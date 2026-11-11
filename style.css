@@ -488,7 +488,6 @@ body { overflow: hidden; }
 .ae-fly-ghost .ae-new-tag, .ae-fly-ghost .queue-hp-tag { display: none; }
 
 /* Pulsante principale "Salva modifiche": dorato */
-.ae-button.is-save { background: var(--ae-gold); color: #20160B; border-color: var(--ae-gold); text-shadow: none; letter-spacing: .04em; }
 
 /* Passo Pesca e carta pescata: un po' più grandi (fronte e retro); crescono verso il basso, nello spazio libero */
 .ae-focus-slide.is-big .ae-focus-stage { scale: 1.08; transform-origin: 50% 0; }
@@ -740,7 +739,6 @@ body { overflow: hidden; }
 /* Testo sempre su una riga: così i due pulsanti restano alti come il pulsante principale anche sui telefoni stretti
    (prima, sotto i ~375px, "Salva modifiche" andava a capo e la riga diventava più alta) */
 .ae-main-row > .ae-button { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; padding-left: 12px; padding-right: 12px; }
-.ae-main-row > .ae-cancel-drafts { flex: 0 0 auto; }
 @media (max-width: 345px) { .ae-main-row > .ae-button { font-size: 14px; padding-left: 8px; padding-right: 8px; } }
 
 /* Creazione del mazzo: animazioni più veloci del 25% */
@@ -1037,3 +1035,78 @@ body { overflow: hidden; }
   border: 1px solid var(--ae-border); background: var(--ae-surface-raised); color: var(--ae-text-muted);
 }
 .ae-main-row > .ae-dock-menu:hover:not(:disabled) { background: var(--ae-surface-raised); }
+
+/* --- Proposta A, turno giocatori: miniature in alto, carte grandi senza comandi, pannello di comando in basso --- */
+/* Fila di miniature 28×39 centrata; quella al centro è piena e con il contorno avorio */
+.queue-view .queue-rail.ae-mini-rail {
+  flex: 0 0 auto; height: auto; margin: 0; padding: 12px 16px 4px; background: none; border: 0;
+  display: flex; justify-content: safe center; gap: 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+}
+.queue-view .queue-rail.ae-mini-rail::-webkit-scrollbar { display: none; }
+.queue-view .queue-rail.ae-mini-rail[hidden] { display: none; }
+.ae-mini-rail .ae-queue-item.ae-mini {
+  --cw: 28px; width: 28px; flex: 0 0 28px; height: 39px; display: block; padding: 0; opacity: .6;
+  border-radius: 3px; scroll-snap-align: none;
+}
+.ae-mini-rail .ae-queue-item.ae-mini::before { content: ''; position: absolute; inset: -3px -4px; }
+.ae-mini-rail .ae-mini .ae-card-art { width: 28px; height: 39px; border: 0; border-radius: 3px; --ae-ring: 0 0 0 transparent; box-shadow: none; }
+.ae-mini-rail .ae-mini[data-viewed='true'] { opacity: 1; }
+.ae-mini-rail .ae-mini[data-viewed='true'] .ae-card-art { outline: 2px solid var(--ae-text); outline-offset: 2px; overflow: hidden; }
+.ae-mini-rail .ae-mini.is-paid .ae-card-art { filter: grayscale(1) brightness(.6); }
+
+/* Carte grandi: niente riga vita/token sopra (è nel pannello); vicine velate; gap 14px; centrate in verticale */
+.queue-view .ae-queue-list { gap: 14px; transform: none; align-items: center; }
+.queue-slot .ae-queue-item > .ae-status-badge { display: none; }
+.queue-slot .ae-new-tag { top: -8px; right: -6px; }
+.queue-view .ae-queue-viewport { padding-top: 12px; padding-bottom: 12px; }
+.queue-view .queue-slot { transition: opacity var(--ae-duration-value) ease-out; }
+.queue-view .ae-queue-list > .queue-slot:not(.is-centred) { opacity: .55; }
+.queue-view .ae-queue-list > .queue-slot:only-child { opacity: 1; }
+.queue-slot .ae-card-art { box-shadow: 0 10px 30px rgba(0, 0, 0, .6); }
+
+/* Dock = pannello che sale dal basso, nei due turni: comandi della carta (turno giocatori) e riga del pulsante principale */
+.ae-shell > .ae-dock {
+  padding: 14px 16px calc(16px + var(--ae-safe-bottom)); gap: 12px;
+  background: rgba(27, 29, 36, .94); border-top: 1px solid var(--ae-border); border-radius: 22px 22px 0 0;
+}
+.ae-shell.is-deck-building > .ae-dock, .ae-shell.is-deck-dark > .ae-dock { background: none; border-top-color: transparent; }
+.ae-deck-card { display: flex; flex-direction: column; gap: 12px; }
+.ae-deck-card[hidden] { display: none; }
+.ae-deck-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 22px; }
+.ae-deck-title {
+  min-width: 0; display: flex; align-items: center; gap: 0; white-space: nowrap; overflow: hidden;
+  font: 600 15px/20px var(--ae-font-ui); color: var(--ae-text);
+}
+.ae-deck-kind { color: var(--ae-text-quiet); font-weight: 500; margin-right: 8px; }
+.ae-deck-title .ae-tokens { display: inline-flex; gap: 2px; }
+.ae-deck-title .ae-token { width: 22px; height: 22px; }
+.ae-deck-pos { flex: 0 0 auto; color: var(--ae-text-quiet); font: 500 12px/16px var(--ae-font-ui); font-variant-numeric: tabular-nums; }
+/* Parte dei comandi sempre alta come quella del minion (72 + 12 + 40): scorrendo tra minion e poteri la carta non cambia misura */
+.ae-deck-body { min-height: 124px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.ae-hp-stepper { display: grid; grid-template-columns: 72px 1fr 72px; align-items: center; gap: 10px; }
+.ae-hp-step {
+  height: 72px; padding: 0; border-radius: 36px; font: 700 30px/1 var(--ae-font-ui);
+  border: 1px solid var(--ae-border); background: var(--ae-surface-raised); color: var(--ae-text);
+}
+.ae-hp-step.is-minus { border-color: var(--ae-danger); background: rgba(217, 94, 92, .12); color: #F08A88; }
+.ae-hp-step:disabled { opacity: .35; cursor: not-allowed; }
+.ae-hp-step:active:not(:disabled) { transform: scale(.96); }
+.ae-hp-value {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font: 800 40px/44px var(--ae-font-ui); font-variant-numeric: tabular-nums; color: var(--ae-text);
+}
+.ae-hp-drop { flex: 0 0 24px; width: 24px; height: 24px; background: url('Assets/ui/icons/life-drop.webp') center / contain no-repeat; }
+.ae-hp-max { font: 600 20px/24px var(--ae-font-ui); color: var(--ae-text-quiet); }
+.ae-hp-quick { display: flex; justify-content: center; gap: 8px; }
+.ae-hp-chip {
+  min-height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--ae-border); background: transparent;
+  color: var(--ae-text-muted); font: 600 14px/1 var(--ae-font-ui); font-variant-numeric: tabular-nums;
+}
+.ae-hp-chip::before { content: ''; position: absolute; inset: -2px 0; }
+.ae-hp-chip { position: relative; }
+.ae-hp-chip.is-kill { border-color: var(--ae-danger); color: #F08A88; }
+.ae-hp-chip:disabled { opacity: .35; cursor: not-allowed; }
+.ae-deck-pay { min-height: 56px; width: 100%; white-space: normal; line-height: 20px; }
+.ae-deck-note { flex: 0 0 auto; }
+/* Pulsante "Turno Nemesi" alto 60px, raggio 14 */
+.ae-main-row > .ae-button { min-height: 60px; border-radius: 14px; font: 700 17px/22px var(--ae-font-ui); }

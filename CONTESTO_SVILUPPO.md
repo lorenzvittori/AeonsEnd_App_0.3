@@ -97,24 +97,37 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
 - Poi compare il banner **Partita iniziata**, con la stessa animazione del banner Tier; finito il banner lo sfondo passa
   dal nero a quello del turno giocatori e si è nel turno giocatori.
 
-**Testata (uguale nei due turni)**
-- A sinistra il **mazzo** (dorso con il numero di carte) e gli **scarti** (ultima carta con il numero).
+**Testata (uguale nei due turni, Proposta A «Pollice» da v159)**
+- A sinistra il nome della nemesi e sotto: fiamma con il numero della battaglia | icona dei giocatori | Turno N.
+- A destra una sola **pillola mazzo/scarti** (alta 44px): metà sinistra il **mazzo** (dorso piccolo + numero), metà
+  destra gli **scarti** (ultima carta + numero). Nel Passo Pesca il bordo è dorato.
   - Tocco sugli scarti: si apre la pila degli scarti, dalla più recente, e ogni carta si ingrandisce.
   - Tocco sul mazzo: compare "Pesca carta", che mostra la carta in cima con *Rimetti nel mazzo* (nessun cambiamento) o
     *Scarta* (va negli scarti, un passo di undo). Serve per gli effetti che fanno pescare o guardare la carta in cima.
-- Al centro il nome della nemesi e sotto: fiamma con il numero della battaglia | icona dei giocatori | Turno N.
-- A destra il **Menu**.
+- Il **Menu** non è più in testata: è in basso, a sinistra del pulsante principale (60×60), nei due turni.
+- **Traccia del turno** (da v158), sotto la testata: una tacca doppia "Giocatori", una tacca per ogni carta da
+  risolvere, una tacca "Pesca". Fatte grigie, attuale avorio (turno giocatori) / rossa (turno nemesi) / dorata (Pesca).
+  Sotto: "Turno giocatori · Turno nemesi N →", "Turno nemesi N · Carta i di n · Pesca", "Turno nemesi N · Pesca".
+  È ricavata dallo stato (`renderTurnTrack`; il numero di carte di inizio turno viene dall'ultimo passo di undo del
+  turno giocatori, `turnStartCount`).
 
-**Turno dei giocatori**
-- In alto la fascia piccola con tutte le carte in gioco; sotto le stesse carte, grandi, che si scorrono in orizzontale.
-- Sotto ogni carta grande i suoi comandi:
-  - **minion:** −5 / −1 / +1 alla vita (+1 solo fino alla vita di inizio turno). Sul box compare "vita/totale" e sulla
-    carta "HP: −n";
-  - **potere con "TO DISCARD":** "Rimuovi · costo pagato" (la carta diventa grigia), con "Annulla" per tornare indietro;
-  - **altri poteri:** la nota "! Non rimovibile".
-- Le modifiche sono una bozza: il pulsante principale diventa **Salva modifiche**, con accanto **Annulla modifiche**.
-  Salvando (un solo passo di undo) i minion a 0 e i poteri pagati volano negli scarti.
-- Toccando una carta grande si apre la sua finestra (vita del minion, token del potere, rimozione del potere).
+**Turno dei giocatori** (Proposta A, da v160)
+- In alto una fila di **miniature** 28×39 (tutta la coda, `.ae-mini-rail`); quella al centro è piena con il contorno
+  avorio. Tocco = le carte grandi scorrono lì.
+- Sotto le carte grandi (circa 230px su 375), una al centro e un pezzo delle vicine (velate). Niente riga vita/token
+  sopra e niente comandi sotto; sulla carta resta "HP: −n" (danno o cura del turno, rispetto a `turnHp`).
+- **Pannello di comando** in basso (`.ae-deck-card` nel dock), per la carta al centro (`centredQueueUid`), sopra il
+  pulsante principale: riga con nome · tipo (e token del potere) e posizione "2 / 5", poi:
+  - **minion:** "−" e "+" tondi da 72px ai lati della vita (goccia, vita, /massimo); "+" solo fino alla vita di inizio
+    turno. Sotto le pillole **−2 −3 −5** e **Uccidi** (vita a 0);
+  - **potere con "TO DISCARD":** "Paga il costo (Spend 7 Æ)" (testo da `toDiscard`), poi "Costo pagato · Annulla";
+  - **altri poteri:** la nota "! Non rimovibile"; **attacco:** solo la riga del nome.
+  La parte dei comandi è sempre alta come quella del minion, così scorrendo le carte non cambiano misura.
+- **Niente bozze** (tolti "Salva modifiche" / "Annulla modifiche"): ogni tocco va subito nella partita ed è un passo di
+  undo; tocchi veloci sullo stesso minion (entro 1,5 s, `actMerged`) sono un passo solo. I minion a 0 e i poteri pagati
+  restano grigi fino a **Turno Nemesi**, che li fa volare negli scarti. Dopo un Annulla resta al centro la stessa carta.
+- Toccando una carta grande si apre la sua finestra (vita del minion, token del potere, rimozione del potere): anche
+  qui la conferma va subito nella partita.
 - Il pulsante **Turno Nemesi**, con l'illustrazione della nemesi, avvia il turno della nemesi: breve scossa dello
   schermo e vibrazione (urgenza, `shakeApp`). Lo sfondo (maga a sinistra, nemesi a destra) scorre verso il lato della
   nemesi.
@@ -149,8 +162,8 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
 
 **Menu (pannello laterale al 70%)**
 - Turno nemesi N e carte nel mazzo.
-- **Annulla ultima azione:** chiude il menu e lascia un pulsante sospeso che si può toccare più volte. Il primo Annulla
-  toglie le modifiche non salvate, poi si torna indietro fino all'inizio della partita.
+- **Annulla ultima azione:** chiude il menu e lascia un pulsante sospeso che si può toccare più volte; si torna indietro
+  fino all'inizio della partita.
 - Scarti.
 - **Nemesi uccisa:** per quando la nemesi muore al tavolo; apre la schermata Vittoria.
 - **Sfondo:** menu a tendina con tre sfondi (Nemesi mascherata, Demone cornuto, Bocca con tentacoli). Cambia subito e
@@ -173,8 +186,9 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   in più nella cronologia (`armBackGuard`, `closeTopForBack`), stesso indirizzo.
 - **Solo verticale:** con il telefono in orizzontale (altezza ≤ 500px e schermo touch) l'app è coperta da "Gira il
   telefono in verticale" (`.ae-rotate`). Tablet e desktop non cambiano.
-- **Aree di tocco:** mazzo e scarti in testata si toccano su 44×44 (il disegno resta 32×44); la freccia della carta
-  nemesi su 44 di altezza; i comandi −5 / −1 / +1 sono a 10px e −5 ha il contorno rosso.
+- **Aree di tocco:** la pillola mazzo/scarti è alta 44px e tutta toccabile; la freccia della carta nemesi su 44 di
+  altezza; "−" e "+" della vita 72px, pillole −2/−3/−5/Uccidi 40px (44 con l'area invisibile); pulsante principale e
+  Menu 60px.
 - **"Inizia partita"** resta sempre visibile in fondo alla pagina iniziale.
 - **Menu:** si chiude anche trascinandolo verso destra (`swipeToClose`).
 - **Vibrazione** (solo Android): carta pescata (doppia per un attacco) e scritte Tier / Partita iniziata (`buzz`).
@@ -205,7 +219,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 | **Turno giocatori** (nel codice *VistaCoda*, `#queue-view`) | Vista delle carte in gioco tra un turno nemesi e l'altro. |
 | **Turno nemesi** (nel codice *VistaRisoluzione*, `#resolve-view`) | Risoluzione delle carte in gioco, poi pesca della nuova carta. |
 | **Coda** (`queue`) | Le carte nemesi in gioco, in ordine di arrivo. |
-| **Vista piccola / fascia** (`.ae-compact-rail`) | Striscia in alto con tutte le carte in piccolo: `#queue-rail` nel turno giocatori, `#rail` (dentro `.ae-rail-row`) nel turno nemesi. |
+| **Vista piccola / fascia** (`.ae-compact-rail`) | Striscia in alto con tutte le carte in piccolo: `#rail` (dentro `.ae-rail-row`) nel turno nemesi. Nel turno giocatori è la fila di **miniature** `#queue-rail.ae-mini-rail`. |
 | **Vista grande** | Le carte grandi: lista scorrevole nel turno giocatori, carosello nel turno nemesi. |
 | **Carosello** (`#focus`, `.ae-focus-track`, `.ae-focus-slide`) | Turno nemesi: tutte le carte in fila, scroll-snap nativo, ai lati si vede un pezzo delle vicine. |
 | **Carta da risolvere** | La carta indicata da `currentIndex`. |
@@ -214,8 +228,10 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 | **Carta nuova** | Carta appena pescata: etichetta NUOVA e bagliore dorato; un attacco lampeggia di rosso. |
 | **Banner Tier** (`showBanner`) | Scritta "Tier 2" / "Tier 3" alla prima carta di quel Tier pescata; la stessa animazione serve per "Partita iniziata". Il carattere Cinzel si carica all'avvio (`preloadBannerFont`); la scritta entra ferma (`is-preparing`) e parte quando il carattere è pronto (max 300 ms) e dopo due fotogrammi. L'animazione muove solo trasformazione e opacità. |
 | **Lampeggio rosso** (`.is-to-resolve`, `.is-attack-drawn`) | Turno nemesi: carta da risolvere (non i poteri con più di un token) e attacco appena pescato. |
-| **Box mazzo / box scarti** (`.ae-header-piles`, `.ae-pile`) | In testata, a sinistra, in entrambi i turni. |
-| **Bozza** (`ui.drafts`) | Turno giocatori: vita e costi pagati non ancora salvati. "Salva modifiche" / "Annulla modifiche". |
+| **Pillola mazzo/scarti** (`.ae-pile-pill`, `.ae-pile`, `.ae-pile-face`) | In testata, a destra, in entrambi i turni. Le animazioni (volo negli scarti, Crea mazzo, carta da pescare) vanno sul riquadro dell'immagine (`pileFace`). |
+| **Traccia del turno** (`.ae-turn-track`, `renderTurnTrack`) | Barra a tacche sotto la testata: Giocatori → carte da risolvere → Pesca. |
+| **Pannello di comando** (`.ae-deck-card`, `renderControlDeck`) | Turno giocatori: comandi della carta al centro, nel dock sopra il pulsante principale. |
+| **Bozza** (`ui.drafts`) | Tolta in v160 (Proposta A): ogni modifica va subito nella partita. Recuperabile dal tag `v157-prima-proposta-a`. |
 | **Token automatico** (`.is-auto-token`) | Turno nemesi: sul potere da risolvere un token lampeggia e diventa grigio da solo. |
 | **Crea mazzo** (`#deck-build`, `ui.deckBuilding`) | Schermata dei 9 mazzi dopo "Inizia partita", con lo slider (`deckSlider`). |
 | **Menu iniziale** (`startMode = 'home'`) | Partita in corso (Riprendi), Nuova partita, Opzioni. |
@@ -366,6 +382,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 | `v152-prima-layout-tablet-desktop` | Con la vecchia vista a due colonne da 900px, prima della colonna centrale per tablet e desktop (v153). |
 | `v154-prima-mobile` | Prima delle modifiche per il telefono della v155 (orizzontale, aree di tocco, app installabile, service worker). |
 | `v156-prima-menu-e-slider` | Prima della v157 (menu iniziale con Opzioni, slider di Crea mazzo, salvataggio dal primo turno nemesi). |
+| `v157-prima-proposta-a` | Prima della Proposta A «Pollice» (traccia del turno, pillola mazzo/scarti, pannello di comando, niente bozze). |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 
