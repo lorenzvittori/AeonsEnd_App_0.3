@@ -971,3 +971,24 @@ body { overflow: hidden; }
   font: 700 11px/14px var(--ae-font-ui); font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .ae-stats-hp .ae-icon { width: 11px; height: 11px; color: var(--ae-danger); }
+
+/* --- Proposta A «Pollice» (v158+) --- */
+/* Traccia del turno sotto la testata: Giocatori (doppia) → una tacca per carta da risolvere → Pesca */
+.ae-turn-track { flex: 0 0 auto; padding: 10px 16px 0; }
+.ae-turn-track[hidden] { display: none; }
+.ae-track-bar { display: flex; gap: 4px; }
+.ae-track-seg { flex: 1 1 0; min-width: 0; height: 4px; border-radius: 2px; background: var(--ae-border); }
+.ae-track-seg.is-players { flex-grow: 2; }
+.ae-track-seg.is-done { background: #5a5d68; }
+.ae-track-seg.is-now { background: var(--ae-text); }
+.ae-shell.is-nemesis-turn .ae-track-seg.is-now { background: var(--ae-danger); }
+.ae-shell.is-nemesis-turn .ae-track-seg.is-draw.is-now { background: var(--ae-gold); }
+.ae-track-text {
+  display: flex; justify-content: space-between; gap: 8px; padding-top: 6px;
+  font: 700 11px/14px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--ae-text-quiet);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+}
+.ae-track-text > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ae-track-text .is-players { color: var(--ae-text); }
+.ae-track-text .is-nemesis { color: var(--ae-danger); }
+.ae-track-text .is-draw { color: var(--ae-gold); }

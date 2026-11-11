@@ -167,7 +167,13 @@ const I18N_IT = {
   menuDeck: 'Carte nel mazzo',
   background: 'Sfondo',
   backgrounds: { masked: 'Nemesi mascherata', horned: 'Demone cornuto', maw: 'Bocca con tentacoli' },
-  exitGame: 'Esci dalla partita'
+  exitGame: 'Esci dalla partita',
+  // Traccia del turno sotto la testata
+  trackPlayers: 'Turno giocatori',
+  trackNextNemesis: n => `Turno nemesi ${n} →`,
+  trackNemesis: n => `Turno nemesi ${n}`,
+  trackCardOf: (i, n) => `Carta ${i} di ${n}`,
+  trackDraw: 'Pesca'
 };
 
 const app = document.getElementById('app');
@@ -2213,6 +2219,7 @@ function render() {
   }
   updateInfo();
   renderDockPiles();
+  renderTurnTrack();
   updateUndoBtn();
   if (ui.tierBanner) {
     ui.tierWaitUntil = performance.now() + TIER_BANNER_MS;
@@ -2964,6 +2971,71 @@ menuBtn.addEventListener('click', openSideMenu);
   if (spacer) spacer.replaceWith(menuBtn);
   infoRow.remove();
 })();
+
+// Traccia del turno, sotto la testata: Giocatori → una tacca per ogni carta da risolvere → Pesca. Sotto, a sinistra la
+// fase attuale e a destra la prossima. È ricavata dallo stato (nessuno stato nuovo).
+const turnTrack = el('div', 'ae-turn-track');
+const trackBar = el('div', 'ae-track-bar');
+trackBar.setAttribute('aria-hidden', 'true');
+const trackText = el('div', 'ae-track-text');
+turnTrack.append(trackBar, trackText);
+mainEl.prepend(turnTrack);
+
+// Carte da risolvere all'inizio del turno nemesi in corso: dal passo di undo salvato subito prima di "Turno Nemesi"
+// (l'ultimo del turno giocatori), senza le carte grigie che a inizio turno sono andate negli scarti. null se non c'è più.
+function turnStartCount() {
+  for (let i = undoStack.length - 1; i >= 0; i--) {
+    const s = undoStack[i];
+    if (!s.resolving && s.turn === turn - 1) {
+      return s.queue.filter(q => {
+        const c = cardsById.get(q.id);
+        const dead = c && c.type === 'Minion' && q.hp !== null && q.hp !== undefined && q.hp <= 0;
+        return c && !q.paid && !dead;
+      }).length;
+    }
+    if (s.turn < turn - 1) break;
+  }
+  return null;
+}
+
+function renderTurnTrack() {
+  turnTrack.hidden = ui.deckBuilding;
+  if (ui.deckBuilding) return;
+  const drawing = resolving && (isDrawStep() || newIndex >= 0);
+  let total;
+  let done;
+  if (!resolving) {
+    total = queue.filter(e => !isGone(e)).length;
+    done = -1;
+  } else {
+    // Carte ancora da risolvere (quella attuale compresa); le risolte sono le altre di inizio turno
+    const remaining = drawing ? 0 : Math.max(0, queue.length - currentIndex);
+    const start = turnStartCount();
+    const fallback = newIndex >= 0 ? queue.length - 1 : queue.length;
+    total = Math.max(start === null ? fallback : start, remaining);
+    done = total - remaining;
+  }
+  const seg = cls => el('span', 'ae-track-seg ' + cls);
+  const segs = [seg('is-players ' + (resolving ? 'is-done' : 'is-now'))];
+  for (let k = 0; k < total; k++) {
+    segs.push(seg(!resolving ? '' : k < done ? 'is-done' : (k === done && !drawing ? 'is-now' : '')));
+  }
+  segs.push(seg('is-draw' + (drawing ? ' is-now' : '')));
+  trackBar.replaceChildren(...segs);
+  let left;
+  let right;
+  if (!resolving) {
+    left = el('span', 'is-players', I18N_IT.trackPlayers);
+    right = el('span', '', I18N_IT.trackNextNemesis(turn + 1));
+  } else if (drawing) {
+    left = el('span', '', I18N_IT.trackNemesis(turn));
+    right = el('span', 'is-draw', I18N_IT.trackDraw);
+  } else {
+    left = el('span', 'is-nemesis', I18N_IT.trackNemesis(turn) + ' · ' + I18N_IT.trackCardOf(done + 1, total));
+    right = el('span', '', I18N_IT.trackDraw);
+  }
+  trackText.replaceChildren(left, right);
+}
 
 // In alto a sinistra, al posto di Undo (che è nel Menu), uno accanto all'altro e uguali nei due turni: il mazzo nemesi
 // (dorso con il numero di carte rimaste) e la pila degli scarti (ultima carta scartata con il numero; toccandola si apre).
