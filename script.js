@@ -2215,7 +2215,6 @@ function render() {
   }
   if (cancelDraftsBtn) {
     cancelDraftsBtn.hidden = !saving || ui.deckBuilding;
-    cancelDraftsBtn.parentElement.hidden = resolving;
   }
   updateInfo();
   renderDockPiles();
@@ -2958,17 +2957,18 @@ discardBtn.addEventListener('click', openDiscard);
 discardClose.addEventListener('click', closeDiscard);
 menuBtn.addEventListener('click', openSideMenu);
 
-// Menu in alto a destra (opposto all'undo): apre un pannello laterale largo il 70% dello schermo, il resto dell'app
-// resta visibile ma oscurato. Contiene: Esci dalla partita, turno, carte nel mazzo, Scarti.
-// La riga Turno/Mazzo/Scarti/Menu in basso non c'è più. Tutto è creato qui, così vale anche con un index.html vecchio.
+// Menu in basso, a sinistra del pulsante principale (alla portata del pollice): apre un pannello laterale largo il 70%
+// dello schermo, il resto dell'app resta visibile ma oscurato. Contiene: Esci dalla partita, turno, carte nel mazzo,
+// Scarti. Il pulsante entra nella riga del pulsante principale più in basso. Tutto è creato qui, così vale anche con un
+// index.html vecchio.
 (function setupMenuButton() {
   const spacer = document.querySelector('.ae-header .ae-header-spacer');
-  menuBtn.className = 'ae-icon-button ae-menu-button';
+  menuBtn.className = 'ae-icon-button ae-menu-button ae-dock-menu';
   menuBtn.textContent = '';
   menuBtn.setAttribute('aria-label', I18N_IT.menu);
   menuBtn.setAttribute('aria-haspopup', 'dialog');
   menuBtn.append(el('span', 'ae-menu-lines'));
-  if (spacer) spacer.replaceWith(menuBtn);
+  if (spacer) spacer.remove();
   infoRow.remove();
 })();
 
@@ -3037,10 +3037,10 @@ function renderTurnTrack() {
   trackText.replaceChildren(left, right);
 }
 
-// In alto a sinistra, al posto di Undo (che è nel Menu), uno accanto all'altro e uguali nei due turni: il mazzo nemesi
-// (dorso con il numero di carte rimaste) e la pila degli scarti (ultima carta scartata con il numero; toccandola si apre).
+// A destra della testata, in una sola pillola e uguali nei due turni: il mazzo nemesi (dorso con il numero di carte
+// rimaste; metà sinistra) e la pila degli scarti (ultima carta scartata con il numero; metà destra, toccandola si apre).
 // Creati qui, così valgono anche con un index.html vecchio.
-const headerPiles = el('div', 'ae-header-piles');
+const headerPiles = el('div', 'ae-header-piles ae-pile-pill');
 const dockDeck = el('div', 'ae-pile ae-pile--deck');
 const dockDiscard = el('button', 'ae-pile ae-pile--discard');
 dockDiscard.type = 'button';
@@ -3050,18 +3050,34 @@ dockDeck.setAttribute('role', 'button');
 dockDeck.tabIndex = 0;
 dockDeck.addEventListener('click', () => { if (!ui.isTransitioning && !modals.length && !ui.deckBuilding) openDeckPopover(); });
 dockDeck.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dockDeck.click(); } });
-headerPiles.append(dockDeck, dockDiscard);
-undoBtn.before(headerPiles);
+{
+  const sep = el('span', 'ae-pill-sep');
+  sep.setAttribute('aria-hidden', 'true');
+  headerPiles.append(dockDeck, sep, dockDiscard);
+}
+phaseLabel.after(headerPiles);
 undoBtn.hidden = true;
 
+// Immagine della pila (dorso o ultima carta scartata) in un riquadro fisso, con il numero accanto. Le animazioni
+// (volo verso gli scarti, creazione del mazzo, carta da pescare) partono e arrivano su questo riquadro (pileFace).
+function pileFace(node) {
+  let face = node.querySelector('.ae-pile-face');
+  if (!face) {
+    face = el('span', 'ae-pile-face');
+    face.setAttribute('aria-hidden', 'true');
+    node.prepend(face);
+  }
+  return face;
+}
 function pileContent(node, imgSrc, count) {
   node.classList.toggle('is-empty', !imgSrc);
-  const img = node.querySelector('img');
+  const face = pileFace(node);
+  const img = face.querySelector('img');
   if (imgSrc) {
     const image = img || document.createElement('img');
     image.alt = '';
     if (image.getAttribute('src') !== imgSrc) image.src = imgSrc;
-    if (!img) node.prepend(image);
+    if (!img) face.appendChild(image);
   } else if (img) {
     img.remove();
   }
@@ -3093,7 +3109,7 @@ function renderDockPiles() {
 const FLY_MS = 720;
 const FLY_STAGGER = 120;
 function flyToDiscard(nodes) {
-  const target = dockDiscard.getBoundingClientRect();
+  const target = pileFace(dockDiscard).getBoundingClientRect();
   nodes.filter(Boolean).forEach((node, i) => {
     const r = node.getBoundingClientRect();
     if (!r.width || !target.width) return;
@@ -3587,7 +3603,7 @@ function setDeckProgress(p) {
   const n = flight.order.length;
   // Le Specifiche si girano (dorso in su) appena lo slider si muove; tornano a faccia in su a slider fermo all'inizio
   flight.layer.classList.toggle('is-flipping', p > 0);
-  const to = dockDeck.getBoundingClientRect();
+  const to = pileFace(dockDeck).getBoundingClientRect();
   const x = p * (n + DECK_FLY_WINDOW - 1);
   let landed = 0;
   const taken = new Map();
@@ -3764,7 +3780,7 @@ const DRAW_IN_MS = 650;
 // delay: attesa (ms) prima della partenza, per esempio finché la carta appena scartata non è atterrata
 function animateDrawIn(delay = 0) {
   const stage = focusEl.querySelector('.ae-focus-slide--draw .ae-focus-stage');
-  const from = dockDeck.getBoundingClientRect();
+  const from = pileFace(dockDeck).getBoundingClientRect();
   if (!stage || !from.width || reducedMotion.matches || !document.body.animate) return;
   // La carta da pescare non deve avere l'animazione di entrata (la sposterebbe): si misura dove starà davvero
   const slide = stage.closest('.ae-focus-slide');
@@ -3849,6 +3865,8 @@ function openDeckPopover() {
   layer.addEventListener('click', e => { if (e.target === layer) closeDeckPopover(); });
   layer.appendChild(b);
   document.body.appendChild(layer);
+  // Il mazzo è a destra della testata: il pulsante resta dentro lo schermo
+  b.style.left = Math.max(8, Math.min(r.left, window.innerWidth - b.offsetWidth - 8)) + 'px';
   deckPopover = layer;
   b.focus({ preventScroll: true });
 }
@@ -4099,7 +4117,8 @@ cancelDraftsBtn.hidden = true;
   const row = el('div', 'ae-main-row');
   nemesisBtn.before(row);
   deckSlider = buildDeckSlider();
-  row.append(cancelDraftsBtn, nemesisBtn, deckSlider.box);
+  // Menu a sinistra del pulsante principale, nei due turni (nel turno nemesi il pulsante principale è resolveBtn/backBtn)
+  row.append(menuBtn, cancelDraftsBtn, nemesisBtn, deckSlider.box, resolveBtn, backBtn);
 }
 cancelDraftsBtn.addEventListener('click', () => {
   if (resolving || ui.isTransitioning || !ui.drafts.size) return;

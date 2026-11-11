@@ -992,3 +992,48 @@ body { overflow: hidden; }
 .ae-track-text .is-players { color: var(--ae-text); }
 .ae-track-text .is-nemesis { color: var(--ae-danger); }
 .ae-track-text .is-draw { color: var(--ae-gold); }
+
+/* Testata: nome della nemesi e riga info a sinistra, pillola mazzo/scarti a destra (il Menu è in basso, nel dock) */
+.ae-shell.clear-header > .ae-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: calc(var(--ae-safe-top) + 10px) 12px 0 16px; min-height: calc(52px + var(--ae-safe-top));
+}
+.ae-shell.clear-header .ae-phase { flex: 1 1 auto; align-items: flex-start; text-align: left; }
+.ae-shell.clear-header .ae-phase-name { font: 600 18px/22px var(--ae-font-display); }
+.ae-shell.clear-header .ae-phase-turn { font-size: 11px; line-height: 14px; }
+/* Pillola: metà sinistra = mazzo (tocco: "Pesca carta"), metà destra = scarti. Alta 44px, tutta toccabile */
+.ae-header-piles.ae-pile-pill {
+  margin-left: auto; flex: 0 0 auto; height: 44px; display: flex; align-items: stretch; gap: 0; padding: 0;
+  border-radius: 22px; border: 1px solid rgba(244, 241, 233, .25); background: rgba(16, 17, 22, .7);
+}
+.ae-shell.is-draw-phase .ae-pile-pill { border-color: var(--ae-gold); }
+.ae-pile-pill .ae-pile {
+  height: auto; aspect-ratio: auto; display: flex; align-items: center; gap: 8px;
+  color: var(--ae-text); font: 700 14px/1 var(--ae-font-ui); font-variant-numeric: tabular-nums;
+}
+.ae-pile-pill .ae-pile--deck { padding: 0 8px 0 8px; border-radius: 22px 0 0 22px; }
+.ae-pile-pill .ae-pile--discard { padding: 0 12px 0 8px; border-radius: 0 22px 22px 0; }
+.ae-pile-pill .ae-pile::before { display: none; }
+.ae-pile-pill .ae-pile.is-empty { border: 0; }
+.ae-pile-pill .ae-pile-face { position: relative; display: block; height: 28px; aspect-ratio: 63 / 88; border-radius: 2px; }
+.ae-pile-pill .ae-pile.is-empty .ae-pile-face { border: 1px dashed rgba(236, 232, 222, .35); }
+.ae-pile-pill .ae-pile-face img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 2px; box-shadow: 0 0 0 1px rgba(236, 232, 222, .3); }
+.ae-pile-pill .ae-pile-count {
+  position: static; transform: none; min-width: 0; height: auto; padding: 0; display: inline;
+  border: 0; border-radius: 0; background: none; font: inherit; color: inherit;
+}
+.ae-pill-sep { flex: 0 0 1px; align-self: center; height: 18px; background: var(--ae-border); }
+.ae-pile-pill .ae-pile:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: -2px; }
+/* Il rimbalzo all'arrivo di una carta riguarda solo l'immagine (non tutta la metà della pillola) */
+.ae-pile-pill .ae-pile.is-bump { animation: none; }
+.ae-pile-pill .ae-pile--discard.is-bump .ae-pile-face { animation: ae-pile-bump .42s cubic-bezier(.2, 1.4, .4, 1); }
+.ae-pile-pill .ae-pile--deck.is-bump .ae-pile-face { animation: ae-pile-bump .225s cubic-bezier(.2, 1.4, .4, 1); }
+
+/* Menu in basso, a sinistra del pulsante principale (nei due turni) */
+.ae-main-row { align-items: stretch; }
+.ae-main-row > [hidden] { display: none; }
+.ae-main-row > .ae-dock-menu {
+  flex: 0 0 60px; width: 60px; height: auto; min-height: 60px; border-radius: 14px;
+  border: 1px solid var(--ae-border); background: var(--ae-surface-raised); color: var(--ae-text-muted);
+}
+.ae-main-row > .ae-dock-menu:hover:not(:disabled) { background: var(--ae-surface-raised); }
