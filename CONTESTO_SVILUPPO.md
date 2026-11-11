@@ -56,41 +56,49 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
 
 ## 4. Come si usa
 
-**Menu iniziale ("Aeon's End – Nemesis Companion")**
-- Se c'è una partita salvata, la finestra **Partita in corso** (nemesi, giocatori, illustrazione) con solo *Riprendi
-  partita*. Sotto, sempre: **Nuova partita** (secondario se c'è una partita in corso) e **Opzioni**.
-- **Opzioni:** per ora una voce, *La mia collezione* (con il riepilogo wave · prodotti).
+**Menu iniziale ("Aeon's End – Nemesis Companion")** (Proposta A, da v165)
+- In alto l'**illustrazione della nemesi** della partita in corso (o dell'ultima scelta), alta 440px con un velo che
+  sfuma nel fondo; sopra, centrato, "Aeon's End / Nemesis Companion".
+- In basso, se c'è una partita salvata: "Partita in corso" (oro), il nome della nemesi, "Battaglia 1 · 3 giocatori ·
+  Turno nemesi 4", la **barra del mazzo per Tier** (un segmento per Tier largo quanto le sue carte, oro = carte già
+  uscite; sotto "Tier 1 finito" e "Mazzo 11 / 18" = carte rimaste / carte del mazzo, `savedDeckProgress`), poi
+  **Riprendi partita** (64px) e, affiancati, **Nuova partita** e **Collezione**.
+- Senza partita salvata: solo **Nuova partita** (principale) e sotto **Collezione**. "Opzioni" non c'è più (conteneva
+  solo la collezione; `openOptions` resta nel codice, non usata).
 
 **Pagina Nuova partita** (`startMode = 'setup'`)
-- In alto a destra il **Menu** (tre linee): *La mia collezione* ed *Esci* (torna al menu iniziale). Anche il tasto
-  Indietro torna al menu iniziale.
-- **La mia collezione:** schermata con un interruttore per ogni wave (la sua scatola base) e, sotto, le sue mini
-  espansioni. Nemesi e carte Basic / Upgraded Basic escono solo dai prodotti spuntati. Vale solo con "Salva collezione".
-- **Giocatori:** 2, 3 o 4 (dalle colonne di `deck-setup.json`).
-- **Wave:** gruppo a sé, con pillole tonde (solo le wave della collezione); il vecchio `#wave-select` resta nascosto e
-  tiene il valore.
-- **Nemesi:** separata dalla wave da una linea; si sceglie la nemesi della wave.
-  - Ogni pulsante mostra parte dell'illustrazione, la battaglia e, se c'è, la mini espansione.
-  - Sulla nemesi scelta c'è una freccia (o un secondo tocco) che apre la sua carta intera; un tocco o uno slide la gira
-    e mostra il retro con il setup.
-  - Le nemesi non giocabili sono in piccoli box non cliccabili: quelle che l'app ha (battaglia e carte) ma fuori dalla
-    collezione hanno a destra la scritta "Non in collezione"; le altre (senza battaglia o senza carte) un "!" rosso.
+- Testata "Nuova partita" con la **X** (torna al menu iniziale; anche il tasto Indietro).
+- **Wave:** pillole basse (36px) in una riga che scorre; solo le wave della collezione. Il vecchio `#wave-select` resta
+  nascosto e tiene il valore.
+- **Nemesi in un carosello orizzontale** (`renderBosses`): riquadri 250×380 (al massimo il 46% dell'altezza) con
+  l'illustrazione, nome e "Battaglia N" (e la mini espansione). Bordo oro sulla scelta, le altre velate. Tocco = scelta;
+  toccando la nemesi già scelta si apre la sua **carta intera** in una finestra (`openNemesisCard`): un tocco o uno
+  slide la gira e mostra il retro con il setup. Sotto, un puntino per nemesi. Le non giocabili sono in fondo, grigie e
+  non toccabili, con "Non in collezione" o un "!" rosso.
+- **Pannello in basso** (fisso): "Giocatori" e "Mazzo: N carte" (`deckSizeFor`), i pulsanti 2 / 3 / 4 (56px) e il
+  pulsante oro **Affronta <Nemesi>** (al posto di "Inizia partita").
+- **La mia collezione** (dal menu iniziale, "Collezione"): per ogni wave una pillola per la scatola base e una per ogni
+  mini espansione ("✓" oro = posseduta, "+" = no). Ogni tocco **si salva subito** (niente "Salva collezione"); togliendo
+  la scatola base si tolgono le sue mini espansioni, che restano spente (opache) finché la base non c'è. In fondo "N
+  nemesi giocabili" e "Salvata" (verde) per 1,5 s dopo ogni modifica. Nemesi e carte Basic / Upgraded Basic escono solo
+  dai prodotti posseduti.
 - L'interruttore **Includi carte base potenziate** è stato tolto in v156 (per ora non serve): le Upgraded Basic sono
   sempre incluse (`settings.includeUpgraded` resta `true`; la logica in `buildDeck` c'è ancora).
 
 **Inizio partita**
-- "Inizia partita": la pagina iniziale esce a sinistra e la partita entra da destra.
-- Schermata **Crea mazzo**: i 9 mazzi da cui nasce il mazzo nemesi (righe Tier 1-3, colonne Base / Potenziate /
-  Specifiche). Base e Potenziate sono dorsi con il numero di carte (al 60% dell'altezza della carta); le Specifiche
-  sono a ventaglio, a faccia in su, e toccandole si vedono grandi (**Carte Nemesi Specifiche**: sopra
-  "Tier 1 | Tier 2 | Tier 3" con un pallino per carta, acceso sulla carta mostrata; toccando un Tier si va alla sua prima
+- "Affronta <Nemesi>": la pagina iniziale esce a sinistra e la partita entra da destra.
+- Schermata **Crea mazzo** (Proposta A, da v165): in alto "Maggoth · 3 giocatori" e "Mazzo nemesi"; poi **una riga
+  per Tier** (Tier 1 in alto, come si pescherà): etichetta, le carte in fila sovrapposte (dorsi per Base e Potenziate,
+  Specifiche a faccia in su) e il totale. Toccando una riga si vedono le Specifiche grandi (**Carte Nemesi
+  Specifiche**: sopra "Tier 1 | Tier 2 | Tier 3" con un pallino per carta; toccando un Tier si va alla sua prima
   carta).
 - Sfondo **nero** (come il menu iniziale, `.ae-shell.is-deck-dark`); mazzo e scarti in alto non si toccano.
 - Tocco sul **nome della nemesi** in alto (solo qui): finestra con nome, battaglia, illustrazione e **giocatori**, che si
   possono cambiare (il mazzo si rifà subito).
 - Nel Menu c'è anche **Ricomincia la partita** (mazzo nuovo, stessa nemesi e giocatori).
 - Al posto del pulsante principale c'è lo **slider** "Scorri per creare il mazzo" (`buildDeckSlider`), che pulsa finché
-  non si tocca: il quadratino dorato si trascina a destra e le carte volano nel mazzo in alto **seguendo il dito**
+  non si tocca (alto 64px): il quadratino dorato si trascina a destra e le carte volano nella pillola del mazzo in alto
+  **seguendo il dito**; intanto la scritta diventa il contatore "11 / 18 nel mazzo" (`setCount`)
   (`setDeckProgress`: a metà strada è nel mazzo metà delle carte; prima il Tier 3, poi il 2, poi l'1; le Specifiche si
   girano appena lo slider si muove). Lasciando prima della fine (`DECK_SLIDE_DONE`) il quadratino e le carte tornano
   indietro; arrivando in fondo il mazzo si completa. Da tastiera (Invio / freccia destra) si completa subito.
@@ -148,17 +156,22 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
     (ultimo token: negli scarti);
   - **minion:** "Fatto, avanti", resta in gioco. Toccando il minion si apre la finestra con −1 / +1 alla vita;
   - **attacco:** "Risolto, scarta", va negli scarti.
-- **Passo Pesca:** dopo l'ultima carta un dorso vola dal mazzo al centro, con il pulsante dorato **Pesca** (o tocco sul
-  dorso). La carta si gira e mostra NUOVA e un bagliore dorato; un attacco lampeggia di rosso. Dorso e carta pescata
+- **Passo Pesca** (Proposta A, da v162): dopo l'ultima carta un dorso vola dal mazzo al centro, con un bagliore dorato.
+  Al posto del pannello e dei pulsanti c'è una **zona da toccare alta 200px** (`drawZone`): freccia "↑" che si muove,
+  "Tocca o scorri su per pescare" e "Prossima: Tier N · N nel mazzo" (Tier della carta in cima). Si pesca toccandola,
+  scorrendo verso l'alto (oltre 40px), con Invio, o toccando il dorso. La carta si gira e mostra NUOVA e un bagliore dorato; un attacco lampeggia di rosso. Dorso e carta pescata
   sono più grandi delle altre carte: il 90% (`BIG_CARD_SCALE`) della misura massima calcolata da `sizeFocus`.
   - Attacco pescato: "Risolto, scarta", vola negli scarti. Altre carte: "Metti in gioco" (pannello: "Minion · nuova",
     "<Nome>: entra in gioco."). Poi si torna al turno
     giocatori: la carta messa in gioco si rimpicciolisce al suo posto e le altre carte della coda entrano da sinistra.
 - Alla prima carta di Tier 2 e di Tier 3 compare la scritta "Tier N".
 - **Il mazzo non si rimescola:** se è vuoto la nemesi non pesca.
-- **Vittoria:** mazzo vuoto e nessun potere né minion in gioco (dopo il primo turno nemesi), oppure "Nemesi uccisa" nel
-  Menu → schermata Vittoria: la scritta "Vittoria" entra come il banner dei Tier e resta ferma; sotto *Statistiche* e
-  *Menu iniziale*. Un tocco in una parte vuota dello schermo torna alla partita, che non cambia.
+- **Vittoria** (Proposta A, da v164): mazzo vuoto e nessun potere né minion in gioco (dopo il primo turno nemesi), oppure
+  "Nemesi uccisa" nel Menu → schermata Vittoria a tutto schermo: "Vittoria" (come il banner dei Tier, ferma) e
+  "<Nemesi> sconfitto in N turni nemesi"; sotto quattro tessere (Carte giocate, Minion uccisi, "Poteri pagati · N Æ",
+  Attacchi risolti), i **turni in gioco dei minion** in barre e "Tutte le statistiche" (la finestra di prima, con le
+  carte in fila). In fondo **Menu iniziale** e **Rivincita** (stessa nemesi e giocatori, mazzo nuovo: `restartGame`,
+  si torna a "Crea mazzo"). Un tocco in una parte vuota dello schermo torna alla partita, che non cambia.
 - **Statistiche:** turni nemesi, carte giocate del mazzo nemesi (mazzo iniziale − carte rimaste, quindi anche quelle
   scartate con "Pesca carta"), carte rimanenti, minion uccisi, poteri scartati pagando il costo, poteri risolti, Æ spesi
   per i poteri (solo i costi "Spend N Æ"; gli altri costi valgono 0), attacchi risolti e, per ogni minion, i turni nemesi
@@ -166,18 +179,17 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   minion uccisi (con la vita della carta), poteri scartati, poteri risolti e attacchi risolti c'è un box con le carte in
   fila; toccandone una la si vede grande. Gli elenchi sono in `stats.cards` (id); i salvataggi più vecchi non li hanno.
 
-**Menu (pannello laterale al 70%)**
-- Turno nemesi N e carte nel mazzo.
-- **Annulla ultima azione:** chiude il menu e lascia un pulsante sospeso che si può toccare più volte; si torna indietro
-  fino all'inizio della partita.
-- Scarti.
-- **Nemesi uccisa:** per quando la nemesi muore al tavolo; apre la schermata Vittoria.
-- **Sfondo:** menu a tendina con tre sfondi (Nemesi mascherata, Demone cornuto, Bocca con tentacoli). Cambia subito e
-  resta salvato nel browser; non entra nella partita né nell'undo.
-- **Esci dalla partita:** rosso, va **tenuto premuto** (`holdToConfirm`, 0,9 s); un tocco breve avvisa "Tieni premuto
-  per uscire". Porta al menu iniziale.
-- Aprendo il Menu le tre linee del pulsante diventano una **X** (animazione, `menuCloseToggle`); toccando la X il menu si
-  chiude. Vale anche per il Menu della pagina Nuova partita.
+**Menu (foglio dal basso, Proposta A da v163)**
+- Si apre dal pulsante Menu in basso; sale dal fondo (180 ms), con una maniglia. Si chiude trascinandolo in basso
+  (`swipeToClose(panel, close, 'down')`), toccando il velo o con Indietro.
+- In alto tre tessere: **Turno**, **Mazzo**, **Scarti**.
+- Voci (righe da 56px): **Annulla ultima azione** (chiude il menu e lascia un pulsante sospeso che si può toccare più
+  volte), **Scarti** ("N carte"), **Ricomincia la partita** (durante "Crea mazzo" rifà subito il mazzo; in partita
+  chiede conferma, poi `restartGame`: stessa nemesi e giocatori, mazzo nuovo, di nuovo "Crea mazzo"), **Nemesi uccisa**
+  (apre la schermata Vittoria), **Sfondo** (menu a tendina con tre sfondi; resta salvato nel browser, non entra
+  nell'undo).
+- In fondo **Tieni premuto per uscire** (rosso, `holdToConfirm`, 0,9 s); un tocco breve lo ricorda. Porta al menu
+  iniziale.
 
 **Salvataggio:** la partita si salva da sola nel browser, insieme alla cronologia dell'undo, **solo dal primo turno
 nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già stata salvata: `ui.gameSaved`). Durante
@@ -196,7 +208,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   altezza; "−" e "+" della vita 72px, pillole −2/−3/−5/Uccidi 40px (44 con l'area invisibile); pulsante principale e
   Menu 60px.
 - **"Inizia partita"** resta sempre visibile in fondo alla pagina iniziale.
-- **Menu:** si chiude anche trascinandolo verso destra (`swipeToClose`).
+- **Menu:** si chiude anche trascinandolo verso il basso (`swipeToClose`).
 - **Vibrazione** (solo Android): carta pescata (doppia per un attacco) e scritte Tier / Partita iniziata (`buzz`).
 - **App installabile:** `manifest.webmanifest` (a tutto schermo, verticale) e icone in `Assets/ui/app-icons/`
   (rifatte da `tools/build-app-icons.py` a partire dal dorso).
@@ -217,6 +229,11 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 - La rotella del mouse scorre le carte grandi e le fasce piccole (orizzontali).
 - "Crea mazzo" ha mazzi più grandi (fino a 150px).
 - La vecchia vista a due colonne (coda a sinistra, carta a destra, da 900px) è stata tolta in v153.
+- **Tablet in orizzontale** (da 900px di larghezza e in orizzontale, Proposta A da v166, `isWide`): griglia
+  `1fr 360px`. A sinistra testata, traccia e carte; a destra una **colonna di comando**: in alto le tessere Mazzo e
+  Scarti e il Menu (`sideTop`), in basso il pannello e il pulsante principale (alto 72px). Nel turno nemesi ai lati della
+  carta da risolvere si vedono la carta prima (grigia) e la prossima, più piccole (60%), solo da guardare. Girando il
+  tablet si passa da una disposizione all'altra (`applyWide`). Il tablet in verticale resta come il telefono.
 
 ## 5. Terminologia (usata con l'utente)
 

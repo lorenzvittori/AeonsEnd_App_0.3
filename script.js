@@ -2636,7 +2636,7 @@ function drawSlide() {
 }
 
 function focusStateSignature() {
-  return (isDrawStep() || newIndex >= 0 ? 'solo' + newIndex + ':' + ui.viewedUid + '|' : '') + 'c' + currentIndex + '|' + queue.map(e => [e.uid, e.hp, e.tokens, e.isNew ? 1 : 0].join(':')).join('|')
+  return (isWide() ? 'W|' : '') + (isDrawStep() || newIndex >= 0 ? 'solo' + newIndex + ':' + ui.viewedUid + '|' : '') + 'c' + currentIndex + '|' + queue.map(e => [e.uid, e.hp, e.tokens, e.isNew ? 1 : 0].join(':')).join('|')
     + '#' + (ui.reveal ? ui.reveal.uid + ':' + ui.reveal.status : '') + '#' + (ui.holdUid || '');
 }
 
@@ -2665,6 +2665,14 @@ function renderFocus(viewed) {
       slides = [...(other ? [focusSlide(other)] : []), main];
     } else {
       slides = [focusSlide(viewed)];
+      // Tablet in orizzontale: a sinistra la carta prima (già risolta, grigia), a destra la prossima. Solo da guardare.
+      if (isWide()) {
+        const i = queue.indexOf(viewed);
+        const prev = i > 0 ? queue[i - 1] : null;
+        const next = i >= 0 ? queue[i + 1] : null;
+        if (prev) { const sl = focusSlide(prev); sl.classList.add('is-side', 'is-prev'); slides.unshift(sl); }
+        if (next) { const sl = focusSlide(next); sl.classList.add('is-side', 'is-next'); slides.push(sl); }
+      }
     }
     focusTrack.replaceChildren(...slides);
     // La firma si calcola dopo: disegnare la carta pescata può far avanzare il suo stato (pronta → si gira)
@@ -2776,7 +2784,10 @@ function sizeFocus(recentre = true) {
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
   // Una carta alla volta: niente spazio per le vicine
   const peekRoom = 0;
-  const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom));
+  let width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom));
+  // Tablet in orizzontale: c'è posto anche per le due carte vicine (60% della carta grande)
+  if (isWide()) width = Math.max(40, Math.min(width, Math.floor((focusEl.clientWidth - 48) / 2.2)));
+  focusEl.style.setProperty('--ae-side-w', Math.round(width * 0.6) + 'px');
   focusEl.style.setProperty('--ae-focus-w', width + 'px');
   focusEl.style.setProperty('--cw', width + 'px');
   focusTrack.style.paddingInline = Math.max(0, (focusEl.clientWidth - width) / 2) + 'px';
@@ -3276,7 +3287,35 @@ function pileContent(node, imgSrc, count) {
 }
 
 // Le carte ancora in volo verso gli scarti non si contano finché non atterrano (ui.flyingDiscards)
+// Tablet in orizzontale (da 900px di larghezza): il dock diventa una colonna a destra (style.css). In alto le tessere
+// Mazzo e Scarti e il Menu; in basso il pannello e il pulsante principale.
+const wideMq = window.matchMedia('(min-width: 900px) and (orientation: landscape)');
+function isWide() { return wideMq.matches; }
+const sideTop = el('div', 'ae-side-top');
+const sideDeck = el('button', 'ae-side-tile');
+sideDeck.type = 'button';
+const sideDiscard = el('button', 'ae-side-tile');
+sideDiscard.type = 'button';
+sideTop.append(sideDeck, sideDiscard);
+sideDeck.addEventListener('click', () => { if (!ui.isTransitioning && !ui.deckBuilding) openDeckPopover(); });
+sideDiscard.addEventListener('click', () => { if (!ui.isTransitioning && !ui.deckBuilding) openDiscard(); });
+function sideTile(node, value, label) {
+  node.replaceChildren(el('span', 'ae-side-tile-value', String(value)), el('span', 'ae-side-tile-label', label));
+}
+function applyWide() {
+  app.classList.toggle('is-wide', isWide());
+  // Il Menu sta in alto nella colonna (accanto alle tessere) o nella riga del pulsante principale
+  if (isWide()) sideTop.appendChild(menuBtn);
+  else if (mainRow && menuBtn.parentElement !== mainRow) mainRow.prepend(menuBtn);
+}
+if (wideMq.addEventListener) wideMq.addEventListener('change', () => { applyWide(); render(); });
+else if (wideMq.addListener) wideMq.addListener(() => { applyWide(); render(); });
+
 function renderDockPiles() {
+  sideTile(sideDeck, ui.deckShown !== null && ui.deckShown !== undefined ? ui.deckShown : deck.length, I18N_IT.menuTileDeck);
+  sideTile(sideDiscard, Math.max(0, discard.length - ui.flyingDiscards), I18N_IT.menuTileDiscard);
+  sideDeck.setAttribute('aria-label', I18N_IT.deckLabel(deck.length));
+  sideDiscard.setAttribute('aria-label', I18N_IT.discardButtonLabel(discard.length));
   // Durante la creazione del mazzo il numero sale man mano che le carte arrivano (ui.deckShown)
   const deckCount = ui.deckShown !== null && ui.deckShown !== undefined ? ui.deckShown : deck.length;
   pileContent(dockDeck, deckCount ? CARD_BACK : null, deckCount);
@@ -4398,11 +4437,14 @@ nemesisBtn.addEventListener('click', onNemesisClick);
   row.before(resolvePanel);
   // Passo Pesca: zona da toccare al posto della riga
   row.after(drawZone);
+  // Tablet in orizzontale: tessere e Menu in alto nella colonna
+  document.getElementById('dock').prepend(sideTop);
   // Pannello di comando della carta al centro (turno giocatori), sopra la riga
   row.before(deckCard);
 }
 resolveBtn.addEventListener('click', onResolveClick);
 stepBackBtn.addEventListener('click', onStepBack);
+applyWide();
 retryBtn.addEventListener('click', init);
 document.getElementById('wave-select').addEventListener('change', e => renderBosses(e.target.value));
 // Interruttore "Includi carte base potenziate" tolto: si toglie anche da un index.html vecchio in cache
@@ -4410,7 +4452,12 @@ document.getElementById('wave-select').addEventListener('change', e => renderBos
   const upgradedRow = document.getElementById('upgraded-switch');
   if (upgradedRow && upgradedRow.closest('.ae-switch-row')) upgradedRow.closest('.ae-switch-row').remove();
 }
-window.addEventListener('resize', () => { sizeFocus(); sizeQueue(); });
+window.addEventListener('resize', () => {
+  // Tablet girato (orizzontale ↔ verticale): se l'evento della media query non arriva, ci pensa il ridimensionamento
+  if (app.classList.contains('is-wide') !== isWide()) { applyWide(); render(); }
+  sizeFocus();
+  sizeQueue();
+});
 // Desktop: la rotella del mouse (verticale) scorre le carte grandi e le fasce piccole, che vanno in orizzontale
 [focusEl, queueViewport, rail].forEach(c => c.addEventListener('wheel', e => {
   if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || c.scrollWidth <= c.clientWidth + 1) return;
