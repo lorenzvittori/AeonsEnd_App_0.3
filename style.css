@@ -1152,3 +1152,31 @@ body { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .ae-draw-arrow { animation: none; } }
 .ae-draw-title { font: 700 16px/20px var(--ae-font-ui); letter-spacing: .12em; text-transform: uppercase; text-align: center; }
 .ae-draw-next { font: 500 13px/18px var(--ae-font-ui); color: var(--ae-text-quiet); }
+
+/* --- Proposta A, Menu come foglio dal basso (v163) --- */
+.ae-modal-backdrop.ae-modal-backdrop--sheet { display: flex; align-items: flex-end; justify-content: center; padding: 0; background: rgba(4, 5, 8, .7); }
+.ae-modal.ae-menu-sheet {
+  width: min(560px, 100%); max-height: calc(100dvh - 24px - var(--ae-safe-top)); gap: 6px; touch-action: pan-y;
+  padding: 10px 16px calc(16px + var(--ae-safe-bottom)); border: 0; border-top: 1px solid var(--ae-border);
+  border-radius: 22px 22px 0 0; background: var(--ae-surface);
+  animation: ae-sheet-in 180ms var(--ae-ease-decelerate);
+}
+@keyframes ae-sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ae-modal.ae-menu-sheet { animation: none; } }
+.ae-sheet-handle { flex: 0 0 4px; align-self: center; width: 40px; height: 4px; margin-bottom: 10px; border-radius: 2px; background: var(--ae-border); }
+.ae-sheet-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+.ae-sheet-tile { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 12px; background: var(--ae-surface-raised); }
+.ae-sheet-tile-value { font: 800 22px/26px var(--ae-font-ui); font-variant-numeric: tabular-nums; color: var(--ae-text); }
+.ae-sheet-tile-label { font: 600 11px/14px var(--ae-font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--ae-text-quiet); }
+.ae-sheet-rows { display: flex; flex-direction: column; }
+.ae-sheet-row {
+  min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 4px;
+  border: 0; border-bottom: 1px solid var(--ae-surface-raised); background: none; color: var(--ae-text);
+  font: 600 16px/22px var(--ae-font-ui); text-align: left; cursor: pointer;
+}
+.ae-sheet-row:disabled { color: var(--ae-text-quiet); opacity: .55; cursor: not-allowed; }
+.ae-sheet-row:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: -2px; }
+.ae-sheet-value { color: var(--ae-text-quiet); font: 500 14px/20px var(--ae-font-ui); }
+.ae-sheet-select .ae-select { width: auto; max-width: 60%; min-height: 40px; margin: 0; }
+.ae-button.ae-sheet-exit { margin-top: 12px; min-height: 56px; border-radius: 14px; font-size: 16px; }
+.ae-confirm-text { margin: 0; color: var(--ae-text-muted); font: 500 15px/22px var(--ae-font-ui); }

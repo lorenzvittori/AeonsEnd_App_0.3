@@ -186,6 +186,13 @@ const I18N_IT = {
   hintNewInPlay: name => `${name}: entra in gioco.`,
   hintDraw: 'Pesca la prossima carta del mazzo.',
   drawKind: 'Pesca',
+  // Menu come foglio dal basso
+  menuTileTurn: 'Turno',
+  menuTileDeck: 'Mazzo',
+  menuTileDiscard: 'Scarti',
+  cardsN: n => (n === 1 ? '1 carta' : `${n} carte`),
+  restartConfirm: 'La partita in corso si perde: stessa nemesi e stessi giocatori, mazzo nuovo.',
+  restartAction: 'Ricomincia',
   drawZoneTitle: 'Tocca o scorri su per pescare',
   drawZoneNext: (tier, n) => `Prossima: Tier ${tier} · ${n} nel mazzo`,
   cardZoomTitle: 'Carta in gioco'
@@ -4018,49 +4025,94 @@ function setBackground(id) {
 }
 applyBackground();
 
+// Menu: foglio che sale dal basso (alla portata del pollice). In alto tre tessere (turno, mazzo, scarti), poi le voci,
+// in fondo "Esci dalla partita" da tenere premuto. Si chiude trascinandolo in basso, toccando il velo o con Indietro.
 function openSideMenu() {
   if (ui.isTransitioning) return;
   let close = () => {};
   const cancel = () => close();
-  const panel = dialogShell(I18N_IT.menu, '', cancel, { displayTitle: false });
-  panel.classList.add('ae-side-menu');
-  const statsList = el('dl', 'ae-side-stats');
-  statsList.append(el('dt', '', I18N_IT.menuTurn), el('dd', '', String(turn)),
-    el('dt', '', I18N_IT.menuDeck), el('dd', '', String(deck.length)));
-  // Menu a tendina dello sfondo: cambia subito, si vede dietro al pannello
-  const bgRow = el('label', 'ae-side-field');
+  const panel = el('div', 'ae-modal ae-menu-sheet');
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-label', I18N_IT.menu);
+  const handle = el('span', 'ae-sheet-handle');
+  handle.setAttribute('aria-hidden', 'true');
+  const tiles = el('div', 'ae-sheet-tiles');
+  [[I18N_IT.menuTileTurn, turn], [I18N_IT.menuTileDeck, deck.length], [I18N_IT.menuTileDiscard, discard.length]].forEach(([k, v]) => {
+    const tile = el('div', 'ae-sheet-tile');
+    tile.append(el('span', 'ae-sheet-tile-value', String(v)), el('span', 'ae-sheet-tile-label', k));
+    tiles.appendChild(tile);
+  });
+  const row = (label, value, handler) => {
+    const b = el('button', 'ae-sheet-row');
+    b.type = 'button';
+    b.appendChild(el('span', '', label));
+    if (value) b.appendChild(el('span', 'ae-sheet-value', value));
+    b.addEventListener('click', handler);
+    return b;
+  };
+  // Undo: annulla l'ultima azione; resta un pulsante sospeso che si può toccare più volte
+  const undoItem = row(I18N_IT.undoAction, '', () => { close(); undo(); openUndoFloat(); });
+  undoItem.disabled = undoStack.length === 0;
+  const discardOpen = row(I18N_IT.menuTileDiscard, I18N_IT.cardsN(discard.length), () => { close(); openDiscard(); });
+  discardOpen.setAttribute('aria-label', I18N_IT.discardButtonLabel(discard.length));
+  // Ricomincia la partita: mazzo nuovo con la stessa nemesi e gli stessi giocatori (in partita chiede conferma)
+  const restart = row(I18N_IT.restartGame, '', () => {
+    close();
+    if (ui.deckBuilding) rebuildDeck(); else confirmRestart();
+  });
+  // Nemesi uccisa al tavolo (vita a 0): si va alla schermata Vittoria; la partita non cambia
+  const killed = row(I18N_IT.nemesisKilled, '', () => { close(); showVictory(); });
+  // Sfondo: menu a tendina nella riga; cambia subito, si vede dietro al velo
+  const bgRow = el('label', 'ae-sheet-row ae-sheet-select');
   const bgSelect = el('select', 'ae-select');
   bgSelect.append(...BACKGROUNDS.map(b => Object.assign(el('option', '', I18N_IT.backgrounds[b.id]), { value: b.id })));
   bgSelect.value = currentBackground().id;
   bgSelect.addEventListener('change', () => setBackground(bgSelect.value));
-  bgRow.append(el('span', 'ae-side-field-label', I18N_IT.background), bgSelect);
-  const discardOpen = button(I18N_IT.discardButton(discard.length), 'secondary', () => { close(); openDiscard(); });
-  discardOpen.classList.add('ae-button--full');
-  discardOpen.setAttribute('aria-label', I18N_IT.discardButtonLabel(discard.length));
-  // Nemesi uccisa al tavolo (vita a 0): si va alla schermata Vittoria; la partita non cambia (Chiudi torna indietro)
-  const killed = button(I18N_IT.nemesisKilled, 'secondary', () => { close(); showVictory(); });
-  killed.classList.add('ae-button--full');
+  bgRow.append(el('span', '', I18N_IT.background), bgSelect);
   // Esci dalla partita (rosso): va tenuto premuto, poi si torna al menu iniziale
-  const exit = button(I18N_IT.exitGame, 'danger');
-  exit.classList.add('ae-button--full', 'ae-side-exit', 'ae-hold-exit');
+  const exit = button(I18N_IT.holdToExit, 'danger');
+  exit.classList.add('ae-button--full', 'ae-sheet-exit', 'ae-hold-exit');
   exit.setAttribute('aria-label', I18N_IT.exitGameLabel);
   holdToConfirm(exit, HOLD_EXIT_MS, () => { close(); openStart(); }, () => showToast(I18N_IT.holdToExit));
-  // Undo: annulla l'ultima azione
-  const undoItem = button(I18N_IT.undoAction, 'secondary', () => { close(); undo(); openUndoFloat(); });
-  undoItem.classList.add('ae-button--full');
-  undoItem.disabled = undoStack.length === 0;
-  const items = [statsList, undoItem, discardOpen, killed];
-  // Durante "Crea mazzo": Ricomincia la partita (mazzo nuovo con la stessa nemesi e gli stessi giocatori)
-  if (ui.deckBuilding) {
-    const restart = button(I18N_IT.restartGame, 'secondary', () => { close(); rebuildDeck(); });
-    restart.classList.add('ae-button--full');
-    items.splice(1, 0, restart);
-  }
-  panel.append(...items, bgRow, exit);
-  close = openModal(panel, { onCancel: cancel });
-  panel.parentElement.classList.add('ae-modal-backdrop--side');
-  swipeToClose(panel, cancel);
-  menuCloseToggle(menuBtn, panel.parentElement, cancel);
+  const rows = el('div', 'ae-sheet-rows');
+  rows.append(undoItem, discardOpen, restart, killed, bgRow);
+  panel.append(handle, tiles, rows, exit);
+  close = openModal(panel, { onCancel: cancel, initialFocus: undoItem.disabled ? discardOpen : undoItem });
+  panel.parentElement.classList.add('ae-modal-backdrop--sheet');
+  swipeToClose(panel, cancel, 'down');
+}
+
+// "Ricomincia la partita" durante la partita: conferma, poi mazzo nuovo con la stessa nemesi e gli stessi giocatori
+function confirmRestart() {
+  let close = () => {};
+  const cancel = () => close();
+  const dialog = dialogShell(I18N_IT.restartGame, '', cancel, { displayTitle: false });
+  dialog.appendChild(el('p', 'ae-confirm-text', I18N_IT.restartConfirm));
+  const footer = el('div', 'ae-modal-footer');
+  footer.append(button(I18N_IT.cancel, 'secondary', cancel), button(I18N_IT.restartAction, 'primary', () => { close(); restartGame(); }));
+  dialog.appendChild(footer);
+  close = openModal(dialog, { onCancel: cancel });
+}
+
+// Partita nuova con la stessa nemesi e gli stessi giocatori ("Ricomincia la partita", "Rivincita"): si torna a "Crea mazzo"
+function restartGame() {
+  clearTransition();
+  closeAllModals();
+  closeDiscard();
+  queue = [];
+  resolving = false;
+  currentIndex = 0;
+  newIndex = -1;
+  ui.viewedUid = null;
+  ui.reveal = null;
+  ui.lastDrawnUid = null;
+  ui.flyingDiscards = 0;
+  undoStack = [];
+  lastActKey = null;
+  ui.gameSaved = false;
+  rebuildDeck();
+  nemesisBtn.focus({ preventScroll: true });
 }
 
 // Pulsante Menu aperto: sopra il menu, nello stesso punto del pulsante, le tre linee diventano una X (animazione
@@ -4121,8 +4173,10 @@ function holdToConfirm(btn, ms, onDone, onShort) {
   btn.addEventListener('contextmenu', e => e.preventDefault());
 }
 
-// Menu laterale: trascinandolo verso destra segue il dito; oltre un terzo della larghezza (o con uno scatto) si chiude
-function swipeToClose(panel, close) {
+// Pannello che si chiude trascinandolo: verso destra (dir 'right', menu laterale) o verso il basso (dir 'down', foglio
+// dal basso). Segue il dito; oltre un terzo della misura (o con uno scatto) si chiude.
+function swipeToClose(panel, close, dir = 'right') {
+  const down = dir === 'down';
   let start = null;
   const reset = () => {
     panel.style.transition = 'transform .18s ease-out';
@@ -4135,16 +4189,18 @@ function swipeToClose(panel, close) {
   });
   panel.addEventListener('pointermove', e => {
     if (!start) return;
-    const dx = e.clientX - start.x;
-    const dy = e.clientY - start.y;
+    const along = down ? e.clientY - start.y : e.clientX - start.x;
+    const across = down ? e.clientX - start.x : e.clientY - start.y;
     if (!start.dragging) {
-      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { start = null; return; }
-      if (dx < 10) return;
+      if (Math.abs(across) > 10 && Math.abs(across) > Math.abs(along)) { start = null; return; }
+      // Foglio con le voci che scorrono: si trascina solo se il contenuto è già in cima
+      if (down && panel.scrollTop > 0) { start = null; return; }
+      if (along < 10) return;
       start.dragging = true;
       panel.style.transition = 'none';
       try { panel.setPointerCapture(e.pointerId); } catch (err) { /* niente cattura */ }
     }
-    panel.style.transform = `translateX(${Math.max(0, dx)}px)`;
+    panel.style.transform = down ? `translateY(${Math.max(0, along)}px)` : `translateX(${Math.max(0, along)}px)`;
   });
   let dragged = false;
   const end = e => {
@@ -4152,13 +4208,13 @@ function swipeToClose(panel, close) {
     if (!start.dragging) { start = null; return; }
     dragged = true;
     setTimeout(() => { dragged = false; }, 0);
-    const dx = e.clientX - start.x;
-    const fast = dx > 40 && Date.now() - start.t < 250;
-    if (dx > panel.offsetWidth / 3 || fast) {
+    const along = down ? e.clientY - start.y : e.clientX - start.x;
+    const fast = along > 40 && Date.now() - start.t < 250;
+    if (along > (down ? panel.offsetHeight : panel.offsetWidth) / 3 || fast) {
       start = null;
-      // Il pannello esce a destra, poi si chiude
+      // Il pannello esce, poi si chiude
       panel.style.transition = 'transform .15s ease-in';
-      panel.style.transform = 'translateX(100%)';
+      panel.style.transform = down ? 'translateY(100%)' : 'translateX(100%)';
       setTimeout(close, 150);
     } else reset();
   };
