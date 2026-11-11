@@ -1,0 +1,973 @@
+/* Layout dell'app (new design 0.2). Token in css/design-tokens.css, componenti in css/components.css. */
+
+html, body { height: 100%; }
+body { overflow: hidden; }
+
+/* Shell: testata, contenuto, dock (REPORT §2.5) */
+.ae-shell {
+  height: 100vh; height: 100dvh;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+.ae-main { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+/* --- VistaCoda --- */
+.queue-view {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; animation: ae-fade var(--ae-duration-phase) var(--ae-ease-standard);
+  position: relative;
+}
+.queue-view > .queue-col, .queue-view > .queue-side { position: relative; z-index: 1; }
+
+.queue-col { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.queue-title { display: none; }
+.queue-side { display: none; }
+
+.ae-queue-viewport {
+  flex: 1; min-height: 0; display: flex; align-items: center;
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity; scroll-padding-inline: 16px;
+  padding: 20px 16px; scrollbar-width: thin;
+}
+.ae-queue-list { display: flex; gap: 12px; min-width: max-content; align-items: flex-end; margin: auto; }
+.ae-queue-list:empty { display: none; }
+/* VistaCoda: carte grandi, alte quanto lo spazio (--ae-queue-card calcolata da sizeQueue in script.js) */
+.ae-queue-list > .queue-slot { width: var(--ae-queue-card, 132px); flex: 0 0 var(--ae-queue-card, 132px); display: flex; flex-direction: column; gap: 8px; scroll-snap-align: center; }
+.queue-slot > .ae-queue-item { width: 100%; flex-basis: auto; }
+/* Comandi sotto la carta grande: vita del minion (−5 −1 +1, Elimina a 0) o rimozione del potere */
+.queue-controls { min-height: 44px; display: flex; gap: 6px; }
+/* Potere non rimovibile: nota piccola con il punto esclamativo rosso */
+.queue-note { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--ae-text-muted); font: 600 12px/16px var(--ae-font-ui); }
+.queue-note::before {
+  content: ''; flex: 0 0 auto; width: 5px; height: 13px; background: var(--ae-danger);
+  -webkit-mask: url('Assets/ui/icons/alert.webp') center / contain no-repeat; mask: url('Assets/ui/icons/alert.webp') center / contain no-repeat;
+}
+/* Danno (rosso) o cura (verde) del minion in questo turno, in alto a destra sulla carta grande */
+.queue-hp-tag {
+  position: absolute; top: 4%; right: 5%; z-index: 2; padding: 2px 7px; border-radius: 6px;
+  background: rgba(16, 17, 22, .85); font: 700 13px/18px var(--ae-font-ui); font-variant-numeric: tabular-nums;
+}
+.queue-hp-tag.is-loss { color: var(--ae-danger); }
+.queue-hp-tag.is-gain { color: var(--ae-heal); }
+.queue-controls .ae-button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 6px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-slot .ae-card-art img { object-fit: cover; }
+/* Fascia compatta in cima alla VistaCoda, come nel turno nemesi */
+.queue-rail[hidden] { display: none; }
+
+/* --- VistaRisoluzione --- */
+.ae-resolve-layout {
+  flex: 1; display: flex; flex-direction: column; min-height: 0;
+}
+.ae-resolve-layout.is-entering { animation: ae-fade var(--ae-duration-phase) var(--ae-ease-standard); }
+
+.ae-compact-rail {
+  flex: 0 0 104px; height: 104px; display: flex; align-items: center; gap: 10px;
+  /* carte a metà tra la testata e la linea di separazione */
+  overflow-x: auto; overflow-y: hidden; padding: 0 16px;
+  border-bottom: 1px solid var(--ae-border); overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+}
+.ae-compact-rail .ae-queue-item { --cw: 52px; width: 52px; flex-basis: 52px; gap: 4px; opacity: .7; }
+.ae-compact-rail .ae-queue-item[aria-current='true'],
+.ae-compact-rail .ae-queue-item[data-viewed='true'] { opacity: 1; }
+/* Box vita / token sopra la carta, centrato in alto (sovrapposto all'immagine) */
+.ae-compact-rail .ae-queue-item > .ae-status-badge { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 3; max-width: calc(100% - 6px); background: rgba(16, 17, 22, .85); }
+.ae-compact-rail .ae-status-badge { height: 18px; min-width: 0; padding: 1px 4px; gap: 2px; font-size: 11px; line-height: 14px; border-radius: 5px; }
+.ae-compact-rail .ae-status-badge .ae-icon { width: 12px; height: 12px; }
+.ae-compact-rail .ae-token { width: 11px; height: 11px; }
+.ae-compact-rail .ae-new-tag { display: none; }
+/* Fascia in alto: carte senza bordo né anello (restano opacità, RISOLVI e il glow dorato della carta nuova) */
+.ae-compact-rail .ae-queue-item .ae-card-art { border: 0; --ae-ring: 0 0 0 transparent; }
+/* Prossima carta da pescare (retro) in fondo alla fascia: NUOVA in alto a destra */
+.ae-compact-rail .ae-next-card .ae-new-tag { display: block; top: 20px; right: -4px; padding: 1px 3px; font-size: 10px; line-height: 12px; border-radius: 4px; }
+
+/* Carosello del turno nemesi: scorre in orizzontale e si ferma su ogni carta (scroll-snap); la barra non si vede */
+.ae-focus {
+  flex: 1; min-height: 0; display: block; padding: 12px 0;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+  scrollbar-width: none; touch-action: pan-x;
+}
+.ae-focus::-webkit-scrollbar { display: none; }
+.ae-focus-track { display: flex; gap: 12px; height: 100%; width: max-content; }
+.ae-focus-slide {
+  flex: 0 0 var(--ae-focus-w, 280px); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px;
+  scroll-snap-align: center; scroll-snap-stop: always; --ae-slide: 24px;
+}
+.ae-focus-slide .ae-focus-stage { width: var(--ae-focus-w, 280px); height: calc(var(--ae-focus-w, 280px) * 88 / 63); }
+.ae-focus-stage { position: relative; flex: 0 0 auto; border-radius: 5% / 3.58%; }
+/* Carta appena pescata: glow dorato come nella versione 1 (10% / 2% della larghezza della carta, al massimo 28px) */
+.ae-focus-stage.is-new { box-shadow: 0 0 min(calc(var(--cw, 300px) * .1), 28px) min(calc(var(--cw, 300px) * .02), 6px) rgba(255, 196, 60, .85); }
+.ae-focus-stage .ae-card-art { width: 100%; height: 100%; border: 0; background: transparent; }
+.ae-focus-stage .ae-new-tag { top: -10px; right: -10px; font-size: 12px; line-height: 16px; }
+.ae-focus-status { display: inline-flex; align-items: center; gap: 8px; min-height: 41px; font: 700 24px/30px var(--ae-font-ui); font-variant-numeric: tabular-nums; }
+.ae-focus-status .ae-icon { width: 20px; height: 20px; }
+/* Token nella vista ingrandita: 39px (26px + 50%) */
+.ae-focus-status .ae-token { width: 39px; height: 39px; }
+.ae-focus-status.is-dropping .ae-tokens { animation: ae-token-out var(--ae-duration-token) ease-out; }
+.ae-focus-status.is-hp .ae-icon { color: var(--ae-danger); }
+.ae-focus-status.is-token .ae-icon { color: var(--ae-gold); }
+.ae-focus-status.is-dropping .ae-icon { animation: ae-token-out var(--ae-duration-token) ease-out; }
+.ae-focus-status.is-bumped { animation: ae-bump var(--ae-duration-value) ease-out; }
+/* Carta che prende il posto di una risolta: entra con una breve animazione */
+.ae-focus-slide.is-entering > * { animation: ae-focus-in var(--ae-duration-focus) var(--ae-ease-decelerate); }
+@keyframes ae-token-out { 0% { opacity: 1; transform: scale(1.25); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes ae-focus-in { from { opacity: .4; transform: translateX(var(--ae-slide, 0px)); } to { opacity: 1; transform: none; } }
+
+/* Carta pescata: retro (dorso, CARD_BACK in script.js) e fronte, che si gira in 350ms */
+.ae-flip { position: absolute; inset: 0; perspective: 1200px; }
+.ae-flip-inner { position: absolute; inset: 0; transform-style: preserve-3d; }
+.ae-flip.is-flipped .ae-flip-inner { transform: rotateY(180deg); transition: transform var(--ae-duration-draw) var(--ae-ease-decelerate); }
+/* angoli arrotondati come la carta: il retro dell'immagine ha gli angoli neri, così vengono tagliati */
+.ae-flip-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 5% / 3.58%; overflow: hidden; }
+.ae-flip-face--front { transform: rotateY(180deg); }
+.ae-flip-face--back img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* "Caricamento carta…" e "Riprova immagine" stanno dentro la carta, in basso: non tolgono spazio alla carta */
+.ae-flip-loading {
+  position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); z-index: 2; max-width: 90%;
+  padding: 4px 10px; border-radius: var(--ae-radius-sm); background: rgba(16, 17, 22, .85); color: var(--ae-text); text-align: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Niente rotazione: dissolvenza breve dal retro al fronte */
+  .ae-flip-inner, .ae-flip.is-flipped .ae-flip-inner { transform: none; transition: none; }
+  .ae-flip-face--front { transform: none; opacity: 0; }
+  .ae-flip-face--back { opacity: 1; }
+  .ae-flip.is-flipped .ae-flip-face--front { opacity: 1; transition: opacity var(--ae-duration-draw) linear; }
+  .ae-flip.is-flipped .ae-flip-face--back { opacity: 0; transition: opacity var(--ae-duration-draw) linear; }
+}
+
+/* Scritta "Tier N" alla prima carta del Tier 2 e 3: app oscurata del 60%, 1s ferma poi 0,5s di dissolvenza */
+.ae-tier-banner {
+  position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
+  background: radial-gradient(ellipse at center, rgba(60, 40, 10, .55) 0%, rgba(0, 0, 0, .82) 70%); animation: ae-tier-banner 2.2s linear forwards;
+}
+.ae-tier-banner-text {
+  font: 600 48px/1.2 var(--ae-font-display); color: var(--ae-gold); letter-spacing: .06em;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, .8);
+}
+@keyframes ae-tier-banner { 0% { opacity: 0; } 8%, 75% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Dock in risoluzione: una CTA principale, eventuale microtesto sopra */
+.ae-dock .ae-button { white-space: normal; }
+#resolve-btn { min-height: 52px; }
+
+/* --- Pagina iniziale --- */
+.start-screen {
+  position: fixed; inset: 0; z-index: 40; overflow-y: auto; background: var(--ae-bg);
+  padding: max(24px, calc(var(--ae-safe-top) + 16px)) 0 calc(24px + var(--ae-safe-bottom));
+}
+.start-box { width: min(100% - 32px, 480px); margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.start-title { margin-top: 8px; text-align: center; font: 600 28px/34px var(--ae-font-display); }
+.start-subtitle { display: block; margin-top: 6px; font: 600 16px/22px var(--ae-font-display); letter-spacing: .14em; color: var(--ae-text-muted); }
+.start-group { display: flex; flex-direction: column; }
+.start-label { margin-bottom: 10px; font: 600 14px/20px var(--ae-font-ui); color: var(--ae-text-muted); letter-spacing: .08em; text-transform: uppercase; }
+.choices { display: flex; gap: 8px; }
+.choices button {
+  flex: 1 1 0; min-width: 0; height: 52px;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised);
+  font: 600 16px/20px var(--ae-font-ui); font-variant-numeric: tabular-nums;
+}
+.choices button[aria-pressed='true'], .nemesis-option[aria-pressed='true'] { background: var(--ae-text); color: var(--ae-on-primary); border-color: var(--ae-text); }
+.ae-select {
+  width: 100%; height: 48px; margin-bottom: 12px; padding: 0 12px;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised);
+  font: 500 16px/20px var(--ae-font-ui);
+}
+.nemesis-list { display: grid; grid-template-columns: 1fr; gap: 8px; }
+@media (min-width: 420px) { .nemesis-list { grid-template-columns: 1fr 1fr; } }
+.nemesis-option {
+  /* Altezza uguale per tutte */
+  min-height: 72px; padding: 12px 14px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised); text-align: left;
+}
+/* Pulsante con illustrazione: un ritaglio dell'illustrazione della nemesi (Assets/nemesis/<slug>-portrait.webp) occupa
+   la parte destra del pulsante, con una sfumatura a sinistra */
+.nemesis-option.has-art { position: relative; overflow: hidden; padding-right: 140px; }
+.nemesis-art {
+  /* Ritaglio dell'illustrazione (480 x 212): larghezza fissa, uguale in tutti i pulsanti */
+  position: absolute; top: 0; right: 0; bottom: 0; width: 176px; pointer-events: none;
+  background: center / cover no-repeat;
+  /* sfumatura: da trasparente a pieno nella prima metà */ -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 50%); mask-image: linear-gradient(to right, transparent 0%, #000 50%);
+}
+.nemesis-option.has-art .nemesis-name, .nemesis-option.has-art .nemesis-tags { position: relative; z-index: 1; }
+/* Mini espansione: etichetta piccola in basso a destra, sopra l'illustrazione */
+.nemesis-option { position: relative; }
+.nemesis-expansion {
+  position: absolute; right: 6px; bottom: 6px; z-index: 2; max-width: calc(100% - 12px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  /* discreta, solo grigi: fondo scuro semitrasparente, testo attenuato e bordo grigio sottile */
+  padding: 1px 5px; border-radius: 4px; background: rgba(16, 17, 22, .72); color: var(--ae-text-muted); border: 1px solid var(--ae-border);
+  font: 700 9px/12px var(--ae-font-ui); letter-spacing: .05em; text-transform: uppercase; pointer-events: none;
+}
+/* Nemesi scelta: freccia verso il basso al centro del pulsante, apre la carta subito sotto (su tutta la larghezza
+   della lista); in cima alla carta la freccia verso l'alto la richiude */
+.nemesis-item { position: relative; display: flex; flex-direction: column; }
+.nemesis-toggle {
+  display: grid; place-items: center; width: 44px; height: 26px; padding: 0;
+  border: 1px solid var(--ae-border); border-radius: 13px; background: var(--ae-surface-raised); color: var(--ae-text);
+}
+.nemesis-toggle svg { display: block; }
+.nemesis-expand { position: absolute; left: 50%; bottom: -13px; transform: translateX(-50%); z-index: 3; }
+.nemesis-item.is-selected:has(.nemesis-expand:not([hidden])) { margin-bottom: 8px; }
+.nemesis-collapse svg { transform: rotate(180deg); }
+.nemesis-preview { grid-column: 1 / -1; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; animation: ae-fade var(--ae-duration-phase) var(--ae-ease-standard); }
+.nemesis-preview[hidden] { display: none; }
+/* Carta nemesi aperta: fronte e retro; trascinando in orizzontale la carta ruota seguendo il dito, i due puntini dicono quale lato si vede */
+.nemesis-flip { position: relative; perspective: 1400px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.nemesis-flip-inner { position: relative; transform-style: preserve-3d; transition: transform var(--ae-duration-draw) var(--ae-ease-decelerate); }
+/* la rotazione la imposta script.js (segue il dito) */
+.nemesis-face { display: block; width: auto; height: auto; max-width: 100%; max-height: 70vh; border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden; -webkit-user-drag: none; }
+.nemesis-face--back { position: absolute; inset: 0; width: 100%; height: 100%; max-height: none; transform: rotateY(180deg); }
+.nemesis-flip-dots { display: flex; gap: 6px; }
+.nemesis-flip-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--ae-border); }
+.nemesis-flip-dots span.is-on { background: var(--ae-text); }
+.nemesis-flip-dots[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .nemesis-flip-inner { transition: none; } }
+.nemesis-name { font: 600 15px/20px var(--ae-font-ui); }
+.nemesis-tags { display: flex; flex-wrap: wrap; gap: 4px 8px; font: 700 12px/16px var(--ae-font-ui); letter-spacing: .04em; text-transform: uppercase; opacity: .8; }
+.nemesis-option[aria-pressed='true'] .nemesis-tags { opacity: .85; }
+.nemesis-skeleton { min-height: 60px; border-radius: var(--ae-radius-md); background: var(--ae-surface-raised); opacity: .6; }
+.start-note { margin-top: 4px; color: var(--ae-text-muted); font: 500 14px/20px var(--ae-font-ui); }
+/* Nemesi non disponibili: box con solo il nome attenuato e un piccolo punto esclamativo rosso accanto (Assets/ui/icons/alert.webp) */
+.nemesis-unavailable { margin: 8px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr; gap: 6px; }
+.nemesis-locked {
+  position: relative; min-height: 40px; padding: 4px 14px; display: flex; align-items: center; justify-content: flex-start; text-align: left;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface); overflow: hidden;
+  color: var(--ae-text-quiet); font: 600 14px/18px var(--ae-font-ui); cursor: not-allowed; user-select: none;
+}
+.nemesis-locked { gap: 8px; }
+.nemesis-locked::before {
+  content: ''; flex: 0 0 auto; width: 6px; height: 16px; background: var(--ae-danger);
+  -webkit-mask: url('Assets/ui/icons/alert.webp') center / contain no-repeat; mask: url('Assets/ui/icons/alert.webp') center / contain no-repeat;
+}
+.start-error { display: flex; flex-direction: column; gap: 12px; color: var(--ae-danger); font: 500 14px/20px var(--ae-font-ui); white-space: pre-line; overflow-wrap: anywhere; }
+.start-actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.start-resume-alt { order: 2; }
+/* Finestra "Partita in corso" sotto il titolo (c'è una partita salvata): nemesi e giocatori, con a destra
+   l'illustrazione della nemesi se c'è; poi Riprendi partita / Nuova partita. Nel frattempo le scelte sono nascoste. */
+.start-box.is-choosing > .start-group, .start-box.is-choosing > .ae-switch-row, .start-box.is-choosing > .start-actions { display: none; }
+.start-choice {
+  display: flex; flex-direction: column; gap: 10px; padding: 16px;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-lg); background: var(--ae-surface);
+}
+.start-choice-head { position: relative; min-height: 72px; display: flex; flex-direction: column; justify-content: center; gap: 4px; margin-bottom: 4px; border-radius: var(--ae-radius-md); overflow: hidden; }
+.start-choice-head.has-art { padding-right: 140px; }
+.start-choice-head .nemesis-art { z-index: 0; }
+.start-choice-title, .start-choice-info { position: relative; z-index: 1; }
+.start-choice-title { color: var(--ae-text-muted); font: 600 14px/20px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; }
+.start-choice-info { font: 600 18px/24px var(--ae-font-ui); }
+
+/* Scarti: icona dello stato vuoto */
+.discard-empty-icon { width: 40px; height: 40px; color: var(--ae-text-muted); }
+.queue-side-icon { width: 40px; height: 40px; color: var(--ae-text-muted); }
+
+/* --- Breakpoint (REPORT §2.4) --- */
+@media (max-width: 359px) {
+  .ae-queue-item { width: 116px; flex-basis: 116px; }
+  .ae-queue-list { gap: 10px; }
+  .ae-queue-viewport { padding-inline: 12px; }
+  .ae-phase { font-size: 13px; }
+  .ae-dock-row { flex-wrap: wrap; }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .ae-header { min-height: 48px; }
+  .ae-compact-rail { flex-basis: 72px; height: 72px; }
+  .ae-compact-rail .ae-queue-item { width: 36px; flex-basis: 36px; }
+  .ae-compact-rail .ae-status-badge { display: none; }
+  .ae-focus { padding: 4px 0; }
+  .ae-dock { padding-top: 4px; gap: 4px; }
+  .ae-dock-row { min-height: 36px; }
+  .ae-dock .ae-button { min-height: 44px; }
+}
+
+/* Tablet e desktop: la partita resta la stessa del telefono (fascia piccola, carte grandi, pulsante), in una colonna al
+   centro larga quanto serve alla carta più un pezzo delle vicine (--ae-col, calcolata da sizeColumn in script.js);
+   lo sfondo riempie tutto lo schermo. La pagina iniziale ha la sua colonna (560px). La vecchia vista a due colonne
+   (coda a sinistra, carta a destra), mai aggiornata al design attuale, è stata tolta: tag v152-prima-layout-tablet-desktop */
+@media (min-width: 768px) {
+  .ae-shell { grid-template-columns: minmax(0, var(--ae-col, 560px)); justify-content: center; }
+  .start-title { font-size: 32px; line-height: 39px; }
+  .start-box { width: min(100% - 64px, 560px); }
+  .ae-toast { bottom: calc(140px + var(--ae-safe-bottom)); }
+}
+
+/* Pulsante Menu in alto a destra (tre linee) e pannello laterale: 70% della larghezza a destra, il resto oscurato */
+.ae-menu-button .ae-menu-lines, .ae-menu-button .ae-menu-lines::before, .ae-menu-button .ae-menu-lines::after {
+  display: block; width: 20px; height: 2px; border-radius: 1px; background: currentColor; content: ''; position: relative;
+}
+.ae-menu-button .ae-menu-lines::before { position: absolute; top: -6px; }
+.ae-menu-button .ae-menu-lines::after { position: absolute; top: 6px; }
+.ae-modal-backdrop.ae-modal-backdrop--side { display: flex; justify-content: flex-end; align-items: stretch; padding: 0; }
+.ae-modal.ae-side-menu {
+  width: 70vw; max-width: 420px; height: 100%; max-height: none; border-radius: 0; border-width: 0 0 0 1px;
+  padding: calc(12px + var(--ae-safe-top)) 16px calc(16px + var(--ae-safe-bottom)); gap: 16px;
+  animation: ae-side-in var(--ae-duration-dialog) var(--ae-ease-decelerate);
+}
+@keyframes ae-side-in { from { transform: translateX(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ae-modal.ae-side-menu { animation: none; } }
+.ae-side-stats { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; font: 500 15px/20px var(--ae-font-ui); }
+.ae-side-stats dt { color: var(--ae-text-muted); }
+.ae-side-stats dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.ae-side-exit { margin-top: auto; }
+/* Menu: scelta dello sfondo (menu a tendina con l'etichetta sopra) */
+.ae-side-field { display: flex; flex-direction: column; gap: 6px; }
+.ae-side-field-label { color: var(--ae-text-muted); font: 500 15px/20px var(--ae-font-ui); }
+.ae-side-field .ae-select { margin-bottom: 0; }
+
+
+/* Pulsante "Turno Nemesi" con l'illustrazione della nemesi scelta al posto del fondo avorio: velo scuro al 55% sopra
+   l'immagine e scritta avorio con un'ombra, così si legge su qualsiasi illustrazione */
+.ae-button.has-nemesis-art {
+  background: linear-gradient(rgba(16, 17, 22, .55), rgba(16, 17, 22, .55)), var(--ae-nemesis-art) center 30% / cover no-repeat, var(--ae-surface-raised);
+  color: var(--ae-text); border: 1px solid rgba(244, 241, 233, .55);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .9), 0 0 10px rgba(0, 0, 0, .6); letter-spacing: .04em;
+}
+.ae-button.has-nemesis-art:disabled { opacity: .55; }
+/* Pile di carte (testata): dorso del mazzo e ultima carta scartata, con un'ombra a scalini che fa da "pila" e il numero sopra */
+.ae-pile { position: relative; flex: 0 0 auto; height: 68px; aspect-ratio: 63 / 88; padding: 0; border: 0; background: none; color: inherit; }
+.ae-pile img {
+  display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 5% / 3.58%;
+  box-shadow: 2px 2px 0 -1px #2a2c34, 4px 4px 0 -1px #1b1d24, 0 2px 8px rgba(0, 0, 0, .7);
+}
+.ae-pile.is-empty { border: 1px dashed rgba(236, 232, 222, .35); border-radius: 5% / 3.58%; }
+.ae-pile-count {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 30px; height: 30px; padding: 0 6px;
+  display: grid; place-items: center; border-radius: 15px; background: rgba(16, 17, 22, .88); border: 1px solid rgba(223, 174, 89, .7);
+  color: var(--ae-text); font: 700 15px/1 var(--ae-font-ui); font-variant-numeric: tabular-nums;
+}
+.ae-pile--discard { cursor: pointer; }
+/* Fase di pesca: fascia con la linea dorata, pulsante "Pesca" dorato */
+.ae-resolve-layout.is-draw-phase .ae-compact-rail { border-bottom-color: rgba(223, 174, 89, .6); }
+.ae-button.is-draw { background: var(--ae-gold); color: #20160B; letter-spacing: .08em; text-transform: uppercase; }
+
+/* Potere da risolvere: dopo 1 secondo un token sfuma fino a sparire (0,9 s) */
+.ae-focus-status.is-auto-token .ae-token:last-child { animation: ae-token-leave .9s ease-in 1s forwards; }
+@keyframes ae-token-leave { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.6); } }
+
+/* Attacco appena pescato: lampeggia di rosso (dopo che si è girato) */
+.ae-focus-stage.is-attack-drawn { animation: ae-attack-pulse 1s ease-in-out infinite; }
+/* Carta da risolvere (non i poteri con più di un token): stesso lampeggio rosso */
+.ae-focus-stage.is-to-resolve { animation: ae-attack-pulse 1s ease-in-out infinite; }
+.ae-focus-slide.is-drawing .ae-focus-stage.is-attack-drawn { animation-delay: .4s; }
+@keyframes ae-attack-pulse {
+  0%, 100% { box-shadow: 0 0 6px 1px rgba(217, 40, 40, .35); }
+  50% { box-shadow: 0 0 calc(var(--cw, 300px) * .12) calc(var(--cw, 300px) * .03) rgba(230, 40, 40, .95); }
+}
+
+/* Carta pescata: la riga sopra è nascosta mentre carica; dopo la rotazione compaiono i token uno alla volta o la vita */
+.ae-focus-slide.is-draw-loading .ae-focus-status { visibility: hidden; }
+.ae-focus-slide.is-drawing .ae-focus-status.is-hp > * { animation: ae-pop .4s cubic-bezier(.2, 1.4, .4, 1) .4s both; }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token { animation: ae-pop .35s cubic-bezier(.2, 1.4, .4, 1) .4s both; }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(2) { animation-delay: .55s; }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(3) { animation-delay: .7s; }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(4) { animation-delay: .85s; }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(n+5) { animation-delay: 1s; }
+@keyframes ae-pop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
+
+/* Scritta "Tier N" più marcata */
+.ae-tier-banner-text {
+  font-size: 64px; letter-spacing: .12em; color: #f3cf86;
+  text-shadow: 0 0 18px rgba(223, 174, 89, .9), 0 0 42px rgba(223, 120, 40, .6), 0 3px 10px rgba(0, 0, 0, .9);
+  padding: 8px 28px; border-top: 2px solid rgba(223, 174, 89, .7); border-bottom: 2px solid rgba(223, 174, 89, .7);
+  animation: ae-tier-text 2.2s cubic-bezier(.2, .8, .2, 1) forwards;
+}
+@keyframes ae-tier-text { 0% { transform: scale(1.6); letter-spacing: .4em; } 25% { transform: scale(1); letter-spacing: .12em; } 100% { transform: scale(1.04); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ae-focus-stage.is-attack-drawn, .ae-focus-stage.is-to-resolve { animation: none; box-shadow: 0 0 16px 4px rgba(230, 40, 40, .85); }
+  .ae-focus-status.is-auto-token .ae-token:last-child { animation-duration: .01s; }
+  .ae-tier-banner-text { animation: none; }
+}
+/* Turno nemesi: riga che contiene la fascia piccola */
+.ae-rail-row { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--ae-border); }
+.ae-rail-row > .ae-compact-rail { flex: 1 1 auto; min-width: 0; border-bottom: 0; padding: 0 6px; }
+.ae-resolve-layout.is-draw-phase .ae-rail-row { border-bottom-color: rgba(223, 174, 89, .6); }
+/* --- Turno giocatori: modifiche del 8 nov --- */
+/* Nessun glow sulle carte (resta l'etichetta NUOVA) */
+.queue-view .ae-queue-item.is-new .ae-card-art { --ae-glow: 0 0 0 transparent; }
+/* Potere con costo pagato e salvato: carta grigia fino al turno nemesi */
+.queue-view .ae-queue-item.is-paid .ae-card-art { filter: grayscale(1) brightness(.6); }
+.queue-view .ae-queue-item.is-paid .ae-status-badge { filter: grayscale(1); }
+.queue-note.is-paid::before { display: none; }
+/* Box vita / token sopra la carta, grande come nel turno nemesi (24px, token 39px), senza scatola */
+.queue-slot { position: relative; }
+.queue-slot .ae-queue-item > .ae-status-badge {
+  height: 41px; min-width: 0; padding: 0; gap: 8px; border: 0; background: none; font: 700 24px/30px var(--ae-font-ui);
+}
+.queue-slot .ae-status-badge .ae-icon { width: 20px; height: 20px; }
+.queue-slot .ae-status-badge .ae-token { width: 39px; height: 39px; }
+.queue-slot .ae-new-tag { top: 47px; right: -2px; }
+/* Turno giocatori: più spazio tra le carte (+50%) */
+.queue-view .ae-queue-list { gap: 18px; }
+/* +1 oscurato e non cliccabile se non c'è vita tolta in questo turno */
+.ae-button.is-dimmed, .ae-button.is-dimmed:disabled { opacity: .35; cursor: not-allowed; }
+
+/* Carta pescata: token e vita compaiono dopo il banner Tier (--ae-tier-wait lo imposta script.js) */
+.ae-focus-slide.is-drawing .ae-focus-status.is-hp > * { animation-delay: calc(var(--ae-tier-wait, 0ms) + .4s); }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token { animation-delay: calc(var(--ae-tier-wait, 0ms) + .4s); }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(2) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .55s); }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(3) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .7s); }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(4) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .85s); }
+.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(n+5) { animation-delay: calc(var(--ae-tier-wait, 0ms) + 1s); }
+
+/* Carta da pescare: si tocca per pescare */
+.ae-focus-slide--draw .ae-focus-stage { cursor: pointer; }
+
+/* Turno giocatori: stessa posizione e dimensione della carta del turno nemesi. I comandi sono sotto la carta, fuori dal flusso */
+.queue-view .ae-queue-viewport { padding-top: 12px; padding-bottom: 12px; }
+.queue-slot { gap: 0; }
+.queue-slot > .ae-queue-item { gap: 8px; }
+.queue-slot > .queue-controls { position: absolute; left: 0; right: 0; top: 100%; margin-top: 8px; }
+
+/* Vita/token, carta e pulsanti alzati di 14px in entrambi i turni */
+.ae-focus-track, .queue-view .ae-queue-list { transform: translateY(-14px); }
+
+/* Nessuna linea di separazione tra fascia piccola e carte grandi, in entrambi i turni */
+.ae-compact-rail, .ae-rail-row, .ae-resolve-layout.is-draw-phase .ae-compact-rail, .ae-resolve-layout.is-draw-phase .ae-rail-row { border-bottom: 0; }
+
+/* Testata trasparente, uguale nei due turni: Undo a sinistra, nome della nemesi al centro, Menu a destra.
+   Sta sopra lo sfondo della vista (che è su tutta l'app), senza fondo né linea. */
+.ae-shell.clear-header > .ae-header { background: none; border-bottom: 0; }
+.ae-shell.clear-header .ae-phase {
+  font: 600 18px/24px var(--ae-font-display); color: var(--ae-gold); letter-spacing: .05em; text-transform: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 4px rgba(0, 0, 0, .9);
+}
+.ae-shell.clear-header .ae-header .ae-icon-button { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .9)); }
+
+/* Lo sfondo è su tutta l'app (.ae-shell, più in basso: "Sfondo unico"); le due viste sono trasparenti */
+.queue-view, .ae-resolve-layout, .ae-resolve-layout.is-draw-phase { background: none; }
+/* Pulsante principale senza il box del dock */
+.ae-dock { background: none; border-top: 0; }
+/* Fascia piccola: senza box, a tutta larghezza; stessa posizione nei due turni (16px ai lati) */
+.ae-rail-row { padding: 0 10px; }
+.ae-rail-row > .ae-compact-rail { padding: 0 6px; }
+/* Sotto il nome della nemesi: "Turno N" */
+.ae-shell.clear-header .ae-phase { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.ae-phase-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ae-phase-turn { font: 700 12px/16px var(--ae-font-ui); color: var(--ae-text-muted); letter-spacing: .1em; text-transform: uppercase; }
+/* Fascia piccola più in basso, con una linea sopra e una sotto (uguale nei due turni) */
+.queue-view .queue-rail, .ae-rail-row { margin-top: 10px; border-top: 1px solid var(--ae-border); border-bottom: 1px solid var(--ae-border); }
+.ae-rail-row > .ae-compact-rail { border: 0; }
+.ae-resolve-layout.is-draw-phase .ae-rail-row { border-color: rgba(223, 174, 89, .6); }
+.queue-view .queue-rail { flex-basis: 106px; height: 106px; }
+
+/* Turno giocatori: carte senza il bordo bianco */
+.queue-view .ae-queue-item .ae-card-art { border: 0; }
+/* Undo e Menu dello stesso colore di "Turno N" */
+.ae-shell.clear-header .ae-header .ae-icon-button { color: var(--ae-text-muted); }
+/* Linee sopra e sotto la fascia piccola: lunghe metà e centrate */
+.queue-view .queue-rail, .ae-rail-row {
+  border-top: 0; border-bottom: 0;
+  background: linear-gradient(var(--ae-border), var(--ae-border)) center top / 50% 1px no-repeat,
+    linear-gradient(var(--ae-border), var(--ae-border)) center bottom / 50% 1px no-repeat;
+}
+.ae-rail-row { padding: 1px 10px; }
+.ae-resolve-layout.is-draw-phase .ae-rail-row {
+  background: linear-gradient(rgba(223, 174, 89, .6), rgba(223, 174, 89, .6)) center top / 50% 1px no-repeat,
+    linear-gradient(rgba(223, 174, 89, .6), rgba(223, 174, 89, .6)) center bottom / 50% 1px no-repeat;
+}
+/* Inizia partita: la pagina iniziale esce a sinistra, il turno giocatori entra da destra */
+.start-screen.is-sliding-out { animation: ae-slide-out-left .38s ease-in-out forwards; }
+.ae-shell.is-sliding-in { animation: ae-slide-in-right .38s ease-in-out; }
+@keyframes ae-slide-out-left { from { transform: none; } to { transform: translateX(-100%); } }
+@keyframes ae-slide-in-right { from { transform: translateX(100%); } to { transform: none; } }
+
+/* Testata: mazzo nemesi e scarti uno accanto all'altro a sinistra (al posto di Undo, che è nel Menu), nome al centro, Menu
+   a destra. Griglia a tre colonne: il nome resta al centro della pagina */
+.ae-shell.clear-header > .ae-header { display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; }
+.ae-header-piles { justify-self: start; display: flex; align-items: center; gap: 6px; }
+.ae-header-piles .ae-pile { height: 44px; }
+.ae-header-piles .ae-pile-count { min-width: 22px; height: 22px; padding: 0 4px; border-radius: 11px; font-size: 12px; }
+.ae-shell.clear-header > .ae-header > .ae-menu-button { justify-self: end; }
+/* La pila degli scarti riceve una carta: piccolo rimbalzo con un lampo dorato */
+.ae-pile--discard.is-bump { animation: ae-pile-bump .42s cubic-bezier(.2, 1.4, .4, 1); }
+.ae-pile--discard.is-bump img { animation: ae-pile-flash .6s ease-out; }
+@keyframes ae-pile-bump { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+@keyframes ae-pile-flash { 0% { box-shadow: 0 0 0 0 rgba(255, 196, 60, 0); } 30% { box-shadow: 0 0 16px 5px rgba(255, 196, 60, .9); } 100% { box-shadow: 2px 2px 0 -1px #2a2c34, 4px 4px 0 -1px #1b1d24, 0 2px 8px rgba(0, 0, 0, .7); } }
+/* Copia della carta che vola verso gli scarti (animata da script.js con Web Animations) */
+.ae-fly-ghost {
+  position: fixed; z-index: 70; margin: 0; pointer-events: none; border-radius: 5% / 3.58%; overflow: visible;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, .65), 0 0 18px 2px rgba(223, 174, 89, .45); will-change: transform, opacity;
+}
+.ae-fly-ghost .ae-new-tag, .ae-fly-ghost .queue-hp-tag { display: none; }
+
+/* Pulsante principale "Salva modifiche": dorato */
+.ae-button.is-save { background: var(--ae-gold); color: #20160B; border-color: var(--ae-gold); text-shadow: none; letter-spacing: .04em; }
+
+/* Passo Pesca e carta pescata: un po' più grandi (fronte e retro); crescono verso il basso, nello spazio libero */
+.ae-focus-slide.is-big .ae-focus-stage { scale: 1.08; transform-origin: 50% 0; }
+
+/* Fascia del turno nemesi: il token del potere da risolvere sfuma insieme a quello della carta grande */
+.ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child { animation: ae-token-leave .9s ease-in var(--ae-token-delay, 1s) forwards; }
+/* Scritta Tier 2/3 più veloce del 20% (1,76 s invece di 2,2 s) */
+.ae-tier-banner { animation-duration: 1.76s; }
+.ae-tier-banner-text { animation-duration: 1.76s; }
+/* Potere da risolvere: il token non sparisce, diventa grigio (carta grande e fascia) */
+@keyframes ae-token-gray { from { filter: none; opacity: 1; } to { filter: grayscale(1) brightness(.6); opacity: .55; } }
+.ae-focus-status.is-auto-token .ae-token:last-child { animation: ae-token-gray .9s ease-in 1s forwards; }
+.ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child { animation: ae-token-gray .9s ease-in var(--ae-token-delay, 1s) forwards; }
+/* Niente barra rossa sulla carta da risolvere nella fascia */
+.ae-compact-rail .ae-queue-item .ae-card-art::after { display: none; }
+/* Carta coperta che vola dal mazzo al centro */
+.ae-draw-ghost img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 5% / 3.58%; }
+/* Pulsante "Annulla ultima azione" sospeso: un tocco fuori lo chiude */
+.ae-undo-float {
+  position: fixed; inset: 0; z-index: 85; display: flex; align-items: flex-end; justify-content: center;
+  padding: 0 16px calc(96px + var(--ae-safe-bottom)); background: rgba(0, 0, 0, .3); animation: ae-fade .2s ease-out;
+}
+.ae-undo-float-button { min-width: 260px; box-shadow: 0 6px 24px rgba(0, 0, 0, .7); }
+
+/* Potere da risolvere: il token da togliere lampeggia subito con un bagliore dorato (due impulsi), poi diventa grigio
+   in fretta. Nessuna attesa iniziale; uguale nella carta grande e nella fascia */
+@keyframes ae-token-spend {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 200, 80, 0)); opacity: 1; }
+  15% { transform: scale(1.3); filter: drop-shadow(0 0 8px rgba(255, 200, 80, 1)) brightness(1.4); }
+  30% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 200, 80, .4)); }
+  45% { transform: scale(1.3); filter: drop-shadow(0 0 8px rgba(255, 200, 80, 1)) brightness(1.4); }
+  62% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 200, 80, .4)); opacity: 1; }
+  100% { transform: scale(1); filter: grayscale(1) brightness(.6); opacity: .55; }
+}
+.ae-focus-status.is-auto-token .ae-token:last-child { animation: ae-token-spend 1.1s ease-in-out var(--ae-token-delay, 0s) both; }
+.ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child { animation: ae-token-spend 1.1s ease-in-out var(--ae-token-delay, 0s) both; }
+.ae-compact-rail .ae-status-badge.is-auto-token { overflow: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .ae-focus-status.is-auto-token .ae-token:last-child, .ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child { animation-duration: .01s; }
+}
+
+/* Mazzo in alto: si tocca; sotto compare "Pesca carta" */
+.ae-header-piles .ae-pile--deck { cursor: pointer; }
+.ae-deck-popover { position: fixed; inset: 0; z-index: 85; }
+.ae-deck-popover-button {
+  position: absolute; min-width: 0; min-height: 44px; padding: 0 18px; box-shadow: 0 6px 20px rgba(0, 0, 0, .7);
+  animation: ae-pop .2s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+
+/* Dal turno nemesi al turno giocatori: niente dissolvenza della vista intera (vedi toPlayersTurn in script.js) */
+.queue-view.is-from-nemesis { animation: none; }
+.ae-shell > .ae-main { position: relative; z-index: 1; }
+
+/* --- Sfondo unico: la maga a sinistra, la nemesi a destra ---
+   Immagine scelta nel Menu (--ae-battle-bg, impostata da script.js; BACKGROUNDS), predefinita battle-bg.webp.
+   Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro.
+   Velo scuro al 50%. Stato precedente (due sfondi): tag git v123-prima-sfondo-unico */
+.ae-shell, .ae-shell.is-nemesis-turn, .ae-shell.is-nemesis-turn.is-draw-phase {
+  background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
+  transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
+}
+.ae-shell.is-nemesis-turn, .ae-shell.is-nemesis-turn.is-draw-phase { background-position: 0 0, 100% center, 0 0; }
+@media (prefers-reduced-motion: reduce) { .ae-shell { transition: none; } }
+
+/* Fascia piccola: NUOVA sulla carta da pescare (dorso) in alto a destra, dentro la carta */
+.ae-compact-rail .ae-next-card .ae-new-tag { top: 3px; right: 3px; }
+/* Carte grandi più grandi: meno spazio in alto e in basso (testata 48px, fascia più vicina, meno margini) */
+.ae-shell.clear-header > .ae-header { min-height: calc(48px + var(--ae-safe-top)); }
+.queue-view .queue-rail, .ae-rail-row { margin-top: 4px; }
+.ae-dock { padding-top: 4px; }
+.ae-focus { padding-top: 6px; padding-bottom: 6px; }
+.queue-view .ae-queue-viewport { padding-top: 6px; padding-bottom: 6px; }
+/* Carta da pescare e carta pescata: scala calcolata da sizeFocus (fino a 1,15) */
+.ae-focus-slide.is-big .ae-focus-stage { scale: var(--ae-big-scale, 1.08); }
+
+/* Retro della faccia anteriore della carta che si gira: se l'immagine non fosse ancora disegnata si vede il dorso, non lo sfondo */
+.ae-flip-face--front { background: url('Assets/ui/decor/card-back-logo.webp') center / cover no-repeat; }
+
+/* Turno giocatori: il blocco vita/token + carta + comandi (questi fuori dal flusso, 52px sotto la carta) è centrato tra
+   la fascia in alto e il pulsante principale (prima era -14px come nel turno nemesi, e restava 10px in basso) */
+.queue-view .ae-queue-list { transform: translateY(-24px); }
+
+/* Turno giocatori: barra di scorrimento delle carte grandi nascosta (come nel turno nemesi); si scorre col dito */
+.ae-queue-viewport { scrollbar-width: none; }
+.ae-queue-viewport::-webkit-scrollbar { display: none; }
+
+/* Testata: stesso spazio dal bordo in alto che c'è tra il pulsante principale e il bordo in basso (12px) */
+.ae-shell.clear-header > .ae-header { padding-top: calc(var(--ae-safe-top) + 10px); min-height: calc(58px + var(--ae-safe-top)); }
+/* Fascia piccola: il box della vita con due numeri lunghi (13/17) può essere più largo della carta, senza tagli */
+.ae-compact-rail .ae-queue-item > .ae-status-badge { max-width: none; overflow: visible; }
+.ae-compact-rail .ae-status-badge.is-long { gap: 1px; padding: 1px 3px; font-size: 10px; letter-spacing: -.02em; }
+.ae-compact-rail .ae-status-badge.is-long .ae-icon { width: 10px; height: 10px; }
+
+/* Schermata Vittoria: stesso fondo e stessa scritta del banner dei Tier (che qui resta ferma), sotto i pulsanti */
+.ae-modal-backdrop.ae-victory-backdrop {
+  background: radial-gradient(ellipse at center, rgba(60, 40, 10, .55) 0%, rgba(0, 0, 0, .82) 70%);
+  animation: ae-fade .3s linear;
+}
+.ae-victory-screen { width: min(340px, 100%); display: flex; flex-direction: column; align-items: center; gap: 48px; }
+.ae-victory-actions { width: 100%; display: flex; flex-direction: column; gap: 10px; animation: ae-fade .4s ease-out 1s both; }
+@media (prefers-reduced-motion: reduce) { .ae-victory-actions { animation: none; } }
+/* Statistiche */
+.ae-stats-subtitle { margin-top: 4px; color: var(--ae-gold); font: 600 15px/20px var(--ae-font-display); }
+.ae-stats-empty { color: var(--ae-text-muted); font: 500 14px/20px var(--ae-font-ui); }
+
+/* Icona dei giocatori (2, 3, 4 figure) a sinistra di "Turno N", dello stesso colore del testo */
+.ae-phase-turn { display: inline-flex; align-items: center; gap: 6px; }
+.ae-players-icon {
+  display: inline-block; height: 14px; aspect-ratio: 132 / 70; background-color: currentColor;
+  -webkit-mask: var(--ae-players-icon) center / contain no-repeat; mask: var(--ae-players-icon) center / contain no-repeat;
+}
+
+/* --- La mia collezione: schermata a parte con le wave e le loro mini espansioni --- */
+.start-collection { gap: 6px; }
+.collection-screen {
+  position: fixed; inset: 0; z-index: 45; display: flex; flex-direction: column; background: var(--ae-bg);
+  padding: calc(var(--ae-safe-top) + 8px) 0 calc(var(--ae-safe-bottom) + 12px); animation: ae-fade .2s ease-out;
+}
+.collection-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 12px 0 16px; min-height: 52px; }
+.collection-title { font: 600 20px/26px var(--ae-font-display); color: var(--ae-gold); }
+.collection-body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.collection-wave { display: flex; flex-direction: column; gap: 2px; padding: 6px 12px; border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface); }
+.collection-item { min-height: 44px; }
+.collection-item.is-wave > span:first-child { font: 600 15px/20px var(--ae-font-ui); }
+.collection-item.is-mini { padding-left: 18px; color: var(--ae-text-muted); font-size: 14px; }
+.collection-item.is-disabled { opacity: .4; }
+.collection-footer { padding: 8px 16px 0; }
+@media (min-width: 900px) { .collection-body, .collection-head, .collection-footer { width: min(100%, 560px); margin-inline: auto; } }
+
+/* --- Creazione del mazzo nemesi: 9 mazzi (Tier × Base / Potenziate / Specifiche) prima del turno giocatori --- */
+.ae-main.is-deck-building > .queue-view { visibility: hidden; }
+.deck-build {
+  position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 8px 12px;
+}
+.deck-build-title { font: 600 20px/26px var(--ae-font-display); color: var(--ae-gold); letter-spacing: .06em; text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
+.deck-build-grid { display: grid; grid-template-columns: 28px repeat(3, auto); align-items: center; justify-items: center; gap: 12px 18px; }
+.deck-build-head { font: 600 14px/18px var(--ae-font-display); color: var(--ae-text); text-align: center; text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+.deck-build-tier { font: 600 18px/1 var(--ae-font-display); color: var(--ae-text-muted); }
+.deck-build-pile { position: relative; height: min(17vh, 128px); aspect-ratio: 63 / 88; }
+.deck-build-pile img {
+  display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 5% / 3.58%;
+  box-shadow: 2px 2px 0 -1px #2a2c34, 4px 4px 0 -1px #1b1d24, 6px 6px 0 -1px #14151b, 0 4px 12px rgba(0, 0, 0, .7);
+}
+.deck-build-pile .ae-pile-count { min-width: 30px; height: 30px; font-size: 14px; }
+.deck-build-pile.is-empty img { opacity: .25; box-shadow: none; }
+.ae-deck-card { box-shadow: 0 8px 18px rgba(0, 0, 0, .6); }
+/* Il mazzo in alto riceve una carta: piccolo rimbalzo */
+.ae-pile--deck.is-bump { animation: ae-pile-bump .3s cubic-bezier(.2, 1.4, .4, 1); }
+
+/* Creazione del mazzo: mazzi più piccoli, etichette "Tier N", numero sotto il dorso, Specifiche a ventaglio */
+.deck-build-grid { grid-template-columns: auto repeat(3, auto); gap: 18px 14px; }
+.deck-build-tier { font-size: 14px; white-space: nowrap; }
+.deck-build-pile { height: min(13vh, 100px); }
+.deck-build-pile .ae-pile-count { top: 86%; min-width: 26px; height: 26px; font-size: 13px; z-index: 3; }
+.deck-build-pile.is-fan { width: calc(min(13vh, 100px) * 63 / 88 + 40px); aspect-ratio: auto; cursor: pointer; }
+.deck-build-fan-card {
+  position: absolute; left: 50%; top: 0; height: 100%; aspect-ratio: 63 / 88; transform-origin: 50% 100%;
+  transform: translateX(calc(-50% + var(--fan) * 16px)) rotate(calc(var(--fan) * 9deg));
+  border-radius: 5% / 3.58%; overflow: hidden; box-shadow: 0 3px 10px rgba(0, 0, 0, .7);
+}
+.deck-build-fan-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.deck-build-fan-card.is-gone { visibility: hidden; }
+.deck-build-pile.is-fan.is-empty img { opacity: 1; }
+/* Specifiche in grande: si scorrono a destra e sinistra */
+.ae-spec-viewer { width: min(92vw, 420px); }
+.ae-spec-track { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.ae-spec-track::-webkit-scrollbar { display: none; }
+.ae-spec-slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ae-spec-slide .ae-card-art { width: min(100%, calc(62vh * 63 / 88)); border: 0; }
+.ae-spec-caption { color: var(--ae-text-muted); font: 600 13px/18px var(--ae-font-ui); letter-spacing: .06em; text-transform: uppercase; }
+.deck-build-fan-card { transform: translateX(calc(-50% + var(--fan) * 12px)) rotate(calc(var(--fan) * 8deg)); }
+.deck-build-pile.is-fan { width: calc(min(13vh, 100px) * 63 / 88 + 30px); }
+
+/* Creazione del mazzo: le Specifiche non mostrano il numero (sono sempre tutte); si girano con "Crea mazzo" */
+.deck-build-pile.is-fan .ae-pile-count { display: none; }
+.deck-build-fan-card { overflow: visible; perspective: 600px; box-shadow: none; }
+.deck-build-fan-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.3, 0, .2, 1); }
+.deck-build-fan-inner > img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 5% / 3.58%;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 3px 10px rgba(0, 0, 0, .7);
+}
+.deck-build-fan-back { transform: rotateY(180deg); }
+.deck-build.is-flipping .deck-build-fan-inner { transform: rotateY(180deg); }
+.deck-build.is-flipping .deck-build-pile.is-fan:nth-child(n) .deck-build-fan-card:nth-child(2) .deck-build-fan-inner { transition-delay: .06s; }
+.deck-build.is-flipping .deck-build-pile.is-fan .deck-build-fan-card:nth-child(3) .deck-build-fan-inner { transition-delay: .12s; }
+@media (prefers-reduced-motion: reduce) { .deck-build-fan-inner { transition: none; } }
+
+/* Bordo dei dorsi (mazzi in alto e nella creazione del mazzo): più chiaro e un po' più evidente */
+.ae-pile img, .deck-build-pile > img, .deck-build-fan-inner > img {
+  box-shadow: 0 0 0 1px rgba(236, 232, 222, .45), 2px 2px 0 -1px #555865, 4px 4px 0 -1px #3d404a, 0 2px 8px rgba(0, 0, 0, .7);
+}
+.deck-build-fan-inner > img { box-shadow: 0 0 0 1px rgba(236, 232, 222, .45), 0 3px 10px rgba(0, 0, 0, .7); }
+.ae-fly-ghost.ae-deck-card img { box-shadow: 0 0 0 1px rgba(236, 232, 222, .45); }
+.deck-build-fan-card { width: calc(min(13vh, 100px) * 63 / 88); }
+
+/* Riga sotto il nome della nemesi: fiamma con il numero della battaglia | giocatori | Turno N */
+.ae-phase-turn { gap: 8px; }
+.ae-info-sep { color: var(--ae-text-muted); opacity: .6; font-weight: 400; }
+.ae-battle-flame {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; padding-top: 4px;
+  background: url('Assets/ui/icons/flame.png') center / contain no-repeat;
+  color: #3a1405; font: 800 10px/1 var(--ae-font-ui); letter-spacing: 0; text-shadow: 0 0 2px rgba(255, 240, 180, .8);
+}
+
+/* Creazione del mazzo: quando le Specifiche si girano si raccolgono in un mazzo dritto, come gli altri */
+.deck-build-fan-card { transition: transform .35s cubic-bezier(.3, 0, .2, 1); }
+.deck-build.is-flipping .deck-build-fan-card { transform: translateX(-50%); }
+.deck-build.is-flipping .deck-build-fan-card:nth-child(1) { transform: translate(-50%, 0); }
+.deck-build.is-flipping .deck-build-fan-card:nth-child(2) { transform: translate(calc(-50% + 2px), -2px); }
+.deck-build.is-flipping .deck-build-fan-card:nth-child(3) { transform: translate(calc(-50% + 4px), -4px); }
+
+/* Carta da pescare e carta pescata più grandi: si ingrandisce tutto il blocco (vita/token + carta), dal punto
+   calcolato da sizeFocus (--ae-big-origin), così dorso e fronte hanno la stessa misura */
+.ae-focus-slide.is-big .ae-focus-stage { scale: none; }
+.ae-focus-slide.is-big { scale: var(--ae-big-scale, 1.08); transform-origin: 50% var(--ae-big-origin, 50%); }
+
+/* Banner con testo lungo ("Partita iniziata"): stessa animazione dei Tier, carattere più piccolo per stare nello schermo */
+.ae-tier-banner-text.is-long { max-width: calc(100vw - 24px); font-size: min(64px, 11vw); line-height: 1.15; text-align: center; }
+
+/* --- 9 nov --- */
+/* Riga vita/token sopra le carte grandi al 90% (era 41px, 24px di testo, icona 20px, token 39px); lo spazio va alla carta
+   (script.js STATUS_H) */
+.ae-focus-status { min-height: 37px; gap: 7px; font-size: 21.6px; line-height: 27px; }
+.ae-focus-status .ae-icon { width: 18px; height: 18px; }
+.ae-focus-status .ae-token { width: 35px; height: 35px; }
+.queue-slot .ae-queue-item > .ae-status-badge { height: 37px; gap: 7px; font-size: 21.6px; line-height: 27px; }
+.queue-slot .ae-status-badge .ae-icon { width: 18px; height: 18px; }
+.queue-slot .ae-status-badge .ae-token { width: 35px; height: 35px; }
+.queue-slot .ae-new-tag { top: 43px; }
+
+/* Carta da pescare e carta pescata: cresce solo la carta (larghezza --ae-big-w da sizeFocus), la riga vita/token resta
+   come nelle altre carte. Il blocco è centrato in verticale (annulla lo spostamento in su di 14px del carosello) */
+.ae-focus-slide.is-big { scale: none; translate: 0 14px; flex-basis: var(--ae-big-w, var(--ae-focus-w, 280px)); --cw: var(--ae-big-w, 300px); }
+.ae-focus-slide.is-big .ae-focus-stage {
+  scale: none; width: var(--ae-big-w, var(--ae-focus-w, 280px)); height: calc(var(--ae-big-w, var(--ae-focus-w, 280px)) * 88 / 63);
+}
+
+/* Fascia piccola: "HP: −x" del minion in modifica, al centro della carta */
+.ae-compact-rail .ae-queue-item .ae-card-art { position: relative; }
+.ae-compact-rail .rail-hp-tag {
+  top: 50%; left: 50%; right: auto; transform: translate(-50%, -50%); z-index: 4; padding: 1px 4px; border-radius: 5px;
+  font-size: 11px; line-height: 14px; white-space: nowrap;
+}
+
+/* Turno giocatori con modifiche: "Annulla modifiche" e "Salva modifiche" sulla stessa riga */
+.ae-main-row { display: flex; gap: 8px; }
+.ae-main-row[hidden] { display: none; }
+/* Testo sempre su una riga: così i due pulsanti restano alti come il pulsante principale anche sui telefoni stretti
+   (prima, sotto i ~375px, "Salva modifiche" andava a capo e la riga diventava più alta) */
+.ae-main-row > .ae-button { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; padding-left: 12px; padding-right: 12px; }
+.ae-main-row > .ae-cancel-drafts { flex: 0 0 auto; }
+@media (max-width: 345px) { .ae-main-row > .ae-button { font-size: 14px; padding-left: 8px; padding-right: 8px; } }
+
+/* Creazione del mazzo: animazioni più veloci del 25% */
+.deck-build-fan-inner { transition-duration: .34s; }
+.deck-build-fan-card { transition-duration: .26s; }
+.deck-build.is-flipping .deck-build-pile.is-fan:nth-child(n) .deck-build-fan-card:nth-child(2) .deck-build-fan-inner { transition-delay: .045s; }
+.deck-build.is-flipping .deck-build-pile.is-fan .deck-build-fan-card:nth-child(3) .deck-build-fan-inner { transition-delay: .09s; }
+.ae-pile--deck.is-bump { animation-duration: .225s; }
+
+/* Creazione del mazzo: altezza dei mazzi in una variabile (--ae-pile-h), più grandi su tablet e desktop */
+.deck-build { --ae-pile-h: min(13vh, 100px); }
+.deck-build-pile { height: var(--ae-pile-h); }
+.deck-build-pile.is-fan { width: calc(var(--ae-pile-h) * 63 / 88 + 30px); }
+.deck-build-fan-card { width: calc(var(--ae-pile-h) * 63 / 88); }
+@media (min-width: 768px) {
+  .deck-build { --ae-pile-h: min(16vh, 150px); gap: 20px; }
+  .deck-build-grid { gap: 24px 22px; }
+  .deck-build-title { font-size: 24px; line-height: 30px; }
+  .deck-build-head, .deck-build-tier { font-size: 16px; }
+}
+
+/* --- Telefono (v155) --- */
+/* Mazzo e scarti in testata: il disegno resta 32×44, l'area che si tocca è 44×44 (6px invisibili per lato); più spazio
+   tra i due così le aree non si sovrappongono */
+.ae-header-piles { gap: 12px; margin-left: 6px; }
+.ae-header-piles .ae-pile::before { content: ''; position: absolute; inset: 0 -6px; }
+/* Comandi vita del minion più distanti (−5 ha il contorno rosso, da script.js) */
+.queue-controls { gap: 10px; }
+/* Freccia della carta nemesi: il disegno resta 44×26, l'area che si tocca è alta 44px */
+.nemesis-toggle { position: relative; }
+.nemesis-toggle::before { content: ''; position: absolute; inset: -9px 0; }
+/* Pagina iniziale: "Inizia partita" resta sempre visibile in fondo, sopra una sfumatura dello sfondo */
+.start-actions {
+  position: sticky; bottom: 0; z-index: 4; margin-bottom: 0; padding-top: 20px;
+  background: linear-gradient(to bottom, transparent, var(--ae-bg) 20px);
+}
+.start-screen { padding-bottom: var(--ae-safe-bottom); }
+.start-actions { padding-bottom: 16px; }
+/* Menu laterale: si trascina verso destra per chiuderlo (script.js, swipeToClose) */
+.ae-modal.ae-side-menu { touch-action: pan-y; }
+/* Telefono in orizzontale: le carte non ci stanno, si chiede di girarlo */
+.ae-rotate { display: none; }
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .ae-rotate {
+    position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; padding: 24px; background: var(--ae-bg); color: var(--ae-gold); text-align: center;
+    font: 600 20px/26px var(--ae-font-display); letter-spacing: .04em;
+  }
+  .ae-rotate::before {
+    content: ''; width: 40px; height: 64px; border: 3px solid var(--ae-text-muted); border-radius: 8px;
+    animation: ae-rotate-hint 1.6s ease-in-out infinite;
+  }
+}
+/* --- v156 --- */
+/* Scritte Tier / Partita iniziata: ferme e invisibili finché non sono pronte (showBanner); poi l'animazione muove solo
+   trasformazione e opacità (niente letter-spacing animato, che ridisegnava il testo con le ombre a ogni fotogramma) */
+.ae-tier-banner.is-preparing, .ae-tier-banner.is-preparing .ae-tier-banner-text { animation-play-state: paused; }
+.ae-tier-banner { will-change: opacity; }
+.ae-tier-banner-text { will-change: transform; }
+@keyframes ae-tier-text { 0% { transform: scale(1.6); } 25% { transform: scale(1); } 100% { transform: scale(1.04); } }
+/* Nemesi non nella collezione: senza "!", con la scritta "Non in collezione" a destra */
+.nemesis-locked.is-not-owned::before { display: none; }
+.nemesis-locked.is-not-owned { justify-content: space-between; }
+.nemesis-locked-note {
+  flex: 0 0 auto; color: var(--ae-text-muted); font: 700 10px/14px var(--ae-font-ui); letter-spacing: .06em; text-transform: uppercase;
+}
+/* "Crea mazzo" da tenere premuto: il pulsante si riempie d'oro da sinistra in 800ms (HOLD_BUILD_MS in script.js) */
+.ae-button.is-hold-action {
+  position: relative; overflow: hidden; isolation: isolate; touch-action: manipulation;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.ae-button.is-hold-action::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; background: var(--ae-gold);
+  transform: scaleX(0); transform-origin: left center; transition: transform .15s ease-out;
+}
+.ae-button.is-hold-action.is-holding::after { transform: scaleX(1); transition: transform .8s linear; }
+.ae-button.is-hold-action.is-holding { color: #20160B; text-shadow: none; }
+
+@keyframes ae-rotate-hint { 0%, 30% { transform: rotate(-90deg); } 60%, 100% { transform: rotate(0deg); } }
+@media (prefers-reduced-motion: reduce) { .ae-rotate::before { animation: none; } }
+
+/* --- v157 --- */
+/* "Crea mazzo": sfondo nero (come il menu iniziale); finito il banner "Partita iniziata" sfuma nello sfondo del turno
+   giocatori (velo .ae-shell::before, tolto da script.js con la classe is-deck-dark) */
+.ae-shell { position: relative; }
+.ae-shell::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--ae-bg); opacity: 0; transition: opacity .9s ease-in-out;
+}
+.ae-shell.is-deck-dark::before { opacity: 1; transition: none; }
+@media (prefers-reduced-motion: reduce) { .ae-shell::before { transition: none; } }
+/* Mazzo e scarti in alto non si toccano durante "Crea mazzo" */
+.ae-shell.is-deck-building .ae-header-piles { pointer-events: none; }
+/* Numero sopra i dorsi dei 9 mazzi: al 60% dell'altezza della carta */
+.deck-build-pile .ae-pile-count { top: 60%; }
+/* Nome della nemesi toccabile durante "Crea mazzo" (apre nemesi e giocatori) */
+.ae-phase-name--button {
+  min-height: 32px; padding: 2px 8px; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit;
+  text-transform: inherit; cursor: pointer; text-decoration: underline dotted rgba(223, 174, 89, .7); text-underline-offset: 4px;
+}
+.ae-game-setup { width: min(420px, 100%); }
+.ae-game-setup .start-choice-head { min-height: 88px; padding-left: 4px; }
+.ae-game-setup-battle { position: relative; z-index: 1; color: var(--ae-text-muted); font: 700 12px/16px var(--ae-font-ui); letter-spacing: .06em; text-transform: uppercase; }
+.ae-game-setup .start-label { margin: 4px 0 0; }
+
+/* Slider "Scorri per creare il mazzo": box con il quadratino dorato da trascinare a destra; pulsa finché non si tocca */
+.ae-deck-slider {
+  position: relative; flex: 1 1 0; min-width: 0; height: 56px; overflow: hidden; isolation: isolate;
+  border: 1px solid rgba(223, 174, 89, .65); border-radius: var(--ae-radius-md); background: rgba(16, 17, 22, .8);
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab;
+  animation: ae-slider-pulse 1.6s ease-in-out infinite;
+}
+.ae-deck-slider[hidden] { display: none; }
+.ae-deck-slider.is-started { animation: none; }
+.ae-deck-slider.is-dragging { cursor: grabbing; }
+.ae-deck-slider:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 2px; }
+.ae-deck-slider-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 56px; z-index: 0;
+  background: linear-gradient(90deg, rgba(223, 174, 89, .08), rgba(223, 174, 89, .38));
+}
+.ae-deck-slider-label {
+  position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 0 12px 0 60px; pointer-events: none;
+  color: var(--ae-text); font: 600 15px/20px var(--ae-font-ui); letter-spacing: .02em; white-space: nowrap; overflow: hidden;
+  opacity: calc(1 - var(--p, 0) * 1.8);
+}
+.ae-deck-slider-knob {
+  position: absolute; left: 4px; top: 4px; bottom: 4px; z-index: 2; width: 48px; display: grid; place-items: center;
+  border-radius: 9px; background: var(--ae-gold); color: #20160B; box-shadow: 0 2px 8px rgba(0, 0, 0, .55);
+}
+.ae-deck-slider:not(.is-started) .ae-deck-slider-knob svg { animation: ae-knob-nudge 1.6s ease-in-out infinite; }
+@keyframes ae-slider-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(223, 174, 89, .55); border-color: rgba(223, 174, 89, .65); }
+  50% { box-shadow: 0 0 0 7px rgba(223, 174, 89, 0), 0 0 18px rgba(223, 174, 89, .35); border-color: rgba(223, 174, 89, 1); }
+}
+@keyframes ae-knob-nudge { 0%, 100% { transform: translateX(-2px); } 50% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .ae-deck-slider, .ae-deck-slider:not(.is-started) .ae-deck-slider-knob svg { animation: none; }
+}
+
+/* Carte Nemesi Specifiche in grande: "Tier 1 | Tier 2 | Tier 3" con un pallino per carta (acceso = carta mostrata) */
+.ae-spec-tiers { display: flex; justify-content: center; align-items: flex-start; gap: 2px; }
+.ae-spec-sep { padding-top: 6px; color: var(--ae-text-muted); opacity: .5; font: 400 14px/18px var(--ae-font-ui); }
+.ae-spec-tier {
+  min-height: 44px; padding: 6px 10px 4px; display: flex; flex-direction: column; align-items: center; gap: 7px;
+  border: 0; background: none; color: var(--ae-text-muted); font: 600 13px/18px var(--ae-font-ui); letter-spacing: .06em;
+  text-transform: uppercase; transition: color .2s ease-out;
+}
+.ae-spec-tier.is-current { color: var(--ae-gold); }
+.ae-spec-dots { display: flex; align-items: center; gap: 5px; }
+.ae-spec-dots span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--ae-border); transition: background-color .2s ease-out, transform .2s ease-out;
+}
+.ae-spec-dots span.is-on { background: var(--ae-text); transform: scale(1.3); }
+.ae-spec-caption { display: none; }
+
+/* Menu: le tre linee diventano una X (la linea centrale sparisce, le altre ruotano di 45°) */
+.ae-menu-button .ae-menu-lines { transition: background-color .15s ease-out; }
+.ae-menu-button .ae-menu-lines::before, .ae-menu-button .ae-menu-lines::after {
+  transition: top .18s ease-out .12s, transform .18s ease-out 0s;
+}
+.ae-menu-button.is-open .ae-menu-lines { background-color: transparent; }
+.ae-menu-button.is-open .ae-menu-lines::before, .ae-menu-button.is-open .ae-menu-lines::after {
+  top: 0; transition: top .18s ease-out 0s, transform .18s ease-out .12s;
+}
+.ae-menu-button.is-open .ae-menu-lines::before { transform: rotate(45deg); }
+.ae-menu-button.is-open .ae-menu-lines::after { transform: rotate(-45deg); }
+@media (prefers-reduced-motion: reduce) {
+  .ae-menu-button .ae-menu-lines, .ae-menu-button .ae-menu-lines::before, .ae-menu-button .ae-menu-lines::after { transition: none; }
+}
+.ae-menu-toggle { position: fixed; z-index: 3; color: var(--ae-text); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .9)); }
+/* Nei menu laterali la X dell'intestazione non serve: c'è quella animata al posto del pulsante Menu */
+.ae-side-menu > .ae-modal-header > .ae-icon-button { visibility: hidden; }
+
+/* Esci dalla partita: rosso, da tenere premuto (si riempie di rosso da sinistra) */
+.ae-button.ae-hold-exit { background: rgba(217, 94, 92, .14); border-color: var(--ae-danger); color: #F08A88; font-weight: 700; }
+.ae-button.is-hold-action.is-holding::after { transition-duration: var(--ae-hold-ms, .8s); }
+.ae-button.ae-hold-exit.is-hold-action::after { background: var(--ae-danger); }
+.ae-button.ae-hold-exit.is-holding { color: #fff; }
+
+/* Turno nemesi: breve scossa dello schermo (urgenza) */
+.ae-shell.is-shaking { animation: ae-shake .5s cubic-bezier(.36, .07, .19, .97) both; }
+@keyframes ae-shake {
+  10%, 90% { transform: translate(-1px, 0); }
+  20%, 80% { transform: translate(3px, -1px); }
+  30%, 50%, 70% { transform: translate(-5px, 1px); }
+  40%, 60% { transform: translate(5px, -1px); }
+}
+@media (prefers-reduced-motion: reduce) { .ae-shell.is-shaking { animation: none; } }
+
+/* --- Menu iniziale: Partita in corso (solo Riprendi), sotto Nuova partita e Opzioni --- */
+.start-home { display: flex; flex-direction: column; gap: 10px; }
+.start-home[hidden], .start-choice[hidden] { display: none; }
+.options-item {
+  min-height: 64px; padding: 12px 16px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised); color: var(--ae-text); text-align: left;
+}
+.options-item-label { font: 600 16px/22px var(--ae-font-ui); }
+.options-item-note { color: var(--ae-text-muted); font: 500 13px/18px var(--ae-font-ui); }
+.options-screen { z-index: 44; }
+/* Nuova partita: Menu in alto a destra */
+.start-menu-button { position: fixed; top: calc(var(--ae-safe-top) + 8px); right: 8px; z-index: 6; color: var(--ae-text-muted); }
+.start-menu-button[hidden] { display: none; }
+.start-screen.is-setup .start-title { padding-inline: 44px; }
+/* Wave e Nemesi separate: le wave sono pillole tonde, la nemesi ha una linea sopra */
+.wave-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.wave-pill {
+  min-height: 44px; padding: 0 18px; border: 1px solid var(--ae-border); border-radius: 999px; background: transparent;
+  color: var(--ae-text-muted); font: 600 14px/18px var(--ae-font-ui); letter-spacing: .02em;
+  transition: background-color .15s ease-out, color .15s ease-out, border-color .15s ease-out;
+}
+.wave-pill[aria-pressed='true'] { border-color: var(--ae-gold); background: rgba(223, 174, 89, .14); color: var(--ae-gold); }
+.start-nemesis { padding-top: 20px; border-top: 1px solid var(--ae-border); }
+
+/* Statistiche: sotto alcune righe le carte in fila (si toccano per vederle grandi) */
+.ae-stats-list { display: flex; flex-direction: column; gap: 8px; }
+.ae-stats-row { margin-top: 4px; }
+.ae-stats-cards {
+  display: flex; gap: 8px; overflow-x: auto; padding: 8px 8px 12px; scrollbar-width: none; overscroll-behavior-x: contain;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised);
+}
+.ae-stats-cards::-webkit-scrollbar { display: none; }
+.ae-stats-cards.is-empty { padding: 8px 12px; }
+.ae-stats-card { position: relative; flex: 0 0 56px; width: 56px; padding: 0; border: 0; background: none; color: inherit; }
+.ae-stats-card .ae-card-art { display: block; width: 100%; height: auto; aspect-ratio: 63 / 88; }
+.ae-stats-hp {
+  position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 2px;
+  padding: 1px 5px; border-radius: 8px; border: 1px solid var(--ae-border); background: rgba(16, 17, 22, .92);
+  font: 700 11px/14px var(--ae-font-ui); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ae-stats-hp .ae-icon { width: 11px; height: 11px; color: var(--ae-danger); }
