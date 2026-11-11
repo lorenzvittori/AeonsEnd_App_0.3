@@ -186,6 +186,8 @@ const I18N_IT = {
   hintNewInPlay: name => `${name}: entra in gioco.`,
   hintDraw: 'Pesca la prossima carta del mazzo.',
   drawKind: 'Pesca',
+  drawZoneTitle: 'Tocca o scorri su per pescare',
+  drawZoneNext: (tier, n) => `Prossima: Tier ${tier} · ${n} nel mazzo`,
   cardZoomTitle: 'Carta in gioco'
 };
 
@@ -210,6 +212,7 @@ const resolveHint = document.getElementById('resolve-hint');
 const nemesisBtn = document.getElementById('nemesis-btn');
 const resolveBtn = document.getElementById('resolve-btn');
 const backBtn = document.getElementById('back-btn'); // non più usato (Proposta A: niente anteprima nel turno nemesi)
+let mainRow = null; // riga Menu / ‹ / pulsante principale nel dock
 // "‹" del turno nemesi: torna alla carta prima (undo dentro il turno)
 const stepBackBtn = document.createElement('button');
 stepBackBtn.type = 'button';
@@ -2217,6 +2220,8 @@ function render() {
   if (!resolving) app.classList.remove('is-draw-phase');
   nemesisBtn.hidden = resolving;
   stepBackBtn.hidden = !resolving;
+  drawZone.hidden = true;
+  if (mainRow) mainRow.hidden = false;
   resolvePanel.hidden = !resolving;
   nemesisBtn.disabled = !deckSetup;
   // "Turno Nemesi" con l'illustrazione della nemesi della partita (come nel menu iniziale), velata per leggere la scritta
@@ -2327,6 +2332,7 @@ function renderResolve() {
 
   renderFocus(drawStep ? { uid: DRAW_UID } : active);
   renderResolvePanel(drawStep, active, isNewStep);
+  renderDrawZone(drawStep);
 
   resolveBtn.hidden = false;
   backBtn.hidden = true;
@@ -2339,6 +2345,44 @@ function renderResolve() {
   resolveHint.hidden = true;
   // Ridimensiona di nuovo ora che il pannello in basso è disegnato
   sizeFocus(!ui.fromScroll);
+}
+
+// Passo Pesca: al posto del pannello e dei pulsanti, tutta la parte bassa è una zona da toccare (o da scorrere verso
+// l'alto, più di 40px) per pescare. Da tastiera è un pulsante (Invio).
+const DRAW_SWIPE = 40;
+const drawZone = el('button', 'ae-draw-zone');
+drawZone.type = 'button';
+drawZone.hidden = true;
+{
+  const arrow = el('span', 'ae-draw-arrow', '↑');
+  arrow.setAttribute('aria-hidden', 'true');
+  drawZone.append(arrow, el('span', 'ae-draw-title', I18N_IT.drawZoneTitle), el('span', 'ae-draw-next'));
+}
+let drawSwipe = null;
+function drawFromZone() {
+  onResolveClick();
+  if (resolving) resolveBtn.focus({ preventScroll: true });
+}
+drawZone.addEventListener('pointerdown', e => { drawSwipe = { y: e.clientY, t: Date.now(), fired: false }; });
+drawZone.addEventListener('pointermove', e => {
+  if (!drawSwipe || drawSwipe.fired || drawSwipe.y - e.clientY <= DRAW_SWIPE) return;
+  drawSwipe.fired = true;
+  drawFromZone();
+});
+drawZone.addEventListener('click', () => {
+  // Uno scorrimento che ha già pescato non deve pescare di nuovo con il clic che lo segue
+  if (drawSwipe && drawSwipe.fired && Date.now() - drawSwipe.t < 1500) return;
+  drawFromZone();
+});
+function renderDrawZone(drawStep) {
+  const on = drawStep && canDraw();
+  drawZone.hidden = !on;
+  if (mainRow) mainRow.hidden = on;
+  if (on) resolvePanel.hidden = true;
+  if (!on) return;
+  const next = deck[deck.length - 1];
+  drawZone.querySelector('.ae-draw-next').textContent = I18N_IT.drawZoneNext(next.tier || 1, deck.length);
+  drawZone.setAttribute('aria-label', I18N_IT.ctaDraw + '. ' + I18N_IT.drawZoneNext(next.tier || 1, deck.length));
 }
 
 // Pannello del turno nemesi (sopra il pulsante principale): tipo · posizione ("Minion · 2 di 4") e cosa fare, in parole
@@ -4129,12 +4173,15 @@ undoBtn.addEventListener('click', undo);
 nemesisBtn.addEventListener('click', onNemesisClick);
 {
   const row = el('div', 'ae-main-row');
+  mainRow = row;
   nemesisBtn.before(row);
   deckSlider = buildDeckSlider();
   // Menu a sinistra del pulsante principale, nei due turni (nel turno nemesi il pulsante principale è resolveBtn/backBtn)
   row.append(menuBtn, stepBackBtn, nemesisBtn, deckSlider.box, resolveBtn, backBtn);
   // Pannello del turno nemesi (cosa fare con la carta), sopra la riga
   row.before(resolvePanel);
+  // Passo Pesca: zona da toccare al posto della riga
+  row.after(drawZone);
   // Pannello di comando della carta al centro (turno giocatori), sopra la riga
   row.before(deckCard);
 }

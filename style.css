@@ -1136,3 +1136,19 @@ body { overflow: hidden; }
 .ae-resolve-layout .ae-rail-row { display: block; width: 100%; }
 .ae-resolve-layout .ae-rail-row > .ae-mini-rail { width: 100%; box-sizing: border-box; }
 .ae-resolve-layout .ae-focus-track { transform: none; }
+
+/* --- Proposta A, Passo Pesca (v162): dorso grande con bagliore dorato, metà bassa da toccare o scorrere su --- */
+.ae-focus-slide--draw .ae-focus-stage .ae-card-back { box-shadow: 0 0 40px 6px rgba(223, 174, 89, .35), 0 12px 30px rgba(0, 0, 0, .7); }
+.ae-draw-zone {
+  height: 200px; margin: -14px -16px calc(-16px - var(--ae-safe-bottom)); padding: 0 16px var(--ae-safe-bottom);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  border: 0; border-top: 1px dashed rgba(223, 174, 89, .5); border-radius: 22px 22px 0 0;
+  background: linear-gradient(transparent, rgba(223, 174, 89, .18)); color: var(--ae-gold); touch-action: none; cursor: pointer;
+}
+.ae-draw-zone[hidden] { display: none; }
+.ae-draw-zone:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: -4px; }
+.ae-draw-arrow { font: 700 28px/1 var(--ae-font-ui); animation: ae-draw-nudge 1.4s ease-in-out infinite; }
+@keyframes ae-draw-nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@media (prefers-reduced-motion: reduce) { .ae-draw-arrow { animation: none; } }
+.ae-draw-title { font: 700 16px/20px var(--ae-font-ui); letter-spacing: .12em; text-transform: uppercase; text-align: center; }
+.ae-draw-next { font: 500 13px/18px var(--ae-font-ui); color: var(--ae-text-quiet); }
