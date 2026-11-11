@@ -186,6 +186,23 @@ const I18N_IT = {
   hintNewInPlay: name => `${name}: entra in gioco.`,
   hintDraw: 'Pesca la prossima carta del mazzo.',
   drawKind: 'Pesca',
+  // Pagine iniziali (Proposta A)
+  homeInfo: (battle, players, turnNo) => [battle ? `Battaglia ${battle}` : '', players, turnNo > 0 ? `Turno nemesi ${turnNo}` : '']
+    .filter(Boolean).join(' · '),
+  tierDone: n => `Tier ${n} finito`,
+  deckOf: (left, total) => `Mazzo ${left} / ${total}`,
+  collectionShort: 'Collezione',
+  faceNemesis: name => `Affronta ${name}`,
+  deckCards: n => `Mazzo: ${n} carte`,
+  deckBuildFor: (name, players) => `${name} · ${players}`,
+  deckBuildNote: 'Base + potenziate (dorsi) + specifiche (fronte) per ogni Tier',
+  deckCounter: (n, total) => `${n} / ${total} nel mazzo`,
+  deckTierLabel: (tier, n) => `Tier ${tier}: ${n} carte. Tocca per vedere le Specifiche`,
+  collectionPillHint: 'Tocca una scatola per aggiungerla o toglierla.',
+  playableN: n => (n === 1 ? '1 nemesi giocabile' : `${n} nemesi giocabili`),
+  savedShort: 'Salvata',
+  closeSetup: 'Chiudi: torna al menu iniziale',
+  playersLabel: 'Giocatori',
   // Vittoria + statistiche
   victorySub: (name, n) => `${name} sconfitto in ${n} ${n === 1 ? 'turno nemesi' : 'turni nemesi'}`,
   victoryTiles: { played: 'Carte giocate', killed: 'Minion uccisi', paid: ae => `Poteri pagati · ${ae} Æ`, attacks: 'Attacchi risolti' },
@@ -1326,6 +1343,7 @@ function renderPlayers() {
     b.addEventListener('click', () => {
       settings.players = value;
       renderPlayers();
+      updateStartActions();
       container.querySelector('[aria-pressed="true"]').focus();
     });
     return b;
@@ -1498,10 +1516,12 @@ function updateNemesisFlip(preview) {
   dots.children[1].classList.toggle('is-on', showBack);
 }
 
-// Nemesi della wave scelta: prima le disponibili (pulsanti), le altre in un elenco chiuso e non interattivo
+// Nemesi della wave scelta in un carosello orizzontale: riquadri 250×380 con l'illustrazione, nome e battaglia.
+// Prima le disponibili, in fondo le altre in grigio (non toccabili). Tocco = scelta; toccando la nemesi già scelta si
+// apre la sua carta intera (fronte e retro). Sotto, un puntino per ogni nemesi disponibile.
 function renderBosses(wave) {
   const list = document.getElementById('nemesis-list');
-  // Prima le nemesi della scatola base della wave, poi quelle delle mini espansioni; in ognuno dei due gruppi per battaglia
+  list.classList.add('nemesis-carousel');
   const byBattle = n => (n.battle === null || n.battle === undefined ? 99 : n.battle);
   const ofWave = nemeses.filter(n => n.wave === wave)
     .map((n, i) => ({ n, i }))
@@ -1509,78 +1529,91 @@ function renderBosses(wave) {
     .map(x => x.n);
   const playable = ofWave.filter(isPlayable);
   const others = ofWave.filter(n => !isPlayable(n));
-
   if (!playable.some(n => n.name === settings.nemesis)) settings.nemesis = playable.length ? playable[0].name : null;
+  const scroll = list.scrollLeft;
 
-  list.replaceChildren(...playable.map(info => {
-    const b = el('button', 'nemesis-option');
+  const tile = (info, ok) => {
+    const b = el('button', 'nemesis-tile');
     b.type = 'button';
-    b.setAttribute('aria-pressed', String(info.name === settings.nemesis));
-    const tags = el('span', 'nemesis-tags');
-    tags.appendChild(el('span', '', info.battle ? I18N_IT.battle(info.battle) : I18N_IT.battleMissing));
     const art = nemesisArt[info.name];
-    if (art) {
-      // Parte dell'illustrazione a destra del pulsante (come nella wiki)
-      b.classList.add('has-art');
-      const portrait = el('span', 'nemesis-art');
-      portrait.setAttribute('aria-hidden', 'true');
-      portrait.style.backgroundImage = `url("${encodeURI(art.portrait)}")`;
-      b.appendChild(portrait);
+    if (art) b.style.setProperty('--ae-tile-art', `url("${encodeURI(art.portrait)}")`);
+    const meta = [info.battle ? I18N_IT.battle(info.battle) : I18N_IT.battleMissing, info.miniExpansion].filter(Boolean).join(' · ');
+    const shade = el('span', 'nemesis-tile-shade');
+    shade.append(el('span', 'nemesis-tile-name', info.name), el('span', 'nemesis-tile-meta', meta));
+    b.appendChild(shade);
+    if (!ok) {
+      const notOwned = info.battle !== null && !ownsProduct(productOfNemesis(info))
+        && allCards.some(c => c.category === 'Specific' && c.nemesis === info.name);
+      b.classList.add('is-locked');
+      b.disabled = true;
+      b.setAttribute('aria-label', notOwned ? I18N_IT.notInCollectionNemesis(info.name) : I18N_IT.unavailableNemesis(info.name));
+      b.appendChild(el('span', 'nemesis-tile-note' + (notOwned ? '' : ' is-alert'), notOwned ? I18N_IT.notInCollection : '!'));
+      return b;
     }
-    b.append(el('span', 'nemesis-name', info.name), tags);
-    // Mini espansione: etichetta dorata piccola in basso a destra
-    if (info.miniExpansion) b.appendChild(el('span', 'nemesis-expansion', info.miniExpansion));
+    const selected = info.name === settings.nemesis;
+    b.classList.toggle('is-selected', selected);
+    b.setAttribute('aria-pressed', String(selected));
+    b.setAttribute('aria-label', info.name + ', ' + meta + (selected && art ? '. ' + I18N_IT.showNemesisCard(info.name) : ''));
     b.addEventListener('click', () => {
-      // Toccare di nuovo la nemesi già scelta apre o chiude la sua carta (come le frecce)
-      if (settings.nemesis === info.name) {
-        if (art) {
-          setNemesisPreview(!nemesisPreviewOpen);
-          b.focus({ preventScroll: true });
-        }
-        return;
-      }
+      if (list.dataset.dragged === '1') return;
+      if (settings.nemesis === info.name) { openNemesisCard(info.name); return; }
       settings.nemesis = info.name;
-      nemesisPreviewOpen = false;
       renderBosses(wave);
-      const selected = list.querySelector('.nemesis-item.is-selected .nemesis-option');
-      if (selected) selected.focus({ preventScroll: true });
+      const now = list.querySelector('.nemesis-tile.is-selected');
+      if (now) {
+        now.focus({ preventScroll: true });
+        now.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+      }
     });
-    const item = el('div', 'nemesis-item');
-    item.appendChild(b);
-    if (info.name === settings.nemesis) {
-      item.classList.add('is-selected');
-      // Freccia verso il basso al centro del pulsante scelto: apre la carta della nemesi
-      if (art) item.appendChild(chevronButton('nemesis-expand', I18N_IT.showNemesisCard(info.name), () => setNemesisPreview(true)));
-    }
-    return item;
-  }));
-  renderNemesisPreview();
-  document.getElementById('nemesis-empty').hidden = playable.length > 0;
+    return b;
+  };
+  list.replaceChildren(...playable.map(n => tile(n, true)), ...others.map(n => tile(n, false)));
+  list.scrollLeft = scroll;
+  if (!list.dataset.tracked) { trackDrag(list); list.dataset.tracked = '1'; }
 
-  // Nemesi non disponibili: box piccoli con solo il nome, barrati da una X rossa sottile, non cliccabili.
-  // Stanno subito sotto i pulsanti delle disponibili (il vecchio elenco a scomparsa non si usa più).
-  const oldOther = document.getElementById('nemesis-other');
-  if (oldOther) oldOther.hidden = true;
-  let unavailable = document.getElementById('nemesis-unavailable');
-  if (!unavailable) {
-    unavailable = el('ul', 'nemesis-unavailable');
-    unavailable.id = 'nemesis-unavailable';
-    unavailable.setAttribute('aria-label', I18N_IT.unavailableNemeses);
-    list.after(unavailable);
+  let dots = document.getElementById('nemesis-dots');
+  if (!dots) {
+    dots = el('div', 'nemesis-dots');
+    dots.id = 'nemesis-dots';
+    dots.setAttribute('aria-hidden', 'true');
+    list.after(dots);
   }
-  unavailable.hidden = others.length === 0;
-  unavailable.replaceChildren(...others.map(info => {
-    // Nemesi che l'app ha (battaglia e carte) ma il cui prodotto non è nella collezione: niente "!", la scritta
-    // "Non in collezione" a destra. Le altre (senza battaglia o senza carte) restano con il "!" rosso.
-    const notOwned = info.battle !== null && !ownsProduct(productOfNemesis(info))
-      && allCards.some(c => c.category === 'Specific' && c.nemesis === info.name);
-    const li = el('li', 'nemesis-locked' + (notOwned ? ' is-not-owned' : ''));
-    li.setAttribute('aria-label', notOwned ? I18N_IT.notInCollectionNemesis(info.name) : I18N_IT.unavailableNemesis(info.name));
-    li.appendChild(el('span', '', info.name));
-    if (notOwned) li.appendChild(el('span', 'nemesis-locked-note', I18N_IT.notInCollection));
-    return li;
-  }));
+  dots.replaceChildren(...playable.map(n => el('span', n.name === settings.nemesis ? 'is-on' : '')));
+  dots.hidden = playable.length < 2;
+  // Vecchi elementi della scelta a lista: non servono più
+  ['nemesis-unavailable', 'nemesis-other', 'nemesis-preview'].forEach(id => { const old = document.getElementById(id); if (old) old.hidden = true; });
+  document.getElementById('nemesis-empty').hidden = playable.length > 0;
   updateStartActions();
+}
+
+// Carta intera della nemesi (fronte e retro con il setup), in una finestra: un tocco o uno slide la gira
+function openNemesisCard(name) {
+  const art = nemesisArt[name];
+  if (!art) return;
+  let close = () => {};
+  const cancel = () => close();
+  const battleNo = battleOf(name);
+  const dialog = dialogShell(name, battleNo ? I18N_IT.battle(battleNo) : '', cancel);
+  dialog.classList.add('ae-nemesis-card');
+  const figure = el('figure', 'nemesis-preview nemesis-preview--dialog');
+  const img = el('img');
+  img.alt = '';
+  figure.appendChild(img);
+  nemesisShowBack = false;
+  nemesisFlipAngle = 0;
+  buildNemesisFlip(figure);
+  const front = figure.querySelector('.nemesis-face--front');
+  front.alt = I18N_IT.nemesisCard(name);
+  front.src = encodeURI(art.card);
+  const back = figure.querySelector('.nemesis-face--back');
+  figure.querySelector('.nemesis-flip').classList.toggle('has-back', !!art.back);
+  if (art.back) {
+    back.alt = I18N_IT.nemesisCardBack(name);
+    back.src = encodeURI(art.back);
+  }
+  updateNemesisFlip(figure);
+  dialog.appendChild(figure);
+  close = openModal(dialog, { onCancel: cancel });
 }
 
 function renderStartChoices() {
@@ -1619,14 +1652,32 @@ function startChoicePanel() {
   panel.id = 'start-choice';
   panel.setAttribute('aria-labelledby', 'start-choice-title');
   const head = el('div', 'start-choice-head');
-  const title = el('h2', 'start-choice-title', I18N_IT.savedGameTitle);
-  title.id = 'start-choice-title';
-  head.append(title, el('p', 'start-choice-info'));
+  const name = el('h2', 'start-choice-name');
+  name.id = 'start-choice-title';
+  head.append(el('p', 'start-choice-kicker', I18N_IT.savedGameTitle), name, el('p', 'start-choice-info'));
+  // Barra del mazzo per Tier: un segmento per Tier (largo quanto le sue carte), oro = carte già uscite
+  const bar = el('div', 'start-deckbar');
+  bar.setAttribute('aria-hidden', 'true');
+  const barText = el('div', 'start-deckbar-text');
+  barText.append(el('span', 'start-deckbar-left'), el('span', 'start-deckbar-right'));
   const resume = button(I18N_IT.resumeGame, 'primary', resumeGame);
   resume.classList.add('ae-button--full', 'start-choice-resume');
-  panel.append(head, resume);
+  panel.append(head, bar, barText, resume);
   document.querySelector('.start-title').after(panel);
   return panel;
+}
+
+// Avanzamento del mazzo della partita salvata, per Tier: { tier, total, out } e il Tier più alto già finito
+function savedDeckProgress(state) {
+  const tierOf = id => { const c = cardsById.get(id); return c ? c.tier || 1 : 1; };
+  const all = [...state.deck, ...state.discard, ...state.queue.map(q => q.id)];
+  const tiers = [1, 2, 3].map(tier => {
+    const total = all.filter(id => tierOf(id) === tier).length;
+    const left = state.deck.filter(id => tierOf(id) === tier).length;
+    return { tier, total, out: total - left };
+  }).filter(t => t.total > 0);
+  const done = tiers.filter(t => t.out >= t.total).map(t => t.tier);
+  return { tiers, done: done.length ? Math.max(...done) : 0, left: state.deck.length, total: all.length };
 }
 
 function startHomeActions() {
@@ -1636,26 +1687,59 @@ function startHomeActions() {
   box.id = 'start-home';
   const fresh = button(I18N_IT.newGame, 'primary', () => setStartMode('setup', true));
   fresh.classList.add('ae-button--full', 'start-home-new');
-  const options = button(I18N_IT.options, 'secondary', () => openOptions(options));
-  options.classList.add('ae-button--full', 'start-home-options');
-  box.append(fresh, options);
+  // "Collezione" al posto di "Opzioni" (che conteneva solo la collezione)
+  const coll = button(I18N_IT.collectionShort, 'secondary', () => openCollection(coll));
+  coll.classList.add('ae-button--full', 'start-home-collection');
+  box.append(fresh, coll);
   startChoicePanel().after(box);
   return box;
 }
 
-// Menu (tre linee) in alto a destra della pagina "Nuova partita"
+// Testata della pagina "Nuova partita": titolo e X (torna al menu iniziale). Prende il posto del vecchio Menu.
 function startMenuButton() {
   let b = document.getElementById('start-menu-btn');
   if (b) return b;
-  b = el('button', 'ae-icon-button ae-menu-button start-menu-button');
+  const head = el('div', 'start-setup-head');
+  head.appendChild(el('h1', 'start-setup-title', I18N_IT.newGame));
+  b = el('button', 'ae-icon-button start-setup-close');
   b.id = 'start-menu-btn';
   b.type = 'button';
-  b.setAttribute('aria-label', I18N_IT.menu);
-  b.setAttribute('aria-haspopup', 'dialog');
-  b.appendChild(el('span', 'ae-menu-lines'));
-  b.addEventListener('click', () => openStartMenu(b));
-  startLayer.appendChild(b);
+  b.setAttribute('aria-label', I18N_IT.closeSetup);
+  b.appendChild(icon('close'));
+  b.addEventListener('click', () => setStartMode('home', true));
+  head.appendChild(b);
+  document.querySelector('.start-box').prepend(head);
   return b;
+}
+
+// Pannello in basso della pagina "Nuova partita": Giocatori (con quante carte avrà il mazzo) e "Affronta <Nemesi>"
+function startSetupPanel() {
+  let panel = document.getElementById('start-setup-panel');
+  if (panel) return panel;
+  panel = el('div', 'start-setup-panel');
+  panel.id = 'start-setup-panel';
+  const row = el('div', 'start-setup-row');
+  const size = el('span', 'start-setup-size');
+  size.id = 'start-deck-size';
+  row.append(el('span', 'start-setup-label', I18N_IT.playersLabel), size);
+  panel.append(row, document.getElementById('choices-players'), startBtn);
+  document.querySelector('.start-box').appendChild(panel);
+  return panel;
+}
+
+// Carte del mazzo per la nemesi e i giocatori scelti (stesso conto di buildDeck, senza mescolare)
+function deckSizeFor(name, players) {
+  const battle = deckSetup && deckSetup.battles.find(b => b.battle === battleOf(name));
+  const setup = battle && battle.players[String(players)];
+  if (!setup) return 0;
+  let n = 0;
+  [1, 2, 3].forEach(tier => {
+    const ofTier = c => c.tier === tier && c.type !== 'Curse';
+    const avail = cat => allCards.filter(c => c.category === cat && ofTier(c) && cardAllowed(c)).length;
+    n += Math.min(avail('Basic Nemesis'), setup.basic[tier]) + Math.min(avail('Upgraded Basic Nemesis'), setup.upgradedBasic[tier]);
+    n += allCards.filter(c => c.category === 'Specific' && c.nemesis === name && ofTier(c)).length;
+  });
+  return n;
 }
 
 function setStartMode(mode, focus) {
@@ -1666,32 +1750,49 @@ function setStartMode(mode, focus) {
   const isHome = startMode === 'home';
   panel.hidden = !isHome || !saved;
   home.hidden = !isHome;
-  startMenuButton().hidden = isHome;
+  startMenuButton();
+  startSetupPanel().hidden = isHome;
   startLayer.classList.toggle('is-setup', !isHome);
+  startLayer.classList.toggle('is-home', isHome);
   panel.parentElement.classList.toggle('is-choosing', isHome);
-  // Con una partita in corso "Nuova partita" è secondario (il principale è Riprendi partita)
+  // Senza partita salvata "Nuova partita" è il pulsante principale (largo); con una partita in corso è secondario,
+  // accanto a "Collezione", e il principale è "Riprendi partita"
   const fresh = home.querySelector('.start-home-new');
   fresh.classList.toggle('ae-button--primary', !saved);
   fresh.classList.toggle('ae-button--secondary', !!saved);
+  home.classList.toggle('is-solo', !saved);
+  // Illustrazione in alto: la nemesi della partita in corso, altrimenti l'ultima scelta
+  const artName = saved ? saved.settings.nemesis : settings.nemesis;
+  const art = artName && nemesisArt[artName];
+  startLayer.classList.toggle('has-home-art', !!art);
+  if (art) startLayer.style.setProperty('--ae-home-art', `url("${encodeURI(art.portrait)}")`);
+  else startLayer.style.removeProperty('--ae-home-art');
   if (saved) {
-    const head = panel.querySelector('.start-choice-head');
-    head.querySelector('.start-choice-info').textContent =
-      [saved.settings.nemesis, I18N_IT.players(saved.settings.players)].filter(Boolean).join(' · ');
-    const old = head.querySelector('.nemesis-art');
-    if (old) old.remove();
-    const art = nemesisArt[saved.settings.nemesis];
-    head.classList.toggle('has-art', !!art);
-    if (art) {
-      const portrait = el('span', 'nemesis-art');
-      portrait.setAttribute('aria-hidden', 'true');
-      portrait.style.backgroundImage = `url("${encodeURI(art.portrait)}")`;
-      head.prepend(portrait);
+    panel.querySelector('.start-choice-name').textContent = saved.settings.nemesis || '';
+    panel.querySelector('.start-choice-info').textContent =
+      I18N_IT.homeInfo(battleOf(saved.settings.nemesis), I18N_IT.players(saved.settings.players), saved.state.turn);
+    let prog = null;
+    try { prog = savedDeckProgress(saved.state); } catch (err) { prog = null; }
+    const bar = panel.querySelector('.start-deckbar');
+    bar.hidden = !prog || !prog.total;
+    panel.querySelector('.start-deckbar-text').hidden = bar.hidden;
+    if (prog && prog.total) {
+      bar.replaceChildren(...prog.tiers.map(t => {
+        const seg = el('span', 'start-deckbar-seg');
+        seg.style.flexGrow = String(t.total);
+        const fill = el('span', 'start-deckbar-fill');
+        fill.style.width = Math.round(100 * t.out / t.total) + '%';
+        seg.appendChild(fill);
+        return seg;
+      }));
+      panel.querySelector('.start-deckbar-left').textContent = prog.done ? I18N_IT.tierDone(prog.done) : '';
+      panel.querySelector('.start-deckbar-right').textContent = I18N_IT.deckOf(prog.left, prog.total);
     }
   }
   startLayer.scrollTop = 0;
   updateStartActions();
   if (focus) {
-    const target = isHome ? (saved ? panel.querySelector('.start-choice-resume') : fresh) : document.querySelector('#choices-players button');
+    const target = isHome ? (saved ? panel.querySelector('.start-choice-resume') : fresh) : document.querySelector('.nemesis-tile.is-selected') || document.querySelector('#choices-players button');
     if (target) target.focus({ preventScroll: true });
   }
 }
@@ -1700,8 +1801,11 @@ function setStartMode(mode, focus) {
 function updateStartActions() {
   resumeBtn.hidden = true;
   resumeBtn.className = 'ae-button ae-button--full ae-button--secondary start-resume-alt';
-  startBtn.textContent = I18N_IT.startNew;
-  startBtn.className = 'ae-button ae-button--full ae-button--primary';
+  // "Affronta <Nemesi>": il pulsante nomina la scelta
+  startBtn.textContent = settings.nemesis ? I18N_IT.faceNemesis(settings.nemesis) : I18N_IT.startNew;
+  startBtn.className = 'ae-button ae-button--full ae-button--primary start-face';
+  const size = document.getElementById('start-deck-size');
+  if (size) size.textContent = settings.nemesis ? I18N_IT.deckCards(deckSizeFor(settings.nemesis, settings.players)) : '';
   startBtn.disabled = !settings.nemesis || !battleOf(settings.nemesis);
   startBtn.title = startBtn.disabled ? I18N_IT.chooseNemesis : '';
 }
@@ -1829,12 +1933,12 @@ function openStartMenu(trigger) {
   menuCloseToggle(trigger, panel.parentElement, cancel);
 }
 
-// Schermata "La mia collezione": per ogni wave un interruttore (la wave, cioè la sua scatola base) e sotto le sue
-// mini espansioni. Togliendo una wave si tolgono anche le sue mini espansioni. Le scelte valgono solo con
-// "Salva collezione"; la X torna indietro senza salvare.
+// Schermata "La mia collezione": per ogni wave una pillola per la scatola base e una per ogni mini espansione.
+// Ogni tocco aggiunge o toglie il prodotto e si salva subito (niente "Salva collezione"); togliendo la scatola base si
+// tolgono anche le sue mini espansioni, che restano spente finché la scatola base non c'è. In fondo quante nemesi sono
+// giocabili e "Salvata" per un attimo dopo ogni modifica.
 function openCollection(trigger, onSaved) {
-  const draft = new Set(collection);
-  const layer = el('div', 'collection-screen');
+  const layer = el('div', 'collection-screen collection-screen--pills');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', I18N_IT.myCollection);
@@ -1842,7 +1946,6 @@ function openCollection(trigger, onSaved) {
   const close = () => {
     layer.remove();
     updateInert();
-    // Aperta da Opzioni: la pagina iniziale resta coperta dalle Opzioni
     if (document.querySelector('.options-screen')) startLayer.inert = true;
     if (trigger && trigger.isConnected) trigger.focus({ preventScroll: true });
   };
@@ -1853,56 +1956,61 @@ function openCollection(trigger, onSaved) {
   x.addEventListener('click', close);
   head.append(el('h2', 'collection-title', I18N_IT.myCollection), x);
   const body = el('div', 'collection-body');
-  body.appendChild(el('p', 'start-note', I18N_IT.collectionHint));
-
-  const toggle = (label, id, extraClass) => {
-    const row = el('label', 'ae-switch-row collection-item' + (extraClass ? ' ' + extraClass : ''));
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.setAttribute('role', 'switch');
-    input.checked = draft.has(id);
-    input.dataset.id = id;
-    const sw = el('span', 'ae-switch');
-    sw.setAttribute('aria-hidden', 'true');
-    row.append(el('span', '', label), input, sw);
-    return row;
-  };
+  body.appendChild(el('p', 'collection-hint', I18N_IT.collectionPillHint));
+  const footer = el('div', 'collection-footer collection-footer--status');
+  const count = el('span', 'collection-count');
+  const savedNote = el('span', 'collection-saved', I18N_IT.savedShort);
+  savedNote.setAttribute('role', 'status');
+  savedNote.hidden = true;
+  footer.append(count, savedNote);
+  const updateCount = () => { count.textContent = I18N_IT.playableN(nemeses.filter(isPlayable).length); };
+  let savedTimer = null;
+  const pills = [];
+  const sync = () => pills.forEach(({ b, id, baseId }) => {
+    const on = collection.has(id);
+    const off = baseId && !collection.has(baseId);
+    b.setAttribute('aria-pressed', String(on));
+    b.disabled = !!off;
+    b.classList.toggle('is-on', on);
+    b.querySelector('.collection-pill-mark').textContent = on ? '✓' : '+';
+  });
   collectionCatalog().forEach(({ wave, products }) => {
     const block = el('section', 'collection-wave');
+    block.appendChild(el('h3', 'collection-wave-name', wave));
+    const row = el('div', 'collection-pills');
     const base = products[0];
-    const waveRow = toggle(wave, base.id, 'is-wave');
-    const minis = products.slice(1).map(m => toggle(m.name, m.id, 'is-mini'));
-    const sync = () => {
-      const on = draft.has(base.id);
-      minis.forEach(r => {
-        const input = r.querySelector('input');
-        input.disabled = !on;
-        r.classList.toggle('is-disabled', !on);
+    products.forEach((prod, i) => {
+      const b = el('button', 'collection-pill');
+      b.type = 'button';
+      const mark = el('span', 'collection-pill-mark');
+      mark.setAttribute('aria-hidden', 'true');
+      b.append(mark, el('span', '', i === 0 ? I18N_IT.baseBox : prod.name));
+      const baseId = i === 0 ? null : base.id;
+      b.addEventListener('click', () => {
+        const next = new Set(collection);
+        if (next.has(prod.id)) {
+          next.delete(prod.id);
+          // Senza la scatola base niente mini espansioni
+          if (i === 0) products.slice(1).forEach(m => next.delete(m.id));
+        } else next.add(prod.id);
+        collection = next;
+        saveCollection();
+        sync();
+        updateCount();
+        renderStartChoices();
+        if (onSaved) onSaved();
+        savedNote.hidden = false;
+        clearTimeout(savedTimer);
+        savedTimer = setTimeout(() => { savedNote.hidden = true; }, 1500);
       });
-    };
-    waveRow.querySelector('input').addEventListener('change', e => {
-      if (e.target.checked) draft.add(base.id);
-      else { draft.delete(base.id); products.slice(1).forEach(m => draft.delete(m.id)); minis.forEach(r => { r.querySelector('input').checked = false; }); }
-      sync();
+      pills.push({ b, id: prod.id, baseId });
+      row.appendChild(b);
     });
-    minis.forEach(r => r.querySelector('input').addEventListener('change', e => {
-      if (e.target.checked) draft.add(e.target.dataset.id); else draft.delete(e.target.dataset.id);
-    }));
-    block.append(waveRow, ...minis);
-    sync();
+    block.appendChild(row);
     body.appendChild(block);
   });
-  const footer = el('div', 'collection-footer');
-  const saveBtn = button(I18N_IT.collectionSave, 'primary', () => {
-    collection = draft;
-    saveCollection();
-    close();
-    renderStartChoices();
-    if (onSaved) onSaved();
-    showToast(I18N_IT.collectionSaved);
-  });
-  saveBtn.classList.add('ae-button--full');
-  footer.appendChild(saveBtn);
+  sync();
+  updateCount();
   layer.append(head, body, footer);
   layer.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
   document.body.appendChild(layer);
@@ -3459,64 +3567,68 @@ function specificCardsOf(tier) {
   return allCards.filter(c => c.category === 'Specific' && c.nemesis === settings.nemesis && c.tier === tier && c.type !== 'Curse');
 }
 
+// "Crea mazzo": una riga per Tier (come si pescherà, dall'alto in basso): etichetta, le carte in fila sovrapposte
+// (dorsi per base e potenziate, Specifiche a faccia in su) e il totale. Toccando le carte di una riga si vedono le
+// Specifiche in grande. Sotto lo slider: le carte volano nella pillola del mazzo in testata.
 function showDeckBuild() {
   closeDeckBuild();
-  const layer = el('div', 'deck-build');
+  const layer = el('div', 'deck-build deck-build--rows');
   layer.id = 'deck-build';
-  const grid = el('div', 'deck-build-grid');
-  grid.appendChild(el('span', 'deck-build-corner'));
-  ['basic', 'upgraded', 'specific'].forEach(kind => grid.appendChild(el('span', 'deck-build-head', I18N_IT.deckBuildKinds[kind])));
+  const head = el('div', 'deck-build-headline');
+  head.append(el('p', 'deck-build-for', I18N_IT.deckBuildFor(settings.nemesis || '', I18N_IT.players(settings.players))),
+    el('h2', 'deck-build-title', I18N_IT.deckBuildTitle));
+  const rows = el('div', 'deck-tiers');
   [1, 2, 3].forEach(tier => {
-    grid.appendChild(el('span', 'deck-build-tier', I18N_IT.tierN(tier)));
-    ['basic', 'upgraded', 'specific'].forEach(kind => {
-      const plan = deckPlan.find(p => p.tier === tier && p.kind === kind) || { count: 0 };
-      const pile = el('div', 'deck-build-pile' + (plan.count ? '' : ' is-empty'));
-      pile.dataset.tier = tier;
-      pile.dataset.kind = kind;
-      pile.dataset.left = plan.count;
-      pile.dataset.count = plan.count;
-      pile.setAttribute('aria-label', I18N_IT.deckBuildPile(plan.count, I18N_IT.deckBuildKinds[kind].toLowerCase(), tier));
-      if (kind === 'specific') {
-        // A faccia in su, a ventaglio (come le carte in mano); si toccano per vederle grandi
-        pile.classList.add('is-fan');
-        pile.setAttribute('role', 'button');
-        pile.tabIndex = 0;
-        const cards = specificCardsOf(tier);
-        const mid = (cards.length - 1) / 2;
-        cards.forEach((data, i) => {
-          const card = el('span', 'deck-build-fan-card');
-          card.style.setProperty('--fan', String(i - mid));
-          // Due facce: fronte (la carta) e dorso; con "Crea mazzo" la carta si gira
-          const inner = el('span', 'deck-build-fan-inner');
-          const img = document.createElement('img');
-          img.alt = '';
-          img.className = 'deck-build-fan-front';
-          img.src = data.thumb;
-          img.addEventListener('error', () => { img.src = encodeURI(data.image); }, { once: true });
-          const back = document.createElement('img');
-          back.alt = '';
-          back.className = 'deck-build-fan-back';
-          back.src = CARD_BACK;
-          inner.append(img, back);
-          card.appendChild(inner);
-          pile.appendChild(card);
-        });
-        pile.addEventListener('click', () => { if (!ui.isTransitioning) openSpecificViewer(tier); });
-        pile.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pile.click(); } });
-      } else {
-        pile.setAttribute('role', 'img');
-        const img = document.createElement('img');
-        img.alt = '';
-        img.src = CARD_BACK;
-        pile.appendChild(img);
-      }
-      const count = el('span', 'ae-pile-count', String(plan.count));
-      count.setAttribute('aria-hidden', 'true');
-      pile.appendChild(count);
-      grid.appendChild(pile);
+    const count = kind => (deckPlan.find(p => p.tier === tier && p.kind === kind) || { count: 0 }).count;
+    const specific = specificCardsOf(tier);
+    const total = count('basic') + count('upgraded') + specific.length;
+    const row = el('div', 'deck-tier-row');
+    row.dataset.tier = tier;
+    row.dataset.count = total;
+    row.dataset.left = total;
+    const cards = el('div', 'deck-tier-cards');
+    const back = kind => {
+      const c = el('span', 'deck-row-card');
+      c.dataset.kind = kind;
+      const img = document.createElement('img');
+      img.alt = '';
+      img.src = CARD_BACK;
+      c.appendChild(img);
+      return c;
+    };
+    for (let i = 0; i < count('basic'); i++) cards.appendChild(back('basic'));
+    for (let i = 0; i < count('upgraded'); i++) cards.appendChild(back('upgraded'));
+    specific.forEach(data => {
+      const c = el('span', 'deck-row-card is-specific');
+      c.dataset.kind = 'specific';
+      const front = document.createElement('img');
+      front.alt = '';
+      front.className = 'deck-row-front';
+      front.src = data.thumb;
+      front.addEventListener('error', () => { front.src = encodeURI(data.image); }, { once: true });
+      const backImg = document.createElement('img');
+      backImg.alt = '';
+      backImg.className = 'deck-row-back';
+      backImg.src = CARD_BACK;
+      c.append(front, backImg);
+      cards.appendChild(c);
     });
+    const label = el('span', 'deck-tier-label', I18N_IT.tierN(tier));
+    const totalEl = el('span', 'ae-pile-count deck-tier-total', String(total));
+    row.append(label, cards, totalEl);
+    if (specific.length) {
+      row.setAttribute('role', 'button');
+      row.tabIndex = 0;
+      row.setAttribute('aria-label', I18N_IT.deckTierLabel(tier, total));
+      row.addEventListener('click', () => { if (!ui.isTransitioning) openSpecificViewer(tier); });
+      row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.click(); } });
+    } else {
+      row.setAttribute('aria-label', I18N_IT.deckTierLabel(tier, total));
+    }
+    rows.appendChild(row);
   });
-  layer.append(el('h2', 'deck-build-title', I18N_IT.deckBuildTitle), grid);
+  rows.appendChild(el('p', 'deck-build-note', I18N_IT.deckBuildNote));
+  layer.append(head, rows);
   mainEl.appendChild(layer);
   mainEl.classList.add('is-deck-building');
 }
@@ -3675,13 +3787,10 @@ function prepareDeckFlight() {
   if (deckFlight && deckFlight.layer === layer) return deckFlight;
   const order = [];
   [3, 2, 1].forEach(tier => {
-    const ofTier = [];
-    ['basic', 'upgraded', 'specific'].forEach(kind => {
-      const pile = layer.querySelector(`.deck-build-pile[data-tier="${tier}"][data-kind="${kind}"]`);
-      const fan = kind === 'specific' ? [...pile.querySelectorAll('.deck-build-fan-card')] : null;
-      const total = kind === 'specific' ? fan.length : Number(pile.dataset.count);
-      for (let i = 0; i < total; i++) ofTier.push({ pile, fanCard: fan ? fan[i] : null });
-    });
+    const row = layer.querySelector(`.deck-tier-row[data-tier="${tier}"]`);
+    if (!row) return;
+    // Ogni carta della riga parte dal suo posto (fanCard: sparisce dalla riga quando parte)
+    const ofTier = [...row.querySelectorAll('.deck-row-card')].map(card => ({ pile: row, fanCard: card }));
     order.push(...shuffle(ofTier));
   });
   order.forEach((c, i) => { c.i = i; c.ghost = null; c.state = 0; });
@@ -3739,7 +3848,7 @@ function setDeckProgress(p) {
     ghost.style.visibility = '';
     ghost.style.transform = `translate(${dx * t}px, ${dy * t - 30 * arc}px) rotate(${(c.i % 2 ? 8 : -8) * arc}deg) scale(${s})`;
   });
-  flight.layer.querySelectorAll('.deck-build-pile').forEach(pile => {
+  flight.layer.querySelectorAll('[data-count]').forEach(pile => {
     const left = Math.max(0, Number(pile.dataset.count) - (taken.get(pile) || 0));
     pile.dataset.left = left;
     pile.querySelector('.ae-pile-count').textContent = String(left);
@@ -3748,6 +3857,7 @@ function setDeckProgress(p) {
   const before = ui.deckShown || 0;
   ui.deckShown = Math.min(deck.length, landed);
   renderDockPiles();
+  if (deckSlider) deckSlider.setCount(p > 0 ? I18N_IT.deckCounter(ui.deckShown, deck.length) : null);
   if (ui.deckShown > before) {
     dockDeck.classList.remove('is-bump');
     void dockDeck.offsetWidth;
@@ -3843,6 +3953,11 @@ function buildDeckSlider() {
     if (quiet && p === 0) box.classList.remove('is-started', 'is-dragging');
   };
   const lock = on => { locked = on; if (on) box.classList.add('is-started'); };
+  // Mentre le carte volano la scritta diventa il contatore ("11 / 18 nel mazzo"); a slider fermo all'inizio torna l'invito
+  const setCount = text => {
+    label.textContent = text || I18N_IT.slideToBuild;
+    box.classList.toggle('is-counting', !!text);
+  };
   const release = () => {
     if (!drag) return;
     drag = null;
@@ -3886,7 +4001,7 @@ function buildDeckSlider() {
     }
   });
   box.addEventListener('contextmenu', e => e.preventDefault());
-  return { box, setProgress, lock };
+  return { box, setProgress, lock, setCount };
 }
 
 // Passo Pesca: una carta coperta parte dal mazzo in alto a sinistra e vola al centro, dove diventa la carta da pescare
