@@ -186,6 +186,13 @@ const I18N_IT = {
   hintNewInPlay: name => `${name}: entra in gioco.`,
   hintDraw: 'Pesca la prossima carta del mazzo.',
   drawKind: 'Pesca',
+  // Vittoria + statistiche
+  victorySub: (name, n) => `${name} sconfitto in ${n} ${n === 1 ? 'turno nemesi' : 'turni nemesi'}`,
+  victoryTiles: { played: 'Carte giocate', killed: 'Minion uccisi', paid: ae => `Poteri pagati · ${ae} Æ`, attacks: 'Attacchi risolti' },
+  victoryMinions: 'Minion · turni in gioco',
+  minionTurnsShort: n => `${n} t.`,
+  allStats: 'Tutte le statistiche',
+  rematch: 'Rivincita',
   // Menu come foglio dal basso
   menuTileTurn: 'Turno',
   menuTileDeck: 'Mazzo',
@@ -3298,23 +3305,61 @@ function checkVictory() {
 function showVictory() {
   let close = () => {};
   const cancel = () => close();
-  const screen = el('div', 'ae-victory-screen');
+  const screen = el('div', 'ae-victory-screen ae-victory-full');
   screen.setAttribute('role', 'dialog');
   screen.setAttribute('aria-modal', 'true');
-  const text = I18N_IT.victoryTitle;
-  const title = el('h2', 'ae-tier-banner-text' + (text.length > 8 ? ' is-long' : ''), text);
+  // In alto la scritta "Vittoria" (come il banner dei Tier, ferma) e chi è stato sconfitto in quanti turni
+  const head = el('div', 'ae-victory-head');
+  const title = el('h2', 'ae-victory-title', I18N_IT.victoryTitle);
   title.id = 'victory-title';
   screen.setAttribute('aria-labelledby', title.id);
+  head.append(title, el('p', 'ae-victory-sub', I18N_IT.victorySub(settings.nemesis || '', turn)));
+  // Statistiche subito sotto: quattro tessere e i turni in gioco dei minion
+  const body = el('div', 'ae-victory-body');
+  const tiles = el('div', 'ae-victory-tiles');
+  const t = I18N_IT.victoryTiles;
+  [[Math.max(0, stats.deckSize - deck.length), t.played], [stats.minionsKilled, t.killed],
+    [stats.powersPaid, t.paid(stats.aetherSpent)], [stats.attacksResolved, t.attacks]].forEach(([v, k]) => {
+    const tile = el('div', 'ae-victory-tile');
+    tile.append(el('span', 'ae-victory-tile-value', String(v)), el('span', 'ae-victory-tile-label', k));
+    tiles.appendChild(tile);
+  });
+  body.appendChild(tiles);
+  const minions = [
+    ...stats.minions.map(m => ({ name: m.name, turns: m.turns })),
+    ...queue.filter(e => e.data.type === 'Minion').map(e => ({ name: e.data.name, turns: Math.max(0, turn - (e.bornTurn || 0)) }))
+  ];
+  if (minions.length) {
+    const box = el('div', 'ae-victory-minions');
+    box.appendChild(el('h3', 'ae-victory-minions-title', I18N_IT.victoryMinions));
+    const most = Math.max(1, ...minions.map(m => m.turns));
+    minions.forEach(m => {
+      const r = el('div', 'ae-victory-bar-row');
+      const bar = el('span', 'ae-victory-bar');
+      const fill = el('span', 'ae-victory-bar-fill');
+      fill.style.width = Math.round(100 * m.turns / most) + '%';
+      bar.appendChild(fill);
+      r.append(el('span', 'ae-victory-bar-name', m.name), bar, el('span', 'ae-victory-bar-value', I18N_IT.minionTurnsShort(m.turns)));
+      box.appendChild(r);
+    });
+    body.appendChild(box);
+  }
+  // Le statistiche complete (con le carte in fila da toccare) restano nella loro finestra
+  const all = button(I18N_IT.allStats, 'secondary', openStats);
+  all.classList.add('ae-victory-all');
+  body.appendChild(all);
   const actions = el('div', 'ae-victory-actions');
-  const statsBtn = button(I18N_IT.statsTitle, 'primary', openStats);
   const home = button(I18N_IT.mainMenu, 'secondary', () => { close(); openStart(); });
-  [statsBtn, home].forEach(b => b.classList.add('ae-button--full'));
-  actions.append(statsBtn, home);
-  screen.append(title, actions);
+  // Rivincita: stessa nemesi e stessi giocatori, mazzo nuovo (come "Ricomincia la partita")
+  const rematch = button(I18N_IT.rematch, 'primary', () => { close(); restartGame(); });
+  actions.append(home, rematch);
+  screen.append(head, body, actions);
   // Niente "Chiudi": un tocco in una parte vuota dello schermo torna alla partita
-  close = openModal(screen, { onCancel: cancel, initialFocus: statsBtn });
-  screen.addEventListener('click', e => { if (e.target === screen) cancel(); });
-  screen.parentElement.classList.add('ae-victory-backdrop');
+  close = openModal(screen, { onCancel: cancel, initialFocus: rematch });
+  screen.addEventListener('click', e => {
+    if (e.target === screen || e.target === head || e.target === body) cancel();
+  });
+  screen.parentElement.classList.add('ae-victory-backdrop', 'ae-victory-backdrop--full');
 }
 
 // Statistiche della partita, in sola lettura. Sotto alcune righe (carte giocate, carte rimanenti, minion uccisi, poteri
