@@ -1110,3 +1110,29 @@ body { overflow: hidden; }
 .ae-deck-note { flex: 0 0 auto; }
 /* Pulsante "Turno Nemesi" alto 60px, raggio 14 */
 .ae-main-row > .ae-button { min-height: 60px; border-radius: 14px; font: 700 17px/22px var(--ae-font-ui); }
+
+/* --- Proposta A, turno nemesi (v161): una carta alla volta, fila di miniature, pannello con cosa fare e «‹» --- */
+.ae-resolve-layout .ae-rail-row, .ae-resolve-layout.is-draw-phase .ae-rail-row { margin: 0; padding: 0; background: none; border: 0; }
+.ae-resolve-layout .ae-mini-rail {
+  flex: 0 0 auto; height: auto; padding: 12px 16px 4px; background: none; border: 0;
+  display: flex; justify-content: safe center; gap: 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+}
+.ae-resolve-layout .ae-mini-rail::-webkit-scrollbar { display: none; }
+.ae-mini-rail .ae-mini[aria-current='true'] { opacity: 1; }
+.ae-mini-rail .ae-mini[aria-current='true'] .ae-card-art { outline: 2px solid var(--ae-danger); outline-offset: 2px; }
+/* Pannello: tipo · posizione (piccolo, maiuscolo) e cosa fare */
+.ae-resolve-panel { display: flex; flex-direction: column; gap: 2px; }
+.ae-resolve-panel[hidden] { display: none; }
+.ae-resolve-kind { font: 700 11px/14px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--ae-text-quiet); }
+.ae-resolve-panel.is-draw .ae-resolve-kind { color: var(--ae-gold); }
+.ae-resolve-text { margin: 0; min-height: 44px; font: 600 16px/22px var(--ae-font-ui); color: var(--ae-text); }
+/* «‹» 60×64 e pulsante principale alto 64 nel turno nemesi */
+.ae-main-row > .ae-step-back {
+  flex: 0 0 60px; width: 60px; height: auto; min-height: 64px; border-radius: 14px;
+  border: 1px solid var(--ae-border); background: var(--ae-surface-raised); color: var(--ae-text-muted); font: 600 22px/1 var(--ae-font-ui);
+}
+.ae-main-row > .ae-step-back:disabled { opacity: .35; cursor: not-allowed; }
+.ae-shell.is-nemesis-turn .ae-main-row > .ae-button, .ae-shell.is-nemesis-turn .ae-main-row > .ae-dock-menu { min-height: 64px; }
+.ae-resolve-layout .ae-rail-row { display: block; width: 100%; }
+.ae-resolve-layout .ae-rail-row > .ae-mini-rail { width: 100%; box-sizing: border-box; }
+.ae-resolve-layout .ae-focus-track { transform: none; }

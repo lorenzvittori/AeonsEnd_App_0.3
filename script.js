@@ -34,8 +34,9 @@ if (!Element.prototype.replaceChildren) {
 const I18N_IT = {
   nemesisButton: 'Turno Nemesi',
   turnN: n => `Turno ${n}`,
-  ctaPowerNext: 'Vai avanti',
-  ctaPowerLast: 'Effetto risolto e scarta',
+  ctaPowerNext: 'Avanti',
+  ctaPowerLast: 'Risolto, scarta',
+  ctaMinionDone: 'Fatto, avanti',
   turnInfo: (turn, deck) => `Turno ${turn} · Mazzo ${deck}`,
   discardButton: n => `Scarti ${n}`,
   discardButtonLabel: n => `Apri gli scarti, ${n} ${n === 1 ? 'carta' : 'carte'}`,
@@ -51,8 +52,7 @@ const I18N_IT = {
   ctaResolved: 'Effetto risolto',
   ctaPutInPlay: 'Metti in gioco',
   ctaDraw: 'Pesca',
-  backToDraw: 'Torna alla carta da pescare',
-  backToActive: 'Torna alla carta da risolvere',
+  stepBack: 'Torna alla carta prima (annulla)',
   loadingCard: 'Caricamento carta…',
   imageMissing: 'Immagine non disponibile',
   retryImage: 'Riprova immagine',
@@ -175,7 +175,18 @@ const I18N_IT = {
   hpMinusLabel: (n, name) => `Togli ${n} ${n === 1 ? 'punto' : 'punti'} vita a ${name}`,
   hpPlusLabel: (n, name) => `Rimetti ${n} ${n === 1 ? 'punto' : 'punti'} vita a ${name}`,
   payCost: cost => (cost ? `Paga il costo (${String(cost).replace(/\.\s*$/, '')})` : 'Paga il costo'),
-  costPaidUndo: 'Costo pagato · Annulla'
+  costPaidUndo: 'Costo pagato · Annulla',
+  // Pannello del turno nemesi: tipo · posizione e cosa fare, in parole
+  resolveKind: (type, i, n) => `${type} · ${i} di ${n}`,
+  resolveKindNew: type => `${type} · nuova`,
+  hintMinion: name => `${name}: applica l'effetto. Resta in gioco.`,
+  hintPowerToken: (name, left) => `${name}: 1 token tolto, ` + (left === 1 ? 'ne resta 1.' : `ne restano ${left}.`),
+  hintPowerLast: name => `${name}: ultimo token. Applica l'effetto, poi la carta va negli scarti.`,
+  hintAttack: name => `${name}: applica l'effetto, poi va negli scarti.`,
+  hintNewInPlay: name => `${name}: entra in gioco.`,
+  hintDraw: 'Pesca la prossima carta del mazzo.',
+  drawKind: 'Pesca',
+  cardZoomTitle: 'Carta in gioco'
 };
 
 const app = document.getElementById('app');
@@ -198,7 +209,14 @@ const menuBtn = document.getElementById('menu-btn');
 const resolveHint = document.getElementById('resolve-hint');
 const nemesisBtn = document.getElementById('nemesis-btn');
 const resolveBtn = document.getElementById('resolve-btn');
-const backBtn = document.getElementById('back-btn');
+const backBtn = document.getElementById('back-btn'); // non più usato (Proposta A: niente anteprima nel turno nemesi)
+// "‹" del turno nemesi: torna alla carta prima (undo dentro il turno)
+const stepBackBtn = document.createElement('button');
+stepBackBtn.type = 'button';
+stepBackBtn.className = 'ae-icon-button ae-step-back';
+stepBackBtn.textContent = '‹';
+stepBackBtn.setAttribute('aria-label', I18N_IT.stepBack);
+stepBackBtn.hidden = true;
 const startLayer = document.getElementById('start');
 const startBtn = document.getElementById('start-btn');
 const resumeBtn = document.getElementById('resume-btn');
@@ -1267,10 +1285,10 @@ function closeDiscard() {
 }
 
 // Carta degli scarti ingrandita: sola lettura, solo "Chiudi immagine"
-function openDiscardZoom(data) {
+function openDiscardZoom(data, title = I18N_IT.discardZoomTitle) {
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.discardZoomTitle, data.name, cancel, { displayTitle: false });
+  const dialog = dialogShell(title, data.name, cancel, { displayTitle: false });
   const art = cardArt(data);
   art.classList.add('ae-modal-art');
   const footer = el('div', 'ae-modal-footer');
@@ -2198,6 +2216,8 @@ function render() {
   app.classList.toggle('is-nemesis-turn', resolving);
   if (!resolving) app.classList.remove('is-draw-phase');
   nemesisBtn.hidden = resolving;
+  stepBackBtn.hidden = !resolving;
+  resolvePanel.hidden = !resolving;
   nemesisBtn.disabled = !deckSetup;
   // "Turno Nemesi" con l'illustrazione della nemesi della partita (come nel menu iniziale), velata per leggere la scritta
   const nemesisArtNow = settings.nemesis && nemesisArt[settings.nemesis];
@@ -2259,11 +2279,11 @@ function canDraw() {
 // un passo a parte, con il pulsante "Pesca".
 function actionText(entry, isNew) {
   const { data, tokens } = entry;
-  if (isNew) return data.type === 'Attack' ? I18N_IT.ctaResolved : I18N_IT.ctaPutInPlay;
+  if (isNew) return data.type === 'Attack' ? I18N_IT.ctaPowerLast : I18N_IT.ctaPutInPlay;
   // Potere: il token se ne va da solo; il pulsante dice solo cosa succede dopo
   if (data.type === 'Power') return tokens > 1 ? I18N_IT.ctaPowerNext : I18N_IT.ctaPowerLast;
   // Minion (resta in gioco) e attacco (va negli scarti)
-  return I18N_IT.ctaResolved;
+  return data.type === 'Minion' ? I18N_IT.ctaMinionDone : I18N_IT.ctaPowerLast;
 }
 
 // Fascia del turno nemesi dentro .ae-rail-row (creata qui una volta sola) e classi della fase di pesca
@@ -2283,57 +2303,83 @@ function renderResolve() {
   const active = activeEntry();
   if (!active && !drawStep) return;
   const isNewStep = newIndex >= 0;
-  const viewedUid = ui.holdUid || ui.viewedUid;
-  // Nel passo da pescare la carta "da risolvere" è la carta coperta (DRAW_UID)
-  const viewed = (viewedUid === DRAW_UID && drawStep) ? null : (entryByUid(viewedUid) || active);
-  const viewingDraw = drawStep && !viewed;
-  if (!ui.holdUid) ui.viewedUid = viewingDraw ? DRAW_UID : viewed.uid;
-  const previewing = !ui.holdUid && (drawStep ? !viewingDraw : viewed !== active);
-
-  // Fascia compatta: rosso = da risolvere, avorio = mostrata
-  const railScroll = rail.scrollLeft;
-  const railScrollTop = rail.scrollTop;
-  const railItems = queue.map((entry, i) => queueItem(entry, {
-    compact: true, index: i, total: queue.length, current: entry === active, viewed: entry === viewed
-  }));
-  // Potere da risolvere: anche nella fascia il token lampeggia e diventa grigio insieme a quello della carta grande.
-  // La fascia si ridisegna spesso: l'animazione riparte dal punto giusto (ritardo negativo) o il token resta nascosto.
+  // Una carta alla volta, senza carosello: si mostra sempre la carta da risolvere (o il dorso da pescare)
+  ui.viewedUid = drawStep ? DRAW_UID : active.uid;
+  // Potere da risolvere: un token lampeggia e diventa grigio da solo. Si ricorda quando è partita l'animazione, così a
+  // ogni ridisegno riparte dal punto giusto (ritardo negativo).
   if (newIndex < 0 && active && active.data.type === 'Power') {
     const key = turn + ':' + currentIndex + ':' + active.uid + ':' + active.tokens;
     // Prima carta del turno: l'animazione parte quando lo sfondo ha finito di scorrere (ui.bgSlideUntil)
     if (ui.autoTokenKey !== key) { ui.autoTokenKey = key; ui.autoTokenAt = Math.max(performance.now(), ui.bgSlideUntil || 0); }
-    const badge = railItems[currentIndex] && railItems[currentIndex].querySelector('.ae-status-badge');
-    if (badge) {
-      badge.classList.add('is-auto-token');
-      badge.style.setProperty('--ae-token-delay', (ui.autoTokenAt - performance.now()) + 'ms');
-    }
   }
-  // In fondo alla fascia, finché non si pesca: la prossima carta del mazzo, coperta (retro) con NUOVA
-  // Il dorso compare nella fascia solo al passo Pesca (non dall'inizio del turno nemesi)
-  if (drawStep && canDraw()) railItems.push(nextCardItem({ current: drawStep, viewed: viewingDraw }));
-  rail.replaceChildren(...railItems);
+
+  // Fila di miniature come nel turno giocatori: contorno rosso sulla carta da risolvere; un tocco apre la carta in
+  // sola lettura (non cambia la carta da risolvere)
+  const railScroll = rail.scrollLeft;
+  rail.replaceChildren(...queue.map((entry, i) => {
+    const item = miniItem(entry, i);
+    if (entry === active && !drawStep) item.setAttribute('aria-current', 'true');
+    return item;
+  }));
   rail.scrollLeft = railScroll;
-  rail.scrollTop = railScrollTop;
-  const viewedItem = rail.querySelector(`[data-uid="${ui.viewedUid}"]`);
-  if (viewedItem) scrollItemInto(rail, viewedItem, 'nearest');
+  const currentItem = rail.querySelector('[aria-current="true"]');
+  if (currentItem) scrollItemInto(rail, currentItem, 'nearest');
 
-  renderFocus(viewingDraw ? { uid: DRAW_UID } : viewed);
+  renderFocus(drawStep ? { uid: DRAW_UID } : active);
+  renderResolvePanel(drawStep, active, isNewStep);
 
-  // Dock: in anteprima al posto dell'azione c'è "Torna alla carta da risolvere"
-  const text = drawStep ? I18N_IT.ctaDraw : actionText(active, isNewStep);
-  backBtn.textContent = drawStep ? I18N_IT.backToDraw : I18N_IT.backToActive;
-  resolveBtn.hidden = previewing;
-  backBtn.hidden = !previewing;
-  resolveBtn.textContent = text;
+  resolveBtn.hidden = false;
+  backBtn.hidden = true;
+  resolveBtn.textContent = drawStep ? I18N_IT.ctaDraw : actionText(active, isNewStep);
   // Fase di pesca: pulsante dorato, diverso da quelli della risoluzione
   resolveBtn.classList.toggle('is-draw', drawStep);
   // Durante l'animazione il pulsante resta focalizzabile ma non accetta tocchi (aria-disabled, controllato in onResolveClick)
   resolveBtn.setAttribute('aria-disabled', String(ui.isTransitioning));
-  // Niente suggerimento sopra il pulsante: lo spazio resta alla carta
+  stepBackBtn.disabled = !canStepBack();
   resolveHint.hidden = true;
-  // Ridimensiona di nuovo ora che il pulsante in basso è visibile: alla prima carta del turno nemesi il pulsante
-  // compariva solo dopo il primo calcolo, quindi la carta era misurata su uno spazio più alto e usciva in basso
+  // Ridimensiona di nuovo ora che il pannello in basso è disegnato
   sizeFocus(!ui.fromScroll);
+}
+
+// Pannello del turno nemesi (sopra il pulsante principale): tipo · posizione ("Minion · 2 di 4") e cosa fare, in parole
+const resolvePanel = el('div', 'ae-resolve-panel');
+resolvePanel.hidden = true;
+const resolveKind = el('span', 'ae-resolve-kind');
+const resolveText = el('p', 'ae-resolve-text');
+resolveText.setAttribute('aria-live', 'polite');
+resolvePanel.append(resolveKind, resolveText);
+function renderResolvePanel(drawStep, active, isNewStep) {
+  resolvePanel.classList.toggle('is-draw', drawStep);
+  if (drawStep) {
+    resolveKind.textContent = I18N_IT.drawKind;
+    resolveText.textContent = I18N_IT.hintDraw;
+    return;
+  }
+  const { data, tokens } = active;
+  const type = typeName(data);
+  if (isNewStep) {
+    resolveKind.textContent = I18N_IT.resolveKindNew(type);
+    resolveText.textContent = data.type === 'Attack' ? I18N_IT.hintAttack(data.name) : I18N_IT.hintNewInPlay(data.name);
+    return;
+  }
+  const p = turnProgress();
+  resolveKind.textContent = I18N_IT.resolveKind(type, p.done + 1, p.total);
+  if (data.type === 'Minion') resolveText.textContent = I18N_IT.hintMinion(data.name);
+  else if (data.type === 'Power') {
+    resolveText.textContent = tokens > 1 ? I18N_IT.hintPowerToken(data.name, tokens - 1) : I18N_IT.hintPowerLast(data.name);
+  } else resolveText.textContent = I18N_IT.hintAttack(data.name);
+}
+
+// "‹": torna alla carta prima con l'undo, ma solo se l'ultimo passo è di questo turno nemesi (non si torna al turno
+// giocatori da qui: per quello c'è "Annulla ultima azione" nel Menu)
+function canStepBack() {
+  const last = undoStack[undoStack.length - 1];
+  return !!(resolving && last && last.resolving && last.turn === turn);
+}
+function onStepBack() {
+  if (!canStepBack() || ui.isTransitioning) return;
+  undo();
+  stepBackBtn.focus({ preventScroll: true });
 }
 
 // Carta in primo piano: solo immagine (o retro durante la pesca) e stato numerico. Nessuna etichetta, nome o tipo
@@ -2452,7 +2498,7 @@ function renderFocus(viewed) {
       main.classList.add('is-big');
       slides = [...(other ? [focusSlide(other)] : []), main];
     } else {
-      slides = queue.map(focusSlide);
+      slides = [focusSlide(viewed)];
     }
     focusTrack.replaceChildren(...slides);
     // La firma si calcola dopo: disegnare la carta pescata può far avanzare il suo stato (pronta → si gira)
@@ -2532,8 +2578,8 @@ const STATUS_H = 37;
 function sharedCardWidth(boxW, boxH, padY, peekRoom) {
   const byWidth = boxW - 16 - peekRoom; // 8px di margine per lato
   const byHeight = (boxH - padY - STATUS_H - 8) / CARD_RATIO;
-  const byControls = (boxH - 2 * 52 - STATUS_H - 8) / CARD_RATIO;
-  return Math.floor(Math.min(byWidth, byHeight, byControls));
+  // (Proposta A: sotto le carte non ci sono più comandi, quindi niente spazio da riservare)
+  return Math.floor(Math.min(byWidth, byHeight));
 }
 
 // Tablet e desktop (da 768px): la partita sta in una colonna al centro (--ae-col su .ae-shell, style.css). La colonna
@@ -2562,7 +2608,8 @@ function sizeFocus(recentre = true) {
   sizeColumn(focusEl);
   const style = getComputedStyle(focusEl);
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-  const peekRoom = queue.length > 1 ? 2 * (PEEK_VISIBLE + PEEK_GAP) : 0;
+  // Una carta alla volta: niente spazio per le vicine
+  const peekRoom = 0;
   const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom));
   focusEl.style.setProperty('--ae-focus-w', width + 'px');
   focusEl.style.setProperty('--cw', width + 'px');
@@ -2817,10 +2864,7 @@ function onNemesisClick(e) {
   // Le carte non spariscono e non ricompaiono: niente dissolvenza della vista, la fascia piccola resta dove era
   // (stesso scorrimento); cambiano solo lo sfondo e i pulsanti
   const railScroll = queueRail ? queueRail.scrollLeft : 0;
-  // Le carte grandi partono dalla carta che si stava guardando e scorrono fino alla prima da risolvere (renderFocus)
-  const shownUid = queue.length ? centredQueueUid() : null;
-  if (shownUid !== null && entryByUid(shownUid)) focusEl.dataset.uid = String(shownUid);
-  else delete focusEl.dataset.uid;
+  delete focusEl.dataset.uid;
   if (resolving) {
     showActive(activeEntry());
     resolveView.classList.remove('is-entering');
@@ -2847,27 +2891,6 @@ function shakeApp() {
   setTimeout(() => app.classList.remove('is-shaking'), 520);
 }
 
-// Mostra un'altra carta senza risolvere nulla (anteprima): non cambia mazzo, vita, token, scarti, turno, undo
-function viewCard(uid) {
-  if (!resolving || ui.holdUid) return;
-  if ((uid === DRAW_UID ? !isDrawStep() : !entryByUid(uid)) || ui.viewedUid === uid) return;
-  ui.viewedUid = uid;
-  renderResolve();
-}
-
-function moveView(step) {
-  const i = queue.findIndex(e => e.uid === ui.viewedUid);
-  const next = queue[i + step];
-  if (next) viewCard(next.uid);
-}
-
-function backToActive() {
-  const active = activeEntry();
-  if (active) viewCard(active.uid);
-  else if (isDrawStep()) viewCard(DRAW_UID);
-  resolveBtn.focus();
-}
-
 // --- 9. Eventi e avvio ---------------------------------------------------------------------------------------------
 
 // Un tocco che diventa scorrimento (oltre DRAG_THRESHOLD px) non apre la carta
@@ -2882,6 +2905,8 @@ function trackDrag(container) {
 }
 trackDrag(queueViewport);
 trackDrag(rail);
+// Turno nemesi: la fascia è una fila di miniature come nel turno giocatori (Proposta A)
+rail.classList.replace('ae-compact-rail', 'ae-mini-rail');
 
 queueList.addEventListener('click', e => {
   const item = e.target.closest('.ae-queue-item');
@@ -2893,7 +2918,8 @@ queueList.addEventListener('click', e => {
 rail.addEventListener('click', e => {
   const item = e.target.closest('.ae-queue-item');
   if (!item || rail.dataset.dragged === '1') return;
-  viewCard(Number(item.dataset.uid));
+  const entry = entryByUid(Number(item.dataset.uid));
+  if (entry) openDiscardZoom(entry.data, I18N_IT.cardZoomTitle);
 });
 
 // Carosello del turno nemesi: toccando il retro della carta da pescare si pesca; toccando un minion (quello al centro)
@@ -2919,15 +2945,6 @@ focusEl.addEventListener('keydown', e => {
     e.preventDefault();
     e.target.click();
   }
-});
-
-// Frecce sinistra/destra sulla fascia: cambiano solo la carta mostrata
-rail.addEventListener('keydown', e => {
-  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-  e.preventDefault();
-  moveView(e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1);
-  const item = rail.querySelector(`[data-uid="${ui.viewedUid}"]`);
-  if (item) item.focus();
 });
 
 // Esc chiude il livello in primo piano; Tab resta dentro dialoghi, scarti e pagina iniziale
@@ -3001,23 +3018,22 @@ function turnStartCount() {
   return null;
 }
 
+// Avanzamento del turno: carte da risolvere in tutto (total), già risolte (done), passo Pesca (drawing)
+function turnProgress() {
+  const drawing = resolving && (isDrawStep() || newIndex >= 0);
+  if (!resolving) return { total: queue.filter(e => !isGone(e)).length, done: -1, drawing };
+  // Carte ancora da risolvere (quella attuale compresa); le risolte sono le altre di inizio turno
+  const remaining = drawing ? 0 : Math.max(0, queue.length - currentIndex);
+  const start = turnStartCount();
+  const fallback = newIndex >= 0 ? queue.length - 1 : queue.length;
+  const total = Math.max(start === null ? fallback : start, remaining);
+  return { total, done: total - remaining, drawing };
+}
+
 function renderTurnTrack() {
   turnTrack.hidden = ui.deckBuilding;
   if (ui.deckBuilding) return;
-  const drawing = resolving && (isDrawStep() || newIndex >= 0);
-  let total;
-  let done;
-  if (!resolving) {
-    total = queue.filter(e => !isGone(e)).length;
-    done = -1;
-  } else {
-    // Carte ancora da risolvere (quella attuale compresa); le risolte sono le altre di inizio turno
-    const remaining = drawing ? 0 : Math.max(0, queue.length - currentIndex);
-    const start = turnStartCount();
-    const fallback = newIndex >= 0 ? queue.length - 1 : queue.length;
-    total = Math.max(start === null ? fallback : start, remaining);
-    done = total - remaining;
-  }
+  const { total, done, drawing } = turnProgress();
   const seg = cls => el('span', 'ae-track-seg ' + cls);
   const segs = [seg('is-players ' + (resolving ? 'is-done' : 'is-now'))];
   for (let k = 0; k < total; k++) {
@@ -4116,12 +4132,14 @@ nemesisBtn.addEventListener('click', onNemesisClick);
   nemesisBtn.before(row);
   deckSlider = buildDeckSlider();
   // Menu a sinistra del pulsante principale, nei due turni (nel turno nemesi il pulsante principale è resolveBtn/backBtn)
-  row.append(menuBtn, nemesisBtn, deckSlider.box, resolveBtn, backBtn);
+  row.append(menuBtn, stepBackBtn, nemesisBtn, deckSlider.box, resolveBtn, backBtn);
+  // Pannello del turno nemesi (cosa fare con la carta), sopra la riga
+  row.before(resolvePanel);
   // Pannello di comando della carta al centro (turno giocatori), sopra la riga
   row.before(deckCard);
 }
 resolveBtn.addEventListener('click', onResolveClick);
-backBtn.addEventListener('click', backToActive);
+stepBackBtn.addEventListener('click', onStepBack);
 retryBtn.addEventListener('click', init);
 document.getElementById('wave-select').addEventListener('change', e => renderBosses(e.target.value));
 // Interruttore "Includi carte base potenziate" tolto: si toglie anche da un index.html vecchio in cache

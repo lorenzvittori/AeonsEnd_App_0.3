@@ -132,21 +132,27 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   schermo e vibrazione (urgenza, `shakeApp`). Lo sfondo (maga a sinistra, nemesi a destra) scorre verso il lato della
   nemesi.
 
-**Turno nemesi**
-- Le carte in gioco si risolvono dalla più vecchia, una alla volta, in un carosello che si scorre con il dito; la fascia
-  in alto indica la carta guardata. Guardando un'altra carta compare "Torna alla carta da risolvere".
-- Toccando "Turno Nemesi" il carosello parte dalla carta che si stava guardando e scorre (animato) fino alla carta da
-  risolvere; anche un tocco sulla fascia in alto fa scorrere il carosello, come nel turno giocatori.
+**Turno nemesi** (Proposta A, da v161)
+- Le carte in gioco si risolvono dalla più vecchia, **una alla volta, senza carosello**: al centro c'è solo la carta da
+  risolvere, con sopra la riga vita/token. Non si può guardare un'altra carta al suo posto (tolti l'anteprima e
+  "Torna alla carta da risolvere").
+- In alto la stessa **fila di miniature** del turno giocatori: contorno rosso sulla carta da risolvere; toccandone una
+  si apre la carta in grande, in sola lettura.
 - La carta da risolvere lampeggia di rosso, come l'attacco appena pescato; non lampeggiano i poteri con più di un token.
-- Pulsante in basso:
-  - **potere:** un token lampeggia e diventa grigio da solo; il pulsante dice "Vai avanti" (token −1) o "Effetto risolto
-    e scarta" (ultimo token: negli scarti);
-  - **minion:** "Effetto risolto", resta in gioco. Toccando il minion si apre la finestra con −1 / +1 alla vita;
-  - **attacco:** "Effetto risolto", va negli scarti.
+- **Pannello** in basso, sopra il pulsante principale: "Minion · 2 di 4" (tipo e posizione, come nella traccia) e cosa
+  fare, in parole: "<Nome>: applica l'effetto. Resta in gioco." / "1 token tolto, ne restano N." / "ultimo token.
+  Applica l'effetto, poi la carta va negli scarti." / attacco "applica l'effetto, poi va negli scarti."
+- Riga in basso: Menu, **«‹»** (torna alla carta prima con l'undo; attivo solo se l'ultimo passo è di questo turno
+  nemesi, `canStepBack`) e il pulsante principale (alto 64px):
+  - **potere:** un token lampeggia e diventa grigio da solo; il pulsante dice "Avanti" (token −1) o "Risolto, scarta"
+    (ultimo token: negli scarti);
+  - **minion:** "Fatto, avanti", resta in gioco. Toccando il minion si apre la finestra con −1 / +1 alla vita;
+  - **attacco:** "Risolto, scarta", va negli scarti.
 - **Passo Pesca:** dopo l'ultima carta un dorso vola dal mazzo al centro, con il pulsante dorato **Pesca** (o tocco sul
   dorso). La carta si gira e mostra NUOVA e un bagliore dorato; un attacco lampeggia di rosso. Dorso e carta pescata
   sono più grandi delle altre carte: il 90% (`BIG_CARD_SCALE`) della misura massima calcolata da `sizeFocus`.
-  - Attacco pescato: "Effetto risolto", vola negli scarti. Altre carte: "Metti in gioco". Poi si torna al turno
+  - Attacco pescato: "Risolto, scarta", vola negli scarti. Altre carte: "Metti in gioco" (pannello: "Minion · nuova",
+    "<Nome>: entra in gioco."). Poi si torna al turno
     giocatori: la carta messa in gioco si rimpicciolisce al suo posto e le altre carte della coda entrano da sinistra.
 - Alla prima carta di Tier 2 e di Tier 3 compare la scritta "Tier N".
 - **Il mazzo non si rimescola:** se è vuoto la nemesi non pesca.
@@ -221,9 +227,10 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 | **Coda** (`queue`) | Le carte nemesi in gioco, in ordine di arrivo. |
 | **Vista piccola / fascia** (`.ae-compact-rail`) | Striscia in alto con tutte le carte in piccolo: `#rail` (dentro `.ae-rail-row`) nel turno nemesi. Nel turno giocatori è la fila di **miniature** `#queue-rail.ae-mini-rail`. |
 | **Vista grande** | Le carte grandi: lista scorrevole nel turno giocatori, carosello nel turno nemesi. |
-| **Carosello** (`#focus`, `.ae-focus-track`, `.ae-focus-slide`) | Turno nemesi: tutte le carte in fila, scroll-snap nativo, ai lati si vede un pezzo delle vicine. |
+| **Carosello** (`#focus`, `.ae-focus-track`, `.ae-focus-slide`) | Turno nemesi: dalla v161 contiene una sola carta (quella da risolvere, o il dorso / la carta pescata). Il codice dello scorrimento c'è ancora ma non serve più. |
 | **Carta da risolvere** | La carta indicata da `currentIndex`. |
-| **Carta mostrata / in anteprima** | La carta al centro (`ui.viewedUid`). Se non è quella da risolvere compare "Torna alla carta da risolvere". |
+| **Carta mostrata** (`ui.viewedUid`) | Dalla v161 è sempre la carta da risolvere (niente anteprima). |
+| **Pannello del turno nemesi** (`.ae-resolve-panel`, `renderResolvePanel`) | Tipo · posizione e cosa fare con la carta; con «‹» (`stepBackBtn`, `canStepBack`). |
 | **Passo Pesca** (`isDrawStep()`, `DRAW_UID = -1`) | Dopo l'ultima carta risolta: dorso al centro e pulsante dorato "Pesca". |
 | **Carta nuova** | Carta appena pescata: etichetta NUOVA e bagliore dorato; un attacco lampeggia di rosso. |
 | **Banner Tier** (`showBanner`) | Scritta "Tier 2" / "Tier 3" alla prima carta di quel Tier pescata; la stessa animazione serve per "Partita iniziata". Il carattere Cinzel si carica all'avvio (`preloadBannerFont`); la scritta entra ferma (`is-preparing`) e parte quando il carattere è pronto (max 300 ms) e dopo due fotogrammi. L'animazione muove solo trasformazione e opacità. |
