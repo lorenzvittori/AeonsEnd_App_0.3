@@ -44,14 +44,14 @@ function pileContent(node, imgSrc, count) {
 // Le carte ancora in volo verso gli scarti non si contano finché non atterrano (ui.flyingDiscards)
 function renderDockPiles() {
   // Durante la creazione del mazzo il numero sale man mano che le carte arrivano (ui.deckShown)
-  const deckCount = ui.deckShown !== null && ui.deckShown !== undefined ? ui.deckShown : deck.length;
+  const deckCount = ui.deckShown !== null && ui.deckShown !== undefined ? ui.deckShown : game.deck.length;
   pileContent(dockDeck, deckCount ? CARD_BACK : null, deckCount);
-  dockDeck.setAttribute('aria-label', I18N_IT.deckLabel(deck.length));
+  dockDeck.setAttribute('aria-label', I18N_IT.deckLabel(game.deck.length));
   dockDeck.setAttribute('aria-haspopup', 'true');
-  const shown = Math.max(0, discard.length - ui.flyingDiscards);
-  const last = discard[shown - 1];
+  const shown = Math.max(0, game.discard.length - ui.flyingDiscards);
+  const last = game.discard[shown - 1];
   pileContent(dockDiscard, last ? encodeURI(last.thumb || last.image) : null, shown);
-  dockDiscard.setAttribute('aria-label', I18N_IT.discardButtonLabel(discard.length));
+  dockDiscard.setAttribute('aria-label', I18N_IT.discardButtonLabel(game.discard.length));
 }
 
 // Animazione dello scarto: una copia della carta si stacca (si alza e si inclina), vola in arco verso la pila degli
@@ -164,12 +164,12 @@ function toPlayersTurn(morphUid, fromNode) {
 // stato non cambia (per esempio con Undo si torna indietro e la condizione non vale più).
 let victoryKey = '';
 function checkVictory() {
-  if (resolving || !isVictory()) { victoryKey = ''; return; }
-  const key = turn + ':' + discard.length + ':' + queue.length;
+  if (game.resolving || !isVictory()) { victoryKey = ''; return; }
+  const key = game.turn + ':' + game.discard.length + ':' + game.queue.length;
   if (victoryKey === key || modals.length || !startLayer.hidden) return;
   victoryKey = key;
   setTimeout(() => {
-    if (resolving || !isVictory() || modals.length) return;
+    if (game.resolving || !isVictory() || modals.length) return;
     showVictory();
   }, reducedMotion.matches ? 0 : MORPH_MS + 100);
 }
@@ -178,7 +178,7 @@ function checkVictory() {
 // Menu iniziale; un tocco su una parte vuota torna alla partita com'era. Si apre da sola (checkVictory) o dal Menu ("Nemesi uccisa").
 function showVictory() {
   // Fine del tempo di partita (statistiche): l'ultima volta che si arriva alla Vittoria
-  stats.endedAt = Date.now();
+  game.stats.endedAt = Date.now();
   save();
   let close = () => {};
   const cancel = () => close();
@@ -207,26 +207,26 @@ function showVictory() {
 function openStats() {
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.statsTitle, settings.nemesis || '', cancel, { displayTitle: false });
+  const dialog = dialogShell(I18N_IT.statsTitle, game.settings.nemesis || '', cancel, { displayTitle: false });
   dialog.classList.add('ae-stats');
   const rows = I18N_IT.statsRows;
   const lists = I18N_IT.statsLists;
-  const ids = (stats && stats.cards) || {};
+  const ids = (game.stats && game.stats.cards) || {};
   const byId = list => (Array.isArray(list) ? list : []).map(id => cardsById.get(id)).filter(Boolean);
   // Carte giocate: tutte quelle uscite dal mazzo (scarti, dalla più vecchia, e carte ancora in gioco)
-  const played = discard.concat(queue.map(e => e.data));
+  const played = game.discard.concat(game.queue.map(e => e.data));
   // Carte rimanenti: per Tier e nome (l'ordine del mazzo non si mostra)
-  const left = deck.slice().sort((x, y) => (x.tier || 0) - (y.tier || 0) || x.name.localeCompare(y.name));
+  const left = game.deck.slice().sort((x, y) => (x.tier || 0) - (y.tier || 0) || x.name.localeCompare(y.name));
   const list = el('div', 'ae-stats-list');
   [
-    [rows.turns, turn],
-    [rows.played, Math.max(0, stats.deckSize - deck.length), played, lists.played],
-    [rows.left, deck.length, left, lists.left],
-    [rows.minionsKilled, stats.minionsKilled, byId(ids.minionsKilled), lists.minionsKilled],
-    [rows.powersPaid, stats.powersPaid, byId(ids.powersPaid), lists.powersPaid],
-    [rows.powersResolved, stats.powersResolved, byId(ids.powersResolved), lists.powersResolved],
-    [rows.aetherSpent, stats.aetherSpent],
-    [rows.attacksResolved, stats.attacksResolved, byId(ids.attacksResolved), lists.attacksResolved]
+    [rows.turns, game.turn],
+    [rows.played, Math.max(0, game.stats.deckSize - game.deck.length), played, lists.played],
+    [rows.left, game.deck.length, left, lists.left],
+    [rows.minionsKilled, game.stats.minionsKilled, byId(ids.minionsKilled), lists.minionsKilled],
+    [rows.powersPaid, game.stats.powersPaid, byId(ids.powersPaid), lists.powersPaid],
+    [rows.powersResolved, game.stats.powersResolved, byId(ids.powersResolved), lists.powersResolved],
+    [rows.aetherSpent, game.stats.aetherSpent],
+    [rows.attacksResolved, game.stats.attacksResolved, byId(ids.attacksResolved), lists.attacksResolved]
   ].forEach(([label, value, cards, listLabel]) => {
     const row = el('dl', 'ae-side-stats ae-stats-row');
     row.append(el('dt', '', label), el('dd', '', String(value)));
@@ -242,8 +242,8 @@ function openStats() {
   // Ogni minion con la sua carta (le partite vecchie non hanno l'id: si cerca per nome)
   const minionCard = m => (m.id && cardsById.get(m.id)) || allCards.find(c => c.type === 'Minion' && c.name === m.name) || null;
   const minions = [
-    ...stats.minions.map(m => ({ name: m.name, data: minionCard(m), turns: m.turns, alive: false })),
-    ...queue.filter(e => e.data.type === 'Minion').map(e => ({ name: e.data.name, data: e.data, turns: Math.max(0, turn - (e.bornTurn || 0)), alive: true }))
+    ...game.stats.minions.map(m => ({ name: m.name, data: minionCard(m), turns: m.turns, alive: false })),
+    ...game.queue.filter(e => e.data.type === 'Minion').map(e => ({ name: e.data.name, data: e.data, turns: Math.max(0, game.turn - (e.bornTurn || 0)), alive: true }))
   ];
   const minionTitle = el('h3', 'ae-stats-subtitle', I18N_IT.statsMinionsTitle);
   let minionList;
@@ -279,7 +279,7 @@ function openStats() {
   const body = magesTable.appendChild(el('tbody'));
   // Una riga per giocatore (il jolly non ha una riga sua: i suoi turni contano per il giocatore che era jolly)
   playerKinds().forEach(kind => {
-    const m = (stats.mages && stats.mages[kind]) || { damage: 0, powers: 0, kills: 0 };
+    const m = (game.stats.mages && game.stats.mages[kind]) || { damage: 0, powers: 0, kills: 0 };
     const tr = el('tr');
     const name = el('th', '');
     name.scope = 'row';
@@ -299,9 +299,9 @@ function openStats() {
 // Tempi delle statistiche: [etichetta, millisecondi o null]. La fine è la Vittoria (stats.endedAt) o adesso.
 // Il tempo è quello dell'orologio: comprende anche le pause con l'app chiusa.
 function statsTimes() {
-  const start = stats.startedAt;
-  const at = stats.tierAt || {};
-  const end = stats.endedAt || Date.now();
+  const start = game.stats.startedAt;
+  const at = game.stats.tierAt || {};
+  const end = game.stats.endedAt || Date.now();
   if (!start) return [[I18N_IT.statsTime, null], [I18N_IT.statsTierTime(1), null], [I18N_IT.statsTierTime(2), null], [I18N_IT.statsTierTime(3), null]];
   const t2 = at[2] || null;
   const t3 = at[3] || null;

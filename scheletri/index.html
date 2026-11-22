@@ -1563,7 +1563,8 @@ function preparaApp() {
   noBars.textContent = '*{scrollbar-width:none !important}*::-webkit-scrollbar{display:none !important}';
   document.head.appendChild(noBars);
   const nem = nemeses.find(n => n.battle && allCards.some(c => c.category === 'Specific' && c.nemesis === n.name));
-  settings = { players: 2, nemesis: nem.name, includeUpgraded: true };
+  // Stato della partita in game (dalla v232, refactoring fase 4)
+  game.settings = { players: 2, nemesis: nem.name, includeUpgraded: true };
   newGame();
   closeStart();
   ui.deckBuilding = false;
@@ -1571,10 +1572,10 @@ function preparaApp() {
   app.classList.remove('is-deck-dark');
   const mins = allCards.filter(c => c.type === 'Minion' && c.hp > 0);
   const pows = allCards.filter(c => c.type === 'Power' && c.removable !== false);
-  queue = [mins[0], pows[0], mins[1], pows[1], mins[2], pows[2], mins[3]].map(makeEntry);
-  resolving = false;
-  turn = 1;
-  turnOrder = { left: ['p2', 'p2', 'nemesis', 'nemesis'], drawn: ['p1', 'p1'], round: 1, picks: {}, wild: null };
+  game.queue = [mins[0], pows[0], mins[1], pows[1], mins[2], pows[2], mins[3]].map(makeEntry);
+  game.resolving = false;
+  game.turn = 1;
+  game.turnOrder = { left: ['p2', 'p2', 'nemesis', 'nemesis'], drawn: ['p1', 'p1'], round: 1, picks: {}, wild: null };
   render();
 }
 async function misuraApp() {
@@ -1591,8 +1592,8 @@ async function misuraApp() {
     try { document.getAnimations().forEach(a => { try { a.finish(); } catch (e) {} }); } catch (e) {}
     await new Promise(r => setTimeout(r, 120));
   };
-  resolving = false; ui.isTransitioning = false; render(); await settle();
-  scrollToCard(queue[3].uid, 'center'); await settle();
+  game.resolving = false; ui.isTransitioning = false; render(); await settle();
+  scrollToCard(game.queue[3].uid, 'center'); await settle();
   let item = null;
   for (let k = 0; k < 15 && !item; k++) {
     item = document.querySelector(`.queue-slot .ae-queue-item[data-uid="${centredQueueUid()}"]`);

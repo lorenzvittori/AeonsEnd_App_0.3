@@ -10,32 +10,11 @@ async function loadJson(path) {
 }
 
 // Le regole di gioco sono in js/00-regole.js (oggetto Regole, senza DOM né variabili globali): qui le funzioni con i
-// nomi di sempre le chiamano passando i dati, la collezione, le scelte e le parti della partita.
+// nomi di sempre le chiamano passando i dati, la collezione, game.settings e la partita (game, js/01: le regole del
+// turno nemesi ricevono game e ne usano queue, deck, discard, stats, turn, currentIndex, newIndex, resolving, maxTierDrawn).
 // Dati per le regole: carte, nemesi, Nemesis Deck Setup
 function rulesDb() {
   return { cards: allCards, nemeses, deckSetup };
-}
-// Parti della partita usate dalle regole del turno nemesi (gameParts) e riscritte dopo (applyGameParts); withGame(fn)
-// fa le due cose intorno a fn(g)
-function gameParts() {
-  return { queue, deck, discard, stats, turn, currentIndex, newIndex, resolving, maxTierDrawn };
-}
-function applyGameParts(g) {
-  queue = g.queue;
-  deck = g.deck;
-  discard = g.discard;
-  stats = g.stats;
-  turn = g.turn;
-  currentIndex = g.currentIndex;
-  newIndex = g.newIndex;
-  resolving = g.resolving;
-  maxTierDrawn = g.maxTierDrawn;
-}
-function withGame(fn) {
-  const g = gameParts();
-  const result = fn(g);
-  applyGameParts(g);
-  return result;
 }
 
 function shuffle(cards) {
@@ -160,12 +139,12 @@ function loadDeckOptions() {
 }
 function saveDeckOptions() {
   try {
-    localStorage.setItem(DECK_OPTIONS_KEY, JSON.stringify({ battleMode: settings.battleMode !== false, mergeCollection: settings.mergeCollection !== false }));
+    localStorage.setItem(DECK_OPTIONS_KEY, JSON.stringify({ battleMode: game.settings.battleMode !== false, mergeCollection: game.settings.mergeCollection !== false }));
   } catch (err) { console.warn(err); }
 }
 // Riga di deck-setup.json usata dal mazzo: la battaglia della nemesi o, senza "Modalità battaglia", la battaglia 1
 // (con le Upgraded a 0). null se la nemesi non ha battaglia
-function deckSetupRow(s = settings) {
+function deckSetupRow(s = game.settings) {
   return Regole.deckSetupRow(rulesDb(), s);
 }
 // Carte Upgraded del mazzo nemesi nei prodotti posseduti di una wave
@@ -174,19 +153,19 @@ function ownedUpgradedInWave(wave) {
 }
 // Conflitto (decisione dell'utente): con "Modalità battaglia" la battaglia chiede carte Upgraded ma la wave della
 // nemesi, nella collezione, non ne ha: "Unisci" resta acceso e bloccato. Restituisce la wave (o null se non c'è blocco)
-function mergeLockedWave(s = settings) {
+function mergeLockedWave(s = game.settings) {
   return Regole.mergeLockedWave(rulesDb(), collection, s);
 }
-function mergeActive(s = settings) {
+function mergeActive(s = game.settings) {
   return Regole.mergeActive(rulesDb(), collection, s);
 }
 // Carte Basic / Upgraded che possono entrare nel mazzo per un Tier: della collezione e, senza "Unisci", della wave
 // della nemesi
-function deckPool(category, tier, s = settings) {
+function deckPool(category, tier, s = game.settings) {
   return Regole.deckPool(rulesDb(), collection, category, tier, s);
 }
 // Carte che mancano rispetto a deck-setup.json (per la riga di avviso prima di "Inizia partita"): { want, have }
-function deckShortfall(s = settings) {
+function deckShortfall(s = game.settings) {
   return Regole.deckShortfall(rulesDb(), collection, s);
 }
 
@@ -196,25 +175,25 @@ function deckShortfall(s = settings) {
 let deckPlan = [];
 function buildDeck() {
   // Nessuna nemesi giocabile (per esempio collezione vuota, v194): mazzo vuoto, si sceglie dopo
-  const built = Regole.buildDeck(rulesDb(), collection, settings, Math.random);
+  const built = Regole.buildDeck(rulesDb(), collection, game.settings, Math.random);
   deckPlan = built.plan;
   return built.deck;
 }
 
 // Nuova partita: mazzo nuovo per le scelte correnti, scarti vuoti, turni a zero
 function newGame() {
-  deck = buildDeck();
-  discard = [];
-  turn = 0;
-  maxTierDrawn = 0;
-  stats = emptyStats(deck.length);
-  stats.startedAt = Date.now();
+  game.deck = buildDeck();
+  game.discard = [];
+  game.turn = 0;
+  game.maxTierDrawn = 0;
+  game.stats = emptyStats(game.deck.length);
+  game.stats.startedAt = Date.now();
   // Mazzo dei turni ancora da cominciare (v193): finito "Crea mazzo" si aspetta "Pesca carta turno" (drawFirstTurn)
-  turnOrder = Regole.newTurnOrder();
+  game.turnOrder = Regole.newTurnOrder();
 }
 // Attesa della carta turno: nessun turno ancora cominciato nel giro (o, salvataggi v211-v221, waiting: turno annullato)
 function awaitingTurnCard() {
-  return Regole.awaitingTurnCard(turnOrder, resolving);
+  return Regole.awaitingTurnCard(game.turnOrder, game.resolving);
 }
 // "Pesca carta turno": estrae il primo turno; se è la nemesi parte subito il turno nemesi
 function drawFirstTurn() {
@@ -245,7 +224,7 @@ function isPairCard(kind) { return Regole.isPairCard(kind); }
 function pairOptions(kind) { return Regole.pairOptions(kind); }
 // Giocatori della partita: 'p1'..'pN' (righe delle Statistiche maghi)
 function playerKinds() {
-  return Regole.playerKinds(settings.players);
+  return Regole.playerKinds(game.settings.players);
 }
 // Estrae a caso una carta tra quelle rimaste (finite le 6 si rimescola). pick: solo le carte che lo soddisfano
 // (serve per i salvataggi vecchi, senza mazzo dei turni)
@@ -254,12 +233,12 @@ function playerKinds() {
 // (Regole.shuffleTurnOrder: mazzo in ordine, left[0] = la carta in cima, nessuna carta nota; la memoria delle carte
 // 1/2 e 3/4 NON si azzera; la storia dei turni riparte vuota)
 function shuffleTurnOrder() {
-  turnOrder = Regole.shuffleTurnOrder(turnOrder, settings.players, turnOrderCards(settings.players), Math.random);
+  game.turnOrder = Regole.shuffleTurnOrder(game.turnOrder, game.settings.players, turnOrderCards(game.settings.players), Math.random);
 }
 // Turno in corso = ultimo del giro (v194): mazzo dei turni vuoto; finendolo si mischia il mazzo e si aspetta "Pesca la
 // prima carta turno"
 function turnRoundOver() {
-  return Regole.turnRoundOver(turnOrder);
+  return Regole.turnRoundOver(game.turnOrder);
 }
 // Fine di un turno: carta turno dopo, o a fine giro mazzo mischiato e attesa (null)
 function nextTurnCard() {
@@ -271,9 +250,9 @@ function nextTurnCard() {
 // (chooseTurnPlayer). Ogni carta pescata è un turno della storia del giro (v222)
 function drawTurnCard(pick) {
   // (le carte di un giro nuovo servono solo a mazzo vuoto: turnOrderCards si legge solo allora, come prima)
-  const r = Regole.drawTurnCard(turnOrder, { players: settings.players, pick, random: Math.random,
-    get cards() { return turnOrderCards(settings.players); } });
-  turnOrder = r.order;
+  const r = Regole.drawTurnCard(game.turnOrder, { players: game.settings.players, pick, random: Math.random,
+    get cards() { return turnOrderCards(game.settings.players); } });
+  game.turnOrder = r.order;
   return r.card;
 }
 
@@ -285,7 +264,7 @@ function drawTurnCard(pick) {
 // La barra dei turni mostra la storia (turni passati e turno in corso) più le carte del mazzo: una carta rimessa nel
 // mazzo resta come turno passato e compare anche come turno futuro; il turno in corso continua anche se la sua carta
 // torna nel mazzo. Riparte vuota a ogni giro (shuffleTurnOrder).
-function currentTurn(order = turnOrder) {
+function currentTurn(order = game.turnOrder) {
   return Regole.currentTurn(order);
 }
 // Storia ricostruita dagli scarti dei turni (salvataggi di prima della v222): ogni carta negli scarti è un turno
@@ -295,7 +274,7 @@ function historyFromPile(order) {
 // Giocatore di un turno della storia: 'p1'..'p4' (wild: chi è wild nel giro), null per la nemesi o per una 1/2 o 3/4
 // non ancora scelta
 function historyPlayer(entry) {
-  return Regole.historyPlayer(entry, turnOrder.wild);
+  return Regole.historyPlayer(entry, game.turnOrder.wild);
 }
 // Giocatori dedotti per le carte 1/2 e 3/4 del mazzo dei turni (dalla cima), seguendo la memoria delle coppie: una
 // carta obbligata ha il suo giocatore; dopo una carta da scegliere quelle della stessa coppia non si sanno
@@ -338,16 +317,16 @@ function currentTurnCard() {
 // i: posizione della carta in turnOrder.drawn (-1 = nel mazzo); senza i (v222): il turno in corso, dalla storia.
 // order: turnOrder o la bozza della finestra del mazzo dei turni (v211)
 // (il wild si legge sempre da turnOrder, anche con la bozza della finestra, come prima)
-function turnCardPlayer(kind, i, order = turnOrder) {
-  return Regole.turnCardPlayer(kind, i, order, turnOrder.wild);
+function turnCardPlayer(kind, i, order = game.turnOrder) {
+  return Regole.turnCardPlayer(kind, i, order, game.turnOrder.wild);
 }
 // Scelta del giocatore per la carta x/y del turno in corso (si può annullare con Undo)
 function chooseTurnPlayer(player) {
   const cur = currentTurn();
-  if (resolving || ui.isTransitioning || !cur || !isPairCard(cur.kind) || cur.player) return;
+  if (game.resolving || ui.isTransitioning || !cur || !isPairCard(cur.kind) || cur.player) return;
   // (v220) Carta SCELTA: la prossima carta della coppia tocca all'altro giocatore (memoria). Undo riporta tutto
   // (v222: il giocatore va nella storia del turno e, se la carta è ancora negli scarti, sulla carta)
-  act(() => { Regole.choosePairPlayer(turnOrder, player); });
+  act(() => { Regole.choosePairPlayer(game.turnOrder, player); });
   render();
   announce(turnTrack.getAttribute('aria-label'));
   nemesisBtn.focus({ preventScroll: true });
@@ -364,26 +343,26 @@ function aetherCost(data) {
 }
 // Minion ucciso (vita a 0, negli scarti)
 function countMinionKilled(entry) {
-  Regole.countMinionKilled(stats, entry, turn);
+  Regole.countMinionKilled(game.stats, entry, game.turn);
 }
 // Potere scartato pagando il costo
 function countPowerPaid(entry) {
-  Regole.countPowerPaid(stats, entry);
+  Regole.countPowerPaid(game.stats, entry);
 }
 // Carte grigie che escono dal gioco (minion a 0, poteri pagati): contate e messe negli scarti
 function discardGone(entry) {
-  withGame(g => Regole.discardGone(g, entry));
+  Regole.discardGone(game, entry);
 }
 
 // Pesca la carta in cima al mazzo. Regole di Aeon's End: il mazzo nemesi non si rimescola; se è vuoto la nemesi non
 // pesca (null). Con mazzo vuoto e nessun potere o minion in gioco i giocatori vincono (checkVictory).
 function drawFromDeck() {
-  return withGame(g => Regole.drawFromDeck(g));
+  return Regole.drawFromDeck(game);
 }
 
 // Vittoria: mazzo nemesi vuoto e nessun potere né minion in gioco (dopo il primo turno nemesi)
 function isVictory() {
-  return Regole.isVictory(gameParts());
+  return Regole.isVictory(game);
 }
 
 // Carta in gioco (nella coda) con il suo stato
@@ -393,7 +372,7 @@ function isVictory() {
 // hpSet (v214): minion con vita variabile (data.hpVariable, la decidono i giocatori): entra in gioco senza vita ("?",
 // hp 0, turnHp null) finché non la si imposta una volta; prima non muore a 0
 function makeEntry(data) {
-  return Regole.makeEntry(data, nextUid++, turn);
+  return Regole.makeEntry(data, game.nextUid++, game.turn);
 }
 // Minion con vita variabile (v214) e minion la cui vita non è ancora stata impostata ("?")
 function isVariableMinion(data) {
@@ -414,10 +393,10 @@ function hpCap(entry, nemesisTurn) {
 
 // Toglie la carta dalla coda e la mette nella pila degli scarti
 function discardEntry(entry) {
-  withGame(g => Regole.discardEntry(g, entry));
+  Regole.discardEntry(game, entry);
 }
 
 function entryByUid(uid) {
-  return queue.find(e => e.uid === uid) || null;
+  return game.queue.find(e => e.uid === uid) || null;
 }
 

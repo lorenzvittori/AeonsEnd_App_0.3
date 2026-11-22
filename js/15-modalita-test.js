@@ -187,14 +187,14 @@ function startScenario(sc) {
   } catch (err) {
     return err.message;
   }
-  if (!testRun) testRun = { prevSettings: JSON.parse(JSON.stringify(settings)) };
+  if (!testRun) testRun = { prevSettings: JSON.parse(JSON.stringify(game.settings)) };
   Object.assign(testRun, { id: sc.id, name: sc.name, pairs: typeof sc.pairs === 'boolean' ? sc.pairs : null,
     turnCards: Array.isArray(sc.turnCards) ? sc.turnCards.slice() : null });
   clearTransition();
   closeAllModals();
   closeDiscard();
   closeTestScreen();
-  settings = { players: sc.players, nemesis: sc.nemesis, battleMode: true, mergeCollection: true };
+  game.settings = { players: sc.players, nemesis: sc.nemesis, battleMode: true, mergeCollection: true };
   undoStack = [];
   ui.drafts.clear();
   ui.deckBuilding = false;
@@ -209,14 +209,14 @@ function startScenario(sc) {
   closeStart();
   render();
   prefetchDeckImages();
-  (resolving ? resolveBtn : nemesisBtn).focus({ preventScroll: true });
+  (game.resolving ? resolveBtn : nemesisBtn).focus({ preventScroll: true });
   return null;
 }
 // Fine del test (menu iniziale): tornano le scelte di prima della pagina iniziale. La partita in memoria è quella di
 // test, ma "Riprendi partita" ricarica quella salvata e "Nuova partita" ne fa una nuova
 function endTest() {
   if (!testRun) return;
-  settings = testRun.prevSettings;
+  game.settings = testRun.prevSettings;
   testRun = null;
 }
 function restartScenario() {

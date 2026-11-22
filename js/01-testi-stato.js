@@ -404,39 +404,43 @@ let nemeses = [];
 // Prodotti (products.json): { "4": "The New Age", "4.1": "Shattered Dreams", ... }; la wave è la parte prima del punto
 let products = {};
 
-// Scelte della pagina iniziale: giocatori, nemesi (da cui dipende la battaglia) e se usare le Upgraded Basic
-let settings = { players: 2, nemesis: null, includeUpgraded: true };
 // Immagini delle nemesi per il menu (Assets/nemesis/nemesis-art.json, fatto da tools/import-db.py):
 // { "Arachnos": { card, portrait, ratio } }. Facoltativo: se manca, i pulsanti restano senza illustrazione.
 let nemesisArt = {};
 let startOptions = null;
 
-// Coda in gioco: dalla carta più vecchia alla più recente. Ogni carta in gioco ha un uid stabile
-// (anche se la stessa carta compare due volte o cambia posizione) e il suo stato: token, vita, appena pescata.
-let queue = [];
-let nextUid = 1;
-
-// Stato della VistaRisoluzione (false = VistaCoda)
-let resolving = false;
-// Posizione della carta da risolvere (cambia solo con il pulsante principale)
-let currentIndex = 0;
-// Posizione della carta appena pescata alla fine della risoluzione (-1 = nessuna)
-let newIndex = -1;
-
-// Mazzo nemesi (si pesca dalla fine), pila degli scarti e numero di turni nemesi giocati
-let deck = [];
-let discard = [];
-let turn = 0;
-// Mazzo dei turni (v168): 6 carte come nel gioco, estratte a caso alla fine di ogni turno; finite le 6 si rimescola.
-// 'p1'..'p4' = giocatori, 'wild' = jolly (con 3 giocatori, sceglie il gruppo), 'nemesis' = nemesi.
-// left: carte ancora da estrarre in questo giro; drawn: carte estratte in ordine (l'ultima è il turno in corso).
-// round: giri del mazzo dei turni cominciati (v169: è il "Turno N" della testata)
-let turnOrder = { left: [], drawn: [], round: 0 };
-// Tier più alto pescato finora: alla prima carta del Tier 2 e del Tier 3 compare la scritta "Tier N"
-let maxTierDrawn = 0;
-// Statistiche della partita (finestra Statistiche della Vittoria). Fanno parte della partita: entrano nel salvataggio e
-// nell'undo. minions: minion usciti dal gioco uccisi, con i turni nemesi passati da quando erano stati pescati.
-let stats = emptyStats(0);
+// Stato della partita: un solo oggetto (refactoring fase 4, v232; da console: game.queue, game.turnOrder, ...).
+// Lo stato solo visivo è in ui (più sotto). snapshot() e restore() (js/07) copiano tutti i campi di game tranne
+// settings e nextUid (Regole.GAME_NOT_SAVED): un campo nuovo della partita va aggiunto solo qui.
+const game = {
+  // Scelte della partita (pagina Nuova partita): giocatori, nemesi (da cui dipende la battaglia) e opzioni del mazzo;
+  // si salvano a parte (save.settings) e non entrano nell'undo
+  settings: { players: 2, nemesis: null, includeUpgraded: true },
+  // uid della prossima carta in gioco (non si salva: dopo un ripristino le carte hanno uid nuovi)
+  nextUid: 1,
+  // Turni nemesi giocati
+  turn: 0,
+  // Mazzo nemesi (si pesca dalla fine) e pila degli scarti: carte di cards.json
+  deck: [],
+  discard: [],
+  // Coda in gioco: dalla carta più vecchia alla più recente. Ogni carta in gioco ha un uid stabile (anche se la stessa
+  // carta compare due volte o cambia posizione) e il suo stato: token, vita, appena pescata (Regole.makeEntry)
+  queue: [],
+  // Turno nemesi in corso (false = turno giocatori)
+  resolving: false,
+  // Posizione della carta da risolvere (cambia solo con il pulsante principale)
+  currentIndex: 0,
+  // Posizione della carta appena pescata alla fine della risoluzione (-1 = nessuna)
+  newIndex: -1,
+  // Tier più alto pescato finora: alla prima carta del Tier 2 e del Tier 3 compare la scritta "Tier N"
+  maxTierDrawn: 0,
+  // Statistiche della partita (finestra Statistiche della Vittoria). minions: minion usciti dal gioco uccisi, con i
+  // turni nemesi passati da quando erano stati pescati
+  stats: emptyStats(0),
+  // Mazzo dei turni (v168): 'p1'..'p4' = giocatori, 'wild', 'nemesis', 'p12' / 'p34'. left: mazzo in ordine
+  // (left[0] = cima); drawn: scarti dei turni; round: giri cominciati ("Turno N"); vedi Regole (js/00-regole.js)
+  turnOrder: { left: [], drawn: [], round: 0 }
+};
 // cards: id delle carte di ogni gruppo (elenchi delle Statistiche); i salvataggi vecchi non li hanno (elenchi vuoti)
 // startedAt / tierAt[2|3] / endedAt: istanti (Date.now) di inizio partita, prima carta del Tier 2 e del Tier 3 pescata,
 // prima Vittoria. Salvataggi vecchi: null (il tempo non si mostra)
@@ -447,7 +451,7 @@ function emptyStats(deckSize) {
 }
 // Aggiunge una carta all'elenco di un gruppo delle statistiche
 function statCard(group, data) {
-  Regole.statCard(stats, group, data);
+  Regole.statCard(game.stats, group, data);
 }
 
 // Undo: uno stato della partita salvato prima di ogni azione

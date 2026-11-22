@@ -508,7 +508,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   (`preparaApp`, `misuraApp` eseguite nell'iframe). Nell'iframe `save()` è spento (la partita salvata non cambia) e le
   barre di scorrimento sono nascoste come su un telefono. Una riga in alto dice da quale versione sono le misure; se la
   misura fallisce (per esempio se cambiano i nomi interni usati: `centredQueueUid`, `scrollToCard`, `makeEntry`,
-  `turnTrackBar`, `turnTrackLabels`, `nemesisBtn`, `.ae-compact-rail`, `.queue-slot`, `.queue-controls`...) mostra
+  `game` (dalla v232: `game.settings`, `game.queue`, `game.turnOrder`...), `turnTrackBar`, `turnTrackLabels`, `nemesisBtn`, `.ae-compact-rail`, `.queue-slot`, `.queue-controls`...) mostra
   le misure salvate in `misure.json` e lo dice. Con un cambio di posizionamento lo scheletro si aggiorna da solo.
 - **App installabile:** `manifest.webmanifest` (a tutto schermo, verticale) e icone in `Assets/ui/app-icons/`
   (rifatte da `tools/build-app-icons.py`; dalla v198 a partire da `Assets/ui/decor/app-icon.png` (400×400), l'immagine
@@ -577,7 +577,8 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   funzioni usate da console, dalla pagina `scheletri/` e dalla Modalità test sono globali. Nell'ordine:
   0. `00-regole.js` (refactoring fase 2): le **regole di gioco**, senza DOM e senza stato globale (vedi "Regole di
      gioco nel codice" più sotto); definisce solo l'oggetto globale `Regole` e si carica anche in Node per i test;
-  1. `01-testi-stato.js`: testi (`I18N_IT`), elementi della pagina, costanti e stato (`ui`, partita, impostazioni);
+  1. `01-testi-stato.js`: testi (`I18N_IT`), elementi della pagina, costanti e stato (`game`: partita e impostazioni,
+     dalla v232; `ui`: stato solo visivo);
   2. `02-dati-mazzo.js`: dati e mazzo (carte, collezione, opzioni del mazzo, nemesi, Nemesis Deck Setup, pesca e scarti,
      storia e mazzo dei turni, statistiche);
   3. `03-componenti.js`: componenti dell'interfaccia (immagine carta, badge, miniatura, dialoghi, toast);
@@ -642,7 +643,21 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 
 ### Stato
 
-- Partita (entra nel salvataggio e nell'undo): `queue` (voci `{ uid, data, tokens, hp, turnHp, isNew, paid, bornTurn }`,
+- **Un solo oggetto `game`** (dalla v232, refactoring fase 4; dichiarato in `01-testi-stato.js`): prima erano variabili
+  globali separate (`queue`, `deck`, `turnOrder`, `settings`...). I campi:
+  `game = { settings, nextUid, turn, deck, discard, queue, resolving, currentIndex, newIndex, maxTierDrawn, stats, turnOrder }`.
+  - `snapshot()` (= `Regole.snapshotGame(game)`) copia **tutti** i campi tranne quelli di `Regole.GAME_NOT_SAVED`
+    (`settings`, salvato a parte in `save.settings` e fuori dall'undo, e `nextUid`, che riparte): le carte diventano il
+    loro `id`, le voci della coda `{ id, ...stato }` senza `uid`. `restore(s)` usa `Regole.restoreGame`, che copia tutti
+    i campi salvati e poi completa i salvataggi vecchi. Quindi **un campo nuovo della partita si aggiunge solo
+    nell'oggetto `game`**: entra da solo in salvataggio e undo (se contiene carte, vanno messe come oggetti di
+    `cards.json`, che diventano id).
+  - Il formato del salvataggio non è cambiato: le partite salvate da main (v228) e dalle versioni precedenti del branch
+    riprendono (`tests/salvataggio.test.js` legge un salvataggio di main, `tests/dati/salvataggio-main-v228.json`). La
+    fotografia generica non scrive i campi assenti che la vecchia scriveva come `null` (per esempio `hpMax`, `wild`):
+    il ripristino li tratta allo stesso modo.
+  - Le regole (js/00-regole.js) ricevono `game` (o le sue parti: `game.turnOrder`, `game.stats`, `game.settings`).
+- Partita (entra nel salvataggio e nell'undo; nomi dei campi di `game`): `queue` (voci `{ uid, data, tokens, hp, turnHp, isNew, paid, bornTurn }`,
   dove `data` è la carta di `cards.json` e `bornTurn` il turno in cui è stata pescata), `deck` e `discard` (array di
   `data`; si pesca dalla fine di `deck`), `currentIndex`, `newIndex` (≥0 quando c'è una carta appena pescata),
   `resolving`, `turn`, `maxTierDrawn`, `stats` (statistiche: `deckSize`, contatori e `minions`; si aggiornano in
@@ -657,7 +672,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   restore, salvataggio, undo e nella bozza della finestra del mazzo dei turni (`turnDraftFrom`). Salvataggi senza
   `pairNext`: picks convertiti, la seconda carta della coppia del giro (che prima si deduceva) diventa obbligata e la
   memoria si ricostruisce dalle carte del giro.
-- Impostazioni: `settings = { players, nemesis, battleMode, mergeCollection }` (v213; i salvataggi vecchi possono avere
+- Impostazioni: `game.settings = { players, nemesis, battleMode, mergeCollection }` (v213; i salvataggi vecchi possono avere
   ancora `includeUpgraded`, che si ignora); collezione in `collection` (Set di codici
   prodotto di `products.json`: `"4"` scatola base, `"4.1"` mini espansione; la wave è la parte prima del punto,
   `waveOfCode`).
@@ -702,10 +717,12 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
     `hpMaxOf`, `hpCap`, `isGone`); statistiche (`emptyStats`, `statCard`, `aetherCost`, `countMinionKilled`,
     `countPowerPaid`); turni (`startResolution`, `nemesisTurn`, `endResolution`, `resolveCurrent`, `isDrawStep`,
     `canDraw`, `drawFromDeck`, `drawNewCard`, `isVictory`, `discardEntry`, `discardGone`, `endPlayerTurnCards`,
-    `removeWhileResolving`, `applyDrafts` per "Salva modifiche").
+    `removeWhileResolving`, `applyDrafts` per "Salva modifiche"); fotografia e ripristino (`snapshotGame`,
+    `restoreGame`, `GAME_NOT_SAVED`, dalla v232).
   - Nell'app le funzioni con i nomi di sempre (`buildDeck`, `drawTurnCard`, `resolveCurrent`, `isVictory`...) restano
-    globali e chiamano `Regole` passando i dati (`rulesDb()`), la collezione, `settings` e le parti della partita
-    (`gameParts()` / `applyGameParts()`, insieme `withGame(fn)` in `02-dati-mazzo.js`). Quello che è solo interfaccia
+    globali e chiamano `Regole` passando i dati (`rulesDb()`), la collezione, `game.settings` e la partita (`game`, o
+    `game.turnOrder` / `game.stats`; dalla v232: nelle v229-v231 c'era un ponte `gameParts()` / `withGame()` con le
+    variabili separate). Quello che è solo interfaccia
     (vibrazione, banner Tier, `ui.lastDrawnUid`, preferenze del browser come `turnPairsOn`, Modalità test) resta fuori
     dalle regole.
   - Una regola nuova va in `00-regole.js` (con un test in `tests/`), non nei file dell'interfaccia.
@@ -830,13 +847,22 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   - `tests/mazzo-turni.test.js`: carte per 2/3/4 giocatori, giro nuovo, wild che passa, pesca dalla cima, memoria delle
     coppie (scelta, obbligata, tra i giri, tre carte nello stesso giro, turno in corso rimesso nel mazzo scelto o
     obbligato), picks e storia dopo una carta tolta dagli scarti, salvataggi vecchi;
+  - `tests/salvataggio.test.js` (v232): fotografia → ripristino → stessa fotografia (anche passando da JSON), solo i
+    campi giusti, un salvataggio fatto con main v228 (`tests/dati/salvataggio-main-v228.json`) letto e riscritto
+    uguale, salvataggi vecchi senza campi recenti, carta sconosciuta;
   - `tests/turno-nemesi.test.js`: risoluzione (potere, minion, attacco), pesca anche col mazzo vuoto, vittoria, costo Æ,
     bozze salvate e Statistiche maghi, minion a vita variabile.
   - **Aggiungere un test:** in uno dei file (o in un file nuovo `tests/<nome>.test.js`) un blocco
     `test('cosa controlla', () => { ... })` con `assert` (`node:assert/strict`); i dati da `require('./aiuto.js')`; il
     caso sempre con `seeded(n)`, mai `Math.random`, così il test dà sempre lo stesso risultato. Poi `npm test`.
-- **Funzioni utili da console:** sono globali, per esempio `queue`, `allCards`, `makeEntry`, `act()`, `render()`,
-  `undo()`, `startGame()`, `onNemesisClick()`, `onResolveClick()`, `viewCard()`, `isDrawStep()`, `centredFocusUid()`.
+- **Stato da console** (dalla v232): la partita è tutta in **`game`**: `game.queue`, `game.deck` (si pesca dalla fine),
+  `game.discard`, `game.turn`, `game.resolving`, `game.currentIndex`, `game.newIndex`, `game.stats`, `game.turnOrder`,
+  `game.settings` (giocatori, nemesi, opzioni del mazzo), `game.nextUid`. Per cambiare lo stato a mano: si cambia
+  `game` e poi `render()` (con `act(() => { ... })` diventa un passo di undo e si salva). `snapshot()` dà la fotografia
+  (formato del salvataggio), `restore(s)` la applica. Lo stato solo visivo è in `ui`, l'undo in `undoStack`.
+- **Funzioni utili da console:** sono globali, per esempio `allCards`, `makeEntry`, `act()`, `render()`,
+  `undo()`, `startGame()`, `onNemesisClick()`, `onResolveClick()`, `viewCard()`, `isDrawStep()`, `centredFocusUid()`;
+  le regole pure in `Regole` (per esempio `Regole.isVictory(game)`).
 - Dopo le prove si toglie la partita di test: `localStorage.removeItem('aeonsend-app-0.2-save')`.
 - **Scenari della Modalità test** (v215): servono anche alle verifiche degli operatori, per arrivare subito al momento
   da provare senza costruire lo stato a mano. Da console: `startScenario(SCENARI.find(s => s.id === 'tier'))`
@@ -869,13 +895,14 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 | `v226-prima-refactoring-1` | Ultima versione con tutto il codice in `script.js`, prima della divisione in `js/` (v227). |
 | `refactoring-prima-fase-2` | Branch `refactoring`, prima delle regole di gioco separate in `js/00-regole.js` con i test (v229). |
 | `refactoring-prima-fase-3` | Branch `refactoring`, ultima versione con tutto il layout in `style.css`, prima dei file per parte in `css/` (v230). |
+| `refactoring-prima-fase-4` | Branch `refactoring`, ultima versione con le variabili della partita separate, prima dell'oggetto `game` (v232). Punta al commit della v230: la v231 ha tolto in più solo 4 regole CSS che non colpivano niente. |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 
 ## 11. Idee e cose aperte
 
 - Semplificazione del codice, proposta dopo l'analisi del repo (la pulizia del codice morto è fatta in v148):
-  1. stato della partita in un solo oggetto `game` (lo snapshot diventa una copia);
+  1. stato della partita in un solo oggetto `game` (lo snapshot diventa una copia): fatto nella v232 (fase 4, branch);
   2. codice diviso in file caricati con `?v=N`: fatto in v227 (fase 1, solo spostamento nei 16 file di `js/`); resta
      da separare le regole di gioco dall'interfaccia e da scegliere uno strumento (moduli, build);
   3. un solo modo di creare il DOM (tutto in `index.html` o tutto da JS), senza le difese per l'`index.html` vecchio;

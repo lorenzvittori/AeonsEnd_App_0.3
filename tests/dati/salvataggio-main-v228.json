@@ -1,0 +1,673 @@
+{
+ "version": 2,
+ "settings": {
+  "players": 4,
+  "nemesis": "Carapace Queen",
+  "battleMode": true,
+  "mergeCollection": true
+ },
+ "state": {
+  "turn": 5,
+  "deck": [
+   "AE220",
+   "NA-END-146",
+   "NA-END-144",
+   "NA-1c-04",
+   "AE232",
+   "AE225",
+   "NA-1c-02",
+   "AE222",
+   "AE234",
+   "AE233",
+   "NA-1c-13",
+   "AE214",
+   "AE213",
+   "AE230",
+   "AE218",
+   "NA-END-142",
+   "NA-1c-12",
+   "AE229",
+   "AE217",
+   "AE231",
+   "AE227",
+   "AE228",
+   "NA-1c-32",
+   "AE206",
+   "AE226",
+   "AE204"
+  ],
+  "discard": [
+   "NA-END-138",
+   "NA-END-136",
+   "NA-1c-30"
+  ],
+  "queue": [
+   {
+    "id": "AE208",
+    "tokens": null,
+    "hp": 5,
+    "turnHp": 5,
+    "isNew": false,
+    "paid": false,
+    "bornTurn": 4
+   },
+   {
+    "id": "NA-1c-26",
+    "tokens": null,
+    "hp": 8,
+    "turnHp": 8,
+    "isNew": true,
+    "paid": false,
+    "bornTurn": 5
+   }
+  ],
+  "resolving": true,
+  "currentIndex": 1,
+  "newIndex": 1,
+  "maxTierDrawn": 1,
+  "stats": {
+   "deckSize": 31,
+   "minionsKilled": 1,
+   "powersPaid": 1,
+   "powersResolved": 1,
+   "aetherSpent": 0,
+   "attacksResolved": 0,
+   "minions": [
+    {
+     "id": "NA-END-136",
+     "name": "Blind Enigma",
+     "turns": 3
+    }
+   ],
+   "mages": {
+    "p2": {
+     "damage": 1,
+     "powers": 1,
+     "kills": 0
+    },
+    "p1": {
+     "damage": 2,
+     "powers": 0,
+     "kills": 1
+    },
+    "p4": {
+     "damage": 2,
+     "powers": 0,
+     "kills": 0
+    }
+   },
+   "cards": {
+    "minionsKilled": [
+     "NA-END-136"
+    ],
+    "powersPaid": [
+     "NA-END-138"
+    ],
+    "powersResolved": [
+     "NA-1c-30"
+    ],
+    "attacksResolved": []
+   },
+   "startedAt": 1700000001000,
+   "tierAt": {},
+   "endedAt": null
+  },
+  "turnOrder": {
+   "left": [
+    "p34",
+    "nemesis"
+   ],
+   "drawn": [
+    "p34",
+    "p12",
+    "p12",
+    "nemesis"
+   ],
+   "round": 3,
+   "wild": null,
+   "picks": {
+    "0": {
+     "player": "p4",
+     "forced": false
+    },
+    "1": {
+     "player": "p1",
+     "forced": false
+    },
+    "2": {
+     "player": "p2",
+     "forced": true
+    }
+   },
+   "pairNext": {
+    "p12": null,
+    "p34": "p3"
+   },
+   "history": [
+    {
+     "kind": "p34",
+     "player": "p4",
+     "forced": false,
+     "pos": 0
+    },
+    {
+     "kind": "p12",
+     "player": "p1",
+     "forced": false,
+     "pos": 1
+    },
+    {
+     "kind": "p12",
+     "player": "p2",
+     "forced": true,
+     "pos": 2
+    },
+    {
+     "kind": "nemesis",
+     "player": null,
+     "forced": false,
+     "pos": 3
+    }
+   ],
+   "known": [
+    false,
+    false
+   ],
+   "waiting": false
+  }
+ },
+ "undo": [
+  {
+   "turn": 5,
+   "deck": [
+    "AE220",
+    "NA-END-146",
+    "NA-END-144",
+    "NA-1c-04",
+    "AE232",
+    "AE225",
+    "NA-1c-02",
+    "AE222",
+    "AE234",
+    "AE233",
+    "NA-1c-13",
+    "AE214",
+    "AE213",
+    "AE230",
+    "AE218",
+    "NA-END-142",
+    "NA-1c-12",
+    "AE229",
+    "AE217",
+    "AE231",
+    "AE227",
+    "AE228",
+    "NA-1c-32",
+    "AE206",
+    "AE226",
+    "AE204",
+    "NA-1c-26"
+   ],
+   "discard": [
+    "NA-END-138",
+    "NA-END-136"
+   ],
+   "queue": [
+    {
+     "id": "NA-1c-30",
+     "tokens": 1,
+     "hp": null,
+     "turnHp": null,
+     "isNew": false,
+     "paid": false,
+     "bornTurn": 3
+    },
+    {
+     "id": "AE208",
+     "tokens": null,
+     "hp": 5,
+     "turnHp": 5,
+     "isNew": false,
+     "paid": false,
+     "bornTurn": 4
+    }
+   ],
+   "resolving": true,
+   "currentIndex": 0,
+   "newIndex": -1,
+   "maxTierDrawn": 1,
+   "stats": {
+    "deckSize": 31,
+    "minionsKilled": 1,
+    "powersPaid": 1,
+    "powersResolved": 0,
+    "aetherSpent": 0,
+    "attacksResolved": 0,
+    "minions": [
+     {
+      "id": "NA-END-136",
+      "name": "Blind Enigma",
+      "turns": 3
+     }
+    ],
+    "mages": {
+     "p2": {
+      "damage": 1,
+      "powers": 1,
+      "kills": 0
+     },
+     "p1": {
+      "damage": 2,
+      "powers": 0,
+      "kills": 1
+     },
+     "p4": {
+      "damage": 2,
+      "powers": 0,
+      "kills": 0
+     }
+    },
+    "cards": {
+     "minionsKilled": [
+      "NA-END-136"
+     ],
+     "powersPaid": [
+      "NA-END-138"
+     ],
+     "powersResolved": [],
+     "attacksResolved": []
+    },
+    "startedAt": 1700000001000,
+    "tierAt": {},
+    "endedAt": null
+   },
+   "turnOrder": {
+    "left": [
+     "p34",
+     "nemesis"
+    ],
+    "drawn": [
+     "p34",
+     "p12",
+     "p12",
+     "nemesis"
+    ],
+    "round": 3,
+    "wild": null,
+    "picks": {
+     "0": {
+      "player": "p4",
+      "forced": false
+     },
+     "1": {
+      "player": "p1",
+      "forced": false
+     },
+     "2": {
+      "player": "p2",
+      "forced": true
+     }
+    },
+    "pairNext": {
+     "p12": null,
+     "p34": "p3"
+    },
+    "history": [
+     {
+      "kind": "p34",
+      "player": "p4",
+      "forced": false,
+      "pos": 0
+     },
+     {
+      "kind": "p12",
+      "player": "p1",
+      "forced": false,
+      "pos": 1
+     },
+     {
+      "kind": "p12",
+      "player": "p2",
+      "forced": true,
+      "pos": 2
+     },
+     {
+      "kind": "nemesis",
+      "player": null,
+      "forced": false,
+      "pos": 3
+     }
+    ],
+    "known": [
+     false,
+     false
+    ],
+    "waiting": false
+   }
+  },
+  {
+   "turn": 5,
+   "deck": [
+    "AE220",
+    "NA-END-146",
+    "NA-END-144",
+    "NA-1c-04",
+    "AE232",
+    "AE225",
+    "NA-1c-02",
+    "AE222",
+    "AE234",
+    "AE233",
+    "NA-1c-13",
+    "AE214",
+    "AE213",
+    "AE230",
+    "AE218",
+    "NA-END-142",
+    "NA-1c-12",
+    "AE229",
+    "AE217",
+    "AE231",
+    "AE227",
+    "AE228",
+    "NA-1c-32",
+    "AE206",
+    "AE226",
+    "AE204",
+    "NA-1c-26"
+   ],
+   "discard": [
+    "NA-END-138",
+    "NA-END-136",
+    "NA-1c-30"
+   ],
+   "queue": [
+    {
+     "id": "AE208",
+     "tokens": null,
+     "hp": 5,
+     "turnHp": 5,
+     "isNew": false,
+     "paid": false,
+     "bornTurn": 4
+    }
+   ],
+   "resolving": true,
+   "currentIndex": 0,
+   "newIndex": -1,
+   "maxTierDrawn": 1,
+   "stats": {
+    "deckSize": 31,
+    "minionsKilled": 1,
+    "powersPaid": 1,
+    "powersResolved": 1,
+    "aetherSpent": 0,
+    "attacksResolved": 0,
+    "minions": [
+     {
+      "id": "NA-END-136",
+      "name": "Blind Enigma",
+      "turns": 3
+     }
+    ],
+    "mages": {
+     "p2": {
+      "damage": 1,
+      "powers": 1,
+      "kills": 0
+     },
+     "p1": {
+      "damage": 2,
+      "powers": 0,
+      "kills": 1
+     },
+     "p4": {
+      "damage": 2,
+      "powers": 0,
+      "kills": 0
+     }
+    },
+    "cards": {
+     "minionsKilled": [
+      "NA-END-136"
+     ],
+     "powersPaid": [
+      "NA-END-138"
+     ],
+     "powersResolved": [
+      "NA-1c-30"
+     ],
+     "attacksResolved": []
+    },
+    "startedAt": 1700000001000,
+    "tierAt": {},
+    "endedAt": null
+   },
+   "turnOrder": {
+    "left": [
+     "p34",
+     "nemesis"
+    ],
+    "drawn": [
+     "p34",
+     "p12",
+     "p12",
+     "nemesis"
+    ],
+    "round": 3,
+    "wild": null,
+    "picks": {
+     "0": {
+      "player": "p4",
+      "forced": false
+     },
+     "1": {
+      "player": "p1",
+      "forced": false
+     },
+     "2": {
+      "player": "p2",
+      "forced": true
+     }
+    },
+    "pairNext": {
+     "p12": null,
+     "p34": "p3"
+    },
+    "history": [
+     {
+      "kind": "p34",
+      "player": "p4",
+      "forced": false,
+      "pos": 0
+     },
+     {
+      "kind": "p12",
+      "player": "p1",
+      "forced": false,
+      "pos": 1
+     },
+     {
+      "kind": "p12",
+      "player": "p2",
+      "forced": true,
+      "pos": 2
+     },
+     {
+      "kind": "nemesis",
+      "player": null,
+      "forced": false,
+      "pos": 3
+     }
+    ],
+    "known": [
+     false,
+     false
+    ],
+    "waiting": false
+   }
+  },
+  {
+   "turn": 5,
+   "deck": [
+    "AE220",
+    "NA-END-146",
+    "NA-END-144",
+    "NA-1c-04",
+    "AE232",
+    "AE225",
+    "NA-1c-02",
+    "AE222",
+    "AE234",
+    "AE233",
+    "NA-1c-13",
+    "AE214",
+    "AE213",
+    "AE230",
+    "AE218",
+    "NA-END-142",
+    "NA-1c-12",
+    "AE229",
+    "AE217",
+    "AE231",
+    "AE227",
+    "AE228",
+    "NA-1c-32",
+    "AE206",
+    "AE226",
+    "AE204",
+    "NA-1c-26"
+   ],
+   "discard": [
+    "NA-END-138",
+    "NA-END-136",
+    "NA-1c-30"
+   ],
+   "queue": [
+    {
+     "id": "AE208",
+     "tokens": null,
+     "hp": 5,
+     "turnHp": 5,
+     "isNew": false,
+     "paid": false,
+     "bornTurn": 4
+    }
+   ],
+   "resolving": true,
+   "currentIndex": 1,
+   "newIndex": -1,
+   "maxTierDrawn": 1,
+   "stats": {
+    "deckSize": 31,
+    "minionsKilled": 1,
+    "powersPaid": 1,
+    "powersResolved": 1,
+    "aetherSpent": 0,
+    "attacksResolved": 0,
+    "minions": [
+     {
+      "id": "NA-END-136",
+      "name": "Blind Enigma",
+      "turns": 3
+     }
+    ],
+    "mages": {
+     "p2": {
+      "damage": 1,
+      "powers": 1,
+      "kills": 0
+     },
+     "p1": {
+      "damage": 2,
+      "powers": 0,
+      "kills": 1
+     },
+     "p4": {
+      "damage": 2,
+      "powers": 0,
+      "kills": 0
+     }
+    },
+    "cards": {
+     "minionsKilled": [
+      "NA-END-136"
+     ],
+     "powersPaid": [
+      "NA-END-138"
+     ],
+     "powersResolved": [
+      "NA-1c-30"
+     ],
+     "attacksResolved": []
+    },
+    "startedAt": 1700000001000,
+    "tierAt": {},
+    "endedAt": null
+   },
+   "turnOrder": {
+    "left": [
+     "p34",
+     "nemesis"
+    ],
+    "drawn": [
+     "p34",
+     "p12",
+     "p12",
+     "nemesis"
+    ],
+    "round": 3,
+    "wild": null,
+    "picks": {
+     "0": {
+      "player": "p4",
+      "forced": false
+     },
+     "1": {
+      "player": "p1",
+      "forced": false
+     },
+     "2": {
+      "player": "p2",
+      "forced": true
+     }
+    },
+    "pairNext": {
+     "p12": null,
+     "p34": "p3"
+    },
+    "history": [
+     {
+      "kind": "p34",
+      "player": "p4",
+      "forced": false,
+      "pos": 0
+     },
+     {
+      "kind": "p12",
+      "player": "p1",
+      "forced": false,
+      "pos": 1
+     },
+     {
+      "kind": "p12",
+      "player": "p2",
+      "forced": true,
+      "pos": 2
+     },
+     {
+      "kind": "nemesis",
+      "player": null,
+      "forced": false,
+      "pos": 3
+     }
+    ],
+    "known": [
+     false,
+     false
+    ],
+    "waiting": false
+   }
+  }
+ ]
+}

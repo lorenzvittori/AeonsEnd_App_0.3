@@ -8,10 +8,10 @@ function renderPlayers() {
   container.replaceChildren(...startOptions.players.map(value => {
     const b = el('button', '', String(value));
     b.type = 'button';
-    b.setAttribute('aria-pressed', String(value === settings.players));
+    b.setAttribute('aria-pressed', String(value === game.settings.players));
     b.setAttribute('aria-label', I18N_IT.players(value));
     b.addEventListener('click', () => {
-      settings.players = value;
+      game.settings.players = value;
       renderPlayers();
       // (le opzioni del mazzo dipendono anche dai giocatori: blocco di "Unisci" e riga di avviso, v213)
       if (startOptions && document.getElementById('deck-options')) renderDeckOptions();
@@ -68,7 +68,7 @@ function renderNemesisPreview() {
   const item = list.querySelector('.nemesis-item.is-selected');
   if (item) item.after(preview); else list.after(preview);
 
-  const art = settings.nemesis && nemesisArt[settings.nemesis];
+  const art = game.settings.nemesis && nemesisArt[game.settings.nemesis];
   const open = !!art && nemesisPreviewOpen;
   preview.hidden = !open;
   const expand = item && item.querySelector('.nemesis-expand');
@@ -89,14 +89,14 @@ function renderNemesisPreview() {
   }
   const front = preview.querySelector('.nemesis-face--front');
   const back = preview.querySelector('.nemesis-face--back');
-  front.alt = I18N_IT.nemesisCard(settings.nemesis);
+  front.alt = I18N_IT.nemesisCard(game.settings.nemesis);
   const src = encodeURI(art.card);
   if (front.getAttribute('src') !== src) front.src = src;
   // Retro (setup e storia), se c'è: si vede con uno slide sulla carta
   const flip = preview.querySelector('.nemesis-flip');
   flip.classList.toggle('has-back', !!art.back);
   if (art.back) {
-    back.alt = I18N_IT.nemesisCardBack(settings.nemesis);
+    back.alt = I18N_IT.nemesisCardBack(game.settings.nemesis);
     const backSrc = encodeURI(art.back);
     if (back.getAttribute('src') !== backSrc) back.src = backSrc;
   } else {
@@ -145,7 +145,7 @@ function buildNemesisFlip(preview) {
   };
   const openZoomLayer = () => {
     if (zoom.layer) return;
-    const art = nemesisArt[settings.nemesis];
+    const art = nemesisArt[game.settings.nemesis];
     if (!art) return;
     const showBack = nemesisShowBack && !!art.back;
     zoom.layer = el('div', 'nemesis-zoom-layer');
@@ -328,12 +328,12 @@ function renderBosses() {
   const playable = ofWave.filter(isPlayable);
   const others = ofWave.filter(n => !isPlayable(n));
 
-  if (!playable.some(n => n.name === settings.nemesis)) settings.nemesis = playable.length ? playable[0].name : null;
+  if (!playable.some(n => n.name === game.settings.nemesis)) game.settings.nemesis = playable.length ? playable[0].name : null;
 
   list.replaceChildren(...playable.map(info => {
     const b = el('button', 'nemesis-option');
     b.type = 'button';
-    b.setAttribute('aria-pressed', String(info.name === settings.nemesis));
+    b.setAttribute('aria-pressed', String(info.name === game.settings.nemesis));
     const tags = el('span', 'nemesis-tags');
     tags.appendChild(el('span', '', info.battle ? I18N_IT.battle(info.battle) : I18N_IT.battleMissing));
     const art = nemesisArt[info.name];
@@ -350,14 +350,14 @@ function renderBosses() {
     if (isMiniCode(info.boxCode)) b.appendChild(el('span', 'nemesis-expansion', productName(info.boxCode)));
     b.addEventListener('click', () => {
       // Toccare di nuovo la nemesi già scelta apre o chiude la sua carta (come le frecce)
-      if (settings.nemesis === info.name) {
+      if (game.settings.nemesis === info.name) {
         if (art) {
           setNemesisPreview(!nemesisPreviewOpen);
           b.focus({ preventScroll: true });
         }
         return;
       }
-      settings.nemesis = info.name;
+      game.settings.nemesis = info.name;
       nemesisPreviewOpen = false;
       renderBosses();
       const selected = list.querySelector('.nemesis-item.is-selected .nemesis-option');
@@ -365,7 +365,7 @@ function renderBosses() {
     });
     const item = el('div', 'nemesis-item');
     item.appendChild(b);
-    if (info.name === settings.nemesis) {
+    if (info.name === game.settings.nemesis) {
       item.classList.add('is-selected');
       // Freccia verso il basso al centro del pulsante scelto: apre la carta della nemesi
       if (art) item.appendChild(chevronButton('nemesis-expand', I18N_IT.showNemesisCard(info.name), () => setNemesisPreview(true)));
@@ -406,7 +406,7 @@ function renderStartChoices() {
   startOptions.waves = ownedWaves();
   ensureCollectionButton();
   renderPlayers();
-  const current = nemeses.find(n => n.name === settings.nemesis);
+  const current = nemeses.find(n => n.name === game.settings.nemesis);
   // Wave scelte: quelle di prima ancora nella collezione; se nessuna, la wave della nemesi scelta (o la prima)
   selectedWaves = selectedWaves.filter(w => startOptions.waves.includes(w));
   if (!selectedWaves.length) {
@@ -501,7 +501,7 @@ function setStartMode(mode, focus) {
   const saved = readSave();
   startMode = mode === 'setup' ? 'setup' : 'home';
   // Pagina Nuova partita: le opzioni del mazzo ripartono dalla preferenza del browser (v213)
-  if (startMode === 'setup') Object.assign(settings, loadDeckOptions());
+  if (startMode === 'setup') Object.assign(game.settings, loadDeckOptions());
   const panel = startChoicePanel();
   const home = startHomeActions();
   const isHome = startMode === 'home';
@@ -548,7 +548,7 @@ function updateStartActions() {
   resumeBtn.className = 'ae-button ae-button--full ae-button--secondary start-resume-alt';
   startBtn.textContent = I18N_IT.startNew;
   startBtn.className = 'ae-button ae-button--full ae-button--primary';
-  startBtn.disabled = !settings.nemesis || !battleOf(settings.nemesis);
+  startBtn.disabled = !game.settings.nemesis || !battleOf(game.settings.nemesis);
   startBtn.title = startBtn.disabled ? I18N_IT.chooseNemesis : '';
   renderDeckOptions();
 }
@@ -576,7 +576,7 @@ function deckOptionsGroup() {
     r.append(texts, input, sw);
     input.addEventListener('change', () => {
       if (input.disabled) return;
-      settings[key] = input.checked;
+      game.settings[key] = input.checked;
       saveDeckOptions();
       renderDeckOptions();
     });
@@ -595,7 +595,7 @@ function renderDeckOptions() {
   const battle = group.querySelector('[data-option="battleMode"]');
   const merge = group.querySelector('[data-option="mergeCollection"]');
   const lockNote = group.querySelector('.deck-option-lock');
-  battle.checked = settings.battleMode !== false;
+  battle.checked = game.settings.battleMode !== false;
   const locked = mergeLockedWave();
   merge.checked = mergeActive();
   merge.disabled = !!locked;
@@ -611,7 +611,7 @@ function renderDeckOptions() {
     warn.setAttribute('role', 'status');
     startBtn.before(warn);
   }
-  const short = settings.nemesis ? deckShortfall() : null;
+  const short = game.settings.nemesis ? deckShortfall() : null;
   warn.hidden = !short;
   warn.textContent = short ? I18N_IT.deckShort(short.have, short.want) : '';
 }
@@ -627,7 +627,7 @@ function buildStartPage() {
   loadCollection();
   startOptions = { players: Object.keys(deckSetup.battles[0].players).map(Number), waves: ownedWaves() };
   const firstPlayable = nemeses.find(isPlayable);
-  settings = Object.assign({ players: startOptions.players[0], nemesis: firstPlayable ? firstPlayable.name : null }, loadDeckOptions());
+  game.settings = Object.assign({ players: startOptions.players[0], nemesis: firstPlayable ? firstPlayable.name : null }, loadDeckOptions());
   renderStartChoices();
 }
 
@@ -732,10 +732,10 @@ function renderWavePills() {
 function pickRandomNemesis() {
   const all = nemeses.filter(isPlayable);
   if (!all.length) return;
-  const pool = all.length > 1 ? all.filter(n => n.name !== settings.nemesis) : all;
+  const pool = all.length > 1 ? all.filter(n => n.name !== game.settings.nemesis) : all;
   const pick = pool[Math.floor(Math.random() * pool.length)];
   if (!selectedWaves.includes(waveOfNemesis(pick))) selectedWaves.push(waveOfNemesis(pick));
-  settings.nemesis = pick.name;
+  game.settings.nemesis = pick.name;
   nemesisPreviewOpen = false;
   renderWavePills();
   renderBosses();
@@ -946,13 +946,13 @@ function onStartClick() {
 
 // Inizia: nuova partita con le scelte fatte (la partita salvata viene sostituita)
 function startGame() {
-  if (!battleOf(settings.nemesis)) return;
+  if (!battleOf(game.settings.nemesis)) return;
   clearTransition();
   closeAllModals();
-  queue = [];
-  resolving = false;
-  currentIndex = 0;
-  newIndex = -1;
+  game.queue = [];
+  game.resolving = false;
+  game.currentIndex = 0;
+  game.newIndex = -1;
   ui.viewedUid = null;
   ui.reveal = null;
   ui.lastDrawnUid = null;
@@ -1007,12 +1007,12 @@ function openMissingNemesis(info, onContinue) {
 }
 function resumeSavedGame(saved) {
   try {
-    const previousSettings = settings;
-    settings = saved.settings;
+    const previousSettings = game.settings;
+    game.settings = saved.settings;
     try {
       restore(saved.state);
     } catch (err) {
-      settings = previousSettings;
+      game.settings = previousSettings;
       throw err;
     }
     undoStack = Array.isArray(saved.undo) ? saved.undo : [];
@@ -1022,7 +1022,7 @@ function resumeSavedGame(saved) {
     closeStart();
     render();
     prefetchDeckImages();
-    (resolving ? resolveBtn : nemesisBtn).focus();
+    (game.resolving ? resolveBtn : nemesisBtn).focus();
   } catch (err) {
     console.error(err);
     showStartError(I18N_IT.resumeError, false);

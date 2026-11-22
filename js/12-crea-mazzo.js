@@ -12,7 +12,7 @@
 
 // Carte Specifiche della nemesi della partita per un Tier (come in buildDeck)
 function specificCardsOf(tier) {
-  return allCards.filter(c => c.category === 'Specific' && c.nemesis === settings.nemesis && c.inNemesisDeck === true && c.tier === tier);
+  return allCards.filter(c => c.category === 'Specific' && c.nemesis === game.settings.nemesis && c.inNemesisDeck === true && c.tier === tier);
 }
 
 function showDeckBuild() {
@@ -85,7 +85,7 @@ function openSpecificViewer(tier) {
   if (!cards.length) return;
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.specificTitle, settings.nemesis, cancel, { displayTitle: false });
+  const dialog = dialogShell(I18N_IT.specificTitle, game.settings.nemesis, cancel, { displayTitle: false });
   dialog.classList.add('ae-spec-viewer');
   const nav = el('div', 'ae-spec-tiers');
   const dots = [];
@@ -171,10 +171,10 @@ function openGameSetup() {
   const dialog = dialogShell(I18N_IT.gameSetupTitle, '', cancel, { displayTitle: false });
   dialog.classList.add('ae-game-setup');
   const head = el('div', 'start-choice-head ae-game-setup-head');
-  head.appendChild(el('p', 'start-choice-info', settings.nemesis || ''));
-  const battleNo = battleOf(settings.nemesis);
+  head.appendChild(el('p', 'start-choice-info', game.settings.nemesis || ''));
+  const battleNo = battleOf(game.settings.nemesis);
   head.appendChild(el('p', 'ae-game-setup-battle', battleNo ? I18N_IT.battle(battleNo) : I18N_IT.battleMissing));
-  const art = nemesisArt[settings.nemesis];
+  const art = nemesisArt[game.settings.nemesis];
   head.classList.toggle('has-art', !!art);
   if (art) {
     const portrait = el('span', 'nemesis-art');
@@ -190,11 +190,11 @@ function openGameSetup() {
   const renderChoices = () => choices.replaceChildren(...startOptions.players.map(value => {
     const b = el('button', '', String(value));
     b.type = 'button';
-    b.setAttribute('aria-pressed', String(value === settings.players));
+    b.setAttribute('aria-pressed', String(value === game.settings.players));
     b.setAttribute('aria-label', I18N_IT.players(value));
     b.addEventListener('click', () => {
-      if (settings.players === value) return;
-      settings.players = value;
+      if (game.settings.players === value) return;
+      game.settings.players = value;
       // Il mazzo dipende dai giocatori: si rifà, con la finestra ancora aperta
       newGame();
       ui.deckShown = 0;
@@ -302,7 +302,7 @@ function setDeckProgress(p) {
     pile.classList.toggle('is-empty', left <= 0);
   });
   const before = ui.deckShown || 0;
-  ui.deckShown = Math.min(deck.length, landed);
+  ui.deckShown = Math.min(game.deck.length, landed);
   renderDockPiles();
   if (ui.deckShown > before) {
     dockDeck.classList.remove('is-bump');

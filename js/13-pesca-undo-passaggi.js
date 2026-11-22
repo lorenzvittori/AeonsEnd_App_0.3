@@ -86,7 +86,7 @@ function openDeckPopover() {
     openDeckDraw();
   });
   b.classList.add('ae-deck-popover-button');
-  b.disabled = deck.length === 0;
+  b.disabled = game.deck.length === 0;
   b.style.left = Math.max(8, r.left) + 'px';
   b.style.top = (r.bottom + 8) + 'px';
   layer.addEventListener('click', e => { if (e.target === layer) closeDeckPopover(); });
@@ -116,7 +116,7 @@ function openExitConfirm(onExit) {
 }
 
 function openDeckDraw() {
-  const data = deck[deck.length - 1];
+  const data = game.deck[game.deck.length - 1];
   if (!data) return;
   let close = () => {};
   const putBack = () => { close(); showToast(I18N_IT.cardPutBack(data.name)); };
@@ -127,7 +127,7 @@ function openDeckDraw() {
   const footer = el('div', 'ae-modal-footer');
   const discardBtnEl = button(I18N_IT.discardDrawn, 'danger', () => {
     const source = art.getBoundingClientRect().width ? art : null;
-    act(() => { discard.push(deck.pop()); });
+    act(() => { game.discard.push(game.deck.pop()); });
     // La carta vola dalla finestra alla pila degli scarti
     if (source) flyToDiscard([source]);
     close();

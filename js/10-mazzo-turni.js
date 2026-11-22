@@ -10,7 +10,7 @@
 // order: turnOrder o la bozza della finestra
 // v221: la faccia è l'immagine della carta vera (Assets/ui/turn-cards/<carta>.webp, style.css [data-card]); sulle carte
 // 1/2, 3/4 e Wild con il giocatore già deciso, un tondino con il suo numero nel suo colore (.ae-turn-card-who)
-function turnCardFace(kind, i, tag = 'span', order = turnOrder) {
+function turnCardFace(kind, i, tag = 'span', order = game.turnOrder) {
   const who = turnCardPlayer(kind, i, order);
   const face = el(tag, 'ae-turn-card');
   face.dataset.kind = who || kind;
@@ -25,7 +25,7 @@ function turnCardFace(kind, i, tag = 'span', order = turnOrder) {
   face.setAttribute('aria-label', turnCardName(kind, i, order));
   return face;
 }
-function turnCardName(kind, i, order = turnOrder) {
+function turnCardName(kind, i, order = game.turnOrder) {
   const who = turnCardPlayer(kind, i, order);
   if (kind === 'nemesis') return I18N_IT.trackNemesisName;
   if (kind === 'wild') return who ? I18N_IT.trackWildOf(Number(who.slice(1))) : I18N_IT.trackWildName;
@@ -99,12 +99,12 @@ function turnDeckMovable(d, i) {
 // Scrive la bozza nel mazzo dei turni: un solo passo di undo (v222: il turno in corso continua sempre)
 function saveTurnDraft(d) {
   act(() => {
-    turnOrder.left = d.left.slice();
-    turnOrder.known = d.known.slice();
-    turnOrder.drawn = d.drawn.slice();
-    turnOrder.picks = JSON.parse(JSON.stringify(d.picks));
-    turnOrder.pairNext = emptyPairNext(d.pairNext);
-    turnOrder.history = JSON.parse(JSON.stringify(d.history || []));
+    game.turnOrder.left = d.left.slice();
+    game.turnOrder.known = d.known.slice();
+    game.turnOrder.drawn = d.drawn.slice();
+    game.turnOrder.picks = JSON.parse(JSON.stringify(d.picks));
+    game.turnOrder.pairNext = emptyPairNext(d.pairNext);
+    game.turnOrder.history = JSON.parse(JSON.stringify(d.history || []));
   });
   render();
 }
@@ -120,15 +120,15 @@ function viewOnlyCopy(node) {
 // Copia della barra della fase con la bozza della finestra (carte note, turno annullato): per un attimo turnOrder è la
 // bozza, si disegna la barra e la si copia, poi si rimette tutto. ui.trackPreview evita scelta x/y e riquadro.
 function trackPreviewCopy(d) {
-  const real = turnOrder;
+  const real = game.turnOrder;
   ui.trackPreview = true;
   try {
-    turnOrder = Object.assign({}, real, { left: d.left, known: d.known, drawn: d.drawn, picks: d.picks, pairNext: d.pairNext,
+    game.turnOrder = Object.assign({}, real, { left: d.left, known: d.known, drawn: d.drawn, picks: d.picks, pairNext: d.pairNext,
       history: d.history, waiting: d.waiting });
     renderTurnTrack();
     return viewOnlyCopy(turnTrack);
   } finally {
-    turnOrder = real;
+    game.turnOrder = real;
     renderTurnTrack();
     ui.trackPreview = false;
   }
@@ -148,8 +148,8 @@ function openTurnScreen() {
   if (turnDeckBlocked()) return;
   // d.old: carte già note all'apertura (scurite, si spostano solo dalla cima); parallelo a d.left, solo nella finestra
   const fresh = order => { const x = turnDraftFrom(order); x.old = x.known.slice(); return x; };
-  const initial = fresh(turnOrder);
-  let d = fresh(turnOrder);
+  const initial = fresh(game.turnOrder);
+  let d = fresh(game.turnOrder);
   let savedKey = turnDraftKey(d);
   let sel = null;   // carta selezionata senza trascinamento: { source: 'deck' | 'pile', index }
   let press = null; // dito o mouse premuto su una carta, prima che parta il trascinamento
@@ -664,11 +664,11 @@ nemesisBtn.after(pairDock);
 
 function needsPairChoice() {
   const cur = currentTurnCard();
-  return !resolving && !ui.deckBuilding && isPairCard(cur) && !turnCardPlayer(cur);
+  return !game.resolving && !ui.deckBuilding && isPairCard(cur) && !turnCardPlayer(cur);
 }
 // Carta x/y in attesa di scelta (giro e posizione): la finestra ridotta vale solo per questa carta
 function pairChoiceKey() {
-  return turnOrder.round + ':' + ((turnOrder.history || []).length - 1);
+  return game.turnOrder.round + ':' + ((game.turnOrder.history || []).length - 1);
 }
 function pairButtons(kind, cls, label) {
   return pairOptions(kind).map(p => {

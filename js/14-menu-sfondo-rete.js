@@ -33,17 +33,17 @@ function openSideMenu(leave) {
   const panel = dialogShell(I18N_IT.menu, '', cancel, { displayTitle: false });
   panel.classList.add('ae-side-menu');
   const statsList = el('dl', 'ae-side-stats');
-  statsList.append(el('dt', '', I18N_IT.menuTurn), el('dd', '', String(turn)),
-    el('dt', '', I18N_IT.menuDeck), el('dd', '', String(deck.length)));
+  statsList.append(el('dt', '', I18N_IT.menuTurn), el('dd', '', String(game.turn)),
+    el('dt', '', I18N_IT.menuDeck), el('dd', '', String(game.deck.length)));
   // Sfondo: anteprima dello sfondo scelto con il nome; si tocca per scegliere tra le anteprime di tutti gli sfondi
   const bgRow = el('div', 'ae-side-field ae-side-field--row');
   bgRow.append(el('span', 'ae-side-field-label', I18N_IT.background), backgroundChoiceButton(null, { compact: true }));
   // Dorso delle carte: miniatura del dorso scelto con il nome; si tocca per scegliere tra tutti i dorsi
   const backRow = el('div', 'ae-side-field ae-side-field--row');
   backRow.append(el('span', 'ae-side-field-label', I18N_IT.cardBack), cardBackChoiceButton(null, { compact: true }));
-  const discardOpen = button(I18N_IT.discardButton(discard.length), 'secondary', () => { go(); openDiscard(); });
+  const discardOpen = button(I18N_IT.discardButton(game.discard.length), 'secondary', () => { go(); openDiscard(); });
   discardOpen.classList.add('ae-button--full');
-  discardOpen.setAttribute('aria-label', I18N_IT.discardButtonLabel(discard.length));
+  discardOpen.setAttribute('aria-label', I18N_IT.discardButtonLabel(game.discard.length));
   // Nemesi uccisa al tavolo (vita a 0): si va alla schermata Vittoria; la partita non cambia (Chiudi torna indietro)
   const killed = button(I18N_IT.nemesisKilled, 'secondary', () => { go(); showVictory(); });
   killed.classList.add('ae-button--full');
@@ -302,7 +302,7 @@ cancelDraftsBtn.hidden = true;
   row.append(cancelDraftsBtn, nemesisBtn, deckSlider.box);
 }
 cancelDraftsBtn.addEventListener('click', () => {
-  if (resolving || ui.isTransitioning || !ui.drafts.size) return;
+  if (game.resolving || ui.isTransitioning || !ui.drafts.size) return;
   ui.drafts.clear();
   render();
   nemesisBtn.focus({ preventScroll: true });
@@ -350,7 +350,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 async function prefetchDeckImages() {
   if (!('caches' in window) || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
   if (navigator.connection && navigator.connection.saveData) return;
-  const urls = [...new Set(deck.concat(queue.map(e => e.data), discard).flatMap(d => [d.image, d.thumb]).filter(Boolean))];
+  const urls = [...new Set(game.deck.concat(game.queue.map(e => e.data), game.discard).flatMap(d => [d.image, d.thumb]).filter(Boolean))];
   const todo = [];
   for (const u of urls) if (!(await caches.match(u))) todo.push(u);
   // Tre alla volta, per non rallentare le immagini che servono subito

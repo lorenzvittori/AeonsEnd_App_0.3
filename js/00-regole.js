@@ -569,7 +569,96 @@ const Regole = (function () {
     return gone;
   }
 
+  // --- Fotografia della partita (salvataggio e undo) e ripristino (refactoring fase 4) -------------------------------
+  // game = { settings, nextUid, turn, deck, discard, queue, resolving, currentIndex, newIndex, maxTierDrawn, stats,
+  // turnOrder }. La fotografia è una copia di tutti i campi di game tranne quelli che non si salvano (GAME_NOT_SAVED:
+  // settings si salva a parte, nextUid riparte); le carte di cards.json diventano il loro id e le voci della coda
+  // { id, ...stato } senza uid. È lo stesso formato dei salvataggi di sempre (dalla v48, version 2 dalla v210).
+  const GAME_NOT_SAVED = ['settings', 'nextUid'];
+  function isCard(v) {
+    return !!v && typeof v === 'object' && typeof v.id === 'string' && 'category' in v && 'inNemesisDeck' in v;
+  }
+  function plain(v) {
+    if (Array.isArray(v)) return v.map(plain);
+    if (v && typeof v === 'object') {
+      if (isCard(v)) return v.id;
+      if ('uid' in v && isCard(v.data)) {
+        const { uid, data, ...rest } = v;
+        return Object.assign({ id: data.id }, plain(rest));
+      }
+      const out = {};
+      Object.keys(v).forEach(k => { if (v[k] !== undefined) out[k] = plain(v[k]); });
+      return out;
+    }
+    return v;
+  }
+  function snapshotGame(game) {
+    const out = {};
+    Object.keys(game).forEach(k => { if (!GAME_NOT_SAVED.includes(k)) out[k] = plain(game[k]); });
+    return out;
+  }
+  // Ripristino da una fotografia s (salvataggio o undo). ctx = { cardsById (Map id -> carta), newUid() (uid delle carte
+  // in gioco), players, random, cards (carte del mazzo dei turni, per i salvataggi senza mazzo dei turni) }.
+  // Si copiano tutti i campi salvati (un campo nuovo di game passa da solo), poi: carte da id a oggetti, voci della coda
+  // con uid nuovi, e i campi mancanti dei salvataggi vecchi. Un errore (carta sconosciuta) esce prima di cambiare
+  // qualcosa. Restituisce { game: i campi salvati di game, view: { viewed, lastDrawnUid, anchor } } (view: cosa
+  // mostrare: viewed = 'draw' per il passo Pesca, l'uid della carta da risolvere o null)
+  function restoreGame(s, ctx) {
+    const get = id => {
+      const card = ctx.cardsById.get(id);
+      if (!card) throw new Error('Carta sconosciuta: ' + id);
+      return card;
+    };
+    const g = {};
+    Object.keys(s).forEach(k => { g[k] = s[k] === undefined ? undefined : JSON.parse(JSON.stringify(s[k])); });
+    g.deck = s.deck.map(get);
+    g.discard = s.discard.map(get);
+    g.queue = s.queue.map(q => {
+      const data = get(q.id);
+      return Object.assign(makeEntry(data, ctx.newUid(), s.turn), {
+        tokens: q.tokens, hp: q.hp, turnHp: q.turnHp === undefined ? q.hp : q.turnHp, isNew: !!q.isNew, paid: !!q.paid,
+        bornTurn: typeof q.bornTurn === 'number' ? q.bornTurn : s.turn
+      }, isVariableMinion(data) ? { hpSet: !!q.hpSet,
+        // Vita massima (v218); salvataggi della v214-v217 senza il campo: la più alta tra vita e vita di inizio turno
+        hpMax: typeof q.hpMax === 'number' ? q.hpMax : (q.hpSet ? Math.max(q.hp || 0, q.turnHp || 0) : undefined) } : {});
+    });
+    g.turn = s.turn;
+    // Salvataggi senza il campo: il tier più alto tra le carte già uscite (coda e scarti)
+    g.maxTierDrawn = typeof s.maxTierDrawn === 'number' ? s.maxTierDrawn
+      : Math.max(0, ...g.queue.map(e => e.data.tier || 0), ...g.discard.map(c => c.tier || 0));
+    // Salvataggi senza statistiche: da zero (mazzo iniziale = tutte le carte della partita)
+    const st = Object.assign(emptyStats(g.deck.length + g.queue.length + g.discard.length), s.stats ? JSON.parse(JSON.stringify(s.stats)) : {});
+    st.minions = Array.isArray(st.minions) ? st.minions : [];
+    st.cards = Object.assign(emptyStats(0).cards, st.cards || {});
+    st.tierAt = Object.assign({}, st.tierAt || {});
+    st.mages = st.mages && typeof st.mages === 'object' ? st.mages : {};
+    g.stats = st;
+    const view = { viewed: null, lastDrawnUid: null, anchor: null };
+    if (s.resolving && g.queue.length === 0 && g.deck.length > 0) {
+      // Turno nemesi con la coda vuota: si torna alla carta da pescare
+      g.resolving = true;
+      g.currentIndex = 0;
+      g.newIndex = -1;
+      view.viewed = 'draw';
+    } else if (s.resolving && g.queue.length > 0) {
+      g.resolving = true;
+      g.currentIndex = Math.max(0, Math.min(s.currentIndex, g.queue.length - 1));
+      g.newIndex = s.newIndex >= 0 ? Math.min(s.newIndex, g.queue.length - 1) : -1;
+      if (g.newIndex >= 0) view.lastDrawnUid = g.queue[g.newIndex].uid;
+      view.viewed = g.queue[g.currentIndex].uid;
+    } else {
+      g.resolving = false;
+      g.currentIndex = 0;
+      g.newIndex = -1;
+      if (g.queue.length) view.anchor = { uid: g.queue[g.queue.length - 1].uid, align: g.queue.length === 1 ? 'center' : 'anchor' };
+    }
+    g.turnOrder = restoreTurnOrder(s.turnOrder, { players: ctx.players, resolving: g.resolving, turn: s.turn, random: ctx.random,
+      get cards() { return ctx.cards; } });
+    return { game: g, view };
+  }
+
   return {
+    GAME_NOT_SAVED, snapshotGame, restoreGame,
     shuffle, pickRandom,
     waveOfCode, isMiniCode, ownsProduct, cardAllowed, battleOf, isPlayable,
     deckSetupRow, ownedUpgradedInWave, mergeLockedWave, mergeActive, deckPool, deckShortfall, buildDeck,

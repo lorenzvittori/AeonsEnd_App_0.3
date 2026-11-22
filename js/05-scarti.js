@@ -8,18 +8,18 @@ let discardTrigger = null;
 // Scarti dalla più recente alla più vecchia; un tocco apre la carta in sola lettura
 function openDiscard() {
   discardTrigger = document.activeElement;
-  discardTitle.textContent = I18N_IT.discardTitle(discard.length);
+  discardTitle.textContent = I18N_IT.discardTitle(game.discard.length);
   discardGrid.replaceChildren();
-  discardEmpty.hidden = discard.length > 0;
-  discardGrid.hidden = discard.length === 0;
-  for (let i = discard.length - 1; i >= 0; i--) {
-    const data = discard[i];
+  discardEmpty.hidden = game.discard.length > 0;
+  discardGrid.hidden = game.discard.length === 0;
+  for (let i = game.discard.length - 1; i >= 0; i--) {
+    const data = game.discard[i];
     const item = el('button', 'ae-discard-item');
     item.type = 'button';
-    const label = discard.length === 1 ? I18N_IT.onlyOne
-      : i === discard.length - 1 ? I18N_IT.mostRecent : i === 0 ? I18N_IT.leastRecent : '';
+    const label = game.discard.length === 1 ? I18N_IT.onlyOne
+      : i === game.discard.length - 1 ? I18N_IT.mostRecent : i === 0 ? I18N_IT.leastRecent : '';
     item.setAttribute('aria-label', [data.name, typeName(data), label].filter(Boolean).join(', '));
-    item.append(cardArt(data, { thumb: true, lazy: discard.length - i > 12 }), el('span', 'ae-discard-label', label));
+    item.append(cardArt(data, { thumb: true, lazy: game.discard.length - i > 12 }), el('span', 'ae-discard-label', label));
     item.addEventListener('click', () => openDiscardZoom(data));
     discardGrid.appendChild(item);
   }

@@ -3,50 +3,19 @@
 
 // --- 7. Stato della partita: fotografia, ripristino, salvataggio, undo ---------------------------------------------
 
-// Fotografia della partita (solo dati semplici, stesso formato della v48, così si può salvare nel browser)
+// Fotografia della partita (salvataggio e undo): una copia di tutti i campi di game tranne settings e nextUid
+// (Regole.snapshotGame: carte come id, voci della coda senza uid). Stesso formato di sempre (v48, version 2 dalla v210):
+// un campo nuovo di game entra da solo nella fotografia
 function snapshot() {
-  return {
-    turn,
-    deck: deck.map(c => c.id),
-    discard: discard.map(c => c.id),
-    queue: queue.map(e => ({ id: e.data.id, tokens: e.tokens, hp: e.hp, turnHp: e.turnHp, isNew: !!e.isNew, paid: !!e.paid, bornTurn: e.bornTurn,
-      // v214: vita impostata (solo i minion a vita variabile)
-      // (v218: con la sua vita massima, quella impostata la prima volta)
-      ...(isVariableMinion(e.data) ? { hpSet: !!e.hpSet, hpMax: typeof e.hpMax === 'number' ? e.hpMax : null } : {}) })),
-    resolving,
-    currentIndex,
-    newIndex,
-    // In più rispetto alla v48 (i salvataggi senza questi campi restano validi)
-    maxTierDrawn,
-    stats: JSON.parse(JSON.stringify(stats)),
-    turnOrder: { left: turnOrder.left.slice(), drawn: turnOrder.drawn.slice(), round: turnOrder.round, wild: turnOrder.wild || null,
-      picks: JSON.parse(JSON.stringify(turnOrder.picks || {})),
-      // v220: memoria delle carte 1/2 e 3/4 (a chi tocca la prossima carta della coppia)
-      pairNext: emptyPairNext(turnOrder.pairNext),
-      // v222: storia dei turni del giro (barra dei turni)
-      history: JSON.parse(JSON.stringify(turnOrder.history || [])),
-      // v211: carte del mazzo note (parallelo a left) e turno annullato in attesa della carta turno
-      known: turnOrder.left.map((k, i) => !!(turnOrder.known && turnOrder.known[i])), waiting: !!turnOrder.waiting }
-  };
+  return Regole.snapshotGame(game);
 }
 
-// Rimette la partita come nella fotografia (senza animazioni; quelle in corso si fermano)
+// Rimette la partita come nella fotografia (senza animazioni; quelle in corso si fermano). Regole.restoreGame copia
+// tutti i campi salvati e completa i salvataggi vecchi (statistiche, Tier, mazzo dei turni: Regole.restoreTurnOrder);
+// legge tutto prima di cambiare qualcosa: se una carta non c'è, la partita in corso resta com'è
 function restore(s) {
-  const get = id => {
-    const card = cardsById.get(id);
-    if (!card) throw new Error('Carta sconosciuta: ' + id);
-    return card;
-  };
-  // Prima si leggono tutti i dati: se qualcosa non va, la partita in corso resta com'è
-  const newDeck = s.deck.map(get);
-  const newDiscard = s.discard.map(get);
-  const newQueue = s.queue.map(q => Object.assign(makeEntry(get(q.id)), {
-    tokens: q.tokens, hp: q.hp, turnHp: q.turnHp === undefined ? q.hp : q.turnHp, isNew: !!q.isNew, paid: !!q.paid,
-    bornTurn: typeof q.bornTurn === 'number' ? q.bornTurn : s.turn
-  }, isVariableMinion(get(q.id)) ? { hpSet: !!q.hpSet,
-    // Vita massima (v218); salvataggi della v214-v217 senza il campo: la più alta tra vita e vita di inizio turno
-    hpMax: typeof q.hpMax === 'number' ? q.hpMax : (q.hpSet ? Math.max(q.hp || 0, q.turnHp || 0) : undefined) } : {}));
-
+  const r = Regole.restoreGame(s, { cardsById, newUid: () => game.nextUid++, players: game.settings.players, random: Math.random,
+    get cards() { return turnOrderCards(game.settings.players); } });
   clearTransition();
   ui.drafts.clear();
   ui.flyingDiscards = 0;
@@ -58,60 +27,22 @@ function restore(s) {
   closeAllModals();
   closeDiscard();
   ui.reveal = null;
-  deck = newDeck;
-  discard = newDiscard;
-  turn = s.turn;
-  queue = newQueue;
-  // Salvataggi senza il campo: il tier più alto tra le carte già uscite (coda e scarti)
-  maxTierDrawn = typeof s.maxTierDrawn === 'number' ? s.maxTierDrawn
-    : Math.max(0, ...queue.map(e => e.data.tier || 0), ...discard.map(c => c.tier || 0));
-  // Salvataggi senza statistiche: si parte da zero (mazzo iniziale = tutte le carte della partita)
-  stats = Object.assign(emptyStats(deck.length + queue.length + discard.length), s.stats ? JSON.parse(JSON.stringify(s.stats)) : {});
-  stats.minions = Array.isArray(stats.minions) ? stats.minions : [];
-  stats.cards = Object.assign(emptyStats(0).cards, stats.cards || {});
-  stats.tierAt = Object.assign({}, stats.tierAt || {});
-  stats.mages = stats.mages && typeof stats.mages === 'object' ? stats.mages : {};
-
-  if (s.resolving && queue.length === 0 && deck.length > 0) {
-    // Turno nemesi con la coda vuota (per esempio il primo turno, se il mazzo dei turni dà subito la nemesi):
-    // si torna alla carta da pescare
-    resolving = true;
-    currentIndex = 0;
-    newIndex = -1;
-    ui.viewedUid = DRAW_UID;
-  } else if (s.resolving && queue.length > 0) {
-    resolving = true;
-    currentIndex = Math.max(0, Math.min(s.currentIndex, queue.length - 1));
-    newIndex = s.newIndex >= 0 ? Math.min(s.newIndex, queue.length - 1) : -1;
-    // Dopo un undo le carte hanno uid nuovi: la carta appena pescata è quella in newIndex
-    if (newIndex >= 0) ui.lastDrawnUid = queue[newIndex].uid;
-    ui.viewedUid = queue[currentIndex].uid;
-  } else {
-    resolving = false;
-    currentIndex = 0;
-    newIndex = -1;
-    ui.viewedUid = null;
-    // Si mostra la carta più recente
-    if (queue.length) ui.queueAnchor = { uid: queue[queue.length - 1].uid, align: queue.length === 1 ? 'center' : 'anchor' };
-  }
-  // Mazzo dei turni (Regole.restoreTurnOrder). Salvataggi senza (prima della v168): giro nuovo con il turno in corso già
-  // estratto. drawn vuoto: attesa di "Pesca carta turno" (v193, per esempio con l'undo); v222: nel turno nemesi basta un
-  // turno nella storia (la sua carta può essere tornata nel mazzo). Campi mancanti dei salvataggi vecchi: giro dai turni
-  // nemesi (v168), wild a caso (prima della v179), nessuna carta nota né turno annullato (v211), picks a stringhe e
-  // memoria delle coppie ricostruita (prima della v220), storia dagli scarti dei turni (prima della v222)
-  turnOrder = Regole.restoreTurnOrder(s.turnOrder, { players: settings.players, resolving, turn: s.turn, random: Math.random,
-    get cards() { return turnOrderCards(settings.players); } });
+  Object.assign(game, r.game);
+  // Cosa si mostra: nel turno nemesi la carta da risolvere (o il passo Pesca con la coda vuota; dopo un undo le carte
+  // hanno uid nuovi: la carta appena pescata è quella in newIndex), nel turno giocatori la carta più recente
+  ui.viewedUid = r.view.viewed === 'draw' ? DRAW_UID : r.view.viewed;
+  if (r.view.lastDrawnUid !== null) ui.lastDrawnUid = r.view.lastDrawnUid;
+  if (r.view.anchor) ui.queueAnchor = r.view.anchor;
 }
-
 // La partita si salva solo dal primo turno nemesi (prima, anche durante "Crea mazzo", non si scrive niente e resta
 // l'eventuale partita salvata prima). Una partita già salvata (ripresa, o tornata al turno 0 con l'undo) si salva sempre.
 function save() {
   // Modalità test (v215): niente salvataggio, la partita salvata vera resta com'è
   if (testRun) return;
-  if (turn < 1 && !ui.gameSaved) return;
+  if (game.turn < 1 && !ui.gameSaved) return;
   ui.gameSaved = true;
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION, settings, state: snapshot(), undo: undoStack }));
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION, settings: game.settings, state: snapshot(), undo: undoStack }));
   } catch (err) {
     console.warn('Salvataggio non riuscito', err);
   }
