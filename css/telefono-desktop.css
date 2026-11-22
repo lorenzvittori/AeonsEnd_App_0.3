@@ -1,0 +1,62 @@
+/* Telefono (orizzontale, schermi stretti) e tablet / desktop (da 768px).
+   Parte di style.css divisa nella fase 3 del refactoring (CONTESTO_SVILUPPO.md, sezione 6): ogni selettore compare
+   una volta sola; l'ordine dei file (STYLES in index.html, @import in style.css) conserva la precedenza delle regole. */
+
+@media (max-width: 359px) {
+  .ae-queue-item { width: 116px; flex-basis: 116px; }
+  .ae-queue-list { gap: 10px; }
+  .ae-queue-viewport { padding-inline: 12px; }
+  .ae-phase { font-size: 13px; }
+  .ae-dock-row { flex-wrap: wrap; }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .ae-header { min-height: 48px; }
+  .ae-compact-rail { flex-basis: 72px; height: 72px; }
+  .ae-compact-rail .ae-queue-item { width: 36px; flex-basis: 36px; }
+  .ae-compact-rail .ae-status-badge { display: none; }
+  .ae-dock-row { min-height: 36px; }
+  .ae-dock .ae-button { min-height: 44px; }
+}
+/* Tablet e desktop: la partita resta la stessa del telefono (fascia piccola, carte grandi, pulsante), in una colonna al
+   centro larga quanto serve alla carta più un pezzo delle vicine (--ae-col, calcolata da sizeColumn in script.js);
+   lo sfondo riempie tutto lo schermo. La pagina iniziale ha la sua colonna (560px). La vecchia vista a due colonne
+   (coda a sinistra, carta a destra), mai aggiornata al design attuale, è stata tolta: tag v152-prima-layout-tablet-desktop */
+@media (min-width: 768px) {
+  .ae-shell { grid-template-columns: minmax(0, var(--ae-col, 560px)); justify-content: center; }
+  .start-title { font-size: 32px; line-height: 39px; }
+  .start-box { width: min(100% - 64px, 560px); }
+  .ae-toast { bottom: calc(140px + var(--ae-safe-bottom)); }
+}
+@media (min-width: 900px) {
+  .collection-body, .collection-head, .collection-footer { width: min(100%, 560px); margin-inline: auto; }
+}
+@media (max-width: 345px) {
+  .ae-main-row > .ae-button { font-size: 14px; padding-left: 8px; padding-right: 8px; }
+}
+@media (min-width: 768px) {
+  .deck-build { --ae-pile-h: min(16vh, 150px); gap: 20px; }
+  .deck-build-grid { gap: 24px 22px; }
+  .deck-build-title { font-size: 24px; line-height: 30px; }
+  .deck-build-head, .deck-build-tier { font-size: 16px; }
+}
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .ae-rotate {
+    position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; padding: 24px; background: var(--ae-bg); color: var(--ae-gold); text-align: center;
+    font: 600 20px/26px var(--ae-font-display); letter-spacing: .04em;
+  }
+  .ae-rotate::before {
+    content: ''; width: 40px; height: 64px; border: 3px solid var(--ae-text-muted); border-radius: 8px;
+    animation: ae-rotate-hint 1.6s ease-in-out infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ae-rotate::before { animation: none; }
+}
+@media (max-width: 767px) {
+  .ae-modal.ae-turn-screen { width: 100%; border-width: 0; }
+}
+@media (min-width: 768px) {
+  .ae-shell.ae-turn-copy { margin-left: -16px; margin-right: -16px; }
+  .ae-turn-sheet { border: solid var(--ae-border); border-width: 0 1px; }
+}

@@ -1,0 +1,125 @@
+/* Fascia piccola e carte (immagine, box vita/token, NUOVA, carta che si gira).
+   Parte di style.css divisa nella fase 3 del refactoring (CONTESTO_SVILUPPO.md, sezione 6): ogni selettore compare
+   una volta sola; l'ordine dei file (STYLES in index.html, @import in style.css) conserva la precedenza delle regole. */
+
+/* Nessuna linea di separazione tra fascia piccola e carte grandi, in entrambi i turni */
+.ae-compact-rail {
+  flex: 0 0 104px;
+  height: 104px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 16px;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  border-bottom: 0;
+}
+.ae-compact-rail .ae-queue-item { --cw: 52px; width: 52px; flex-basis: 52px; gap: 4px; opacity: .7; }
+.ae-compact-rail .ae-queue-item[aria-current='true'],
+.ae-compact-rail .ae-queue-item[data-viewed='true'] { opacity: 1; }
+.ae-compact-rail .ae-status-badge { height: 18px; min-width: 0; padding: 1px 4px; gap: 2px; font-size: 11px; line-height: 14px; border-radius: 5px; }
+.ae-compact-rail .ae-status-badge .ae-icon { width: 12px; height: 12px; }
+.ae-compact-rail .ae-token { width: 11px; height: 11px; }
+.ae-compact-rail .ae-new-tag { display: none; }
+/* Fascia in alto: carte senza bordo né anello (restano opacità, RISOLVI e il glow dorato della carta nuova) */
+/* Fascia piccola: "HP: −x" del minion in modifica, al centro della carta */
+.ae-compact-rail .ae-queue-item .ae-card-art { border: 0; --ae-ring: 0 0 0 transparent; position: relative; }
+/* Carta pescata: retro (dorso, CARD_BACK in script.js) e fronte, che si gira in 350ms */
+.ae-flip { position: absolute; inset: 0; perspective: 1200px; }
+.ae-flip-inner { position: absolute; inset: 0; transform-style: preserve-3d; }
+.ae-flip.is-flipped .ae-flip-inner { transform: rotateY(180deg); transition: transform var(--ae-duration-draw) var(--ae-ease-decelerate); }
+/* angoli arrotondati come la carta: il retro dell'immagine ha gli angoli neri, così vengono tagliati */
+.ae-flip-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 5% / 3.58%; overflow: hidden; }
+/* Retro della faccia anteriore della carta che si gira: se l'immagine non fosse ancora disegnata si vede il dorso, non lo sfondo */
+.ae-flip-face--front {
+  transform: rotateY(180deg);
+  background: var(--ae-card-back, url('../Assets/ui/decor/card-back-logo.webp')) center / cover no-repeat;
+}
+.ae-flip-face--back img { display: block; width: 100%; height: 100%; object-fit: contain; }
+/* "Caricamento carta…" e "Riprova immagine" stanno dentro la carta, in basso: non tolgono spazio alla carta */
+.ae-flip-loading {
+  position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); z-index: 2; max-width: 90%;
+  padding: 4px 10px; border-radius: var(--ae-radius-sm); background: rgba(16, 17, 22, .85); color: var(--ae-text); text-align: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Niente rotazione: dissolvenza breve dal retro al fronte */
+  .ae-flip-inner, .ae-flip.is-flipped .ae-flip-inner { transform: none; transition: none; }
+  .ae-flip-face--front { transform: none; opacity: 0; }
+  .ae-flip-face--back { opacity: 1; }
+  .ae-flip.is-flipped .ae-flip-face--front { opacity: 1; transition: opacity var(--ae-duration-draw) linear; }
+  .ae-flip.is-flipped .ae-flip-face--back { opacity: 0; transition: opacity var(--ae-duration-draw) linear; }
+}
+/* Niente barra rossa sulla carta da risolvere nella fascia */
+.ae-compact-rail .ae-queue-item .ae-card-art::after { display: none; }
+.ae-compact-rail .ae-status-badge.is-auto-token { overflow: visible; }
+/* Prossima carta da pescare (retro) in fondo alla fascia: NUOVA in alto a destra */
+/* Fascia piccola: NUOVA sulla carta da pescare (dorso) in alto a destra, dentro la carta */
+.ae-compact-rail .ae-next-card .ae-new-tag {
+  display: block;
+  padding: 1px 3px;
+  font-size: 10px;
+  line-height: 12px;
+  border-radius: 4px;
+  top: 3px;
+  right: 3px;
+}
+/* Box vita / token sopra la carta, centrato in alto (sovrapposto all'immagine) */
+/* Fascia piccola: il box della vita con due numeri lunghi (13/17) può essere più largo della carta, senza tagli */
+.ae-compact-rail .ae-queue-item > .ae-status-badge {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  background: rgba(16, 17, 22, .85);
+  max-width: none;
+  overflow: visible;
+}
+.ae-compact-rail .ae-status-badge.is-long { gap: 1px; padding: 1px 3px; font-size: 10px; letter-spacing: -.02em; }
+.ae-compact-rail .ae-status-badge.is-long .ae-icon { width: 10px; height: 10px; }
+.ae-compact-rail .rail-hp-tag {
+  top: 50%; left: 50%; right: auto; transform: translate(-50%, -50%); z-index: 4; padding: 1px 4px; border-radius: 5px;
+  font-size: 11px; line-height: 14px; white-space: nowrap;
+}
+/* v218: box della vita "?" (minion a vita variabile da impostare): si tocca e apre la scheda della carta */
+.ae-status-badge.is-unset, .ae-focus-status.is-unset { cursor: pointer; pointer-events: auto; }
+/* v169: fascia piccola, potere non rimovibile: box con il simbolo di divieto in basso, simmetrico al box in alto */
+.ae-compact-rail .ae-queue-item > .ae-status-badge.ae-ban-badge {
+  top: auto; bottom: 4px; display: inline-flex; align-items: center; justify-content: center; color: hsl(356 70% 62%);
+}
+.ae-compact-rail .ae-ban-badge svg { display: block; width: 12px; height: 12px; }
+/* v171: nella fascia piccola la carta da risolvere ha un bagliore rosso, come la carta grande (non il dorso da pescare,
+   non la carta appena pescata, che ha il suo bagliore dorato) */
+.ae-compact-rail .ae-queue-item[aria-current='true']:not(.ae-next-card):not(.is-new) .ae-card-art {
+  --ae-glow: 0 0 9px 2px rgba(230, 40, 40, .7);
+}
+/* v169: box NUOVA come sul dorso al passo Pesca (.ae-compact-rail .ae-next-card .ae-new-tag) */
+/* v173: durante la risoluzione NUOVA è grigia (diventa dorata al passo Pesca, sul dorso) */
+.ae-compact-rail .ae-next-slot .ae-new-tag {
+  display: block;
+  top: 3px;
+  right: 3px;
+  padding: 1px 3px;
+  font-size: 10px;
+  line-height: 12px;
+  border-radius: 4px;
+  background: #8a8780;
+  color: #15161c;
+}
+/* v176: poteri con più di 3 token: token e spazi rimpiccioliti di 3/n (script.js tokenIcons), il box resta quello da 3 */
+.ae-tokens.is-many .ae-token { zoom: var(--ae-token-zoom, 1); }
+/* v178: 4-5 token: il box ha la larghezza di quello con 3 token (padding laterale + 3 token + 2 spazi da 2px); lo spazio
+   libero (2 × padding + 4px) si divide in n + 1 parti uguali: tra un token e l'altro e tra i token e il bordo.
+   --ae-badge-px = padding laterale del box con 3 token in quel punto dell'app */
+.ae-status-badge.has-many-tokens { --ae-badge-px: 8px; padding-left: 0; padding-right: 0; }
+.ae-compact-rail .ae-status-badge.has-many-tokens { --ae-badge-px: 4px; }
+.ae-status-badge.has-many-tokens .ae-tokens {
+  --ae-token-space: calc((2 * var(--ae-badge-px) + 4px) / (var(--ae-token-n, 3) + 1));
+  gap: var(--ae-token-space); padding: 0 var(--ae-token-space); max-width: none;
+}
+.ae-tokens.is-many { gap: calc(4px / (var(--ae-token-n, 3) - 1)); }
+/* v178: più di 5 token: un token e il numero */
+.ae-tokens.is-count { gap: .25em; }
+.ae-token-count { font-variant-numeric: tabular-nums; }

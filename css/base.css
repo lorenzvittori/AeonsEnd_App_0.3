@@ -1,0 +1,109 @@
+/* Base: pagina, shell dell'app, sfondo, animazioni comuni.
+   Parte di style.css divisa nella fase 3 del refactoring (CONTESTO_SVILUPPO.md, sezione 6): ogni selettore compare
+   una volta sola; l'ordine dei file (STYLES in index.html, @import in style.css) conserva la precedenza delle regole. */
+
+html { height: 100%; }
+/* Layout dell'app (new design 0.2). Token in css/design-tokens.css, componenti in css/components.css. */
+body { height: 100%; overflow: hidden; }
+/* Shell: testata, contenuto, dock (REPORT §2.5) */
+/* --- Sfondo unico: la maga a sinistra, la nemesi a destra ---
+   Immagine scelta nel Menu (--ae-battle-bg, impostata da script.js; BACKGROUNDS), predefinita battle-bg.webp.
+   Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro.
+   Velo scuro al 50%. Stato precedente (due sfondi): tag git v123-prima-sfondo-unico */
+/* --- v157 --- */
+/* "Crea mazzo": sfondo nero (come il menu iniziale); finito il banner "Partita iniziata" sfuma nello sfondo del turno
+   giocatori (velo .ae-shell::before, tolto da script.js con la classe is-deck-dark) */
+.ae-shell {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('../Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
+  transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
+  position: relative;
+}
+.ae-main { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ae-shell.is-sliding-in { animation: ae-slide-in-right .38s ease-in-out; }
+@keyframes ae-slide-out-left { from { transform: none; } to { transform: translateX(-100%); } }
+@keyframes ae-slide-in-right { from { transform: translateX(100%); } to { transform: none; } }
+.ae-shell > .ae-main { position: relative; z-index: 1; }
+.ae-shell.is-nemesis-turn {
+  background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('../Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
+  transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
+  background-position: 0 0, 100% center, 0 0;
+}
+.ae-shell.is-nemesis-turn.is-draw-phase {
+  background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('../Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
+  transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
+  background-position: 0 0, 100% center, 0 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ae-shell { transition: none; }
+}
+/* --- Creazione del mazzo nemesi: 9 mazzi (Tier × Base / Potenziate / Specifiche) prima del turno giocatori --- */
+.ae-main.is-deck-building > .queue-view { visibility: hidden; }
+/* Turno giocatori con modifiche: "Annulla modifiche" e "Salva modifiche" sulla stessa riga */
+.ae-main-row { display: flex; gap: 8px; }
+.ae-main-row[hidden] { display: none; }
+/* Telefono in orizzontale: le carte non ci stanno, si chiede di girarlo */
+.ae-rotate { display: none; }
+.ae-shell::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--ae-bg); opacity: 0; transition: opacity .9s ease-in-out;
+}
+.ae-shell.is-deck-dark::before { opacity: 1; transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ae-shell::before { transition: none; }
+}
+/* Mazzo e scarti in alto non si toccano durante "Crea mazzo" */
+.ae-shell.is-deck-building .ae-header-piles { pointer-events: none; }
+/* Turno nemesi: breve scossa dello schermo (urgenza) */
+.ae-shell.is-shaking { animation: ae-shake .5s cubic-bezier(.36, .07, .19, .97) both; }
+@keyframes ae-shake {
+  10%, 90% { transform: translate(-1px, 0); }
+  20%, 80% { transform: translate(3px, -1px); }
+  30%, 50%, 70% { transform: translate(-5px, 1px); }
+  40%, 60% { transform: translate(5px, -1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ae-shell.is-shaking { animation: none; }
+}
+/* Barra della fase sotto la testata (script.js renderTurnTrack, v168): 6 caselle, una per carta del mazzo dei turni,
+   nell'ordine di estrazione. Accesa (8px, colore e bagliore) la casella del turno in corso; velate le caselle dei turni
+   già giocati nel giro; grigie quelle da estrarre. Colori: giocatori 1-4 verde, giallo, blu, viola; jolly grigio
+   chiaro; nemesi rosso scuro. Sotto la casella accesa, solo nel turno nemesi, "Nemesi · Risolvi" / "Nemesi · Pesca" */
+:root {
+  /* v174: palette dell'utente (giocatori 1-4: lime, arancio, blu, viola); v222: nuovi colori dell'utente, presi dalle
+  carte turno vere */
+  --ae-turn-p1: #86811D; --ae-turn-p2: #CF892B; --ae-turn-p3: #007591;
+  --ae-turn-p4: #773067; --ae-turn-wild: hsl(40 14% 84%); --ae-turn-red: hsl(356 58% 42%);
+  --ae-turn-red-text: hsl(356 62% 70%); --ae-turn-off: rgba(236, 232, 222, .14);
+}
+/* v195: oscurato tutto tranne la barra della fase: lo sfondo con il velo ::before della shell (sotto .ae-main), testata,
+   pulsante e contenuto della parte centrale con un filtro; la barra (.ae-turn-track) resta accesa. La finestra non ha
+   più un fondo scuro suo (copriva anche la barra). Il Menu resta toccabile anche se scurito. */
+.ae-shell.is-pair-choice .ae-pair-choice { background: transparent; }
+.ae-shell.is-pair-choice::before { opacity: .72; transition: opacity .25s ease-out; }
+.ae-shell > .ae-header, .ae-shell > .ae-dock, .ae-shell > .ae-main > * { transition: filter .25s ease-out; }
+.ae-shell.is-pair-choice > .ae-header, .ae-shell.is-pair-choice > .ae-dock,
+.ae-shell.is-pair-choice > .ae-main > :not(.ae-turn-track) { filter: brightness(.28); }
+.ae-shell.ae-turn-copy::before { display: none; }
+/* v212: copia, solo da guardare, della testata e della barra della fase in cima alla finestra. Il contenitore ha le
+   classi di #app (lo stile della testata dipende da .ae-shell.clear-header) ma non la sua griglia, altezza e sfondo;
+   arriva ai bordi della finestra (margini negativi pari al padding) */
+.ae-shell.ae-turn-copy {
+  display: block;
+  height: auto;
+  overflow: visible;
+  animation: none;
+  transition: none;
+  flex: 0 0 auto;
+  margin: calc(-12px - var(--ae-safe-top)) -16px 0;
+  pointer-events: none;
+  position: relative;
+  z-index: 2;
+  background: var(--ae-surface);
+}
+/* Con la scelta in sospeso le carte non si cambiano e il mazzo non si pesca: comandi sotto le carte e mazzo velati */
+.ae-shell.is-pair-pending .queue-controls { opacity: .35; pointer-events: none; }
+.ae-shell.is-pair-pending .ae-pile--deck { opacity: .45; }

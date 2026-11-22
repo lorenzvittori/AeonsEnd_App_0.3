@@ -4,7 +4,7 @@
   "description": "Solo strumenti di sviluppo (tools/ e test in tests/): l'app non usa pacchetti e non ha build.",
   "scripts": {
     "test": "node --test tests/",
-    "check": "node tools/check-js-order.mjs && node tools/check-syntax.mjs"
+    "check": "node tools/check-js-order.mjs && node tools/check-syntax.mjs && node tools/check-css.mjs"
   },
   "devDependencies": {
     "acorn": "8.14.0"

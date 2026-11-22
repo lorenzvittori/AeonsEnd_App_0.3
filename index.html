@@ -138,11 +138,15 @@
     Questo file non va più modificato a ogni cambio di CSS/JS: la versione si aumenta in version.json.
     version.json viene letto saltando la cache del browser, così CSS e JS nuovi si vedono subito
     (dopo la pubblicazione di GitHub Pages) anche se questo index.html è ancora in cache.
-    I CSS sono tre (token, componenti, app) e prendono tutti lo stesso ?v=N.
+    I CSS (token, componenti e, dalla v230, un file per parte dell'app) prendono tutti lo stesso ?v=N. L'ordine di
+    STYLES è quello della precedenza delle regole: un file nuovo di css/ va qui E negli @import di style.css, nello
+    stesso punto. style.css resta solo per un index.html vecchio ancora in cache (vedi il commento in style.css).
   -->
   <script>
     (function () {
-      var STYLES = ['css/design-tokens.css', 'css/components.css', 'style.css'];
+      var STYLES = ['css/design-tokens.css', 'css/components.css', 'css/base.css', 'css/testata.css', 'css/carte.css',
+        'css/turno-giocatori.css', 'css/turno-nemesi.css', 'css/mazzo-turni.css', 'css/pagina-iniziale.css',
+        'css/crea-mazzo.css', 'css/finestre.css', 'css/statistiche-vittoria.css', 'css/telefono-desktop.css'];
       function load(v) {
         var q = v ? '?v=' + v : '';
         var pending = STYLES.length;

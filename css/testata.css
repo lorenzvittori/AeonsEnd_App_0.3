@@ -1,0 +1,261 @@
+/* Testata (nome della nemesi, mazzo e scarti, Menu) e barra dei turni.
+   Parte di style.css divisa nella fase 3 del refactoring (CONTESTO_SVILUPPO.md, sezione 6): ogni selettore compare
+   una volta sola; l'ordine dei file (STYLES in index.html, @import in style.css) conserva la precedenza delle regole. */
+
+/* Pile di carte (testata): dorso del mazzo e ultima carta scartata, con un'ombra a scalini che fa da "pila" e il numero sopra */
+.ae-pile { position: relative; flex: 0 0 auto; height: 68px; aspect-ratio: 63 / 88; padding: 0; border: 0; background: none; color: inherit; }
+.ae-pile.is-empty { border: 1px dashed rgba(236, 232, 222, .35); border-radius: 5% / 3.58%; }
+.ae-pile-count {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 30px; height: 30px; padding: 0 6px;
+  display: grid; place-items: center; border-radius: 15px; background: rgba(16, 17, 22, .88); border: 1px solid rgba(223, 174, 89, .7);
+  color: var(--ae-text); font: 700 15px/1 var(--ae-font-ui); font-variant-numeric: tabular-nums;
+}
+.ae-pile--discard { cursor: pointer; }
+/* Sotto il nome della nemesi: "Turno N" */
+.ae-shell.clear-header .ae-phase {
+  font: 600 18px/24px var(--ae-font-display);
+  color: var(--ae-gold);
+  letter-spacing: .05em;
+  text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.ae-phase-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+/* Undo e Menu dello stesso colore di "Turno N" */
+.ae-shell.clear-header .ae-header .ae-icon-button {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .9));
+  color: var(--ae-text-muted);
+}
+.ae-header-piles .ae-pile { height: 44px; }
+.ae-header-piles .ae-pile-count { min-width: 22px; height: 22px; padding: 0 4px; border-radius: 11px; font-size: 12px; }
+/* La pila degli scarti riceve una carta: piccolo rimbalzo con un lampo dorato */
+.ae-pile--discard.is-bump { animation: ae-pile-bump .42s cubic-bezier(.2, 1.4, .4, 1); }
+.ae-pile--discard.is-bump img { animation: ae-pile-flash .6s ease-out; }
+@keyframes ae-pile-bump { 0% { transform: scale(1); } 35% { transform: scale(1.22); } 100% { transform: scale(1); } }
+@keyframes ae-pile-flash { 0% { box-shadow: 0 0 0 0 rgba(255, 196, 60, 0); } 30% { box-shadow: 0 0 16px 5px rgba(255, 196, 60, .9); } 100% { box-shadow: 2px 2px 0 -1px #2a2c34, 4px 4px 0 -1px #1b1d24, 0 2px 8px rgba(0, 0, 0, .7); } }
+/* Copia della carta che vola verso gli scarti (animata da script.js con Web Animations) */
+.ae-fly-ghost {
+  position: fixed; z-index: 70; margin: 0; pointer-events: none; border-radius: 5% / 3.58%; overflow: visible;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, .65), 0 0 18px 2px rgba(223, 174, 89, .45); will-change: transform, opacity;
+}
+/* Mazzo in alto: si tocca; sotto compare "Pesca carta" */
+.ae-header-piles .ae-pile--deck { cursor: pointer; }
+.ae-players-icon {
+  display: inline-block; height: 14px; aspect-ratio: 132 / 70; background-color: currentColor;
+  -webkit-mask: var(--ae-players-icon) center / contain no-repeat; mask: var(--ae-players-icon) center / contain no-repeat;
+}
+/* Bordo dei dorsi (mazzi in alto e nella creazione del mazzo): più chiaro e un po' più evidente */
+.ae-pile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 5% / 3.58%;
+  box-shadow: 0 0 0 1px rgba(236, 232, 222, .45), 2px 2px 0 -1px #555865, 4px 4px 0 -1px #3d404a, 0 2px 8px rgba(0, 0, 0, .7);
+}
+/* Icona dei giocatori (2, 3, 4 figure) a sinistra di "Turno N", dello stesso colore del testo */
+/* Riga sotto il nome della nemesi: fiamma con il numero della battaglia | giocatori | Turno N */
+.ae-phase-turn {
+  font: 700 12px/16px var(--ae-font-ui);
+  color: var(--ae-text-muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ae-info-sep { color: var(--ae-text-muted); opacity: .6; font-weight: 400; }
+.ae-battle-flame {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; padding-top: 4px;
+  background: url('../Assets/ui/icons/flame.png') center / contain no-repeat;
+  color: #3a1405; font: 800 10px/1 var(--ae-font-ui); letter-spacing: 0; text-shadow: 0 0 2px rgba(255, 240, 180, .8);
+}
+/* Il mazzo in alto riceve una carta: piccolo rimbalzo */
+.ae-pile--deck.is-bump { animation: ae-pile-bump .3s cubic-bezier(.2, 1.4, .4, 1); animation-duration: .225s; }
+/* --- Telefono (v155) --- */
+/* Mazzo e scarti in testata: il disegno resta 32×44, l'area che si tocca è 44×44 (6px invisibili per lato); più spazio
+   tra i due così le aree non si sovrappongono */
+.ae-header-piles { justify-self: start; display: flex; align-items: center; gap: 12px; margin-left: 6px; }
+.ae-header-piles .ae-pile::before { content: ''; position: absolute; inset: 0 -6px; }
+/* Pulsante Menu in alto a destra (tre linee) e pannello laterale: 70% della larghezza a destra, il resto oscurato */
+/* Menu: le tre linee diventano una X (la linea centrale sparisce, le altre ruotano di 45°) */
+.ae-menu-button .ae-menu-lines {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  content: '';
+  position: relative;
+  transition: background-color .15s ease-out;
+}
+.ae-menu-button .ae-menu-lines::before {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  content: '';
+  position: absolute;
+  top: -6px;
+  transition: top .18s ease-out .12s, transform .18s ease-out 0s;
+}
+.ae-menu-button .ae-menu-lines::after {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  content: '';
+  position: absolute;
+  top: 6px;
+  transition: top .18s ease-out .12s, transform .18s ease-out 0s;
+}
+.ae-menu-button.is-open .ae-menu-lines { background-color: transparent; }
+.ae-menu-button.is-open .ae-menu-lines::before {
+  top: 0;
+  transition: top .18s ease-out 0s, transform .18s ease-out .12s;
+  transform: rotate(45deg);
+}
+.ae-menu-button.is-open .ae-menu-lines::after {
+  top: 0;
+  transition: top .18s ease-out 0s, transform .18s ease-out .12s;
+  transform: rotate(-45deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ae-menu-button .ae-menu-lines, .ae-menu-button .ae-menu-lines::before, .ae-menu-button .ae-menu-lines::after { transition: none; }
+}
+.ae-menu-toggle { position: fixed; z-index: 3; color: var(--ae-text); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .9)); }
+/* v215: Modalità test. Scritta "TEST · <scenario>" sotto il nome della nemesi nella testata; schermata degli scenari */
+.ae-phase-test {
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: #E9A23B; font: 700 10px/14px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase;
+}
+.ae-turn-track[hidden] { display: none; }
+.ae-turn-track-bar { display: flex; gap: 6px; align-items: center; height: 8px; }
+.ae-turn-seg[data-kind="p1"] { --ae-seg: var(--ae-turn-p1); }
+.ae-turn-seg[data-kind="p2"] { --ae-seg: var(--ae-turn-p2); }
+.ae-turn-seg[data-kind="p3"] { --ae-seg: var(--ae-turn-p3); }
+.ae-turn-seg[data-kind="p4"] { --ae-seg: var(--ae-turn-p4); }
+.ae-turn-seg[data-kind="wild"] { --ae-seg: var(--ae-turn-wild); }
+.ae-turn-seg[data-kind="nemesis"] { --ae-seg: var(--ae-turn-red); }
+.ae-turn-seg.is-past { background: var(--ae-seg); opacity: .45; }
+/* v212: carta del mazzo dei turni nota (rivelata nella finestra del mazzo dei turni): il suo colore, più tenue */
+.ae-turn-seg.is-known { background: var(--ae-seg); opacity: .22; }
+/* v179: jolly = uno dei 3 giocatori, che cambia a ogni giro: strisce bianche e del suo colore */
+.ae-turn-seg[data-kind="wild"][data-owner="p1"] { --ae-seg: var(--ae-turn-p1); }
+.ae-turn-seg[data-kind="wild"][data-owner="p2"] { --ae-seg: var(--ae-turn-p2); }
+.ae-turn-seg[data-kind="wild"][data-owner="p3"] { --ae-seg: var(--ae-turn-p3); }
+.ae-turn-seg[data-kind="wild"][data-owner].is-past,
+.ae-turn-seg[data-kind="wild"][data-owner].is-current {
+  /* v180: strisce bianche spesse la metà di quelle colorate (3px e 6px) */
+  background: repeating-linear-gradient(135deg, #fff 0 3px, var(--ae-seg) 3px 9px);
+}
+/* v192: carte turno 1/2 e 3/4 (wave 4). v194: finché non si sceglie chi gioca la casella è una sfumatura dai due
+   colori (strato ::after sopra il colore pieno); scelto il giocatore lo strato svanisce e resta il suo colore */
+.ae-turn-seg {
+  --ae-seg: var(--ae-turn-off);
+  flex: 0 0 calc((100% - 122px - (var(--ae-seg-n, 6) - 1) * 6px) / (var(--ae-seg-n, 6) - 1));
+  min-width: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ae-turn-off);
+  transition: height .3s ease-out, flex-basis .3s ease-out, background-color .3s ease-out, box-shadow .3s ease-out, opacity .3s ease-out;
+  position: relative;
+}
+.ae-turn-seg[data-kind="p12"] { --ae-seg: var(--ae-turn-p1); }
+.ae-turn-seg[data-kind="p34"] { --ae-seg: var(--ae-turn-p3); }
+.ae-turn-seg[data-pair="p12"] { --ae-pair-a: var(--ae-turn-p1); --ae-pair-b: var(--ae-turn-p2); }
+.ae-turn-seg[data-pair="p34"] { --ae-pair-a: var(--ae-turn-p3); --ae-pair-b: var(--ae-turn-p4); }
+.ae-turn-seg[data-pair]::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, var(--ae-pair-a), var(--ae-pair-b)); transition: opacity .45s ease-out;
+}
+.ae-turn-seg[data-pair][data-kind="p12"]::after, .ae-turn-seg[data-pair][data-kind="p34"]::after { opacity: 1; }
+/* v194: nessun turno in corso (attesa della carta turno, mazzo appena mischiato): 6 caselle uguali */
+.ae-turn-track-bar.is-idle .ae-turn-seg { flex-basis: calc((100% - (var(--ae-seg-n, 6) - 1) * 6px) / var(--ae-seg-n, 6)); }
+/* v194: mazzo dei turni mischiato: scritte e sigle sotto la barra svaniscono */
+.ae-turn-labels > * { transition: opacity .3s ease-out; }
+.ae-turn-track.is-shuffling .ae-turn-labels > * { opacity: 0 !important; }
+/* v170: la casella del turno in corso è lunga il doppio di una casella a misura fissa (6 caselle, 5 spazi da 6px:
+   (100% - 30px) / 6 × 2); le altre 5 si stringono nello spazio che resta */
+.ae-turn-seg.is-current {
+  /* v184: misura fissa 122px, abbastanza per la scritta più lunga ("Nemesi · Risolvi", circa 114px) */
+  flex: 0 0 122px; height: 8px; border-radius: 4px; background: var(--ae-seg);
+  /* v203: bagliore molto più leggero (era 12px al 60%: sembravano caramelle) */
+  box-shadow: 0 0 4px color-mix(in srgb, var(--ae-seg) 25%, transparent);
+}
+/* Turno giocatori che passa a un altro giocatore: la casella accesa pulsa una volta */
+.ae-turn-track.is-changed .ae-turn-seg.is-current { animation: ae-turn-pulse .5s ease-out; }
+@keyframes ae-turn-pulse { 0% { transform: scaleY(.4); } 60% { transform: scaleY(1.35); } 100% { transform: none; } }
+/* Altezza fissa: la riga c'è anche quando è vuota (turno giocatori), così le carte sotto non si spostano */
+.ae-turn-labels { position: relative; height: 14px; margin-top: 6px; font: 700 11px/14px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; }
+/* v206: mazzo dei turni. La barra della fase si tocca (apre il menu); le carte turno sono piccole carte colorate */
+.ae-turn-track { flex: 0 0 auto; padding: 10px 16px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ae-turn-track:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 2px; border-radius: 6px; }
+/* v182: sigla sotto le caselle dei turni già passati (N, 1-4, J), nel colore del turno e velata come la casella */
+.ae-turn-mark { position: absolute; top: 0; transform: translateX(-50%); opacity: .7; color: var(--ae-text-muted); }
+.ae-turn-mark[data-kind="nemesis"] { color: var(--ae-turn-red-text); }
+.ae-turn-mark[data-kind="p1"] { color: var(--ae-turn-p1); }
+.ae-turn-mark[data-kind="p2"] { color: color-mix(in srgb, var(--ae-turn-p2) 85%, white); }
+.ae-turn-mark[data-kind="p3"] { color: color-mix(in srgb, var(--ae-turn-p3) 45%, white); }
+.ae-turn-mark[data-kind="p4"] { color: color-mix(in srgb, var(--ae-turn-p4) 50%, white); }
+.ae-turn-mark.is-wild { color: #fff; }
+.ae-turn-mark.is-known { opacity: .4; }
+@media (prefers-reduced-motion: reduce) {
+  .ae-turn-seg { transition: none; }
+  .ae-turn-track.is-changed .ae-turn-seg.is-current { animation: none; }
+}
+/* Testata trasparente, uguale nei due turni: Undo a sinistra, nome della nemesi al centro, Menu a destra.
+   Sta sopra lo sfondo della vista (che è su tutta l'app), senza fondo né linea. */
+/* Testata: mazzo nemesi e scarti uno accanto all'altro a sinistra (al posto di Undo, che è nel Menu), nome al centro, Menu
+   a destra. Griglia a tre colonne: il nome resta al centro della pagina */
+/* Carte grandi più grandi: meno spazio in alto e in basso (testata 48px, fascia più vicina, meno margini) */
+/* Testata: stesso spazio dal bordo in alto che c'è tra il pulsante principale e il bordo in basso (12px) */
+/* --- v163 --- */
+/* Testata: a sinistra nome della nemesi e, sotto, battaglia | giocatori | turno; a destra mazzo e scarti, poi il Menu */
+.ae-shell.clear-header > .ae-header {
+  background: none;
+  border-bottom: 0;
+  display: grid;
+  padding-top: calc(var(--ae-safe-top) + 10px);
+  min-height: calc(58px + var(--ae-safe-top));
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  column-gap: 10px;
+  padding-left: 16px;
+}
+/* v216: il blocco del nome della nemesi non supera la sua colonna (prima si allargava quanto il testo e finiva sotto
+   mazzo e scarti); se il nome non ci sta il carattere scende (script.js fitPhaseName). L'ellissi resta come rete */
+.ae-shell.clear-header > .ae-header > .ae-phase {
+  order: 1;
+  justify-self: start;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 100%;
+}
+/* Nome della nemesi toccabile durante "Crea mazzo" (apre nemesi e giocatori) */
+.ae-phase-name--button {
+  min-height: 32px;
+  padding: 2px 8px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted rgba(223, 174, 89, .7);
+  text-underline-offset: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ae-shell.clear-header > .ae-header > .ae-header-piles { order: 2; justify-self: end; margin-left: 0; margin-right: 6px; }
+.ae-shell.clear-header > .ae-header > .ae-menu-button { justify-self: end; order: 3; }

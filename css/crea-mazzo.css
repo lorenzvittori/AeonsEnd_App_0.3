@@ -1,0 +1,167 @@
+/* "Crea mazzo" (9 mazzi, slider, carte specifiche).
+   Parte di style.css divisa nella fase 3 del refactoring (CONTESTO_SVILUPPO.md, sezione 6): ogni selettore compare
+   una volta sola; l'ordine dei file (STYLES in index.html, @import in style.css) conserva la precedenza delle regole. */
+
+.deck-build-title { font: 600 20px/26px var(--ae-font-display); color: var(--ae-gold); letter-spacing: .06em; text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
+.deck-build-head { font: 600 14px/18px var(--ae-font-display); color: var(--ae-text); text-align: center; text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+.deck-build-pile img {
+  display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 5% / 3.58%;
+  box-shadow: 2px 2px 0 -1px #2a2c34, 4px 4px 0 -1px #1b1d24, 6px 6px 0 -1px #14151b, 0 4px 12px rgba(0, 0, 0, .7);
+}
+.deck-build-pile.is-empty img { opacity: .25; box-shadow: none; }
+.ae-deck-card { box-shadow: 0 8px 18px rgba(0, 0, 0, .6); }
+/* Creazione del mazzo: mazzi più piccoli, etichette "Tier N", numero sotto il dorso, Specifiche a ventaglio */
+.deck-build-grid {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  grid-template-columns: auto repeat(3, auto);
+  gap: 18px 14px;
+}
+.deck-build-tier {
+  font: 600 18px/1 var(--ae-font-display);
+  color: var(--ae-text-muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+.deck-build-fan-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.deck-build-fan-card.is-gone { visibility: hidden; }
+.deck-build-pile.is-fan.is-empty img { opacity: 1; }
+/* Specifiche in grande: si scorrono a destra e sinistra */
+.ae-spec-viewer { width: min(92vw, 420px); }
+.ae-spec-track { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.ae-spec-track::-webkit-scrollbar { display: none; }
+.ae-spec-slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ae-spec-slide .ae-card-art { width: min(100%, calc(62vh * 63 / 88)); border: 0; }
+/* Creazione del mazzo: le Specifiche non mostrano il numero (sono sempre tutte); si girano con "Crea mazzo" */
+.deck-build-pile.is-fan .ae-pile-count { display: none; }
+/* Creazione del mazzo: animazioni più veloci del 25% */
+.deck-build-fan-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform .45s cubic-bezier(.3, 0, .2, 1);
+  transition-duration: .34s;
+}
+.deck-build-fan-back { transform: rotateY(180deg); }
+.deck-build.is-flipping .deck-build-fan-inner { transform: rotateY(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .deck-build-fan-inner { transition: none; transition-duration: .34s; }
+}
+.deck-build-pile > img {
+  box-shadow: 0 0 0 1px rgba(236, 232, 222, .45), 2px 2px 0 -1px #555865, 4px 4px 0 -1px #3d404a, 0 2px 8px rgba(0, 0, 0, .7);
+}
+.deck-build-fan-inner > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 5% / 3.58%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 0 0 1px rgba(236, 232, 222, .45), 0 3px 10px rgba(0, 0, 0, .7);
+}
+.ae-fly-ghost.ae-deck-card img { box-shadow: 0 0 0 1px rgba(236, 232, 222, .45); }
+.deck-build.is-flipping .deck-build-fan-card { transform: translateX(-50%); }
+.deck-build.is-flipping .deck-build-fan-card:nth-child(1) { transform: translate(-50%, 0); }
+.deck-build.is-flipping .deck-build-fan-card:nth-child(2) { transform: translate(calc(-50% + 2px), -2px); }
+.deck-build.is-flipping .deck-build-fan-card:nth-child(3) { transform: translate(calc(-50% + 4px), -4px); }
+.deck-build.is-flipping .deck-build-pile.is-fan:nth-child(n) .deck-build-fan-card:nth-child(2) .deck-build-fan-inner {
+  transition-delay: .045s;
+}
+.deck-build.is-flipping .deck-build-pile.is-fan .deck-build-fan-card:nth-child(3) .deck-build-fan-inner {
+  transition-delay: .09s;
+}
+/* Creazione del mazzo: altezza dei mazzi in una variabile (--ae-pile-h), più grandi su tablet e desktop */
+.deck-build {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 8px 12px;
+  --ae-pile-h: min(13vh, 100px);
+}
+.deck-build-pile { position: relative; aspect-ratio: 63 / 88; height: var(--ae-pile-h); }
+.deck-build-pile.is-fan { aspect-ratio: auto; cursor: pointer; width: calc(var(--ae-pile-h) * 63 / 88 + 30px); }
+/* Creazione del mazzo: quando le Specifiche si girano si raccolgono in un mazzo dritto, come gli altri */
+.deck-build-fan-card {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: 100%;
+  aspect-ratio: 63 / 88;
+  transform-origin: 50% 100%;
+  border-radius: 5% / 3.58%;
+  transform: translateX(calc(-50% + var(--fan) * 12px)) rotate(calc(var(--fan) * 8deg));
+  overflow: visible;
+  perspective: 600px;
+  box-shadow: none;
+  transition: transform .35s cubic-bezier(.3, 0, .2, 1);
+  transition-duration: .26s;
+  width: calc(var(--ae-pile-h) * 63 / 88);
+}
+/* Numero sopra i dorsi dei 9 mazzi: al 60% dell'altezza della carta */
+.deck-build-pile .ae-pile-count { min-width: 26px; height: 26px; font-size: 13px; z-index: 3; top: 60%; }
+.ae-game-setup { width: min(420px, 100%); }
+.ae-game-setup .start-choice-head { min-height: 88px; padding-left: 4px; }
+.ae-game-setup-battle { position: relative; z-index: 1; color: var(--ae-text-muted); font: 700 12px/16px var(--ae-font-ui); letter-spacing: .06em; text-transform: uppercase; }
+.ae-game-setup .start-label { margin: 4px 0 0; }
+/* Slider "Scorri per creare il mazzo": box con il quadratino dorato da trascinare a destra; pulsa finché non si tocca */
+.ae-deck-slider {
+  position: relative; flex: 1 1 0; min-width: 0; height: 56px; overflow: hidden; isolation: isolate;
+  border: 1px solid rgba(223, 174, 89, .65); border-radius: var(--ae-radius-md); background: rgba(16, 17, 22, .8);
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab;
+  animation: ae-slider-pulse 1.6s ease-in-out infinite;
+}
+.ae-deck-slider[hidden] { display: none; }
+.ae-deck-slider.is-started { animation: none; }
+.ae-deck-slider.is-dragging { cursor: grabbing; }
+.ae-deck-slider:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 2px; }
+.ae-deck-slider-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 56px; z-index: 0;
+  background: linear-gradient(90deg, rgba(223, 174, 89, .08), rgba(223, 174, 89, .38));
+}
+.ae-deck-slider-label {
+  position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 0 12px 0 60px; pointer-events: none;
+  color: var(--ae-text); font: 600 15px/20px var(--ae-font-ui); letter-spacing: .02em; white-space: nowrap; overflow: hidden;
+  opacity: calc(1 - var(--p, 0) * 1.8);
+}
+.ae-deck-slider-knob {
+  position: absolute; left: 4px; top: 4px; bottom: 4px; z-index: 2; width: 48px; display: grid; place-items: center;
+  border-radius: 9px; background: var(--ae-gold); color: #20160B; box-shadow: 0 2px 8px rgba(0, 0, 0, .55);
+}
+.ae-deck-slider:not(.is-started) .ae-deck-slider-knob svg { animation: ae-knob-nudge 1.6s ease-in-out infinite; }
+@keyframes ae-slider-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(223, 174, 89, .55); border-color: rgba(223, 174, 89, .65); }
+  50% { box-shadow: 0 0 0 7px rgba(223, 174, 89, 0), 0 0 18px rgba(223, 174, 89, .35); border-color: rgba(223, 174, 89, 1); }
+}
+@keyframes ae-knob-nudge { 0%, 100% { transform: translateX(-2px); } 50% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .ae-deck-slider, .ae-deck-slider:not(.is-started) .ae-deck-slider-knob svg { animation: none; }
+}
+/* Carte Nemesi Specifiche in grande: "Tier 1 | Tier 2 | Tier 3" con un pallino per carta (acceso = carta mostrata) */
+.ae-spec-tiers { display: flex; justify-content: center; align-items: flex-start; gap: 2px; }
+.ae-spec-sep { padding-top: 6px; color: var(--ae-text-muted); opacity: .5; font: 400 14px/18px var(--ae-font-ui); }
+.ae-spec-tier {
+  min-height: 44px; padding: 6px 10px 4px; display: flex; flex-direction: column; align-items: center; gap: 7px;
+  border: 0; background: none; color: var(--ae-text-muted); font: 600 13px/18px var(--ae-font-ui); letter-spacing: .06em;
+  text-transform: uppercase; transition: color .2s ease-out;
+}
+.ae-spec-tier.is-current { color: var(--ae-gold); }
+.ae-spec-dots { display: flex; align-items: center; gap: 5px; }
+.ae-spec-dots span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--ae-border); transition: background-color .2s ease-out, transform .2s ease-out;
+}
+.ae-spec-dots span.is-on { background: var(--ae-text); transform: scale(1.3); }
+.ae-spec-caption {
+  color: var(--ae-text-muted);
+  font: 600 13px/18px var(--ae-font-ui);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  display: none;
+}

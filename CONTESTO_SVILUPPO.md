@@ -561,8 +561,10 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 
 ### File
 
-- `index.html`: il loader legge `version.json` (no-store) e carica `css/design-tokens.css`, `css/components.css`,
-  `style.css` e `script.js` con `?v=N`. **Non si modifica** per aggiungere file JS.
+- `index.html`: il loader legge `version.json` (no-store) e carica i CSS dell'elenco **`STYLES`** e poi `script.js`, tutti
+  con `?v=N`. Dalla v230 (refactoring fase 3) `STYLES` = `css/design-tokens.css`, `css/components.css` e i file del
+  layout di `css/` (sotto), **in quest'ordine, che è quello della precedenza delle regole**. **Non si modifica** per
+  aggiungere file JS; per un file CSS nuovo sì (vedi `style.css`).
   - GitHub Pages tiene in cache `index.html` per circa 10 minuti. Per questo molti elementi (pulsante Menu, box mazzo e
     scarti, "Annulla modifiche", finestra "Partita in corso", pulsante Collezione, fascia del turno giocatori) sono
     creati o spostati dal codice JS all'avvio: il DOM reale è diverso da quello scritto in `index.html`
@@ -609,8 +611,34 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   - `--ae-text` avorio, `--ae-text-muted`;
   - `--ae-gold #DFAE59`, `--ae-danger #D95E5C`, `--ae-heal`, `--ae-focus`.
 - `css/components.css`: componenti (pulsanti, badge, carta, finestre, scarti, toast, interruttore).
-- `style.css`: layout e quasi tutte le aggiunte recenti, in fondo al file, spesso come ridefinizioni di regole
-  precedenti: in caso di dubbio vale l'ultima.
+- **Layout, un file per parte dell'app** (dalla v230, refactoring fase 3: prima era tutto in `style.css`, con circa 70
+  regole ridefinite più volte, "in caso di dubbio vale l'ultima"). Ogni selettore compare **una volta sola** (per
+  contesto: fuori da `@media` o dentro la stessa `@media`): per cambiare qualcosa si modifica la regola che c'è già, nel
+  suo file. Nell'ordine di `STYLES`:
+  1. `css/base.css`: pagina e shell dell'app (`.ae-shell`, `.ae-main`), sfondo, animazioni comuni;
+  2. `css/testata.css`: testata (nome della nemesi, mazzo e scarti, Menu) e barra dei turni (`.ae-turn-track`);
+  3. `css/carte.css`: fascia piccola (`.ae-compact-rail`) e carte (immagine, box vita/token, NUOVA, carta che si gira);
+  4. `css/turno-giocatori.css`: turno giocatori (VistaCoda, comandi sotto la carta) e pulsante principale (`.ae-dock`);
+  5. `css/turno-nemesi.css`: turno nemesi (carosello, passo Pesca, banner Tier, token automatico);
+  6. `css/mazzo-turni.css`: finestra del mazzo dei turni, carte turno, "Chi gioca questo turno?";
+  7. `css/pagina-iniziale.css`: menu iniziale, Nuova partita, collezione, Opzioni, Modalità test;
+  8. `css/crea-mazzo.css`: "Crea mazzo" (9 mazzi, slider, carte specifiche);
+  9. `css/finestre.css`: dialoghi, menu laterale, scarti, scelta di sfondo e dorso, undo sospeso;
+  10. `css/statistiche-vittoria.css`: Vittoria e Statistiche;
+  11. `css/telefono-desktop.css`: telefono in orizzontale e schermi stretti, tablet e desktop (da 768px).
+  - L'ordine dei file conserva la precedenza: dove due regole con la stessa specificità possono colpire lo stesso
+    elemento, quella che vinceva prima viene ancora dopo. Per questo qualche regola sta nel file che viene dopo la sua
+    parte (per esempio una regola `@media` della `.ae-dock` sta in `turno-giocatori.css`, dopo la `.ae-dock` normale).
+    Spostando una regola in un altro file bisogna controllare la stessa cosa.
+  - **`url()` nei file di `css/`**: i percorsi partono da `../` (`url('../Assets/...')`), perché sono relativi al file
+    CSS. Le variabili con un'immagine impostate da JS (`--ae-card-back`, `--ae-battle-bg`, `--ae-nemesis-art`,
+    `--ae-players-icon`) usano `cssUrl(path)` (in `01-testi-stato.js`), che dà l'indirizzo assoluto: Chrome risolve un
+    `url()` relativo dentro una variabile rispetto al file CSS che la usa, non alla pagina.
+- `style.css`: dalla v230 solo **file di compatibilità**: `@import` dei file del layout nello stesso ordine di `STYLES`,
+  nessuna regola. Serve a un `index.html` **vecchio** ancora in cache (GitHub Pages lo tiene circa 10 minuti dopo la
+  pubblicazione): quello carica `css/design-tokens.css`, `css/components.css` e `style.css`, e così vede gli stessi
+  stili. Un file CSS nuovo si aggiunge **sia** a `STYLES` **sia** agli `@import` di `style.css`, nello stesso punto
+  (`npm run check` controlla che siano uguali).
 
 ### Stato
 
@@ -788,8 +816,10 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   scattare tra un file e l'altro: oggi 5 (`fitPhaseName` e `sizeFocus`/`sizeQueue` con `ResizeObserver`, `fonts.ready`,
   service worker), controllate a mano: usano solo codice dei file precedenti. `--dir <cartella>` prova una divisione
   in un'altra cartella. Si lancia ogni volta che si sposta codice tra i file; insieme a `node --check js/*.js`.
-  - **`npm run check`** (dalla v229) fa le due cose: `tools/check-js-order.mjs` e `tools/check-syntax.mjs` (`node
-    --check` su `script.js` e su ogni file di `js/`; su Windows npm non espande `js/*.js`).
+  - **`npm run check`** (dalla v229) fa: `tools/check-js-order.mjs`, `tools/check-syntax.mjs` (`node --check` su
+    `script.js` e su ogni file di `js/`; su Windows npm non espande `js/*.js`) e, dalla v230, `tools/check-css.mjs`
+    (ogni selettore una volta sola per contesto nei file del layout, `STYLES` di `index.html` uguale agli `@import` di
+    `style.css`, `url()` con `../`).
 - **Test delle regole** (dalla v229): **`npm test`** (= `node --test tests/`, il test runner integrato di Node, nessun
   pacchetto). Devono passare tutti. I test caricano `js/00-regole.js` con `require` e usano i **veri** `cards.json`,
   `nemesis.json`, `deck-setup.json`, `products.json` (`tests/aiuto.js`: dati, collezioni di prova, `seeded(n)` =
@@ -838,6 +868,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 | `v157-prima-nuova-partita-e-dorsi` | Prima della v158 (pagina Nuova partita con X e wave multiple, dorsi, tempi, zoom della carta nemesi). |
 | `v226-prima-refactoring-1` | Ultima versione con tutto il codice in `script.js`, prima della divisione in `js/` (v227). |
 | `refactoring-prima-fase-2` | Branch `refactoring`, prima delle regole di gioco separate in `js/00-regole.js` con i test (v229). |
+| `refactoring-prima-fase-3` | Branch `refactoring`, ultima versione con tutto il layout in `style.css`, prima dei file per parte in `css/` (v230). |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 

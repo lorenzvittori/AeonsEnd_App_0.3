@@ -89,7 +89,7 @@ function render() {
   const turnLine = el('span', 'ae-phase-turn');
   const players = Math.max(1, Math.min(4, Number(settings.players) || 1));
   const playersIcon = el('span', 'ae-players-icon');
-  playersIcon.style.setProperty('--ae-players-icon', `url('Assets/ui/icons/players-${players}.png')`);
+  playersIcon.style.setProperty('--ae-players-icon', cssUrl(`Assets/ui/icons/players-${players}.png`));
   playersIcon.setAttribute('role', 'img');
   playersIcon.setAttribute('aria-label', I18N_IT.players(players));
   // "Turno N" = giri del mazzo dei turni (v169; prima erano i turni nemesi)
@@ -128,7 +128,7 @@ function render() {
   else delete nemesisBtn.dataset.kind;
   const nemesisArtNow = !playerKind && settings.nemesis && nemesisArt[settings.nemesis];
   nemesisBtn.classList.toggle('has-nemesis-art', !!nemesisArtNow);
-  if (nemesisArtNow) nemesisBtn.style.setProperty('--ae-nemesis-art', `url("${encodeURI(nemesisArtNow.portrait)}")`);
+  if (nemesisArtNow) nemesisBtn.style.setProperty('--ae-nemesis-art', cssUrl(encodeURI(nemesisArtNow.portrait)));
   else nemesisBtn.style.removeProperty('--ae-nemesis-art');
   nemesisBtn.setAttribute('aria-disabled', String(ui.isTransitioning));
   // Turno giocatori con modifiche non salvate: il pulsante principale le salva

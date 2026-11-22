@@ -1,0 +1,99 @@
+/* Finestre: dialoghi, menu laterale, scarti, scelte di sfondo e dorso, undo sospeso.
+   Parte di style.css divisa nella fase 3 del refactoring (CONTESTO_SVILUPPO.md, sezione 6): ogni selettore compare
+   una volta sola; l'ordine dei file (STYLES in index.html, @import in style.css) conserva la precedenza delle regole. */
+
+/* Scarti: icona dello stato vuoto */
+.discard-empty-icon { width: 40px; height: 40px; color: var(--ae-text-muted); }
+.ae-modal-backdrop.ae-modal-backdrop--side { display: flex; justify-content: flex-end; align-items: stretch; padding: 0; }
+/* Menu laterale: si trascina verso destra per chiuderlo (script.js, swipeToClose) */
+.ae-modal.ae-side-menu {
+  width: 70vw;
+  max-width: 420px;
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
+  border-width: 0 0 0 1px;
+  padding: calc(12px + var(--ae-safe-top)) 16px calc(16px + var(--ae-safe-bottom));
+  gap: 16px;
+  animation: ae-side-in var(--ae-duration-dialog) var(--ae-ease-decelerate);
+  touch-action: pan-y;
+}
+@keyframes ae-side-in { from { transform: translateX(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ae-modal.ae-side-menu { animation: none; }
+}
+.ae-side-stats { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; font: 500 15px/20px var(--ae-font-ui); }
+.ae-side-stats dt { color: var(--ae-text-muted); }
+.ae-side-stats dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.ae-side-exit { margin-top: auto; }
+/* v193: conferma di "Esci dalla partita" */
+.ae-exit-confirm .ae-modal-text { margin: 0 0 16px; color: var(--ae-text-muted); font: 400 15px/22px var(--ae-font-ui); }
+/* Menu: scelta dello sfondo (menu a tendina con l'etichetta sopra) */
+.ae-side-field { display: flex; flex-direction: column; gap: 6px; }
+.ae-side-field-label { color: var(--ae-text-muted); font: 500 15px/20px var(--ae-font-ui); }
+.ae-side-field .ae-select { margin-bottom: 0; }
+/* Pulsante "Annulla ultima azione" sospeso: un tocco fuori lo chiude */
+.ae-undo-float {
+  position: fixed; inset: 0; z-index: 85; display: flex; align-items: flex-end; justify-content: center;
+  padding: 0 16px calc(96px + var(--ae-safe-bottom)); background: rgba(0, 0, 0, .3); animation: ae-fade .2s ease-out;
+}
+.ae-undo-float-button { min-width: 260px; box-shadow: 0 6px 24px rgba(0, 0, 0, .7); }
+/* Potere da risolvere: il token da togliere lampeggia subito con un bagliore dorato (due impulsi), poi diventa grigio
+   in fretta. Nessuna attesa iniziale; uguale nella carta grande e nella fascia */
+@keyframes ae-token-spend {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 200, 80, 0)); opacity: 1; }
+  15% { transform: scale(1.3); filter: drop-shadow(0 0 8px rgba(255, 200, 80, 1)) brightness(1.4); }
+  30% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 200, 80, .4)); }
+  45% { transform: scale(1.3); filter: drop-shadow(0 0 8px rgba(255, 200, 80, 1)) brightness(1.4); }
+  62% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 200, 80, .4)); opacity: 1; }
+  100% { transform: scale(1); filter: grayscale(1) brightness(.6); opacity: .55; }
+}
+.ae-deck-popover { position: fixed; inset: 0; z-index: 85; }
+.ae-deck-popover-button {
+  position: absolute; min-width: 0; min-height: 44px; padding: 0 18px; box-shadow: 0 6px 20px rgba(0, 0, 0, .7);
+  animation: ae-pop .2s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+/* Menu: dorso delle carte scelto (miniatura e nome), si tocca per la griglia dei dorsi */
+.ae-back-choice {
+  min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 6px 12px 6px 6px; text-align: left;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised); color: var(--ae-text);
+  font: 500 15px/20px var(--ae-font-ui);
+}
+.ae-back-choice-thumb { width: 36px; height: 50px; object-fit: cover; border-radius: 3px; flex: 0 0 auto; }
+.ae-back-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ae-back-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--ae-text-muted);
+  font: 600 12px/16px var(--ae-font-ui); text-align: center;
+}
+.ae-back-item img {
+  display: block; width: 100%; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 5% / 3.58%;
+  border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+.ae-back-item[aria-pressed='true'] { color: var(--ae-gold); }
+.ae-back-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px rgba(223, 174, 89, .6); }
+/* Nei menu laterali la X dell'intestazione non serve: c'è quella animata al posto del pulsante Menu */
+.ae-side-menu > .ae-modal-header > .ae-icon-button { visibility: hidden; }
+.ae-back-choice.ae-back-choice--compact { min-height: 0; padding: 4px; gap: 0; }
+.ae-back-choice--compact .ae-back-choice-name { display: none; }
+.ae-bg-choice.ae-bg-choice--compact { min-height: 0; padding: 4px; gap: 0; }
+.ae-bg-choice--compact .ae-bg-choice-name { display: none; }
+/* Menu della partita: Sfondo e Dorso delle carte in una riga, scritta a sinistra e anteprima piccola a destra */
+.ae-side-field.ae-side-field--row { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+/* Sfondo: anteprima dello sfondo scelto (Menu della partita e Opzioni) e scelta con le anteprime di tutti */
+.ae-bg-choice {
+  min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 6px 12px 6px 6px; text-align: left;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised); color: var(--ae-text);
+  font: 500 15px/20px var(--ae-font-ui);
+}
+.ae-bg-choice-thumb { width: 89px; height: 50px; object-fit: cover; border-radius: 4px; flex: 0 0 auto; }
+.ae-bg-grid { display: flex; flex-direction: column; gap: 14px; }
+.ae-bg-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 0; border: 0; background: none;
+  color: var(--ae-text-muted); font: 600 13px/18px var(--ae-font-ui); text-align: left;
+}
+.ae-bg-item img {
+  display: block; width: 100%; aspect-ratio: 1672 / 941; object-fit: cover; border-radius: var(--ae-radius-md);
+  border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+.ae-bg-item[aria-pressed='true'] { color: var(--ae-gold); }
+.ae-bg-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px rgba(223, 174, 89, .6); }

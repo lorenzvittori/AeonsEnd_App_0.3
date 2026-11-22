@@ -380,12 +380,18 @@ function currentCardBack() {
   return CARD_BACKS.find(b => b.id === id) || CARD_BACKS[0];
 }
 let CARD_BACK = currentCardBack().src;
-// Il dorso dietro la carta che si gira (style.css .ae-flip-face--front) segue la stessa scelta
-document.documentElement.style.setProperty('--ae-card-back', `url("${CARD_BACK}")`);
+// Valore url() con l'indirizzo assoluto, per le variabili CSS impostate da JS (--ae-card-back, --ae-battle-bg,
+// --ae-nemesis-art, --ae-players-icon): Chrome risolve un url() relativo dentro una variabile rispetto al file CSS che la
+// usa, e dalla v230 quei file sono in css/ (refactoring fase 3); assoluto, punta sempre alla stessa immagine
+function cssUrl(path) {
+  return `url("${new URL(path, document.baseURI).href}")`;
+}
+// Il dorso dietro la carta che si gira (css/carte.css .ae-flip-face--front) segue la stessa scelta
+document.documentElement.style.setProperty('--ae-card-back', cssUrl(CARD_BACK));
 function setCardBack(id) {
   try { localStorage.setItem(CARD_BACK_KEY, id); } catch (err) { console.warn(err); }
   CARD_BACK = currentCardBack().src;
-  document.documentElement.style.setProperty('--ae-card-back', `url("${CARD_BACK}")`);
+  document.documentElement.style.setProperty('--ae-card-back', cssUrl(CARD_BACK));
   loadImage(CARD_BACK);
 }
 

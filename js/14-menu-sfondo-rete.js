@@ -15,7 +15,7 @@ function currentBackground() {
   return BACKGROUNDS.find(b => b.id === id) || BACKGROUNDS[0];
 }
 function applyBackground() {
-  app.style.setProperty('--ae-battle-bg', `url("${currentBackground().src}")`);
+  app.style.setProperty('--ae-battle-bg', cssUrl(currentBackground().src));
 }
 function setBackground(id) {
   try { localStorage.setItem(BACKGROUND_KEY, id); } catch (err) { console.warn(err); }

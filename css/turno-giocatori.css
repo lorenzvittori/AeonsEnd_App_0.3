@@ -1,0 +1,189 @@
+/* Turno giocatori (VistaCoda: carte grandi e comandi sotto la carta, pulsante principale).
+   Parte di style.css divisa nella fase 3 del refactoring (CONTESTO_SVILUPPO.md, sezione 6): ogni selettore compare
+   una volta sola; l'ordine dei file (STYLES in index.html, @import in style.css) conserva la precedenza delle regole. */
+
+.queue-view > .queue-col, .queue-view > .queue-side { position: relative; z-index: 1; }
+.queue-col { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.queue-title { display: none; }
+.queue-side { display: none; }
+/* Turno giocatori: barra di scorrimento delle carte grandi nascosta (come nel turno nemesi); si scorre col dito */
+.ae-queue-viewport {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 16px;
+  padding: 20px 16px;
+  scrollbar-width: none;
+}
+.ae-queue-list { display: flex; gap: 12px; min-width: max-content; align-items: flex-end; margin: auto; }
+.ae-queue-list:empty { display: none; }
+/* VistaCoda: carte grandi, alte quanto lo spazio (--ae-queue-card calcolata da sizeQueue in script.js) */
+.ae-queue-list > .queue-slot { width: var(--ae-queue-card, 132px); flex: 0 0 var(--ae-queue-card, 132px); display: flex; flex-direction: column; gap: 8px; scroll-snap-align: center; }
+/* Potere non rimovibile: nota piccola con il punto esclamativo rosso */
+.queue-note { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--ae-text-muted); font: 600 12px/16px var(--ae-font-ui); }
+.queue-note::before {
+  content: ''; flex: 0 0 auto; width: 5px; height: 13px; background: var(--ae-danger);
+  -webkit-mask: url('../Assets/ui/icons/alert.webp') center / contain no-repeat; mask: url('../Assets/ui/icons/alert.webp') center / contain no-repeat;
+}
+/* v205: "Non rimovibile" con il simbolo di divieto (lo stesso del box nella fascia piccola) al posto del "!" */
+.queue-note.is-locked::before {
+  width: 13px; height: 13px; background: hsl(356 70% 62%);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M5.6 5.6l12.8 12.8'/></svg>") center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M5.6 5.6l12.8 12.8'/></svg>") center / contain no-repeat;
+}
+/* Danno (rosso) o cura (verde) del minion in questo turno, in alto a destra sulla carta grande */
+.queue-hp-tag {
+  position: absolute; top: 4%; right: 5%; z-index: 2; padding: 2px 7px; border-radius: 6px;
+  background: rgba(16, 17, 22, .85); font: 700 13px/18px var(--ae-font-ui); font-variant-numeric: tabular-nums;
+}
+.queue-hp-tag.is-loss { color: var(--ae-danger); }
+.queue-hp-tag.is-gain { color: var(--ae-heal); }
+.queue-controls .ae-button { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 6px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue-slot .ae-card-art img { object-fit: cover; }
+/* Fascia compatta in cima alla VistaCoda, come nel turno nemesi */
+.queue-rail[hidden] { display: none; }
+/* Dock in risoluzione: una CTA principale, eventuale microtesto sopra */
+.ae-dock .ae-button { white-space: normal; }
+.queue-side-icon { width: 40px; height: 40px; color: var(--ae-text-muted); }
+/* --- Breakpoint (REPORT §2.4) --- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .ae-dock { padding-top: 4px; gap: 4px; }
+}
+.ae-button.is-draw { background: var(--ae-gold); color: #20160B; letter-spacing: .08em; text-transform: uppercase; }
+@keyframes ae-token-leave { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.6); } }
+/* --- Turno giocatori: modifiche del 8 nov --- */
+/* Nessun glow sulle carte (resta l'etichetta NUOVA) */
+.queue-view .ae-queue-item.is-new .ae-card-art { --ae-glow: 0 0 0 transparent; }
+/* Potere con costo pagato e salvato: carta grigia fino al turno nemesi */
+.queue-view .ae-queue-item.is-paid .ae-card-art { filter: grayscale(1) brightness(.6); }
+.queue-view .ae-queue-item.is-paid .ae-status-badge { filter: grayscale(1); }
+.queue-note.is-paid::before { display: none; }
+/* +1 oscurato e non cliccabile se non c'è vita tolta in questo turno */
+.ae-button.is-dimmed, .ae-button.is-dimmed:disabled { opacity: .35; cursor: not-allowed; }
+/* Box vita / token sopra la carta, grande come nel turno nemesi (24px, token 39px), senza scatola */
+.queue-slot { position: relative; gap: 0; }
+.queue-slot > .ae-queue-item { width: 100%; flex-basis: auto; gap: 8px; }
+/* --- VistaCoda --- */
+/* Lo sfondo è su tutta l'app (.ae-shell, più in basso: "Sfondo unico"); le due viste sono trasparenti */
+.queue-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  animation: ae-fade var(--ae-duration-phase) var(--ae-ease-standard);
+  position: relative;
+  background: none;
+}
+/* Turno giocatori: carte senza il bordo bianco */
+.queue-view .ae-queue-item .ae-card-art { border: 0; }
+.ae-fly-ghost .ae-new-tag, .ae-fly-ghost .queue-hp-tag { display: none; }
+/* Pulsante principale "Salva modifiche": dorato */
+.ae-button.is-save { background: var(--ae-gold); color: #20160B; border-color: var(--ae-gold); text-shadow: none; letter-spacing: .04em; }
+/* Potere da risolvere: il token non sparisce, diventa grigio (carta grande e fascia) */
+@keyframes ae-token-gray { from { filter: none; opacity: 1; } to { filter: grayscale(1) brightness(.6); opacity: .55; } }
+/* Dal turno nemesi al turno giocatori: niente dissolvenza della vista intera (vedi toPlayersTurn in script.js) */
+.queue-view.is-from-nemesis { animation: none; }
+/* Fascia piccola più in basso, con una linea sopra e una sotto (uguale nei due turni) */
+/* Nessuna linea tra testata, fascia piccola e carte grandi (v162): le zone sono separate solo dallo spazio */
+.queue-view .queue-rail {
+  flex-basis: 106px;
+  height: 106px;
+  border-top: 0;
+  border-bottom: 0;
+  background: none;
+  margin-top: 4px;
+}
+/* Pulsante principale senza il box del dock */
+.ae-dock { background: none; border-top: 0; padding-top: 4px; }
+/* Turno giocatori: stessa posizione e dimensione della carta del turno nemesi. I comandi sono sotto la carta, fuori dal flusso */
+.queue-view .ae-queue-viewport { padding-top: 6px; padding-bottom: 6px; }
+/* Turno giocatori: più spazio tra le carte (+50%) */
+/* Turno giocatori: il blocco vita/token + carta + comandi (questi fuori dal flusso, 52px sotto la carta) è centrato tra
+   la fascia in alto e il pulsante principale (prima era -14px come nel turno nemesi, e restava 10px in basso) */
+.queue-view .ae-queue-list { gap: 18px; transform: translateY(-24px); }
+.ae-queue-viewport::-webkit-scrollbar { display: none; }
+.queue-slot .ae-queue-item > .ae-status-badge {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 700 24px/30px var(--ae-font-ui);
+  height: 37px;
+  gap: 7px;
+  font-size: 21.6px;
+  line-height: 27px;
+}
+.queue-slot .ae-status-badge .ae-icon { width: 18px; height: 18px; }
+.queue-slot .ae-status-badge .ae-token { width: 35px; height: 35px; }
+.queue-slot .ae-new-tag { right: -2px; top: 43px; }
+/* Testo sempre su una riga: così i due pulsanti restano alti come il pulsante principale anche sui telefoni stretti
+   (prima, sotto i ~375px, "Salva modifiche" andava a capo e la riga diventava più alta) */
+.ae-main-row > .ae-button { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; padding-left: 12px; padding-right: 12px; }
+.ae-main-row > .ae-cancel-drafts { flex: 0 0 auto; }
+/* Comandi sotto la carta grande: vita del minion (−5 −1 +1, Elimina a 0) o rimozione del potere */
+/* Comandi vita del minion più distanti (−5 ha il contorno rosso, da script.js) */
+.queue-controls { min-height: 44px; display: flex; gap: 10px; }
+/* "Crea mazzo" da tenere premuto: il pulsante si riempie d'oro da sinistra in 800ms (HOLD_BUILD_MS in script.js) */
+.ae-button.is-hold-action {
+  position: relative; overflow: hidden; isolation: isolate; touch-action: manipulation;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.ae-button.is-hold-action::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; background: var(--ae-gold);
+  transform: scaleX(0); transform-origin: left center; transition: transform .15s ease-out;
+}
+.ae-button.is-hold-action.is-holding { color: #20160B; text-shadow: none; }
+@keyframes ae-rotate-hint { 0%, 30% { transform: rotate(-90deg); } 60%, 100% { transform: rotate(0deg); } }
+/* Esci dalla partita: rosso, da tenere premuto (si riempie di rosso da sinistra) */
+.ae-button.ae-hold-exit { background: rgba(217, 94, 92, .14); border-color: var(--ae-danger); color: #F08A88; font-weight: 700; }
+.ae-button.is-hold-action.is-holding::after {
+  transform: scaleX(1);
+  transition: transform .8s linear;
+  transition-duration: var(--ae-hold-ms, .8s);
+}
+.ae-button.ae-hold-exit.is-hold-action::after { background: var(--ae-danger); }
+.ae-button.ae-hold-exit.is-holding { color: #fff; }
+/* v169: pulsante "Fine turno" nel turno di un giocatore: fondo scuro velato del colore del giocatore, molto tenue */
+.ae-button.has-player-color {
+  --ae-player: var(--ae-turn-wild);
+  background: color-mix(in srgb, var(--ae-player) 16%, #15161c); color: var(--ae-text);
+  border: 1px solid color-mix(in srgb, var(--ae-player) 45%, transparent); letter-spacing: .04em; text-shadow: none;
+}
+.ae-button.has-player-color[data-kind="p1"] { --ae-player: var(--ae-turn-p1); }
+.ae-button.has-player-color[data-kind="p2"] { --ae-player: var(--ae-turn-p2); }
+.ae-button.has-player-color[data-kind="p3"] { --ae-player: var(--ae-turn-p3); }
+.ae-button.has-player-color[data-kind="p4"] { --ae-player: var(--ae-turn-p4); }
+.ae-button.has-player-color:disabled { opacity: .55; }
+/* v192: carta 1/2 o 3/4 non ancora scelta: fondo sfumato dai due colori (v194: sfumatura, non più metà e metà) */
+.ae-button.has-player-color[data-kind="p12"] {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ae-a) 16%, #15161c), color-mix(in srgb, var(--ae-b) 16%, #15161c));
+  border-color: color-mix(in srgb, var(--ae-a) 45%, transparent) color-mix(in srgb, var(--ae-b) 45%, transparent)
+    color-mix(in srgb, var(--ae-b) 45%, transparent) color-mix(in srgb, var(--ae-a) 45%, transparent);
+  --ae-a: var(--ae-turn-p1);
+  --ae-b: var(--ae-turn-p2);
+}
+.ae-button.has-player-color[data-kind="p34"] {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ae-a) 16%, #15161c), color-mix(in srgb, var(--ae-b) 16%, #15161c));
+  border-color: color-mix(in srgb, var(--ae-a) 45%, transparent) color-mix(in srgb, var(--ae-b) 45%, transparent)
+    color-mix(in srgb, var(--ae-b) 45%, transparent) color-mix(in srgb, var(--ae-a) 45%, transparent);
+  --ae-a: var(--ae-turn-p3);
+  --ae-b: var(--ae-turn-p4);
+}
+/* Con modifiche non salvate resta il pulsante dorato "Salva modifiche" */
+.ae-button.has-player-color.is-save { background: var(--ae-gold); color: #20160B; border-color: var(--ae-gold); }
+/* Carte grandi del turno giocatori: i comandi si vedono solo sulla carta al centro */
+.queue-slot > .queue-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin-top: 8px;
+  transition: opacity .15s ease-out;
+}
+.queue-slot:not(.is-centred) > .queue-controls { opacity: 0; visibility: hidden; pointer-events: none; }
+.queue-slot .ae-status-badge.has-many-tokens { --ae-badge-px: 0px; }
