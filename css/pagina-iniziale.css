@@ -140,7 +140,6 @@
 /* Inizia partita: la pagina iniziale esce a sinistra, il turno giocatori entra da destra */
 .start-screen.is-sliding-out { animation: ae-slide-out-left .38s ease-in-out forwards; }
 /* --- La mia collezione: schermata a parte con le wave e le loro mini espansioni --- */
-.start-collection { gap: 6px; }
 .collection-screen {
   position: fixed; inset: 0; z-index: 45; display: flex; flex-direction: column; background: var(--ae-bg);
   padding: calc(var(--ae-safe-top) + 8px) 0 calc(var(--ae-safe-bottom) + 12px); animation: ae-fade .2s ease-out;
@@ -195,9 +194,6 @@
 .options-item-label { font: 600 16px/22px var(--ae-font-ui); }
 .options-item-note { color: var(--ae-text-muted); font: 500 13px/18px var(--ae-font-ui); }
 .options-screen { z-index: 44; }
-/* Nuova partita: Menu in alto a destra */
-.start-menu-button { position: fixed; top: calc(var(--ae-safe-top) + 8px); right: 8px; z-index: 6; color: var(--ae-text-muted); }
-.start-menu-button[hidden] { display: none; }
 /* Wave e Nemesi separate: le wave sono pillole tonde, la nemesi ha una linea sopra */
 .wave-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .wave-pill {
@@ -342,5 +338,3 @@
 .collection-bulk .ae-button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14px; }
 /* Opzioni: voce in una riga, scritta a sinistra e miniatura piccola a destra (Dorso delle carte) */
 .options-item.options-item--row { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; cursor: default; }
-/* Opzioni: voce con dentro il pulsante dello sfondo */
-.options-item--field { cursor: default; gap: 8px; align-items: stretch; }
