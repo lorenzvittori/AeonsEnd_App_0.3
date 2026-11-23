@@ -4,31 +4,31 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { G } from '../src/stato/condivise.js';
-import { buildDeck, deckSetupRow, deckShortfall } from '../src/stato/partita.js';
-import * as partita from '../src/stato/partita.js';
-import { shuffle, pickRandom } from '../src/regole/caso.js';
+import { G } from '../src/stato/condivise.ts';
+import { buildDeck, deckSetupRow, deckShortfall } from '../src/stato/partita.ts';
+import * as partita from '../src/stato/partita.ts';
+import { shuffle, pickRandom } from '../src/regole/caso.ts';
 import { readJson, seeded } from './aiuto.js';
 
 const ROOT = join(import.meta.dirname, '..');
 
 describe('moduli di src/', () => {
   const files = [];
-  (function walk(dir) { readdirSync(dir).forEach(f => { const p = join(dir, f); if (statSync(p).isDirectory()) walk(p); else if (f.endsWith('.js') && f !== 'main.js') files.push(p); }); })(join(ROOT, 'src'));
+  (function walk(dir) { readdirSync(dir).forEach(f => { const p = join(dir, f); if (statSync(p).isDirectory()) walk(p); else if (/\.(js|ts)$/.test(f) && !/^main\.(js|ts)$/.test(f) && !p.includes(join('src', 'tipi'))) files.push(p); }); })(join(ROOT, 'src'));
   const rel = f => relative(ROOT, f).split(sep).join('/');
 
   it.each(files.map(rel))('%s si importa senza DOM', async name => {
     const mod = await import('../' + name);
     if (name.startsWith('src/regole/')) expect(mod.avvio, 'le regole non hanno codice di avvio').toBeUndefined();
-    else if (!name.endsWith('condivise.js')) expect(typeof mod.avvio).toBe('function');
+    else if (!/condivise\.(js|ts)$/.test(name)) expect(typeof mod.avvio).toBe('function');
   });
 
   it('src/regole/ non nomina document, window, localStorage, G, Math.random, Date (fuori dai commenti)', () => {
     const regole = files.filter(f => rel(f).startsWith('src/regole/'));
-    expect(regole.length).toBe(6);
+    expect(regole.length).toBe(7);
     for (const f of regole) {
       const code = readFileSync(f, 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
-      for (const bad of [/\bdocument\b/, /\bwindow\b/, /\blocalStorage\b/, /\bG\./, /Math\.random/, /\bDate\b/, /from '\.\.\//]) {
+      for (const bad of [/\bdocument\b/, /\bwindow\b/, /\blocalStorage\b/, /\bG\./, /Math\.random/, /\bDate\b/, /from '\.\.\/(?!tipi\/)/]) {
         expect(bad.test(code), `${rel(f)}: ${bad}`).toBe(false);
       }
       // Intestazione: cosa contiene, cosa riceve, da chi è usato

@@ -2,14 +2,14 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import * as Nemesi from '../../regole/turno-nemesi.js';
-import { G } from '../../stato/condivise.js';
+import * as Nemesi from '../../regole/turno-nemesi.ts';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { ANCHOR_RATIO, discardBtn, focusEl, nemesisBtn, queueEmpty, queueList, queueView, queueViewport, reducedMotion, resolveBtn, turnInfo, ui } from '../../stato/stato.js';
-import { awaitingTurnCard, currentTurnCard, hpCap, hpUnset, turnCardPlayer } from '../../stato/partita.js';
+import { ANCHOR_RATIO, discardBtn, focusEl, nemesisBtn, queueEmpty, queueList, queueView, queueViewport, reducedMotion, resolveBtn, turnInfo, ui } from '../../stato/stato.ts';
+import { awaitingTurnCard, currentTurnCard, hpCap, hpUnset, turnCardPlayer } from '../../stato/partita.ts';
 import { cardArt, displayEntry, draftHp, draftOf, el, hasHp, icon, queueItem, setDraft, tokenIcons, typeName } from '../componenti/componenti.js';
 import { button, openModal, showToast } from '../componenti/dialoghi.js';
-import { act } from '../../stato/salvataggio.js';
+import { act } from '../../stato/salvataggio.ts';
 import { PEEK_GAP, PEEK_VISIBLE, render, sharedCardWidth, sizeColumn } from './turno-nemesi.js';
 import { trackDrag } from '../eventi.js';
 import { needsPairChoice } from './mazzo-turni.js';

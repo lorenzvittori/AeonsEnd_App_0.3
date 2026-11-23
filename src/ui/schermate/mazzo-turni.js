@@ -2,14 +2,14 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import * as Turni from '../../regole/mazzo-turni.js';
-import { G } from '../../stato/condivise.js';
+import * as Turni from '../../regole/mazzo-turni.ts';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.js';
-import { chooseTurnPlayer, currentTurnCard, isPairCard, pairOptions, turnCardPlayer } from '../../stato/partita.js';
+import { app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.ts';
+import { chooseTurnPlayer, currentTurnCard, isPairCard, pairOptions, turnCardPlayer } from '../../stato/partita.ts';
 import { el, icon } from '../componenti/componenti.js';
 import { announce, button, dialogShell, modals, openModal } from '../componenti/dialoghi.js';
-import { pushUndo, save, snapshot } from '../../stato/salvataggio.js';
+import { pushUndo, save, snapshot } from '../../stato/salvataggio.ts';
 import { fitPhaseName, render } from './turno-nemesi.js';
 import { renderTurnTrack, turnTrack } from '../eventi.js';
 import { headerPiles } from '../componenti/testata.js';

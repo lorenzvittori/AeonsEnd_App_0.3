@@ -2,11 +2,11 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from './stato/condivise.js';
+import { G } from './stato/condivise.ts';
 import { I18N_IT } from './ui/testi.js';
-import { CARD_BACK, DATA_ROOT, THUMB_DIR, discardLayer, startBtn, startError, startLayer } from './stato/stato.js';
-import { loadJson } from './dati/dati.js';
-import { newGame } from './stato/partita.js';
+import { CARD_BACK, DATA_ROOT, THUMB_DIR, discardLayer, startBtn, startError, startLayer } from './stato/stato.ts';
+import { loadJson } from './dati/dati.ts';
+import { newGame } from './stato/partita.ts';
 import { el } from './ui/componenti/componenti.js';
 import { loadImage, modals, showToast, updateInert } from './ui/componenti/dialoghi.js';
 import { closeDiscard } from './ui/componenti/scarti.js';

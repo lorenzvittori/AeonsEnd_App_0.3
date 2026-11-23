@@ -1,38 +1,47 @@
-// dati/rete.js: Schermo sempre acceso, service worker, immagini per l'uso senza rete. Provvisorio.
-// Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
-// funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
+// dati/rete.ts: schermo sempre acceso, service worker, immagini del mazzo per l'uso senza rete. Provvisorio.
+// Dipende da: stato/condivise.ts. Usato da: ui (inizio partita), main.ts (avvio).
 
-import { G } from '../stato/condivise.js';
+import { G } from '../stato/condivise.ts';
+import { isRecord } from '../regole/json.ts';
 
 // Schermo sempre acceso finché l'app è aperta e visibile (Screen Wake Lock). Il browser lo toglie da solo quando la
 // pagina va in secondo piano: si richiede di nuovo al ritorno e, se il browser lo vuole dopo un tocco, al primo tocco.
-export let wakeLock = null;
+export let wakeLock: WakeLockSentinel | null = null;
 
-export async function keepScreenOn() {
+export async function keepScreenOn(): Promise<void> {
   if (!('wakeLock' in navigator) || wakeLock || document.visibilityState !== 'visible') return;
   try {
-    wakeLock = await navigator.wakeLock.request('screen');
-    wakeLock.addEventListener('release', () => { wakeLock = null; });
+    const lock = await navigator.wakeLock.request('screen');
+    wakeLock = lock;
+    lock.addEventListener('release', () => { wakeLock = null; });
   } catch (err) { wakeLock = null; }
 }
 
-export async function prefetchDeckImages() {
+// "Risparmio dati" del browser (navigator.connection.saveData, non ancora nei tipi standard del DOM)
+function saveDataOn(): boolean {
+  const connection: unknown = Reflect.get(navigator, 'connection');
+  return isRecord(connection) && !!connection.saveData;
+}
+
+export async function prefetchDeckImages(): Promise<void> {
   if (!('caches' in window) || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
-  if (navigator.connection && navigator.connection.saveData) return;
-  const urls = [...new Set(G.deck.concat(G.queue.map(e => e.data), G.discard).flatMap(d => [d.image, d.thumb]).filter(Boolean))];
-  const todo = [];
+  if (saveDataOn()) return;
+  const urls = [...new Set(G.deck.concat(G.queue.map(e => e.data), G.discard).flatMap(d => [d.image, d.thumb])
+    .filter((u): u is string => !!u))];
+  const todo: string[] = [];
   for (const u of urls) if (!(await caches.match(u))) todo.push(u);
   // Tre alla volta, per non rallentare le immagini che servono subito
   const next = async () => {
     while (todo.length) {
-      try { await fetch(todo.shift()); } catch (err) { /* senza rete: si riprova alla prossima partita */ }
+      const url = todo.shift();
+      try { if (url) await fetch(url); } catch (err) { /* senza rete: si riprova alla prossima partita */ }
     }
   };
   await Promise.all([next(), next(), next()]);
 }
 
-// Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima
-export function avvio() {
+// Codice eseguito all'avvio, nell'ordine di sempre
+export function avvio(): void {
   document.addEventListener('visibilitychange', keepScreenOn);
 
   document.addEventListener('pointerdown', keepScreenOn, { passive: true });

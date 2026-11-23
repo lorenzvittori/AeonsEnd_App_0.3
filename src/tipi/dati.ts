@@ -37,7 +37,8 @@ export interface Carta {
   immediately: string | null;    // testo "Immediately"
   persistent: string | null;     // testo "Persistent"
   powerEffect: string | null;    // testo dell'effetto del potere quando si risolve
-  image: string;                 // scansione della carta (percorso in Data/; la miniatura è in thumbs/)
+  image: string;                 // scansione della carta (percorso in Data/; all'avvio diventa relativo a DATA_ROOT)
+  thumb?: string;                // miniatura in thumbs/ (non è nel file: la aggiunge l'avvio, avvio.ts)
 }
 
 // Una nemesi di nemesis.json

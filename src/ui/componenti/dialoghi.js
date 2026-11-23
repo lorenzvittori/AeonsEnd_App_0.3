@@ -3,7 +3,7 @@
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
 import { I18N_IT } from '../testi.js';
-import { app, dialogRoot, discardLayer, liveRegion, startLayer, toastRoot } from '../../stato/stato.js';
+import { app, dialogRoot, discardLayer, liveRegion, startLayer, toastRoot } from '../../stato/stato.ts';
 import { el, icon } from './componenti.js';
 
 // --- Dialoghi: un livello alla volta in primo piano, il resto è inerte; Tab resta nel dialogo, Esc annulla ---

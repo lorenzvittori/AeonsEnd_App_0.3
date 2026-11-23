@@ -2,7 +2,7 @@
 // 2/3/4 giocatori × Modalità battaglia × Unisci, blocco di Unisci, mazzo corto, inNemesisDeck e Tier, nemesi giocabili.
 // I numeri attesi si calcolano qui da deck-setup.json e cards.json, senza passare dalle funzioni provate.
 import { describe, it, expect } from 'vitest';
-import * as Mazzo from '../src/regole/mazzo-nemesi.js';
+import * as Mazzo from '../src/regole/mazzo-nemesi.ts';
 import { db, cards, nemeses, deckSetup, seeded, allProducts, appWaves } from './aiuto.js';
 
 const COMBOS = [

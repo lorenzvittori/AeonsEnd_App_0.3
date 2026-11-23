@@ -2,10 +2,10 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { CARD_BACK, queueList, queueView, rail, reducedMotion, startLayer, ui, undoBtn } from '../../stato/stato.js';
-import { isVictory } from '../../stato/partita.js';
+import { CARD_BACK, queueList, queueView, rail, reducedMotion, startLayer, ui, undoBtn } from '../../stato/stato.ts';
+import { isVictory } from '../../stato/partita.ts';
 import { el } from './componenti.js';
 import { modals } from './dialoghi.js';
 import { queueRail } from '../schermate/turno-giocatori.js';

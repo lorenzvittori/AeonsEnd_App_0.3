@@ -3,11 +3,11 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import * as S from '../src/regole/salvataggio.js';
-import * as T from '../src/regole/mazzo-turni.js';
-import * as N from '../src/regole/turno-nemesi.js';
-import { buildDeck } from '../src/regole/mazzo-nemesi.js';
-import { nemesisStartLife } from '../src/regole/vite.js';
+import * as S from '../src/regole/salvataggio.ts';
+import * as T from '../src/regole/mazzo-turni.ts';
+import * as N from '../src/regole/turno-nemesi.ts';
+import { buildDeck } from '../src/regole/mazzo-nemesi.ts';
+import { nemesisStartLife } from '../src/regole/vite.ts';
 import { db, nemeses, cardsById, seeded, allProducts } from './aiuto.js';
 
 const MAIN_V228 = JSON.parse(readFileSync(join(import.meta.dirname, 'dati', 'salvataggio-main-v228.json'), 'utf8'));

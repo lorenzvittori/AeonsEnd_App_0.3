@@ -2,14 +2,14 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { isVariableMinion, playerKinds } from '../../stato/partita.js';
+import { isVariableMinion, playerKinds } from '../../stato/partita.ts';
 import { cardArt, el, icon, typeName } from '../componenti/componenti.js';
 import { button, dialogShell, openModal } from '../componenti/dialoghi.js';
 import { openDiscardZoom } from '../componenti/scarti.js';
 import { openStart } from './opzioni.js';
-import { save } from '../../stato/salvataggio.js';
+import { save } from '../../stato/salvataggio.ts';
 import { trackDrag } from '../eventi.js';
 
 // Schermata Vittoria: scritta "Vittoria" come il banner dei Tier, ma resta ferma sullo schermo; sotto Statistiche e

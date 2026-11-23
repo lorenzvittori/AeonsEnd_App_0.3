@@ -2,15 +2,15 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { app, backBtn, CARD_BACKS, cssUrl, currentCardBack, focusEl, menuBtn, nemesisBtn, queueViewport, rail, reducedMotion, resolveBtn, resumeBtn, retryBtn, setCardBack, startBtn, startLayer, ui, undoBtn } from '../../stato/stato.js';
+import { app, backBtn, CARD_BACKS, cssUrl, currentCardBack, focusEl, menuBtn, nemesisBtn, queueViewport, rail, reducedMotion, resolveBtn, resumeBtn, retryBtn, setCardBack, startBtn, startLayer, ui, undoBtn } from '../../stato/stato.ts';
 import { el } from './componenti.js';
 import { button, dialogShell, openModal } from './dialoghi.js';
 import { sizeQueue } from '../schermate/turno-giocatori.js';
 import { openDiscard } from './scarti.js';
 import { onStartClick, openStart, resumeGame } from '../schermate/opzioni.js';
-import { undo } from '../../stato/salvataggio.js';
+import { undo } from '../../stato/salvataggio.ts';
 import { backToActive, buzz, onNemesisClick, onResolveClick, render, renderLives, sizeFocus } from '../schermate/turno-nemesi.js';
 import { animDone } from '../schermate/mazzo-turni.js';
 import { showVictory } from '../schermate/statistiche.js';

@@ -2,7 +2,7 @@
 // pesca dalla cima, carte note, attesa e turno annullato, memoria delle coppie, carte tolte e aggiunte agli scarti,
 // carta del mazzo portata negli scarti, bozza della finestra, salvataggi vecchi del mazzo dei turni.
 import { describe, it, expect } from 'vitest';
-import * as T from '../src/regole/mazzo-turni.js';
+import * as T from '../src/regole/mazzo-turni.ts';
 import { seeded } from './aiuto.js';
 
 const sorted = list => list.slice().sort();

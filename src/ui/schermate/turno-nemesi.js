@@ -2,17 +2,17 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import * as Vite from '../../regole/vite.js';
-import * as Nemesi from '../../regole/turno-nemesi.js';
-import { G } from '../../stato/condivise.js';
+import * as Vite from '../../regole/vite.ts';
+import * as Nemesi from '../../regole/turno-nemesi.ts';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { app, backBtn, CARD_BACK, CARD_RATIO, cssUrl, DRAW_MS, duration, focusEl, GRAVEHOLD_LIFE, nemesisBtn, nemesisStartLife, phaseLabel, queueView, rail, reducedMotion, resolveBtn, resolveHint, resolveView, ui } from '../../stato/stato.js';
-import { battleOf } from '../../dati/dati.js';
-import { awaitingTurnCard, currentTurnCard, drawFirstTurn, entryByUid, hpUnset, isPairCard, nextTurnCard, turnCardPlayer, turnRoundOver } from '../../stato/partita.js';
+import { app, backBtn, CARD_BACK, CARD_RATIO, cssUrl, DRAW_MS, duration, focusEl, GRAVEHOLD_LIFE, nemesisBtn, nemesisStartLife, phaseLabel, queueView, rail, reducedMotion, resolveBtn, resolveHint, resolveView, ui } from '../../stato/stato.ts';
+import { battleOf } from '../../dati/dati.ts';
+import { awaitingTurnCard, currentTurnCard, drawFirstTurn, entryByUid, hpUnset, isPairCard, nextTurnCard, turnCardPlayer, turnRoundOver } from '../../stato/partita.ts';
 import { cardArt, el, hasHp, icon, nextCardItem, nextSlotItem, placeholderArt, queueItem, statusText, tokenIcons } from '../componenti/componenti.js';
 import { announce, button, loadImage, modals, openModal } from '../componenti/dialoghi.js';
 import { FAST_SCROLL_MS, cancelFastScroll, centredQueueUid, ensureQueueRail, fastScrollTo, openCardDialog, queueRail, renderQueue, saveAllDrafts, scrollItemInto, updateInfo } from './turno-giocatori.js';
-import { act, lockFor, updateUndoBtn } from '../../stato/salvataggio.js';
+import { act, lockFor, updateUndoBtn } from '../../stato/salvataggio.ts';
 import { renderTurnTrack, turnTrack, turnTrackBar } from '../eventi.js';
 import { animDone, needsPairChoice } from './mazzo-turni.js';
 import { BG_SLIDE_MS, ENTER_MS, FLY_MS, MORPH_MS, checkVictory, flyToDiscard, renderDockPiles, toPlayersTurn } from '../componenti/testata.js';

@@ -2,16 +2,16 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { DRAG_THRESHOLD, SWIPE_MIN_DISTANCE, reducedMotion, resumeBtn, startBtn, startLayer } from '../../stato/stato.js';
-import { battleOf } from '../../dati/dati.js';
-import { collectionCatalog, isMiniCode, isPlayable, loadCollection, ownsProduct, productName, productOfNemesis, waveOfCode, waveOfNemesis } from '../../dati/collezione.js';
-import { deckShortfall, loadDeckOptions, mergeActive, mergeLockedWave, saveDeckOptions } from '../../stato/partita.js';
+import { DRAG_THRESHOLD, SWIPE_MIN_DISTANCE, reducedMotion, resumeBtn, startBtn, startLayer } from '../../stato/stato.ts';
+import { battleOf } from '../../dati/dati.ts';
+import { collectionCatalog, isMiniCode, isPlayable, loadCollection, ownsProduct, productName, productOfNemesis, waveOfCode, waveOfNemesis } from '../../dati/collezione.ts';
+import { deckShortfall, loadDeckOptions, mergeActive, mergeLockedWave, saveDeckOptions } from '../../stato/partita.ts';
 import { el, icon } from '../componenti/componenti.js';
 import { button, showToast } from '../componenti/dialoghi.js';
 import { ensureCollectionButton, openCollection, openOptions, resumeGame } from './opzioni.js';
-import { readSave } from '../../stato/salvataggio.js';
+import { readSave } from '../../stato/salvataggio.ts';
 import { openTestScreen } from './test.js';
 
 // --- 6. Pagina iniziale e nuova partita -----------------------------------------------------------------------------

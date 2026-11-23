@@ -53,7 +53,7 @@ export interface Salvataggio {
   version: number;               // versione del formato (SAVE_VERSION; un'altra versione si cancella)
   settings: Impostazioni;        // scelte della partita
   state: Fotografia;             // partita
-  undo: Fotografia[];            // passi di undo (dal più vecchio)
+  undo: FotografiaLetta[];       // passi di undo (dal più vecchio; dopo una ripresa anche quelli letti)
 }
 
 // --- Formati letti (anche vecchi) ---

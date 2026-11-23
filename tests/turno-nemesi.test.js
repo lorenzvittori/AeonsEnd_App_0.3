@@ -1,7 +1,7 @@
 // Turno nemesi e turno giocatori (src/regole/turno-nemesi.js) con le carte vere di cards.json: risoluzione (potere,
 // minion, attacco), pesca (anche a mazzo vuoto), vittoria a mazzo vuoto, costo Æ, statistiche, minion a vita variabile.
 import { describe, it, expect } from 'vitest';
-import * as N from '../src/regole/turno-nemesi.js';
+import * as N from '../src/regole/turno-nemesi.ts';
 import { cards, cardByName } from './aiuto.js';
 
 const byType = (type, pred = () => true) => cards.find(c => c.type === type && c.inNemesisDeck && pred(c));

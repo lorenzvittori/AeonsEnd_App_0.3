@@ -2,22 +2,22 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../../stato/stato.js';
-import { battleOf } from '../../dati/dati.js';
-import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, productOfNemesis, saveCollection, waveOfNemesis } from '../../dati/collezione.js';
-import { newGame, setTurnPairs, turnPairsOn } from '../../stato/partita.js';
+import { nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../../stato/stato.ts';
+import { battleOf } from '../../dati/dati.ts';
+import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, productOfNemesis, saveCollection, waveOfNemesis } from '../../dati/collezione.ts';
+import { newGame, setTurnPairs, turnPairsOn } from '../../stato/partita.ts';
 import { el, icon } from '../componenti/componenti.js';
 import { button, closeAllModals, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.js';
 import { closeDiscard } from '../componenti/scarti.js';
 import { renderStartChoices, setStartMode, updateHomeCollection, waveLabel } from './menu.js';
-import { clearTransition, readSave, restore } from '../../stato/salvataggio.js';
+import { clearTransition, readSave, restore } from '../../stato/salvataggio.ts';
 import { render } from './turno-nemesi.js';
 import { showDeckBuild } from './crea-mazzo.js';
 import { slideToGame } from '../componenti/pesca-undo.js';
 import { backgroundChoiceButton, cardBackChoiceButton } from '../componenti/menu-laterale.js';
-import { prefetchDeckImages } from '../../dati/rete.js';
+import { prefetchDeckImages } from '../../dati/rete.ts';
 import { endTest } from './test.js';
 
 // Il pulsante "La mia collezione" non è più nella pagina "Nuova partita" (sta in Opzioni e nel Menu): si toglie anche

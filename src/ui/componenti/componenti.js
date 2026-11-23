@@ -2,10 +2,10 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import * as Nemesi from '../../regole/turno-nemesi.js';
+import * as Nemesi from '../../regole/turno-nemesi.ts';
 import { I18N_IT } from '../testi.js';
-import { CARD_BACK, ui } from '../../stato/stato.js';
-import { hpMaxOf, hpUnset } from '../../stato/partita.js';
+import { CARD_BACK, ui } from '../../stato/stato.ts';
+import { hpMaxOf, hpUnset } from '../../stato/partita.ts';
 import { DRAW_UID } from '../schermate/turno-nemesi.js';
 import { needsPairChoice } from '../schermate/mazzo-turni.js';
 

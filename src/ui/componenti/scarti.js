@@ -2,9 +2,9 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { discardBtn, discardClose, discardEmpty, discardGrid, discardLayer, discardTitle } from '../../stato/stato.js';
+import { discardBtn, discardClose, discardEmpty, discardGrid, discardLayer, discardTitle } from '../../stato/stato.ts';
 import { cardArt, el, typeName } from './componenti.js';
 import { button, dialogShell, openModal, restoreFocus, updateInert } from './dialoghi.js';
 

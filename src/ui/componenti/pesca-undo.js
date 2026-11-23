@@ -2,13 +2,13 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { CARD_BACK, app, focusEl, reducedMotion, startLayer, ui } from '../../stato/stato.js';
+import { CARD_BACK, app, focusEl, reducedMotion, startLayer, ui } from '../../stato/stato.ts';
 import { cardArt, el } from './componenti.js';
 import { button, dialogShell, loadImage, openModal, showToast } from './dialoghi.js';
 import { closeStart } from '../schermate/opzioni.js';
-import { act, lockFor, undo } from '../../stato/salvataggio.js';
+import { act, lockFor, undo } from '../../stato/salvataggio.ts';
 import { DRAW_UID, render, scrollFocusTo } from '../schermate/turno-nemesi.js';
 import { dockDeck, flyToDiscard } from './testata.js';
 import { specificCardsOf } from '../schermate/crea-mazzo.js';

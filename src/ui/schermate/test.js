@@ -2,17 +2,17 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { emptyStats, nemesisBtn, resolveBtn, startLayer, ui } from '../../stato/stato.js';
-import { aetherCost, emptyPairNext, isVariableMinion, makeEntry } from '../../stato/partita.js';
+import { emptyStats, nemesisBtn, resolveBtn, startLayer, ui } from '../../stato/stato.ts';
+import { aetherCost, emptyPairNext, isVariableMinion, makeEntry } from '../../stato/partita.ts';
 import { el, icon } from '../componenti/componenti.js';
 import { closeAllModals, showToast, updateInert } from '../componenti/dialoghi.js';
 import { closeDiscard } from '../componenti/scarti.js';
 import { closeStart } from './opzioni.js';
-import { clearTransition, restore } from '../../stato/salvataggio.js';
+import { clearTransition, restore } from '../../stato/salvataggio.ts';
 import { render } from './turno-nemesi.js';
-import { prefetchDeckImages } from '../../dati/rete.js';
+import { prefetchDeckImages } from '../../dati/rete.ts';
 
 // --- Modalità test (v215) ------------------------------------------------------------------------------------------
 // Dal menu iniziale ("Test") si sceglie uno scenario: la partita parte già in un momento preciso, senza giocarla fino

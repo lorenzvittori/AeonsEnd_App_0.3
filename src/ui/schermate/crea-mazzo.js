@@ -2,17 +2,17 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../../stato/condivise.js';
+import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.js';
-import { CARD_BACK, app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.js';
-import { battleOf, shuffle } from '../../dati/dati.js';
-import { deckPlan, newGame } from '../../stato/partita.js';
+import { CARD_BACK, app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.ts';
+import { battleOf, shuffle } from '../../dati/dati.ts';
+import { deckPlan, newGame } from '../../stato/partita.ts';
 import { cardArt, el } from '../componenti/componenti.js';
 import { button, closeAllModals, dialogShell, openModal } from '../componenti/dialoghi.js';
-import { clearTransition, lockFor } from '../../stato/salvataggio.js';
+import { clearTransition, lockFor } from '../../stato/salvataggio.ts';
 import { TIER_BANNER_MS, buzz, render, showBanner } from './turno-nemesi.js';
 import { dockDeck, renderDockPiles } from '../componenti/testata.js';
-import { prefetchDeckImages } from '../../dati/rete.js';
+import { prefetchDeckImages } from '../../dati/rete.ts';
 
 // --- Creazione del mazzo nemesi (dopo "Inizia partita") ---
 // Si vedono i 9 mazzi da cui nasce il mazzo nemesi: righe Tier 1-3, colonne Base / Potenziate / Specifiche. Base e

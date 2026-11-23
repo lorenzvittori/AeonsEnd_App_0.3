@@ -1,29 +1,29 @@
-// stato/salvataggio.js: Fotografia della partita, ripristino, salvataggio nel browser, undo.
-// Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
-// funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
+// stato/salvataggio.ts: fotografia della partita, ripristino, salvataggio nel browser, undo, blocco del pulsante
+// principale durante le animazioni.
+// Dipende da: regole/salvataggio.ts, stato/ (condivise, stato, partita), ui (dialoghi, scarti, turno-nemesi,
+// crea-mazzo). Usato da: quasi tutta l'interfaccia (act, save, undo), avvio e Modalità test.
 
-import * as Salv from '../regole/salvataggio.js';
-import { G } from './condivise.js';
+import * as Salv from '../regole/salvataggio.ts';
+import { parseJson } from '../regole/json.ts';
+import { G } from './condivise.ts';
 import { I18N_IT } from '../ui/testi.js';
-import { SAVE_KEY, SAVE_VERSION, UNDO_LIMIT, ui, undoBtn } from './stato.js';
-import { turnOrderCards } from './partita.js';
+import { SAVE_KEY, SAVE_VERSION, UNDO_LIMIT, ui, undoBtn } from './stato.ts';
+import { turnOrderCards } from './partita.ts';
 import { closeAllModals, showToast } from '../ui/componenti/dialoghi.js';
 import { closeDiscard } from '../ui/componenti/scarti.js';
 import { DRAW_UID, render } from '../ui/schermate/turno-nemesi.js';
 import { closeDeckBuild } from '../ui/schermate/crea-mazzo.js';
+import type { Fotografia, FotografiaLetta, SalvataggioValido } from '../tipi/salvataggio.ts';
 
-// --- 7. Stato della partita: fotografia, ripristino, salvataggio, undo ---------------------------------------------
-
-// Fotografia della partita (solo dati semplici, stesso formato della v48, così si può salvare nel browser; formato in
-// regole/salvataggio.js)
-export function snapshot() {
+// Fotografia della partita (solo dati semplici, così si può salvare nel browser; formato in regole/salvataggio.ts)
+export function snapshot(): Fotografia {
   return Salv.snapshotGame(G);
 }
 
 // Rimette la partita come nella fotografia (senza animazioni; quelle in corso si fermano); formati vecchi letti da
-// regole/salvataggio.js
-export function restore(s) {
-  // Prima si leggono tutti i dati (regole/salvataggio.js): se qualcosa non va, la partita in corso resta com'è
+// regole/salvataggio.ts
+export function restore(s: FotografiaLetta): void {
+  // Prima si leggono tutti i dati: se qualcosa non va, la partita in corso resta com'è
   const { game, view } = Salv.restoreGame(s, { cardsById: G.cardsById, newUid: () => G.nextUid++,
     players: G.settings.players, nemeses: G.nemeses, nemesisName: G.settings.nemesis, random: Math.random,
     cards: () => turnOrderCards(G.settings.players) });
@@ -60,11 +60,11 @@ export function restore(s) {
 
 // La partita si salva solo dal primo turno nemesi (prima, anche durante "Crea mazzo", non si scrive niente e resta
 // l'eventuale partita salvata prima). Una partita già salvata (ripresa, o tornata al turno 0 con l'undo) si salva sempre.
-export function save() {
-  // Modalità test (v215): niente salvataggio, la partita salvata vera resta com'è
+export function save(): void {
+  // Modalità test: niente salvataggio, la partita salvata vera resta com'è
   if (G.testRun) return;
-  // Pagina scheletri/ (misura dell'app in un iframe): app.noSave = true e la partita salvata non cambia (prima la pagina
-  // sostituiva la funzione save, che con i moduli ES non si può più riassegnare da fuori)
+  // Pagina scheletri/ (misura dell'app in un iframe): app.noSave = true e la partita salvata non cambia (con i moduli
+  // ES la pagina non può sostituire la funzione save)
   if (G.noSave) return;
   if (G.turn < 1 && !ui.gameSaved) return;
   ui.gameSaved = true;
@@ -75,34 +75,35 @@ export function save() {
   }
 }
 
-export function readSave() {
+export function readSave(): SalvataggioValido | null {
   try {
-    const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
+    const raw = localStorage.getItem(SAVE_KEY);
+    const saved = raw === null ? null : parseJson(raw);
     const check = Salv.checkSave(saved, SAVE_VERSION);
-    // Salvataggio di un'altra versione (prima della v210: carte con gli id vecchi): si ignora e si cancella
+    // Salvataggio di un'altra versione (carte con gli id di prima del DataBase): si ignora e si cancella
     if (check === 'other-version') {
       localStorage.removeItem(SAVE_KEY);
       return null;
     }
-    if (check === 'ok') return saved;
+    if (check === 'ok' && Salv.isResumableSave(saved)) return saved;
   } catch (err) {
     console.warn('Salvataggio illeggibile', err);
   }
   return null;
 }
 
-export function updateUndoBtn() {
+export function updateUndoBtn(): void {
   undoBtn.disabled = G.undoStack.length === 0 && ui.drafts.size === 0;
 }
 
 // Aggiunge un passo di undo (lo stato prima di un'azione), tenendone al massimo UNDO_LIMIT
-export function pushUndo(state) {
+export function pushUndo(state: FotografiaLetta): void {
   G.undoStack.push(state);
   if (G.undoStack.length > UNDO_LIMIT) G.undoStack.shift();
 }
 
 // Ogni azione che cambia la partita: prima si salva lo stato per l'undo, poi si fa l'azione, poi si salva la partita
-export function act(action) {
+export function act<T>(action: () => T): T {
   pushUndo(snapshot());
   const result = action();
   save();
@@ -110,7 +111,7 @@ export function act(action) {
 }
 
 // Undo: torna allo stato prima dell'ultima azione (si può ripetere fino all'inizio della partita)
-export function undo() {
+export function undo(): void {
   // Modifiche non salvate sulle carte (turno giocatori): il primo Annulla le scarta, poi si torna ai salvataggi precedenti
   if (ui.drafts.size) {
     ui.drafts.clear();
@@ -127,16 +128,16 @@ export function undo() {
 }
 
 // Ferma le animazioni in corso dopo un'azione (undo, nuova partita, riprendi)
-export function clearTransition() {
-  clearTimeout(ui.transitionTimer);
+export function clearTransition(): void {
+  if (ui.transitionTimer !== null) clearTimeout(ui.transitionTimer);
   ui.transitionTimer = null;
   ui.isTransitioning = false;
   ui.holdUid = null;
 }
 
 // Blocca il pulsante principale per ms millisecondi, poi esegue then
-export function lockFor(ms, then) {
-  clearTimeout(ui.transitionTimer);
+export function lockFor(ms: number, then?: () => void): void {
+  if (ui.transitionTimer !== null) clearTimeout(ui.transitionTimer);
   ui.isTransitioning = true;
   ui.transitionTimer = setTimeout(() => {
     ui.transitionTimer = null;
@@ -146,6 +147,6 @@ export function lockFor(ms, then) {
   }, ms);
 }
 
-// Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima
-export function avvio() {
+// Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
+export function avvio(): void {
 }

@@ -1,7 +1,7 @@
 // Vite di Gravehold e della nemesi (src/regole/vite.js) con nemesis.json vero: valori iniziali, tetto, passi,
 // Vittoria a 0 della nemesi, Sconfitta a 0 di Gravehold.
 import { describe, it, expect } from 'vitest';
-import * as V from '../src/regole/vite.js';
+import * as V from '../src/regole/vite.ts';
 import { nemeses } from './aiuto.js';
 
 describe('vite e fine partita', () => {

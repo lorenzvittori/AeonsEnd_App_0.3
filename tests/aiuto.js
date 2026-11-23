@@ -1,7 +1,7 @@
 // Aiuti comuni ai test delle regole (npm test, Vitest): i dati veri di public/, un caso ripetibile e le collezioni.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { waveOfCode } from '../src/regole/mazzo-nemesi.js';
+import { waveOfCode } from '../src/regole/mazzo-nemesi.ts';
 
 const ROOT = join(import.meta.dirname, '..');
 export const readJson = name => JSON.parse(readFileSync(join(ROOT, 'public', name), 'utf8'));

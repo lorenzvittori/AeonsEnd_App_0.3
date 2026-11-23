@@ -2,10 +2,10 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
-import { G } from '../stato/condivise.js';
+import { G } from '../stato/condivise.ts';
 import { I18N_IT } from './testi.js';
-import { DRAG_THRESHOLD, app, discardBtn, discardClose, discardLayer, focusEl, infoRow, mainEl, menuBtn, queueList, queueViewport, rail, ui } from '../stato/stato.js';
-import { awaitingTurnCard, currentTurn, currentTurnCard, entryByUid, historyPlayer, hpUnset, isPairCard, pairOptions, predictedPairPlayers, turnCardPlayer } from '../stato/partita.js';
+import { DRAG_THRESHOLD, app, discardBtn, discardClose, discardLayer, focusEl, infoRow, mainEl, menuBtn, queueList, queueViewport, rail, ui } from '../stato/stato.ts';
+import { awaitingTurnCard, currentTurn, currentTurnCard, entryByUid, historyPlayer, hpUnset, isPairCard, pairOptions, predictedPairPlayers, turnCardPlayer } from '../stato/partita.ts';
 import { el } from './componenti/componenti.js';
 import { focusables, modals, topLayer } from './componenti/dialoghi.js';
 import { centredQueueUid, markQueueRail, openCardDialog, scrollQueueTo } from './schermate/turno-giocatori.js';
