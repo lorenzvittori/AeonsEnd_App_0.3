@@ -12,7 +12,7 @@ import { closeAllModals, showToast, updateInert } from '../componenti/dialoghi.t
 import { closeDiscard } from '../componenti/scarti.ts';
 import { closeStart } from './opzioni.ts';
 import { clearTransition, restore } from '../../stato/salvataggio.ts';
-import { render } from './turno-nemesi.js';
+import { render } from './turno-nemesi.ts';
 import { prefetchDeckImages } from '../../dati/rete.ts';
 import { jsonCopy } from '../../regole/json.ts';
 import type { Carta } from '../../tipi/dati.ts';

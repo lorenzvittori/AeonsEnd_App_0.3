@@ -12,7 +12,7 @@ import * as Mazzo from '../regole/mazzo-nemesi.ts';
 import * as Turni from '../regole/mazzo-turni.ts';
 import * as Nemesi from '../regole/turno-nemesi.ts';
 import { announce } from '../ui/componenti/dialoghi.ts';
-import { nemesisTurn, render } from '../ui/schermate/turno-nemesi.js';
+import { nemesisTurn, render } from '../ui/schermate/turno-nemesi.ts';
 import { turnTrack } from '../ui/eventi.ts';
 import type { Carta, DatiRegole, RigaDeckSetup } from '../tipi/dati.ts';
 import type { CartaTurno, Giocatore, MazzoTurni, PianoMazzo, SceltePerMazzo, TurnoStoria, VoceInGioco } from '../tipi/partita.ts';

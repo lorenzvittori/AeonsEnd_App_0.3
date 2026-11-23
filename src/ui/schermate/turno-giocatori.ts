@@ -13,9 +13,9 @@ import { awaitingTurnCard, currentTurnCard, hpCap, hpUnset, turnCardPlayer } fro
 import { cardArt, displayEntry, draftHp, draftOf, el, hasHp, icon, query, queryAll, queueItem, setDraft, tokenIcons, typeName } from '../componenti/componenti.ts';
 import { button, openModal, showToast } from '../componenti/dialoghi.ts';
 import { act } from '../../stato/salvataggio.ts';
-import { PEEK_GAP, PEEK_VISIBLE, render, sharedCardWidth, sizeColumn } from './turno-nemesi.js';
+import { PEEK_GAP, PEEK_VISIBLE, render, sharedCardWidth, sizeColumn } from './turno-nemesi.ts';
 import { trackDrag } from '../eventi.ts';
-import { needsPairChoice } from './mazzo-turni.js';
+import { needsPairChoice } from './mazzo-turni.ts';
 import { flyToDiscard } from '../componenti/testata.ts';
 import { tween } from './crea-mazzo.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';

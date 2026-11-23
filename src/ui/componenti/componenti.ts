@@ -7,8 +7,8 @@ import * as Nemesi from '../../regole/turno-nemesi.ts';
 import { I18N_IT } from '../testi.ts';
 import { CARD_BACK, ui } from '../../stato/stato.ts';
 import { hpMaxOf, hpUnset } from '../../stato/partita.ts';
-import { DRAW_UID } from '../schermate/turno-nemesi.js';
-import { needsPairChoice } from '../schermate/mazzo-turni.js';
+import { DRAW_UID } from '../schermate/turno-nemesi.ts';
+import { needsPairChoice } from '../schermate/mazzo-turni.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import type { BozzaCarta, VoceInGioco } from '../../tipi/partita.ts';
 
@@ -35,6 +35,13 @@ export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: st
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+// Valore che c'è sempre (un elemento della pagina creato dall'app, uno stato già pronto): se manca è un errore del
+// programma, con un messaggio chiaro (invece dell'errore di accesso a null che darebbe JavaScript)
+export function need<T>(value: T | null | undefined, what: string): T {
+  if (value === null || value === undefined) throw new TypeError(what + ' mancante');
+  return value;
 }
 
 // Primo elemento dentro root che corrisponde al selettore ed è del tipo indicato; null altrimenti (il tipo si controlla

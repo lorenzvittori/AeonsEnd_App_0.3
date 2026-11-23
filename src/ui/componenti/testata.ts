@@ -12,8 +12,8 @@ import { el, query, queryAll } from './componenti.ts';
 import { modals } from './dialoghi.ts';
 import { queueRail } from '../schermate/turno-giocatori.ts';
 import { openDiscard } from './scarti.ts';
-import { render } from '../schermate/turno-nemesi.js';
-import { needsPairChoice } from '../schermate/mazzo-turni.js';
+import { render } from '../schermate/turno-nemesi.ts';
+import { needsPairChoice } from '../schermate/mazzo-turni.ts';
 import { showVictory } from '../schermate/statistiche.ts';
 import { openDeckPopover } from './pesca-undo.ts';
 
@@ -120,7 +120,7 @@ export const ENTER_MS = 320;
 // Durata dello scorrimento dello sfondo tra i due turni (uguale alla transizione di .ae-shell in style.css)
 export const BG_SLIDE_MS = 800;
 
-export function toPlayersTurn(morphUid: number | null, fromNode: HTMLElement | null): void {
+export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | null): void {
   const railScroll = rail.scrollLeft;
   const fromRect = fromNode && fromNode.getBoundingClientRect().width ? fromNode.getBoundingClientRect() : null;
   // Riga vita/token sopra la carta grande del turno nemesi: anche lei si sposta nel box del turno giocatori

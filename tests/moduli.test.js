@@ -19,7 +19,7 @@ describe('moduli di src/', () => {
   // Moduli avviati da main (elenco MODULI): devono esportare avvio()
   const mainFile = ['main.ts', 'main.js'].map(n => join(ROOT, 'src', n)).find(p => { try { return statSync(p).isFile(); } catch (e) { return false; } });
   const mainCode = readFileSync(mainFile, 'utf8');
-  const listed = new Set(/const MODULI = \[([^\]]*)\]/.exec(mainCode)[1].split(',').map(s => s.trim()));
+  const listed = new Set(/const MODULI(?:: [^=]+)? = \[([^\]]*)\]/.exec(mainCode)[1].split(',').map(s => s.trim()));
   const started = new Set([...mainCode.matchAll(/import \* as (\w+) from '\.\/([^']+)'/g)].filter(m => listed.has(m[1])).map(m => 'src/' + m[2]));
 
   it('main avvia i moduli dell\'app (almeno 20)', () => {

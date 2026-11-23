@@ -252,8 +252,8 @@ export function takeFromTurnPile(order: Pick<MazzoTurni, 'drawn' | 'picks' | 'hi
 // `old` (true per le carte già note all'apertura: si spostano solo quando sono in cima). Le operazioni modificano solo
 // `d`; applyTurnDraft la scrive nel mazzo dei turni.
 
-// Bozza da un mazzo dei turni (copie: la bozza non tocca order)
-export function turnDraftFrom(order: MazzoTurni): BozzaTurni {
+// Bozza da un mazzo dei turni, o da un'altra bozza (copie: la bozza non tocca order)
+export function turnDraftFrom(order: Pick<MazzoTurni, 'left' | 'known' | 'drawn' | 'picks' | 'waiting' | 'pairNext' | 'history'>): BozzaTurni {
   return { left: order.left.slice(), known: order.left.map((k, i) => !!(order.known && order.known[i])),
     drawn: order.drawn.slice(), picks: jsonCopy(order.picks || {}), waiting: !!order.waiting,
     pairNext: emptyPairNext(order.pairNext), history: jsonCopy(order.history || []) };

@@ -11,7 +11,7 @@ import { cardArt, el, query } from './componenti.ts';
 import { button, dialogShell, loadImage, openModal, showToast } from './dialoghi.ts';
 import { closeStart } from '../schermate/opzioni.ts';
 import { act, lockFor, undo } from '../../stato/salvataggio.ts';
-import { DRAW_UID, render, scrollFocusTo } from '../schermate/turno-nemesi.js';
+import { DRAW_UID, render, scrollFocusTo } from '../schermate/turno-nemesi.ts';
 import { dockDeck, flyToDiscard } from './testata.ts';
 import { specificCardsOf } from '../schermate/crea-mazzo.ts';
 import { currentBackground } from './menu-laterale.ts';

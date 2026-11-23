@@ -11,7 +11,7 @@ import { SAVE_KEY, SAVE_VERSION, UNDO_LIMIT, ui, undoBtn } from './stato.ts';
 import { turnOrderCards } from './partita.ts';
 import { closeAllModals, showToast } from '../ui/componenti/dialoghi.ts';
 import { closeDiscard } from '../ui/componenti/scarti.ts';
-import { DRAW_UID, render } from '../ui/schermate/turno-nemesi.js';
+import { DRAW_UID, render } from '../ui/schermate/turno-nemesi.ts';
 import { closeDeckBuild } from '../ui/schermate/crea-mazzo.ts';
 import type { Fotografia, FotografiaLetta, SalvataggioValido } from '../tipi/salvataggio.ts';
 

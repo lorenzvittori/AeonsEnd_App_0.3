@@ -1,23 +1,33 @@
-// ui/schermate/menu.js: Menu iniziale e pagina Nuova partita (giocatori, opzioni del mazzo, wave, nemesi). Provvisorio: Nuova partita andrà in nuova-partita.js.
-// Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
-// funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
+// ui/schermate/menu.ts: menu iniziale e pagina Nuova partita (giocatori, opzioni del mazzo, wave, nemesi con la sua
+// carta). Provvisorio: Nuova partita andrà in un file suo.
+// Dipende da: stato/ (condivise, stato, partita, salvataggio), dati/ (dati, collezione), ui/testi.ts, ui/componenti
+// (componenti, dialoghi), ui/schermate (opzioni, test). Usato da: avvio, opzioni, crea-mazzo (scelte), Indietro.
 
 import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { DRAG_THRESHOLD, SWIPE_MIN_DISTANCE, reducedMotion, resumeBtn, startBtn, startLayer } from '../../stato/stato.ts';
+import { DRAG_THRESHOLD, SWIPE_MIN_DISTANCE, byId, reducedMotion, resumeBtn, startBtn, startLayer } from '../../stato/stato.ts';
 import { battleOf } from '../../dati/dati.ts';
 import { collectionCatalog, isMiniCode, isPlayable, loadCollection, ownsProduct, productName, productOfNemesis, waveOfCode, waveOfNemesis } from '../../dati/collezione.ts';
 import { deckShortfall, loadDeckOptions, mergeActive, mergeLockedWave, saveDeckOptions } from '../../stato/partita.ts';
-import { el, icon } from '../componenti/componenti.ts';
+import { el, icon, need, query } from '../componenti/componenti.ts';
 import { button, showToast } from '../componenti/dialoghi.ts';
 import { ensureCollectionButton, openCollection, openOptions, resumeGame } from './opzioni.ts';
 import { readSave } from '../../stato/salvataggio.ts';
 import { openTestScreen } from './test.ts';
 
-// --- 6. Pagina iniziale e nuova partita -----------------------------------------------------------------------------
-export function renderPlayers() {
-  const container = document.getElementById('choices-players');
-  container.replaceChildren(...G.startOptions.players.map(value => {
+// Un punto dello schermo
+interface Punto { x: number; y: number }
+
+// Elemento della pagina iniziale che c'è sempre (creato da index.html o dall'app)
+function pageEl<T extends HTMLElement>(root: ParentNode, selector: string, type: abstract new () => T): T {
+  return need(query(root, selector, type), selector);
+}
+
+// --- Pagina iniziale e nuova partita ---
+export function renderPlayers(): void {
+  const container = byId('choices-players', HTMLDivElement);
+  const options = need(G.startOptions, 'scelte della pagina iniziale');
+  container.replaceChildren(...options.players.map(value => {
     const b = el('button', '', String(value));
     b.type = 'button';
     b.setAttribute('aria-pressed', String(value === G.settings.players));
@@ -25,9 +35,9 @@ export function renderPlayers() {
     b.addEventListener('click', () => {
       G.settings.players = value;
       renderPlayers();
-      // (le opzioni del mazzo dipendono anche dai giocatori: blocco di "Unisci" e riga di avviso, v213)
+      // Le opzioni del mazzo dipendono anche dai giocatori (blocco di "Unisci" e riga di avviso)
       if (G.startOptions && document.getElementById('deck-options')) renderDeckOptions();
-      container.querySelector('[aria-pressed="true"]').focus();
+      pageEl(container, '[aria-pressed="true"]', HTMLElement).focus();
     });
     return b;
   }));
@@ -40,7 +50,7 @@ export let nemesisPreviewOpen = false;
 export const CHEVRON_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">'
   + '<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-export function chevronButton(className, label, handler) {
+export function chevronButton(className: string, label: string, handler: () => void): HTMLButtonElement {
   const b = el('button', 'nemesis-toggle ' + className);
   b.type = 'button';
   b.setAttribute('aria-label', label);
@@ -50,10 +60,11 @@ export function chevronButton(className, label, handler) {
   return b;
 }
 
-export function setNemesisPreview(open) {
+export function setNemesisPreview(open: boolean): void {
   nemesisPreviewOpen = open;
   renderNemesisPreview();
-  const target = open ? document.querySelector('#nemesis-preview .nemesis-collapse') : document.querySelector('.nemesis-item.is-selected .nemesis-expand');
+  const target = open ? query(document, '#nemesis-preview .nemesis-collapse', HTMLElement)
+    : query(document, '.nemesis-item.is-selected .nemesis-expand', HTMLElement);
   if (target) target.focus({ preventScroll: true });
   if (open) {
     const preview = document.getElementById('nemesis-preview');
@@ -61,8 +72,8 @@ export function setNemesisPreview(open) {
   }
 }
 
-export function renderNemesisPreview() {
-  const list = document.getElementById('nemesis-list');
+export function renderNemesisPreview(): void {
+  const list = byId('nemesis-list', HTMLDivElement);
   let preview = document.getElementById('nemesis-preview');
   if (!preview) {
     // index.html vecchio ancora in cache del browser: il riquadro si crea qui
@@ -81,42 +92,43 @@ export function renderNemesisPreview() {
   const item = list.querySelector('.nemesis-item.is-selected');
   if (item) item.after(preview); else list.after(preview);
 
-  const art = G.settings.nemesis && G.nemesisArt[G.settings.nemesis];
+  const nemesis = G.settings.nemesis;
+  const art = nemesis ? G.nemesisArt[nemesis] : undefined;
   const open = !!art && nemesisPreviewOpen;
   preview.hidden = !open;
-  const expand = item && item.querySelector('.nemesis-expand');
+  const expand = item && query(item, '.nemesis-expand', HTMLElement);
   if (expand) {
     expand.hidden = open;
     expand.setAttribute('aria-expanded', String(open));
   }
-  if (!open) {
+  if (!open || !art || !nemesis) {
     // Chiusa: la prossima volta si riapre dal fronte e non ingrandita
     resetNemesisZoom();
     nemesisShowBack = false;
     nemesisFlipAngle = 0;
-    const inner = preview.querySelector('.nemesis-flip-inner');
+    const inner = pageEl(preview, '.nemesis-flip-inner', HTMLElement);
     inner.style.transition = 'none';
     inner.style.transform = '';
-    preview.querySelector('.nemesis-flip').classList.remove('is-back');
+    pageEl(preview, '.nemesis-flip', HTMLElement).classList.remove('is-back');
     return;
   }
-  const front = preview.querySelector('.nemesis-face--front');
-  const back = preview.querySelector('.nemesis-face--back');
-  front.alt = I18N_IT.nemesisCard(G.settings.nemesis);
+  const front = pageEl(preview, '.nemesis-face--front', HTMLImageElement);
+  const back = pageEl(preview, '.nemesis-face--back', HTMLImageElement);
+  front.alt = I18N_IT.nemesisCard(nemesis);
   const src = encodeURI(art.card);
   if (front.getAttribute('src') !== src) front.src = src;
   // Retro (setup e storia), se c'è: si vede con uno slide sulla carta
-  const flip = preview.querySelector('.nemesis-flip');
+  const flip = pageEl(preview, '.nemesis-flip', HTMLElement);
   flip.classList.toggle('has-back', !!art.back);
   if (art.back) {
-    back.alt = I18N_IT.nemesisCardBack(G.settings.nemesis);
+    back.alt = I18N_IT.nemesisCardBack(nemesis);
     const backSrc = encodeURI(art.back);
     if (back.getAttribute('src') !== backSrc) back.src = backSrc;
   } else {
     back.removeAttribute('src');
     nemesisShowBack = false;
     nemesisFlipAngle = 0;
-    preview.querySelector('.nemesis-flip-inner').style.transform = '';
+    pageEl(preview, '.nemesis-flip-inner', HTMLElement).style.transform = '';
   }
   updateNemesisFlip(preview);
 }
@@ -124,7 +136,7 @@ export function renderNemesisPreview() {
 // Fronte e retro della carta nemesi aperta: uno slide orizzontale (destra o sinistra) la gira
 export let nemesisShowBack = false;
 
-export function buildNemesisFlip(preview) {
+export function buildNemesisFlip(preview: HTMLElement): void {
   const flip = el('div', 'nemesis-flip');
   const inner = el('div', 'nemesis-flip-inner');
   let front = preview.querySelector('img');
@@ -144,32 +156,38 @@ export function buildNemesisFlip(preview) {
   // Zoom con due dita sul lato che si vede: sopra la carta compare un livello con la stessa immagine, ingrandita dentro
   // il riquadro della carta (fino a NEMESIS_ZOOM_MAX); da ingrandita un dito la sposta e un doppio tocco torna normale.
   // Il livello evita di ingrandire la carta che si gira in 3D (le due facce).
-  const zoom = { scale: 1, tx: 0, ty: 0, layer: null, img: null };
-  const pointers = new Map();
-  let pinch = null;
-  let pan = null;
-  let lastTap = null;
-  const applyZoom = animate => {
+  const zoom: { scale: number; tx: number; ty: number; layer: HTMLDivElement | null; img: HTMLImageElement | null } =
+    { scale: 1, tx: 0, ty: 0, layer: null, img: null };
+  const pointers = new Map<number, Punto>();
+  let pinch: { d: number; s: number; m: Punto; tx: number; ty: number } | null = null;
+  let pan: { x: number; y: number; tx: number; ty: number; moved: boolean } | null = null;
+  let lastTap: number | null = null;
+  const applyZoom = (animate: boolean) => {
+    const img = zoom.img;
+    if (!img) return;
     const w = flip.offsetWidth, h = flip.offsetHeight;
     const maxX = Math.max(0, (w * zoom.scale - w) / 2), maxY = Math.max(0, (h * zoom.scale - h) / 2);
     zoom.tx = Math.max(-maxX, Math.min(maxX, zoom.tx));
     zoom.ty = Math.max(-maxY, Math.min(maxY, zoom.ty));
-    zoom.img.style.transition = animate ? 'transform .2s ease-out' : 'none';
-    zoom.img.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
+    img.style.transition = animate ? 'transform .2s ease-out' : 'none';
+    img.style.transform = `translate(${zoom.tx}px, ${zoom.ty}px) scale(${zoom.scale})`;
   };
   const openZoomLayer = () => {
     if (zoom.layer) return;
-    const art = G.nemesisArt[G.settings.nemesis];
+    const nemesis = G.settings.nemesis;
+    const art = nemesis !== null ? G.nemesisArt[nemesis] : undefined;
     if (!art) return;
     const showBack = nemesisShowBack && !!art.back;
-    zoom.layer = el('div', 'nemesis-zoom-layer');
-    zoom.layer.setAttribute('aria-hidden', 'true');
-    zoom.img = el('img');
-    zoom.img.alt = '';
-    zoom.img.draggable = false;
-    zoom.img.src = encodeURI(showBack ? art.back : art.card);
-    zoom.layer.appendChild(zoom.img);
-    flip.appendChild(zoom.layer);
+    const layer = el('div', 'nemesis-zoom-layer');
+    layer.setAttribute('aria-hidden', 'true');
+    const img = el('img');
+    img.alt = '';
+    img.draggable = false;
+    img.src = encodeURI(showBack && art.back ? art.back : art.card);
+    layer.appendChild(img);
+    zoom.layer = layer;
+    zoom.img = img;
+    flip.appendChild(layer);
     flip.classList.add('is-zoomed');
   };
   const resetZoom = () => {
@@ -185,8 +203,8 @@ export function buildNemesisFlip(preview) {
   };
   resetNemesisZoom = resetZoom;
   // Punto (relativo al centro della carta) che resta sotto le dita / sotto il tocco
-  const local = (x, y) => { const r = flip.getBoundingClientRect(); return { x: x - r.left - r.width / 2, y: y - r.top - r.height / 2 }; };
-  const zoomAt = (scale, p, animate) => {
+  const local = (x: number, y: number): Punto => { const r = flip.getBoundingClientRect(); return { x: x - r.left - r.width / 2, y: y - r.top - r.height / 2 }; };
+  const zoomAt = (scale: number, p: Punto, animate: boolean) => {
     const ix = (p.x - zoom.tx) / zoom.scale, iy = (p.y - zoom.ty) / zoom.scale;
     zoom.scale = Math.max(1, Math.min(NEMESIS_ZOOM_MAX, scale));
     zoom.tx = p.x - ix * zoom.scale;
@@ -197,8 +215,8 @@ export function buildNemesisFlip(preview) {
   // La carta ruota seguendo il dito (tutta la larghezza della carta = mezzo giro). Al rilascio: oltre
   // SWIPE_MIN_DISTANCE completa il mezzo giro nella direzione del dito, altrimenti torna com'era. Il retro si vede solo
   // così (un tocco non gira la carta) e non mentre la carta è ingrandita.
-  let drag = null;
-  const setAngle = (deg, animate) => {
+  let drag: { x: number; y: number; id: number; dx: number; active: boolean } | null = null;
+  const setAngle = (deg: number, animate: boolean) => {
     inner.style.transition = animate ? '' : 'none';
     inner.style.transform = `rotateY(${deg}deg)`;
   };
@@ -207,7 +225,7 @@ export function buildNemesisFlip(preview) {
     if (pointers.size === 2) {
       // Secondo dito: niente giro, comincia lo zoom
       if (drag) { setAngle(nemesisFlipAngle, true); drag = null; }
-      pointers.forEach((p, id) => { try { flip.setPointerCapture(id); } catch (_) {} });
+      pointers.forEach((p, id) => { try { flip.setPointerCapture(id); } catch (_) { /* niente cattura */ } });
       openZoomLayer();
       if (!zoom.layer) return;
       const [a, b] = [...pointers.values()];
@@ -217,7 +235,7 @@ export function buildNemesisFlip(preview) {
     }
     if (pointers.size !== 1) return;
     if (zoom.layer) {
-      try { flip.setPointerCapture(e.pointerId); } catch (_) {}
+      try { flip.setPointerCapture(e.pointerId); } catch (_) { /* niente cattura */ }
       pan = { x: e.clientX, y: e.clientY, tx: zoom.tx, ty: zoom.ty, moved: false };
       return;
     }
@@ -252,13 +270,13 @@ export function buildNemesisFlip(preview) {
     if (!drag.active) {
       if (Math.abs(dx) < DRAG_THRESHOLD || Math.abs(dx) <= Math.abs(dy)) return;
       drag.active = true;
-      try { flip.setPointerCapture(e.pointerId); } catch (_) {}
+      try { flip.setPointerCapture(e.pointerId); } catch (_) { /* niente cattura */ }
     }
     drag.dx = dx;
     const width = flip.offsetWidth || 300;
     setAngle(nemesisFlipAngle + Math.max(-180, Math.min(180, dx / width * 180)), false);
   });
-  const endZoomGesture = e => {
+  const endZoomGesture = (e: PointerEvent) => {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
     if (!zoom.layer) return;
@@ -278,7 +296,7 @@ export function buildNemesisFlip(preview) {
     pan = null;
     if (zoom.scale < 1.05) resetZoom();
   };
-  const endDrag = (e, cancelled) => {
+  const endDrag = (e: PointerEvent, cancelled: boolean) => {
     endZoomGesture(e);
     if (!drag || (e && e.pointerId !== drag.id)) return;
     const { dx, active } = drag;
@@ -301,46 +319,47 @@ export let nemesisFlipAngle = 0;
 export const NEMESIS_ZOOM_MAX = 4;
 
 // Toglie lo zoom della carta nemesi (carta chiusa o cambiata); la imposta buildNemesisFlip
-export let resetNemesisZoom = () => {};
+export let resetNemesisZoom: () => void = () => {};
 
-export function updateNemesisFlip(preview) {
-  const flip = preview.querySelector('.nemesis-flip');
+export function updateNemesisFlip(preview: HTMLElement): void {
+  const flip = pageEl(preview, '.nemesis-flip', HTMLElement);
   const showBack = nemesisShowBack && flip.classList.contains('has-back');
   flip.classList.toggle('is-back', showBack);
-  preview.querySelector('.nemesis-face--front').setAttribute('aria-hidden', String(showBack));
-  preview.querySelector('.nemesis-face--back').setAttribute('aria-hidden', String(!showBack));
-  const dots = preview.querySelector('.nemesis-flip-dots');
+  pageEl(preview, '.nemesis-face--front', HTMLElement).setAttribute('aria-hidden', String(showBack));
+  pageEl(preview, '.nemesis-face--back', HTMLElement).setAttribute('aria-hidden', String(!showBack));
+  const dots = pageEl(preview, '.nemesis-flip-dots', HTMLElement);
   dots.hidden = !flip.classList.contains('has-back');
   dots.children[0].classList.toggle('is-on', !showBack);
   dots.children[1].classList.toggle('is-on', showBack);
 }
 
 // Wave scelte nella pagina Nuova partita (anche più di una): si vedono le nemesi di tutte
-export let selectedWaves = [];
+export let selectedWaves: string[] = [];
 
 // Numero della wave in cifre romane per mostrarla ("4 - The New Age" → "IV - The New Age"); il valore resta quello di
 // nemesis.json
-export function toRoman(n) {
-  const map = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
+export function toRoman(n: number): string {
+  const map: [number, string][] = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
   let out = '';
   map.forEach(([v, s]) => { while (n >= v) { out += s; n -= v; } });
   return out;
 }
 
-// Nome della wave dal suo codice: "4" -> "IV - The New Age"
-export function waveLabel(wave) {
-  return toRoman(Number(wave)) + ' - ' + productName(wave);
+// Nome della wave dal suo codice: "4" -> "IV - The New Age" (String: una wave mancante si legge "null", come prima)
+export function waveLabel(wave: string | null): string {
+  return toRoman(Number(wave)) + ' - ' + productName(String(wave));
 }
 
 // Nemesi delle wave scelte: prima le disponibili (pulsanti), le altre in un elenco chiuso e non interattivo
-export function renderBosses() {
-  const list = document.getElementById('nemesis-list');
+export function renderBosses(): void {
+  const list = byId('nemesis-list', HTMLDivElement);
   // Per wave (nell'ordine delle wave); in ogni wave prima le nemesi della scatola base, poi quelle delle mini espansioni,
   // in ognuno dei due gruppi per battaglia
-  const byBattle = n => (n.battle === null || n.battle === undefined ? 99 : n.battle);
-  const ofWave = G.nemeses.filter(n => n.boxCode && selectedWaves.includes(waveOfNemesis(n)))
+  const byBattle = (n: { battle: number | null }) => (n.battle === null || n.battle === undefined ? 99 : n.battle);
+  const inSelectedWaves = (wave: string | null) => wave !== null && selectedWaves.includes(wave);
+  const ofWave = G.nemeses.filter(n => n.boxCode && inSelectedWaves(waveOfNemesis(n)))
     .map((n, i) => ({ n, i }))
-    .sort((a, b) => (Number(waveOfNemesis(a.n)) - Number(waveOfNemesis(b.n))) || (isMiniCode(a.n.boxCode) - isMiniCode(b.n.boxCode))
+    .sort((a, b) => (Number(waveOfNemesis(a.n)) - Number(waveOfNemesis(b.n))) || (Number(isMiniCode(a.n.boxCode)) - Number(isMiniCode(b.n.boxCode)))
       || (byBattle(a.n) - byBattle(b.n)) || (a.i - b.i))
     .map(x => x.n);
   const playable = ofWave.filter(isPlayable);
@@ -360,12 +379,12 @@ export function renderBosses() {
       b.classList.add('has-art');
       const portrait = el('span', 'nemesis-art');
       portrait.setAttribute('aria-hidden', 'true');
-      portrait.style.backgroundImage = `url("${encodeURI(art.portrait)}")`;
+      portrait.style.backgroundImage = `url("${encodeURI(String(art.portrait))}")`;
       b.appendChild(portrait);
     }
     b.append(el('span', 'nemesis-name', info.name), tags);
     // Mini espansione: etichetta dorata piccola in basso a destra
-    if (isMiniCode(info.boxCode)) b.appendChild(el('span', 'nemesis-expansion', productName(info.boxCode)));
+    if (isMiniCode(info.boxCode)) b.appendChild(el('span', 'nemesis-expansion', productName(String(info.boxCode))));
     b.addEventListener('click', () => {
       // Toccare di nuovo la nemesi già scelta apre o chiude la sua carta (come le frecce)
       if (G.settings.nemesis === info.name) {
@@ -378,7 +397,7 @@ export function renderBosses() {
       G.settings.nemesis = info.name;
       nemesisPreviewOpen = false;
       renderBosses();
-      const selected = list.querySelector('.nemesis-item.is-selected .nemesis-option');
+      const selected = query(list, '.nemesis-item.is-selected .nemesis-option', HTMLElement);
       if (selected) selected.focus({ preventScroll: true });
     });
     const item = el('div', 'nemesis-item');
@@ -391,7 +410,7 @@ export function renderBosses() {
     return item;
   }));
   renderNemesisPreview();
-  document.getElementById('nemesis-empty').hidden = playable.length > 0;
+  need(document.getElementById('nemesis-empty'), '#nemesis-empty').hidden = playable.length > 0;
 
   // Nemesi non disponibili: box piccoli con solo il nome, barrati da una X rossa sottile, non cliccabili.
   // Stanno subito sotto i pulsanti delle disponibili (il vecchio elenco a scomparsa non si usa più).
@@ -408,7 +427,8 @@ export function renderBosses() {
   unavailable.replaceChildren(...others.map(info => {
     // Nemesi che l'app ha (battaglia e carte) ma il cui prodotto non è nella collezione: niente "!", la scritta
     // "Non in collezione" a destra. Le altre (senza battaglia o senza carte) restano con il "!" rosso.
-    const notOwned = info.battle !== null && !ownsProduct(productOfNemesis(info))
+    // (String: una nemesi senza prodotto si cerca come "null", che non è nella collezione)
+    const notOwned = info.battle !== null && !ownsProduct(String(productOfNemesis(info)))
       && G.allCards.some(c => c.category === 'Specific' && c.nemesis === info.name);
     const li = el('li', 'nemesis-locked' + (notOwned ? ' is-not-owned' : ''));
     li.setAttribute('aria-label', notOwned ? I18N_IT.notInCollectionNemesis(info.name) : I18N_IT.unavailableNemesis(info.name));
@@ -419,16 +439,19 @@ export function renderBosses() {
   updateStartActions();
 }
 
-export function renderStartChoices() {
+export function renderStartChoices(): void {
   nemesisPreviewOpen = false;
-  G.startOptions.waves = ownedWaves();
+  const options = need(G.startOptions, 'scelte della pagina iniziale');
+  options.waves = ownedWaves();
   ensureCollectionButton();
   renderPlayers();
   const current = G.nemeses.find(n => n.name === G.settings.nemesis);
   // Wave scelte: quelle di prima ancora nella collezione; se nessuna, la wave della nemesi scelta (o la prima)
-  selectedWaves = selectedWaves.filter(w => G.startOptions.waves.includes(w));
+  selectedWaves = selectedWaves.filter(w => options.waves.includes(w));
   if (!selectedWaves.length) {
-    selectedWaves = [current && G.startOptions.waves.includes(waveOfNemesis(current)) ? waveOfNemesis(current) : G.startOptions.waves[0]].filter(Boolean);
+    const currentWave = current ? waveOfNemesis(current) : null;
+    selectedWaves = [currentWave !== null && options.waves.includes(currentWave) ? currentWave : options.waves[0]]
+      .filter((w): w is string => !!w);
   }
   ensureWaveGroup();
   renderWavePills();
@@ -438,16 +461,15 @@ export function renderStartChoices() {
 // Pagina iniziale in due modi:
 //   'home':  menu iniziale. Se c'è una partita salvata, la finestra "Partita in corso" (nemesi, giocatori, Riprendi
 //            partita); sotto, sempre, "Nuova partita" e "Opzioni" (La mia collezione).
-//   'setup': scelte della nuova partita (giocatori, wave, nemesi) e "Inizia partita"; in alto a destra il Menu
-//            (Esci → menu iniziale, La mia collezione).
-export let startMode = 'home';
+//   'setup': scelte della nuova partita (giocatori, wave, nemesi) e "Inizia partita"; in alto la X (menu iniziale).
+export let startMode: 'home' | 'setup' = 'home';
 
 // Finestra "Partita in corso" sotto il titolo e, sotto, i pulsanti del menu iniziale. Creati qui, così funzionano
 // anche con un index.html vecchio ancora in cache.
-export function startChoicePanel() {
-  let panel = document.getElementById('start-choice');
-  if (panel) return panel;
-  panel = el('section', 'start-choice');
+export function startChoicePanel(): HTMLElement {
+  const existing = document.getElementById('start-choice');
+  if (existing) return existing;
+  const panel = el('section', 'start-choice');
   panel.id = 'start-choice';
   panel.setAttribute('aria-labelledby', 'start-choice-title');
   const head = el('div', 'start-choice-head');
@@ -457,26 +479,26 @@ export function startChoicePanel() {
   const resume = button(I18N_IT.resumeGame, 'primary', resumeGame);
   resume.classList.add('ae-button--full', 'start-choice-resume');
   panel.append(head, resume);
-  document.querySelector('.start-title').after(panel);
+  pageEl(document, '.start-title', HTMLElement).after(panel);
   return panel;
 }
 
-export function startHomeActions() {
-  let box = document.getElementById('start-home');
-  if (box) return box;
-  box = el('div', 'start-home');
+export function startHomeActions(): HTMLElement {
+  const existing = document.getElementById('start-home');
+  if (existing) return existing;
+  const box = el('div', 'start-home');
   box.id = 'start-home';
   const fresh = button(I18N_IT.newGame, 'primary', () => setStartMode('setup', true));
   fresh.classList.add('ae-button--full', 'start-home-new');
-  // Collezione vuota (v194): "Inserisci collezione" apre La mia collezione; "Nuova partita" è oscurato
+  // Collezione vuota: "Inserisci collezione" apre La mia collezione; "Nuova partita" è oscurato
   const addCollection = button(I18N_IT.addCollection, 'primary', () => openCollection(addCollection, () => {
-    const next = startHomeActions().querySelector('.start-home-new');
+    const next = query(startHomeActions(), '.start-home-new', HTMLButtonElement);
     if (next && !next.disabled) next.focus({ preventScroll: true });
   }));
   addCollection.classList.add('ae-button--full', 'start-home-collection');
   const options = button(I18N_IT.options, 'secondary', () => openOptions(options));
   options.classList.add('ae-button--full', 'start-home-options');
-  // Modalità test (v215): scenari che partono in un momento preciso della partita
+  // Modalità test: scenari che partono in un momento preciso della partita
   const test = button(I18N_IT.testMenu, 'secondary', () => openTestScreen(test));
   test.classList.add('ae-button--full', 'start-home-test');
   box.append(addCollection, fresh, options, test);
@@ -484,16 +506,16 @@ export function startHomeActions() {
   return box;
 }
 
-export function updateHomeCollection() {
+export function updateHomeCollection(): void {
   const box = document.getElementById('start-home');
   if (!box) return;
   const empty = !G.collection || G.collection.size === 0;
-  box.querySelector('.start-home-collection').hidden = !empty;
-  const fresh = box.querySelector('.start-home-new');
+  pageEl(box, '.start-home-collection', HTMLElement).hidden = !empty;
+  const fresh = pageEl(box, '.start-home-new', HTMLButtonElement);
   fresh.disabled = empty;
   fresh.title = empty ? I18N_IT.collectionEmptyHint : '';
-  // Con la collezione vuota il pulsante principale è "Inserisci collezione"
-  // (altrimenti principale solo senza partita salvata, come in setStartMode)
+  // Con la collezione vuota il pulsante principale è "Inserisci collezione" (altrimenti principale solo senza partita
+  // salvata, come in setStartMode)
   const primary = !empty && !readSave();
   fresh.classList.toggle('ae-button--primary', primary);
   fresh.classList.toggle('ae-button--secondary', !primary);
@@ -501,10 +523,10 @@ export function updateHomeCollection() {
 
 // Testata della pagina "Nuova partita": titolo e X (torna al menu iniziale). Resta ferma in alto mentre la pagina scorre
 // sotto, e sotto di lei il contenuto sfuma nel nero (style.css .start-setup-head)
-export function startSetupHead() {
-  let head = document.getElementById('start-setup-head');
-  if (head) return head;
-  head = el('div', 'start-setup-head');
+export function startSetupHead(): HTMLElement {
+  const existing = document.getElementById('start-setup-head');
+  if (existing) return existing;
+  const head = el('div', 'start-setup-head');
   head.id = 'start-setup-head';
   const x = el('button', 'ae-icon-button start-setup-close');
   x.type = 'button';
@@ -512,14 +534,14 @@ export function startSetupHead() {
   x.appendChild(icon('close'));
   x.addEventListener('click', () => setStartMode('home', true));
   head.append(el('h1', 'start-setup-title', I18N_IT.newGameTitle), x);
-  document.querySelector('.start-box').prepend(head);
+  pageEl(document, '.start-box', HTMLElement).prepend(head);
   return head;
 }
 
-export function setStartMode(mode, focus) {
+export function setStartMode(mode: string, focus?: boolean): void {
   const saved = readSave();
   startMode = mode === 'setup' ? 'setup' : 'home';
-  // Pagina Nuova partita: le opzioni del mazzo ripartono dalla preferenza del browser (v213)
+  // Pagina Nuova partita: le opzioni del mazzo ripartono dalla preferenza del browser
   if (startMode === 'setup') Object.assign(G.settings, loadDeckOptions());
   const panel = startChoicePanel();
   const home = startHomeActions();
@@ -531,38 +553,39 @@ export function setStartMode(mode, focus) {
   const oldMenu = document.getElementById('start-menu-btn');
   if (oldMenu) oldMenu.remove();
   startLayer.classList.toggle('is-setup', !isHome);
-  panel.parentElement.classList.toggle('is-choosing', isHome);
+  need(panel.parentElement, 'contenitore della pagina iniziale').classList.toggle('is-choosing', isHome);
   // Con una partita in corso "Nuova partita" è secondario (il principale è Riprendi partita)
-  const fresh = home.querySelector('.start-home-new');
+  const fresh = pageEl(home, '.start-home-new', HTMLButtonElement);
   fresh.classList.toggle('ae-button--primary', !saved);
   fresh.classList.toggle('ae-button--secondary', !!saved);
   updateHomeCollection();
   if (saved) {
-    const head = panel.querySelector('.start-choice-head');
-    head.querySelector('.start-choice-info').textContent =
+    const head = pageEl(panel, '.start-choice-head', HTMLElement);
+    pageEl(head, '.start-choice-info', HTMLElement).textContent =
       [saved.settings.nemesis, I18N_IT.players(saved.settings.players)].filter(Boolean).join(' · ');
     const old = head.querySelector('.nemesis-art');
     if (old) old.remove();
-    const art = G.nemesisArt[saved.settings.nemesis];
+    const nemesis = saved.settings.nemesis;
+    const art = nemesis !== null ? G.nemesisArt[nemesis] : undefined;
     head.classList.toggle('has-art', !!art);
     if (art) {
       const portrait = el('span', 'nemesis-art');
       portrait.setAttribute('aria-hidden', 'true');
-      portrait.style.backgroundImage = `url("${encodeURI(art.portrait)}")`;
+      portrait.style.backgroundImage = `url("${encodeURI(String(art.portrait))}")`;
       head.prepend(portrait);
     }
   }
   startLayer.scrollTop = 0;
   updateStartActions();
   if (focus) {
-    const target = isHome ? (saved ? panel.querySelector('.start-choice-resume')
-      : fresh.disabled ? home.querySelector('.start-home-collection') : fresh) : document.querySelector('#choices-players button');
+    const target = isHome ? (saved ? query(panel, '.start-choice-resume', HTMLElement)
+      : fresh.disabled ? query(home, '.start-home-collection', HTMLElement) : fresh) : query(document, '#choices-players button', HTMLElement);
     if (target) target.focus({ preventScroll: true });
   }
 }
 
 // In 'setup' il pulsante principale è "Inizia partita"
-export function updateStartActions() {
+export function updateStartActions(): void {
   resumeBtn.hidden = true;
   resumeBtn.className = 'ae-button ae-button--full ae-button--secondary start-resume-alt';
   startBtn.textContent = I18N_IT.startNew;
@@ -572,17 +595,17 @@ export function updateStartActions() {
   renderDeckOptions();
 }
 
-// Opzioni del mazzo (v213): due interruttori sopra la wave ("Modalità battaglia", "Unisci le carte della collezione"),
-// con il blocco di "Unisci" (mergeLockedWave) e, prima di "Inizia partita", una riga se il mazzo esce più corto
-export function deckOptionsGroup() {
-  let group = document.getElementById('deck-options');
-  if (group) return group;
-  group = el('section', 'start-group start-deck-options');
+// Opzioni del mazzo: due interruttori sopra la wave ("Modalità battaglia", "Unisci le carte della collezione"), con il
+// blocco di "Unisci" (mergeLockedWave) e, prima di "Inizia partita", una riga se il mazzo esce più corto
+export function deckOptionsGroup(): HTMLElement {
+  const existing = document.getElementById('deck-options');
+  if (existing) return existing;
+  const group = el('section', 'start-group start-deck-options');
   group.id = 'deck-options';
   group.setAttribute('aria-labelledby', 'deck-options-label');
   const label = el('h2', 'start-label', I18N_IT.deckOptions);
   label.id = 'deck-options-label';
-  const row = (key, text, note) => {
+  const row = (key: 'battleMode' | 'mergeCollection', text: string, note: string) => {
     const r = el('label', 'ae-switch-row deck-option');
     const input = document.createElement('input');
     input.type = 'checkbox';
@@ -609,17 +632,17 @@ export function deckOptionsGroup() {
   return group;
 }
 
-export function renderDeckOptions() {
+export function renderDeckOptions(): void {
   if (!G.deckSetup || !G.nemeses.length) return;
   const group = deckOptionsGroup();
-  const battle = group.querySelector('[data-option="battleMode"]');
-  const merge = group.querySelector('[data-option="mergeCollection"]');
-  const lockNote = group.querySelector('.deck-option-lock');
+  const battle = pageEl(group, '[data-option="battleMode"]', HTMLInputElement);
+  const merge = pageEl(group, '[data-option="mergeCollection"]', HTMLInputElement);
+  const lockNote = pageEl(group, '.deck-option-lock', HTMLElement);
   battle.checked = G.settings.battleMode !== false;
   const locked = mergeLockedWave();
   merge.checked = mergeActive();
   merge.disabled = !!locked;
-  merge.closest('.ae-switch-row').classList.toggle('is-locked', !!locked);
+  need(merge.closest('.ae-switch-row'), 'riga di "Unisci"').classList.toggle('is-locked', !!locked);
   merge.setAttribute('aria-describedby', locked ? lockNote.id : '');
   lockNote.hidden = !locked;
   lockNote.textContent = locked ? I18N_IT.mergeLocked(waveLabel(locked).split(' - ')[0]) : '';
@@ -637,28 +660,30 @@ export function renderDeckOptions() {
 }
 
 // Wave nella scelta della nemesi: solo quelle della collezione (se nessuna, tutte)
-export function ownedWaves() {
+export function ownedWaves(): string[] {
   const all = collectionCatalog().map(w => w.wave);
-  const owned = all.filter(w => [...G.collection].some(id => waveOfCode(id) === w));
+  const owned = all.filter(w => [...need(G.collection, 'collezione')].some(id => waveOfCode(id) === w));
   return owned.length ? owned : all;
 }
 
-export function buildStartPage() {
+export function buildStartPage(): void {
   loadCollection();
-  G.startOptions = { players: Object.keys(G.deckSetup.battles[0].players).map(Number), waves: ownedWaves() };
+  const setup = need(G.deckSetup, 'deck-setup.json');
+  const options = { players: Object.keys(setup.battles[0].players).map(Number), waves: ownedWaves() };
+  G.startOptions = options;
   const firstPlayable = G.nemeses.find(isPlayable);
-  G.settings = Object.assign({ players: G.startOptions.players[0], nemesis: firstPlayable ? firstPlayable.name : null }, loadDeckOptions());
+  G.settings = Object.assign({ players: options.players[0], nemesis: firstPlayable ? firstPlayable.name : null }, loadDeckOptions());
   renderStartChoices();
 }
 
 // Wave: gruppo a sé ("Wave"), sopra la Nemesi, con un menu a tendina in cui si spuntano una o più wave (in cifre
 // romane). Accanto al titolo "Nemesi" il dado sceglie una nemesi a caso. Creati qui, così valgono anche con un
 // index.html vecchio (il vecchio <select> della wave resta nascosto e non si usa più).
-export function ensureWaveGroup() {
-  let group = document.getElementById('wave-group');
-  if (group) return group;
+export function ensureWaveGroup(): HTMLElement {
+  const existing = document.getElementById('wave-group');
+  if (existing) return existing;
   const select = document.getElementById('wave-select');
-  group = el('section', 'start-group start-wave');
+  const group = el('section', 'start-group start-wave');
   group.id = 'wave-group';
   group.setAttribute('aria-labelledby', 'wave-label');
   const label = el('h2', 'start-label', I18N_IT.wave);
@@ -677,18 +702,19 @@ export function ensureWaveGroup() {
   menu.setAttribute('role', 'group');
   menu.setAttribute('aria-label', I18N_IT.wavesLabel);
   menu.hidden = true;
-  const setOpen = open => {
+  const setOpen = (open: boolean) => {
     menu.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
     dropdown.classList.toggle('is-open', open);
   };
-  toggle.addEventListener('click', () => setOpen(menu.hidden));
+  // (hidden nei tipi del DOM può essere anche 'until-found'; qui è sempre true o false)
+  toggle.addEventListener('click', () => setOpen(Boolean(menu.hidden)));
   // Un tocco fuori dal menu (o Esc) lo chiude
-  document.addEventListener('pointerdown', e => { if (!menu.hidden && !dropdown.contains(e.target)) setOpen(false); });
+  document.addEventListener('pointerdown', e => { if (!menu.hidden && !dropdown.contains(e.target instanceof Node ? e.target : null)) setOpen(false); });
   dropdown.addEventListener('keydown', e => { if (e.key === 'Escape' && !menu.hidden) { e.stopPropagation(); setOpen(false); toggle.focus(); } });
   dropdown.append(toggle, menu);
   group.append(label, dropdown);
-  const nemesisGroup = document.getElementById('nemesis-list').closest('.start-group');
+  const nemesisGroup = need(byId('nemesis-list', HTMLDivElement).closest('.start-group'), 'gruppo della nemesi');
   nemesisGroup.before(group);
   nemesisGroup.classList.add('start-nemesis');
   // Titolo "Nemesi" con a destra il dado (nemesi a caso tra tutte quelle della collezione)
@@ -722,14 +748,15 @@ export const DICE_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hi
   + '<circle cx="8.5" cy="15.5" r="1.6" fill="currentColor"/></svg>';
 
 // Menu a tendina delle wave: testo con le wave scelte e, aperto, una casella per wave. Resta sempre almeno una wave.
-export function renderWavePills() {
-  const dropdown = document.getElementById('wave-pills');
-  const text = dropdown.querySelector('.wave-dropdown-text');
-  const menu = dropdown.querySelector('.wave-menu');
-  const chosen = G.startOptions.waves.filter(w => selectedWaves.includes(w));
+export function renderWavePills(): void {
+  const dropdown = byId('wave-pills', HTMLDivElement);
+  const text = pageEl(dropdown, '.wave-dropdown-text', HTMLElement);
+  const menu = pageEl(dropdown, '.wave-menu', HTMLElement);
+  const options = need(G.startOptions, 'scelte della pagina iniziale');
+  const chosen = options.waves.filter(w => selectedWaves.includes(w));
   text.textContent = !chosen.length ? I18N_IT.wavesNone
     : chosen.length === 1 ? waveLabel(chosen[0]) : I18N_IT.wavesMore(waveLabel(chosen[0]), chosen.length - 1);
-  menu.replaceChildren(...G.startOptions.waves.map(wave => {
+  menu.replaceChildren(...options.waves.map(wave => {
     const row = el('label', 'wave-option');
     const input = document.createElement('input');
     input.type = 'checkbox';
@@ -749,12 +776,14 @@ export function renderWavePills() {
 
 // Dado: una nemesi a caso tra tutte quelle giocabili della collezione (se possibile diversa da quella scelta); la sua
 // wave si aggiunge alle wave scelte e la pagina scorre fino a lei
-export function pickRandomNemesis() {
+export function pickRandomNemesis(): void {
   const all = G.nemeses.filter(isPlayable);
   if (!all.length) return;
   const pool = all.length > 1 ? all.filter(n => n.name !== G.settings.nemesis) : all;
   const pick = pool[Math.floor(Math.random() * pool.length)];
-  if (!selectedWaves.includes(waveOfNemesis(pick))) selectedWaves.push(waveOfNemesis(pick));
+  // (una nemesi giocabile ha sempre un prodotto, quindi una wave)
+  const wave = waveOfNemesis(pick);
+  if (wave !== null && !selectedWaves.includes(wave)) selectedWaves.push(wave);
   G.settings.nemesis = pick.name;
   nemesisPreviewOpen = false;
   renderWavePills();
@@ -764,6 +793,6 @@ export function pickRandomNemesis() {
   showToast(pick.name);
 }
 
-// Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima
-export function avvio() {
+// Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
+export function avvio(): void {
 }

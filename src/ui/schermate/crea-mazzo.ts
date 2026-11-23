@@ -13,7 +13,7 @@ import { deckPlan, newGame } from '../../stato/partita.ts';
 import { cardArt, el, query, queryAll } from '../componenti/componenti.ts';
 import { button, closeAllModals, dialogShell, openModal } from '../componenti/dialoghi.ts';
 import { clearTransition, lockFor } from '../../stato/salvataggio.ts';
-import { TIER_BANNER_MS, buzz, render, showBanner } from './turno-nemesi.js';
+import { TIER_BANNER_MS, buzz, render, showBanner } from './turno-nemesi.ts';
 import { dockDeck, renderDockPiles } from '../componenti/testata.ts';
 import { prefetchDeckImages } from '../../dati/rete.ts';
 import type { Carta } from '../../tipi/dati.ts';

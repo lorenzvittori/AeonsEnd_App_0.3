@@ -12,9 +12,9 @@ import { newGame } from './stato/partita.ts';
 import { el } from './ui/componenti/componenti.ts';
 import { loadImage, modals, showToast, updateInert } from './ui/componenti/dialoghi.ts';
 import { closeDiscard } from './ui/componenti/scarti.ts';
-import { buildStartPage, setStartMode, startMode } from './ui/schermate/menu.js';
+import { buildStartPage, setStartMode, startMode } from './ui/schermate/menu.ts';
 import { showStartError, showStartSkeleton } from './ui/schermate/opzioni.ts';
-import { preloadBannerFont, render } from './ui/schermate/turno-nemesi.js';
+import { preloadBannerFont, render } from './ui/schermate/turno-nemesi.ts';
 import { closeDeckPopover, closeUndoFloat, deckPopover, undoFloat } from './ui/componenti/pesca-undo.ts';
 
 // Tasto / gesto Indietro (Android, swipe di iOS): chiude il livello in primo piano invece di uscire dall'app.
