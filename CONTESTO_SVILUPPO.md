@@ -30,7 +30,15 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
 
 - **Accesso ai file:** solo dentro le cartelle dei due repository e nei file che l'utente allega. Non si legge né si
   scrive altrove sul PC; se serve, prima si chiede.
-- **Commit e push:** dopo ogni richiesta si fa commit e push su `main`.
+- **Passaggio a Vite + TypeScript (branch `ts`, dalla fase A).** Sul branch `ts` l'app si costruisce con Vite: le regole
+  qui sotto su `version.json` e sul caricatore valgono solo per `main` finché `ts` non viene fuso. Su `ts`:
+  - **`npm run dev`** per provare (http://localhost:5173/AeonsEnd_App_0.2/, si aggiorna da solo a ogni modifica);
+    `npm run build` + `npm run preview` per provare il sito costruito come sarà pubblicato (porta 4173);
+  - **prima di ogni commit `npm run check` e `npm test`**, entrambi senza errori;
+  - **niente `version.json`** e niente `?v=N`: Vite dà ai file costruiti un nome con l'hash (vedi sezione 8);
+  - il codice è in `src/` (moduli ES: ogni file importa quello che usa, niente variabili globali tranne
+    `window.app` per il debug), i file serviti così come sono in `public/` (sezione 9).
+- **Commit e push:** dopo ogni richiesta si fa commit e push su `main` (sul branch `ts`: su `ts`).
   - Gli autori dei commit sono `Claude` e `noreply@anthropic.com`, passati con i flag del singolo comando. Non vanno mai
     scritti nella config, e il nome dell'utente non va mai usato:
     ```
@@ -720,6 +728,10 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 
 ## 6. Architettura
 
+> **Branch `ts` (fase A del passaggio a Vite):** questa sezione descrive ancora `main` (script.js unico). Sul branch `ts`
+> il codice è diviso in moduli ES in `src/` (vedi sezione 9, "Struttura"); le sezioni di `script.js` citate qui sotto
+> corrispondono ai file di `src/` con lo stesso contenuto. La sezione si riscrive nella fase F.
+
 ### File
 
 - `index.html`: il loader legge `version.json` (no-store) e carica `css/design-tokens.css`, `css/components.css`,
@@ -876,15 +888,44 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 
 ## 8. Pubblicazione
 
-- `.github/workflows/pages.yml` (Pages → Source = "GitHub Actions").
+- **Branch `ts` (Vite):** `.github/workflows/pages.yml` parte solo con push su `main` (anche lanciato a mano pubblica
+  solo `main`): sul branch `ts` c'è ma non parte, si attiva alla fusione. Passi: `npm ci`, `npm run check`, `npm test`,
+  `npm run build`, poi `tools/pubblicazione-precedente.mjs` e pubblica `dist/`.
+  - **Cache di `index.html`:** GitHub Pages lo tiene in cache circa 10 minuti; i file costruiti (`dist/app/index-<hash>.js`
+    e `.css`) cambiano nome a ogni pubblicazione. Per non rompere un `index.html` vecchio, `pubblicazione-precedente.mjs`
+    legge l'`index.html` del sito pubblicato, scarica i suoi file di `app/` e li mette in `dist/app/` accanto ai nuovi
+    (si tengono le ultime 3 pubblicazioni, elenco in `app/precedenti.json`). Il primo passaggio dal sito senza build
+    (fino alla v268) è coperto da `public/script.js`: un `index.html` vecchio carica `script.js`, che ricarica la pagina
+    una volta e così arriva quello nuovo.
+  - La cartella del codice costruito si chiama `app/` e non `assets/`: su Windows sarebbe la stessa cartella di
+    `public/Assets/` (i nomi non distinguono maiuscole e minuscole).
+- `.github/workflows/pages.yml` su `main` (sito senza build, fino alla fusione di `ts`; Pages → Source = "GitHub Actions").
   - Pubblica solo i file del sito: niente `tools/`, `README`, `.md`.
   - Ogni tentativo di deploy ha 3 minuti e ce ne sono fino a 3.
   - Motivo: GitHub ogni tanto si blocca fino al limite di 10 minuti e manda una mail di errore.
 
 ## 9. Test in locale
 
-- **Server:** `python -m http.server 8124 --bind 127.0.0.1`, lanciato in background dalla cartella del repo. Poi si apre
-  `http://127.0.0.1:8124/` nel browser interno.
+- **Branch `ts` (Vite, dalla fase A):**
+  - `npm install` la prima volta (o `npm ci`); poi **`npm run dev`** e si apre `http://localhost:5173/AeonsEnd_App_0.2/`.
+    Per il sito costruito: `npm run build` e `npm run preview` → `http://localhost:4173/AeonsEnd_App_0.2/`.
+  - **`npm run check`**: `tsc --noEmit` (in questa fase il codice è JavaScript e tsc non lo controlla ancora: la
+    conversione a TypeScript è la fase C) e `tools/check-moduli.mjs` (ogni nome usato è dichiarato, importato o del
+    browser; gli import esistono; nessuna variabile globale tranne `window.app`).
+  - **`npm test`**: i test con Vitest in `tests/*.test.js`. Si aggiunge un test con un file nuovo o un blocco
+    `it('cosa controlla', () => { ... })`; i moduli di `src/` si importano direttamente (al caricamento non toccano il
+    DOM). Oggi: ogni modulo si importa senza effetti, mazzo nemesi secondo `deck-setup.json` (le regole e i loro test
+    arrivano con la fase B).
+  - **Struttura:** `src/main.js` (avvio: CSS, `avvio()` dei moduli nell'ordine di prima, `window.app`), `src/regole/`,
+    `src/stato/` (`condivise.js`: l'oggetto `G` con le variabili assegnate da più moduli, provvisorio fino alla fase D),
+    `src/dati/`, `src/ui/componenti/`, `src/ui/schermate/`, `src/stili/` (il CSS di prima, così com'è). In `public/`:
+    `Data/`, `thumbs/`, `Assets/`, i JSON, `manifest.webmanifest`, `sw.js`, `scheletri/` (si copiano così come sono).
+    Gli strumenti Python di `tools/` scrivono in `public/`.
+  - **Console e pagina `scheletri/`:** niente più nomi globali; tutto è in **`window.app`**: `app.queue`,
+    `app.settings`, `app.render()`, `app.startScenario(app.SCENARI[0])`... (`app.app` è l'elemento della shell,
+    `app.noSave = true` spegne il salvataggio).
+- **Server (`main`, sito senza build):** `python -m http.server 8124 --bind 127.0.0.1`, lanciato in background dalla
+  cartella del repo. Poi si apre `http://127.0.0.1:8124/` nel browser interno.
 - **Misura del telefono:** `resize_window` preset `mobile` (375×812); alla fine si torna a `desktop`.
 - **Limiti del browser di prova:**
   - non esegue animazioni né transizioni (restano al tempo 0);

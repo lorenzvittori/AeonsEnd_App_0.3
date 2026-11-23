@@ -17,7 +17,7 @@ from pathlib import Path
 
 from PIL import Image
 
-ROOT = Path(__file__).resolve().parents[1]  # cartella del repository
+ROOT = Path(__file__).resolve().parents[1] / 'public'  # file del sito (dalla fase A del passaggio a Vite: public/)
 DATA = ROOT / 'Data'
 CARDS = ROOT / 'cards.json'
 SOURCE_EXT = {'.jpg', '.jpeg', '.png'}

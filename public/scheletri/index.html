@@ -1795,35 +1795,36 @@ document.querySelectorAll('.zoom button[data-s]').forEach(b => b.addEventListene
 // --- Misura dal vivo ---------------------------------------------------------------------------------------------
 // L'app vera (../index.html) si apre in un iframe nascosto largo 360 px; per ogni formato l'iframe prende l'altezza
 // del formato, nell'app si prepara la stessa partita di prova (7 carte, la 4a al centro della vista grande) e si
-// misurano i box. L'app non salva niente: save() viene spento nell'iframe, così la partita salvata resta com'è.
+// misurano i box. L'app non salva niente: nell'iframe app.noSave = true, così la partita salvata resta com'è.
 // Se l'app cambia i nomi interni usati qui sotto, la misura fallisce e la pagina mostra le misure salvate.
 const COLONNA = ['Testata', 'Barra della fase', 'Fascia della scritta', 'Fascia piccola 1', 'Vita Gravehold', 'Box vita/token',
   'Carta grande', 'Comandi', 'Pulsante'];
 const stato = document.getElementById('stato');
 function setStato(text, cls) { stato.textContent = text; stato.className = 'stato' + (cls ? ' ' + cls : ''); }
 
-// Eseguite DENTRO l'iframe (nel suo contesto globale, con le variabili dell'app)
+// Eseguite DENTRO l'iframe (nel suo contesto globale). Dal passaggio a Vite (fase A) l'app non ha più variabili globali:
+// tutto quello che serve è nell'oggetto di debug window.app (app.render(), app.queue, app.settings, app.app = la shell...)
 function preparaApp() {
-  save = function () {};
+  app.noSave = true;
   // Come su un telefono: barre di scorrimento sovrapposte, che non occupano spazio (su computer la fascia piccola
   // ne avrebbe una da 15 px e le carte risulterebbero più in alto)
   const noBars = document.createElement('style');
   noBars.textContent = '*{scrollbar-width:none !important}*::-webkit-scrollbar{display:none !important}';
   document.head.appendChild(noBars);
-  const nem = nemeses.find(n => n.battle && allCards.some(c => c.category === 'Specific' && c.nemesis === n.name));
-  settings = { players: 2, nemesis: nem.name, includeUpgraded: true };
-  newGame();
-  closeStart();
-  ui.deckBuilding = false;
-  ui.deckDark = false;
-  app.classList.remove('is-deck-dark');
-  const mins = allCards.filter(c => c.type === 'Minion' && c.hp > 0);
-  const pows = allCards.filter(c => c.type === 'Power' && c.removable !== false);
-  queue = [mins[0], pows[0], mins[1], pows[1], mins[2], pows[2], mins[3]].map(makeEntry);
-  resolving = false;
-  turn = 1;
-  turnOrder = { left: ['p2', 'p2', 'nemesis', 'nemesis'], drawn: ['p1', 'p1'], round: 1, picks: {}, wild: null };
-  render();
+  const nem = app.nemeses.find(n => n.battle && app.allCards.some(c => c.category === 'Specific' && c.nemesis === n.name));
+  app.settings = { players: 2, nemesis: nem.name, includeUpgraded: true };
+  app.newGame();
+  app.closeStart();
+  app.ui.deckBuilding = false;
+  app.ui.deckDark = false;
+  app.app.classList.remove('is-deck-dark');
+  const mins = app.allCards.filter(c => c.type === 'Minion' && c.hp > 0);
+  const pows = app.allCards.filter(c => c.type === 'Power' && c.removable !== false);
+  app.queue = [mins[0], pows[0], mins[1], pows[1], mins[2], pows[2], mins[3]].map(d => app.makeEntry(d));
+  app.resolving = false;
+  app.turn = 1;
+  app.turnOrder = { left: ['p2', 'p2', 'nemesis', 'nemesis'], drawn: ['p1', 'p1'], round: 1, picks: {}, wild: null };
+  app.render();
 }
 async function misuraApp() {
   const W = innerWidth, H = innerHeight;
@@ -1839,18 +1840,18 @@ async function misuraApp() {
     try { document.getAnimations().forEach(a => { try { a.finish(); } catch (e) {} }); } catch (e) {}
     await new Promise(r => setTimeout(r, 120));
   };
-  resolving = false; ui.isTransitioning = false; render(); await settle();
-  scrollToCard(queue[3].uid, 'center'); await settle();
+  app.resolving = false; app.ui.isTransitioning = false; app.render(); await settle();
+  app.scrollToCard(app.queue[3].uid, 'center'); await settle();
   let item = null;
   for (let k = 0; k < 15 && !item; k++) {
-    item = document.querySelector(`.queue-slot .ae-queue-item[data-uid="${centredQueueUid()}"]`);
+    item = document.querySelector(`.queue-slot .ae-queue-item[data-uid="${app.centredQueueUid()}"]`);
     if (!item) await new Promise(r => setTimeout(r, 200));
   }
   if (!item) throw new Error('carta al centro non trovata');
   const slot = item.closest('.queue-slot');
   const g = { 'Testata': R(document.querySelector('.ae-header')), 'Nome nemesi': R(document.querySelector('.ae-phase')),
     'Mazzo': R(document.querySelector('.ae-pile--deck')), 'Scarti': R(document.querySelector('.ae-pile--discard')),
-    'Menu': R(document.getElementById('menu-btn')), 'Barra della fase': R(turnTrackBar), 'Fascia della scritta': R(turnTrackLabels) };
+    'Menu': R(document.getElementById('menu-btn')), 'Barra della fase': R(app.turnTrackBar), 'Fascia della scritta': R(app.turnTrackLabels) };
   let n = 0;
   document.querySelectorAll('.queue-view .ae-compact-rail .ae-queue-item').forEach(it => { const r = R(it); if (r) { n++; g['Fascia piccola ' + n] = r; } });
   // v254: vite di Gravehold (sinistra) e della nemesi (destra), sotto la fascia piccola
@@ -1866,7 +1867,7 @@ async function misuraApp() {
   if (R(arts[mi - 1])) g['Carta laterale sinistra'] = R(arts[mi - 1]);
   if (R(arts[mi + 1])) g['Carta laterale destra'] = R(arts[mi + 1]);
   g['Comandi'] = R(slot.querySelector('.queue-controls'));
-  g['Pulsante'] = R(nemesisBtn);
+  g['Pulsante'] = R(app.nemesisBtn);
   Object.keys(g).forEach(k => { if (!g[k]) delete g[k]; });
   return g;
 }
@@ -1903,7 +1904,7 @@ async function misuraDalVivo() {
   try {
     await new Promise((res, rej) => { frame.onload = res; frame.onerror = rej; });
     const win = frame.contentWindow;
-    const ready = () => { try { return win.eval('typeof deckSetup !== "undefined" && !!deckSetup && allCards.length > 0 && typeof makeEntry === "function"'); } catch (e) { return false; } };
+    const ready = () => { try { return win.eval('typeof app !== "undefined" && !!app.deckSetup && app.allCards.length > 0 && typeof app.makeEntry === "function"'); } catch (e) { return false; } };
     for (let i = 0; i < 100 && !ready(); i++) await new Promise(r => setTimeout(r, 150));
     if (!ready()) throw new Error("l'app non si è caricata");
     win.eval('(' + preparaApp.toString() + ')')();

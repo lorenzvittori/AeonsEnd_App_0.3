@@ -4,8 +4,9 @@
 # Da lanciare dalla cartella del repo: python tools/build-app-icons.py
 from PIL import Image, ImageFilter
 
-SRC = 'Assets/ui/decor/app-icon.png'
-OUT = 'Assets/ui/app-icons/'
+# (dalla fase A del passaggio a Vite i file del sito sono in public/; si lancia dalla cartella del repo)
+SRC = 'public/Assets/ui/decor/app-icon.png'
+OUT = 'public/Assets/ui/app-icons/'
 
 import os
 os.makedirs(OUT, exist_ok=True)

@@ -26,13 +26,13 @@ button:disabled { cursor: not-allowed; }
 }
 /* Vita: goccia rossa (immagine a colori, non maschera), centrata nel riquadro dell'icona */
 .ae-icon.ae-icon--heart {
-  background: url('../Assets/ui/icons/life-drop.webp') center / contain no-repeat;
+  background: url('/Assets/ui/icons/life-drop.webp') center / contain no-repeat;
   -webkit-mask-image: none; mask-image: none;
 }
-.ae-icon--undo { -webkit-mask-image: url('../Assets/ui/icons/undo.svg'); mask-image: url('../Assets/ui/icons/undo.svg'); width: 20px; height: 20px; }
-.ae-icon--eye { -webkit-mask-image: url('../Assets/ui/icons/eye.svg'); mask-image: url('../Assets/ui/icons/eye.svg'); }
-.ae-icon--close { -webkit-mask-image: url('../Assets/ui/icons/close.svg'); mask-image: url('../Assets/ui/icons/close.svg'); width: 20px; height: 20px; }
-.ae-icon--discard { -webkit-mask-image: url('../Assets/ui/icons/discard.svg'); mask-image: url('../Assets/ui/icons/discard.svg'); }
+.ae-icon--undo { -webkit-mask-image: url('/Assets/ui/icons/undo.svg'); mask-image: url('/Assets/ui/icons/undo.svg'); width: 20px; height: 20px; }
+.ae-icon--eye { -webkit-mask-image: url('/Assets/ui/icons/eye.svg'); mask-image: url('/Assets/ui/icons/eye.svg'); }
+.ae-icon--close { -webkit-mask-image: url('/Assets/ui/icons/close.svg'); mask-image: url('/Assets/ui/icons/close.svg'); width: 20px; height: 20px; }
+.ae-icon--discard { -webkit-mask-image: url('/Assets/ui/icons/discard.svg'); mask-image: url('/Assets/ui/icons/discard.svg'); }
 
 /* --- Pulsanti: primary avorio, secondary scuro, destructive contorno rosso, testuale discreto --- */
 .ae-button {
@@ -102,7 +102,7 @@ button:disabled { cursor: not-allowed; }
 .ae-tokens { display: inline-flex; align-items: center; justify-content: center; gap: 2px; min-width: 0; max-width: 100%; }
 .ae-token {
   flex: 0 1 auto; min-width: 0; width: 16px; height: 16px;
-  background: url('../Assets/power-token-2.webp') center / contain no-repeat;
+  background: url('/Assets/power-token-2.webp') center / contain no-repeat;
 }
 .ae-status-badge--empty { visibility: hidden; }
 .ae-status-badge.is-bumped { animation: ae-bump var(--ae-duration-value) ease-out; }

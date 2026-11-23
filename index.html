@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#101116">
 <title>Aeons End App - new design 0.2</title>
 <!-- App installabile (schermata Home, a tutto schermo) -->
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="Assets/ui/app-icons/apple-touch-icon.png?v=198">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/Assets/ui/app-icons/apple-touch-icon.png?v=198">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -135,47 +135,10 @@
   <div id="live" class="visually-hidden" aria-live="polite"></div>
 
   <!--
-    Questo file non va più modificato a ogni cambio di CSS/JS: la versione si aumenta in version.json.
-    version.json viene letto saltando la cache del browser, così CSS e JS nuovi si vedono subito
-    (dopo la pubblicazione di GitHub Pages) anche se questo index.html è ancora in cache.
-    I CSS sono tre (token, componenti, app) e prendono tutti lo stesso ?v=N.
+    Codice e stili: src/main.js (Vite). Con `npm run build` diventano file in app/ con un hash nel nome, e questo
+    index.html li carica direttamente (al posto del vecchio caricatore con version.json e script.js?v=N).
+    I percorsi che iniziano con / sono file di public/: Vite aggiunge il percorso del sito (vite.config.js, base).
   -->
-  <script>
-    (function () {
-      var STYLES = ['css/design-tokens.css', 'css/components.css', 'style.css'];
-      function load(v) {
-        var q = v ? '?v=' + v : '';
-        var pending = STYLES.length;
-        var started = false;
-        function start() {
-          if (started) return;
-          started = true;
-          document.documentElement.classList.add('ready');
-          var js = document.createElement('script');
-          js.src = 'script.js' + q;
-          document.body.appendChild(js);
-        }
-        function done() {
-          pending--;
-          if (pending === 0) start();
-        }
-        STYLES.forEach(function (href) {
-          var css = document.createElement('link');
-          css.rel = 'stylesheet';
-          css.href = href + q;
-          css.onload = done;
-          css.onerror = done;
-          document.head.appendChild(css);
-        });
-        // Se un CSS non risponde (per esempio i font senza rete), la pagina parte comunque
-        setTimeout(start, 4000);
-      }
-
-      fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
-        .then(function (r) { return r.json(); })
-        .then(function (d) { load(d.v); })
-        .catch(function () { load(''); });
-    })();
-  </script>
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>

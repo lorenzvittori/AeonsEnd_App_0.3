@@ -1,9 +1,15 @@
-# Pubblica il sito su GitHub Pages a ogni push su main (o a mano da Actions → "Pubblica il sito" → Run workflow).
+# Pubblica il sito su GitHub Pages a ogni push su main (o a mano da Actions → "Pubblica il sito" → Run workflow, solo
+# su main). Dal passaggio a Vite (branch ts, fase A) il sito si COSTRUISCE: npm ci, controlli, test, npm run build, e si
+# pubblica dist/. Sul branch ts questo file c'è già ma non parte: si attiva quando ts viene fuso in main.
+#
+# Cache di index.html: GitHub Pages lo tiene in cache circa 10 minuti, e i file di Vite hanno un hash nel nome che cambia
+# a ogni pubblicazione. Per non rompere un index.html vecchio, prima di pubblicare si portano in dist/app/ anche i
+# file delle ultime pubblicazioni (tools/pubblicazione-precedente.mjs). Il primo passaggio dal sito senza build è coperto
+# da public/script.js (ricarica la pagina se arriva un index.html vecchio).
 #
 # Perché un workflow nostro: la pubblicazione automatica di GitHub ogni tanto si blocca e resta ferma fino al suo
 # limite di 10 minuti, poi fallisce (e arriva la mail di errore); ripubblicando subito dopo, di solito va in ~30 s.
-# Qui ogni tentativo ha un limite di 3 minuti (il doppio della pubblicazione riuscita più lenta vista finora) e, se si
-# blocca, ne parte un altro, fino a 3 in tutto. La mail di errore arriva solo se falliscono tutti e tre.
+# Qui ogni tentativo ha un limite di 3 minuti e, se si blocca, ne parte un altro, fino a 3 in tutto.
 #
 # Richiede: Settings → Pages → Build and deployment → Source = "GitHub Actions".
 
@@ -26,24 +32,39 @@ concurrency:
 
 jobs:
   build:
+    # Anche lanciato a mano, si pubblica solo main
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # Solo i file che servono al sito (niente tools/, README, .gitignore)
-      - name: Prepara i file del sito
-        run: |
-          mkdir _site
-          cp index.html script.js style.css version.json cards.json products.json deck-setup.json nemesis.json sw.js manifest.webmanifest _site/
-          # scheletri/: pagina con lo scheletro dell'app misurato dal vivo (non fa parte dell'app)
-          cp -r css Assets Data thumbs scheletri _site/
-          du -sh _site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Pacchetti
+        run: npm ci
+
+      - name: Controlli (tsc e moduli)
+        run: npm run check
+
+      - name: Test
+        run: npm test
+
+      - name: Costruzione del sito (dist/)
+        run: npm run build
+
+      - name: File delle pubblicazioni precedenti (index.html vecchi ancora in cache)
+        run: node tools/pubblicazione-precedente.mjs https://lorenzvittori.github.io/AeonsEnd_App_0.2/ dist
+
+      - run: du -sh dist
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: dist
 
   deploy:
     needs: build

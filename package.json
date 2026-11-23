@@ -1,0 +1,19 @@
+{
+  "name": "aeonsend-nemesis-companion",
+  "private": true,
+  "description": "Aeon's End - Nemesis Companion (App 0.2): Vite + TypeScript, senza framework per l'interfaccia.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit && node tools/check-moduli.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "acorn": "8.19.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
+    "vitest": "5.1.1"
+  }
+}

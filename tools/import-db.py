@@ -42,6 +42,9 @@ import openpyxl
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]  # cartella del repository
+# File del sito (Data/, thumbs/, Assets/, cards.json, products.json, nemesis.json): dal passaggio a Vite (fase A) sono
+# in public/. I percorsi scritti DENTRO i JSON restano relativi alla radice del sito (Data/..., Assets/...)
+SITE = ROOT / 'public'
 IMG_ROOT = Path('Data') / 'Nemesis'
 THUMB_ROOT = Path('thumbs') / 'Nemesis'
 MAX_WIDTH = 1640
@@ -179,7 +182,7 @@ def git(*args):
 # ------------------------------------------------------------------------------- illustrazioni delle nemesi
 # Stessa logica e stesse misure di tools/build-nemesis-art.py (che parte da scansioni in Assets/nemesis/src/):
 # qui la fonte e' la plancia della nemesi nel MAIN (Format "mat", Type "Nemesis", Category = Name = nome nemesi).
-ART_DIR = ROOT / 'Assets' / 'nemesis'
+ART_DIR = SITE / 'Assets' / 'nemesis'
 ART_CARD_WIDTH = 1000
 ART_PORTRAIT = (480, 212)  # circa 2,26:1, la forma del riquadro nel pulsante (style.css: .nemesis-art)
 ART_QUALITY = 90
@@ -217,7 +220,7 @@ def make_card(img):
 def build_nemesis_art(data, main_rows, args, issues):
     """Crea Assets/nemesis/<slug>.webp, -back.webp, -portrait.webp e aggiorna nemesis-art.json.
     Salta le nemesi che hanno gia' la voce e i file (salvo --force-art); le voci esistenti non si toccano."""
-    names = {n['name'] for n in json.loads((ROOT / 'nemesis.json').read_text(encoding='utf-8-sig'))}
+    names = {n['name'] for n in json.loads((SITE / 'nemesis.json').read_text(encoding='utf-8-sig'))}
     manifest_path = ART_DIR / 'nemesis-art.json'
     manifest = json.loads(manifest_path.read_text(encoding='utf-8-sig')) if manifest_path.exists() else {}
     ART_DIR.mkdir(parents=True, exist_ok=True)
@@ -280,7 +283,7 @@ def write_preview_page(previews):
         cells.append(
             f'<figure><div class="row"><div><img src="db-{s}-portrait.webp" width="480" height="212" alt="">'
             f'<small>dal DataBase</small></div>'
-            + (f'<div><img src="../../Assets/nemesis/{s}-portrait.webp" width="480" height="212" alt="">'
+            + (f'<div><img src="../../public/Assets/nemesis/{s}-portrait.webp" width="480" height="212" alt="">'
                f'<small>attuale nell\'app</small></div>' if has_old else '')
             + f'</div><figcaption>{name}</figcaption></figure>')
     html = ('<!doctype html>\n<html lang="it"><head><meta charset="utf-8"><title>Anteprima ritagli nemesi</title>\n'
@@ -365,7 +368,7 @@ def main():
 
     # ---- vecchio cards.json (per riusare le scansioni e le miniature di The New Age)
     old_cards = []
-    cards_path = ROOT / 'cards.json'
+    cards_path = SITE / 'cards.json'
     if cards_path.exists():
         old_cards = json.loads(cards_path.read_text(encoding='utf-8-sig'))
     old_by_id = {c['id']: c for c in old_cards}
@@ -463,13 +466,13 @@ def main():
     stats = defaultdict(int)
     if not args.no_images:
         for c in cards:
-            dst, thumb = ROOT / c['image'], ROOT / c['_thumb']
+            dst, thumb = SITE / c['image'], SITE / c['_thumb']
             old = c['_old']
-            old_img = ROOT / old['image'] if old else None
+            old_img = SITE / old['image'] if old else None
             old_thumb = None
             if old:  # carte gia' nel nuovo albero: stessa posizione sotto thumbs/; le piu' vecchie: thumbs/<id>.webp
-                old_thumb = (ROOT / 'thumbs' / Path(old['image']).relative_to('Data')) \
-                    if old['image'].startswith('Data/Nemesis/') else ROOT / 'thumbs' / f'{old["id"]}.webp'
+                old_thumb = (SITE / 'thumbs' / Path(old['image']).relative_to('Data')) \
+                    if old['image'].startswith('Data/Nemesis/') else SITE / 'thumbs' / f'{old["id"]}.webp'
             if old_img is not None and old_img.resolve() == dst.resolve():
                 old_img = None  # e' gia' al suo posto
             if dst.exists() and not args.force:
@@ -496,9 +499,9 @@ def main():
 
         # cartelle vecchie rimaste vuote (i file non tracciati, per esempio i .jpg, restano dove sono)
         leftovers = []
-        for base in (ROOT / 'Data', ROOT / 'thumbs'):
+        for base in (SITE / 'Data', SITE / 'thumbs'):
             for d in sorted((p for p in base.rglob('*') if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
-                rel = d.relative_to(ROOT).as_posix()
+                rel = d.relative_to(SITE).as_posix()
                 if rel.startswith(('Data/Nemesis/', 'thumbs/Nemesis/')) or rel in ('Data/Nemesis', 'thumbs/Nemesis'):
                     continue
                 if not any(d.iterdir()):
@@ -507,16 +510,16 @@ def main():
                     files = [f for f in d.iterdir() if f.is_file()]
                     if files and not any(s.is_dir() for s in d.iterdir()):
                         leftovers.append(rel)
-        for d in ROOT.joinpath('Data').iterdir():
+        for d in SITE.joinpath('Data').iterdir():
             if d.is_dir() and d.name != 'Nemesis' and not any(d.iterdir()):
                 d.rmdir()
         if leftovers:
             issues.append('cartelle vecchie non vuote (restano dove sono): ' + ', '.join(sorted(leftovers)))
 
     # ---- le carte senza immagine non entrano in cards.json (entreranno quando il PNG ci sara' e si rilancera' il ponte)
-    no_image = [c for c in cards if not (ROOT / c['image']).exists()]
+    no_image = [c for c in cards if not (SITE / c['image']).exists()]
     if no_image:
-        cards = [c for c in cards if (ROOT / c['image']).exists()]
+        cards = [c for c in cards if (SITE / c['image']).exists()]
         per_box = defaultdict(int)
         for c in no_image:
             per_box[c['boxCode']] += 1
@@ -541,7 +544,7 @@ def main():
 
     # tutti i codici di BOXES_NAMES (l'app mostra anche le wave non ancora disponibili)
     prod_out = {k: products[k] for k in sorted(products, key=code_key)}
-    (ROOT / 'products.json').write_text(json.dumps(prod_out, indent=4, ensure_ascii=False, separators=(',', ':  ')) + '\n',
+    (SITE / 'products.json').write_text(json.dumps(prod_out, indent=4, ensure_ascii=False, separators=(',', ':  ')) + '\n',
                                         encoding='utf-8', newline='\n')
 
     # ---- illustrazioni delle nemesi (Assets/nemesis)

@@ -39,7 +39,7 @@ body { overflow: hidden; }
 .queue-note { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--ae-text-muted); font: 600 12px/16px var(--ae-font-ui); }
 .queue-note::before {
   content: ''; flex: 0 0 auto; width: 5px; height: 13px; background: var(--ae-danger);
-  -webkit-mask: url('Assets/ui/icons/alert.webp') center / contain no-repeat; mask: url('Assets/ui/icons/alert.webp') center / contain no-repeat;
+  -webkit-mask: url('/Assets/ui/icons/alert.webp') center / contain no-repeat; mask: url('/Assets/ui/icons/alert.webp') center / contain no-repeat;
 }
 /* v205: "Non rimovibile" con il simbolo di divieto (lo stesso del box nella fascia piccola) al posto del "!" */
 .queue-note.is-locked::before {
@@ -240,7 +240,7 @@ body { overflow: hidden; }
 .nemesis-locked { gap: 8px; }
 .nemesis-locked::before {
   content: ''; flex: 0 0 auto; width: 6px; height: 16px; background: var(--ae-danger);
-  -webkit-mask: url('Assets/ui/icons/alert.webp') center / contain no-repeat; mask: url('Assets/ui/icons/alert.webp') center / contain no-repeat;
+  -webkit-mask: url('/Assets/ui/icons/alert.webp') center / contain no-repeat; mask: url('/Assets/ui/icons/alert.webp') center / contain no-repeat;
 }
 .start-error { display: flex; flex-direction: column; gap: 12px; color: var(--ae-danger); font: 500 14px/20px var(--ae-font-ui); white-space: pre-line; overflow-wrap: anywhere; }
 .start-actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
@@ -551,7 +551,7 @@ body { overflow: hidden; }
    Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro.
    Velo scuro al 50%. Stato precedente (due sfondi): tag git v123-prima-sfondo-unico */
 .ae-shell, .ae-shell.is-nemesis-turn, .ae-shell.is-nemesis-turn.is-draw-phase {
-  background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
+  background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('/Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
   transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
 }
 .ae-shell.is-nemesis-turn, .ae-shell.is-nemesis-turn.is-draw-phase { background-position: 0 0, 100% center, 0 0; }
@@ -569,7 +569,7 @@ body { overflow: hidden; }
 .ae-focus-slide.is-big .ae-focus-stage { scale: var(--ae-big-scale, 1.08); }
 
 /* Retro della faccia anteriore della carta che si gira: se l'immagine non fosse ancora disegnata si vede il dorso, non lo sfondo */
-.ae-flip-face--front { background: var(--ae-card-back, url('Assets/ui/decor/card-back-logo.webp')) center / cover no-repeat; }
+.ae-flip-face--front { background: var(--ae-card-back, url('/Assets/ui/decor/card-back-logo.webp')) center / cover no-repeat; }
 
 /* Turno giocatori: il blocco vita/token + carta + comandi (questi fuori dal flusso, 52px sotto la carta) è centrato tra
    la fascia in alto e il pulsante principale (prima era -14px come nel turno nemesi, e restava 10px in basso) */
@@ -720,7 +720,7 @@ body { overflow: hidden; }
 .ae-info-sep { color: var(--ae-text-muted); opacity: .6; font-weight: 400; }
 .ae-battle-flame {
   display: inline-grid; place-items: center; width: 18px; height: 18px; padding-top: 4px;
-  background: url('Assets/ui/icons/flame.png') center / contain no-repeat;
+  background: url('/Assets/ui/icons/flame.png') center / contain no-repeat;
   color: #3a1405; font: 800 10px/1 var(--ae-font-ui); letter-spacing: 0; text-shadow: 0 0 2px rgba(255, 240, 180, .8);
 }
 
@@ -1217,14 +1217,14 @@ body { overflow: hidden; }
   border: 0; border-radius: 8% / 6%; color: transparent;
   background: #1b1d24 var(--ae-turn-face) center / cover no-repeat;
 }
-.ae-turn-card[data-card="p1"] { --ae-turn-face: url('Assets/ui/turn-cards/p1.webp'); }
-.ae-turn-card[data-card="p2"] { --ae-turn-face: url('Assets/ui/turn-cards/p2.webp'); }
-.ae-turn-card[data-card="p3"] { --ae-turn-face: url('Assets/ui/turn-cards/p3.webp'); }
-.ae-turn-card[data-card="p4"] { --ae-turn-face: url('Assets/ui/turn-cards/p4.webp'); }
-.ae-turn-card[data-card="p12"] { --ae-turn-face: url('Assets/ui/turn-cards/p12.webp'); }
-.ae-turn-card[data-card="p34"] { --ae-turn-face: url('Assets/ui/turn-cards/p34.webp'); }
-.ae-turn-card[data-card="nemesis"] { --ae-turn-face: url('Assets/ui/turn-cards/nemesis.webp'); }
-.ae-turn-card[data-card="wild"] { --ae-turn-face: url('Assets/ui/turn-cards/wild.webp'); }
+.ae-turn-card[data-card="p1"] { --ae-turn-face: url('/Assets/ui/turn-cards/p1.webp'); }
+.ae-turn-card[data-card="p2"] { --ae-turn-face: url('/Assets/ui/turn-cards/p2.webp'); }
+.ae-turn-card[data-card="p3"] { --ae-turn-face: url('/Assets/ui/turn-cards/p3.webp'); }
+.ae-turn-card[data-card="p4"] { --ae-turn-face: url('/Assets/ui/turn-cards/p4.webp'); }
+.ae-turn-card[data-card="p12"] { --ae-turn-face: url('/Assets/ui/turn-cards/p12.webp'); }
+.ae-turn-card[data-card="p34"] { --ae-turn-face: url('/Assets/ui/turn-cards/p34.webp'); }
+.ae-turn-card[data-card="nemesis"] { --ae-turn-face: url('/Assets/ui/turn-cards/nemesis.webp'); }
+.ae-turn-card[data-card="wild"] { --ae-turn-face: url('/Assets/ui/turn-cards/wild.webp'); }
 .ae-turn-card-who {
   --ae-player: var(--ae-turn-wild);
   position: absolute; right: -5px; bottom: -5px; min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box;
@@ -1242,10 +1242,10 @@ body { overflow: hidden; }
   background: transparent var(--ae-turn-face) center / contain no-repeat; box-shadow: none;
   filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ae-player) 55%, transparent));
 }
-.ae-pair-pick[data-kind="p1"] { --ae-turn-face: url('Assets/ui/turn-tokens/p1.webp'); }
-.ae-pair-pick[data-kind="p2"] { --ae-turn-face: url('Assets/ui/turn-tokens/p2.webp'); }
-.ae-pair-pick[data-kind="p3"] { --ae-turn-face: url('Assets/ui/turn-tokens/p3.webp'); }
-.ae-pair-pick[data-kind="p4"] { --ae-turn-face: url('Assets/ui/turn-tokens/p4.webp'); }
+.ae-pair-pick[data-kind="p1"] { --ae-turn-face: url('/Assets/ui/turn-tokens/p1.webp'); }
+.ae-pair-pick[data-kind="p2"] { --ae-turn-face: url('/Assets/ui/turn-tokens/p2.webp'); }
+.ae-pair-pick[data-kind="p3"] { --ae-turn-face: url('/Assets/ui/turn-tokens/p3.webp'); }
+.ae-pair-pick[data-kind="p4"] { --ae-turn-face: url('/Assets/ui/turn-tokens/p4.webp'); }
 .ae-turn-subtitle { margin: 0; color: var(--ae-text-muted); font: 700 12px/16px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; }
 .ae-turn-pile-empty, .ae-turn-fan-empty { color: var(--ae-text-muted); font: 400 14px/20px var(--ae-font-ui); }
 /* v211: finestra del mazzo dei turni a tutto schermo (su desktop larga quanto la colonna della partita, --ae-turn-col) */
@@ -1285,7 +1285,7 @@ body { overflow: hidden; }
 /* v226: dorso vero delle carte turno ("Turn Order Deck", Assets/ui/turn-cards/back.webp, 252 x 352; prima righe neutre) */
 .ae-turn-card.is-back {
   border: 0; border-radius: 8% / 6%;
-  background: #1b1d24 url('Assets/ui/turn-cards/back.webp') center / cover no-repeat;
+  background: #1b1d24 url('/Assets/ui/turn-cards/back.webp') center / cover no-repeat;
 }
 .ae-turn-zone {
   display: flex; align-items: center; justify-content: center; padding: 0; border: 1px dashed rgba(255, 255, 255, .14);
@@ -1587,7 +1587,7 @@ body { overflow: hidden; }
 
 /* new_turn: finestra del mazzo dei turni con scarti e mazzo sulla stessa riga, separati da un segmento verticale.
    La larghezza della carta (--ae-turn-w) la calcola script.js (rowGeometry): tutte le carte in fila senza sovrapporsi */
-.ae-icon--shuffle { -webkit-mask-image: url('Assets/ui/icons/shuffle.svg'); mask-image: url('Assets/ui/icons/shuffle.svg'); width: 22px; height: 22px; }
+.ae-icon--shuffle { -webkit-mask-image: url('/Assets/ui/icons/shuffle.svg'); mask-image: url('/Assets/ui/icons/shuffle.svg'); width: 22px; height: 22px; }
 .ae-turn-row { display: flex; align-items: stretch; gap: 0; margin-top: 4px; }
 .ae-turn-area { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .ae-turn-area--pile { flex: 0 0 auto; }
@@ -1649,7 +1649,7 @@ body { overflow: hidden; }
 /* v237: "Rivela tutto" è un rettangolo con l'occhio al centro, lungo quanto le carte del mazzo (larghezza da script.js
    layoutFan) e allineato con loro; con tutto scoperto l'occhio barrato ("Copri tutto", eye-off.svg). Niente più fascio
    di luce né alone (v235-v236) */
-.ae-icon--eye-off { -webkit-mask-image: url('Assets/ui/icons/eye-off.svg'); mask-image: url('Assets/ui/icons/eye-off.svg'); }
+.ae-icon--eye-off { -webkit-mask-image: url('/Assets/ui/icons/eye-off.svg'); mask-image: url('/Assets/ui/icons/eye-off.svg'); }
 .ae-turn-reveal-row .ae-turn-eye--all {
   height: 36px; min-height: 36px; padding: 0; border-radius: 8px; box-sizing: border-box; transition: width .2s ease;
 }
@@ -1688,10 +1688,10 @@ body { overflow: hidden; }
   background: var(--ae-who-img) center / contain no-repeat; left: 50%; right: auto; transform: translateX(-50%);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
 }
-.ae-turn-card-who[data-kind="p1"] { --ae-who-img: url('Assets/ui/turn-tokens/p1.webp'); }
-.ae-turn-card-who[data-kind="p2"] { --ae-who-img: url('Assets/ui/turn-tokens/p2.webp'); }
-.ae-turn-card-who[data-kind="p3"] { --ae-who-img: url('Assets/ui/turn-tokens/p3.webp'); }
-.ae-turn-card-who[data-kind="p4"] { --ae-who-img: url('Assets/ui/turn-tokens/p4.webp'); }
+.ae-turn-card-who[data-kind="p1"] { --ae-who-img: url('/Assets/ui/turn-tokens/p1.webp'); }
+.ae-turn-card-who[data-kind="p2"] { --ae-who-img: url('/Assets/ui/turn-tokens/p2.webp'); }
+.ae-turn-card-who[data-kind="p3"] { --ae-who-img: url('/Assets/ui/turn-tokens/p3.webp'); }
+.ae-turn-card-who[data-kind="p4"] { --ae-who-img: url('/Assets/ui/turn-tokens/p4.webp'); }
 .ae-turn-reveal-row .ae-turn-eye--all[hidden] { display: none; }
 /* v240: il segmento tra scarti e mazzo è come il "|" tra giocatori e turno nella testata (.ae-info-sep: 1px, colore dei
    testi secondari al 60%) */
@@ -1833,11 +1833,11 @@ body { overflow: hidden; }
    leggermente trasparente, acceso pieno con un alone (il pallino della guida ci entra dentro) */
 .ae-turn-lane .ae-turn-zone::before, .ae-turn-pile-zone {
   border: 0; border-radius: 0; box-shadow: none; opacity: .75;
-  background: url('Assets/ui/icons/place-circle.webp') center / contain no-repeat;
+  background: url('/Assets/ui/icons/place-circle.webp') center / contain no-repeat;
 }
 .ae-turn-lane .ae-turn-zone.is-over::before, .ae-turn-pile-zone.is-over {
   border: 0; box-shadow: none; opacity: 1; filter: drop-shadow(0 0 4px rgba(255, 186, 72, .85));
-  background: url('Assets/ui/icons/place-circle.webp') center / contain no-repeat;
+  background: url('/Assets/ui/icons/place-circle.webp') center / contain no-repeat;
 }
 /* v249: cuspide a due curve, 14px (prima 10x6); l'altezza la dà lo svg, con la coda fino al segmento verticale */
 .ae-turn-cusp { width: 14px; height: auto; }
