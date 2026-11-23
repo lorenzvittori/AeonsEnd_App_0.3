@@ -1,9 +1,12 @@
-// Mazzo nemesi (src/regole/mazzo-nemesi.js) sui dati veri di public/: Nemesis Deck Setup per ogni nemesi giocabile ×
+// Mazzo nemesi (src/regole/mazzo-nemesi.ts) sui dati veri di public/: Nemesis Deck Setup per ogni nemesi giocabile ×
 // 2/3/4 giocatori × Modalità battaglia × Unisci, blocco di Unisci, mazzo corto, inNemesisDeck e Tier, nemesi giocabili.
 // I numeri attesi si calcolano qui da deck-setup.json e cards.json, senza passare dalle funzioni provate.
 import { describe, it, expect } from 'vitest';
 import * as Mazzo from '../src/regole/mazzo-nemesi.ts';
-import { db, cards, nemeses, deckSetup, seeded, allProducts, appWaves } from './aiuto.js';
+import { db, cards, nemeses, deckSetup, seeded, allProducts, appWaves, must } from './aiuto.ts';
+import type { CartePerTier } from '../src/tipi/dati.ts';
+
+const TIERS = [1, 2, 3] as const;
 
 const COMBOS = [
   { battleMode: true, mergeCollection: true },
@@ -13,21 +16,21 @@ const COMBOS = [
 ];
 
 // Riga attesa di deck-setup.json: battaglia della nemesi (o 1 senza Modalità battaglia, con le Upgraded a 0)
-function expectedRow(nemesis, players, battleMode) {
-  const info = nemeses.find(n => n.name === nemesis);
-  const battle = deckSetup.battles.find(b => b.battle === (battleMode ? info.battle : 1));
-  const row = battle.players[String(players)];
+function expectedRow(nemesis: string, players: number, battleMode: boolean): { basic: CartePerTier; upgraded: CartePerTier } {
+  const info = must(nemeses.find(n => n.name === nemesis), nemesis);
+  const battle = must(deckSetup.battles.find(b => b.battle === (battleMode ? info.battle : 1)), 'battaglia');
+  const row = must(battle.players[String(players)], 'riga');
   return { basic: row.basic, upgraded: battleMode ? row.upgradedBasic : { 1: 0, 2: 0, 3: 0 } };
 }
 // Carte ammesse per categoria e Tier: inNemesisDeck, collezione e, senza Unisci in vigore, wave della nemesi
-function expectedPool(collection, nemesis, category, tier, merge) {
-  const wave = Mazzo.waveOfCode(nemeses.find(n => n.name === nemesis).boxCode);
+function expectedPool(collection: ReadonlySet<string>, nemesis: string, category: 'Basic' | 'Upgraded', tier: number, merge: boolean) {
+  const wave = Mazzo.waveOfCode(must(nemeses.find(n => n.name === nemesis), nemesis).boxCode);
   return cards.filter(c => c.category === category && c.inNemesisDeck === true && c.tier === tier
     && (!c.boxCode || collection.has(c.boxCode)) && (merge || Mazzo.waveOfCode(c.boxCode) === wave));
 }
 
 // Controlla ogni nemesi giocabile con la collezione: restituisce quante combinazioni ha provato
-function checkDeck(collection, label) {
+function checkDeck(collection: ReadonlySet<string>, label: string): number {
   const playable = nemeses.filter(n => Mazzo.isPlayable(db, collection, n));
   expect(playable.length, `${label}: nessuna nemesi giocabile`).toBeGreaterThan(0);
   let seed = 1;
@@ -39,11 +42,11 @@ function checkDeck(collection, label) {
         const s = { players, nemesis: info.name, ...opts };
         const where = `${label} · ${info.name} · ${players}G · battaglia ${opts.battleMode} · unisci ${opts.mergeCollection}`;
         const row = expectedRow(info.name, players, opts.battleMode);
-        expect(Mazzo.deckSetupRow(db, s).basic, where).toEqual(row.basic);
-        expect(Mazzo.deckSetupRow(db, s).upgradedBasic, where).toEqual(row.upgraded);
+        expect(must(Mazzo.deckSetupRow(db, s), 'riga').basic, where).toEqual(row.basic);
+        expect(must(Mazzo.deckSetupRow(db, s), 'riga').upgradedBasic, where).toEqual(row.upgraded);
         // Blocco: con Modalità battaglia, Upgraded richieste e nessuna Upgraded della wave della nemesi nella collezione
         const wave = Mazzo.waveOfCode(info.boxCode);
-        const wantsUp = [1, 2, 3].some(t => row.upgraded[t] > 0);
+        const wantsUp = TIERS.some(t => row.upgraded[t] > 0);
         const waveHasUp = cards.some(c => c.category === 'Upgraded' && c.inNemesisDeck === true && c.boxCode
           && Mazzo.waveOfCode(c.boxCode) === wave && collection.has(c.boxCode));
         const locked = opts.battleMode && wantsUp && !waveHasUp;
@@ -55,14 +58,14 @@ function checkDeck(collection, label) {
         let want = 0;
         let have = 0;
         let total = 0;
-        for (const t of [1, 2, 3]) {
+        for (const t of TIERS) {
           const nB = Math.min(row.basic[t], expectedPool(collection, info.name, 'Basic', t, merge).length);
           const nU = Math.min(row.upgraded[t], expectedPool(collection, info.name, 'Upgraded', t, merge).length);
           const nS = cards.filter(c => c.category === 'Specific' && c.nemesis === info.name && c.inNemesisDeck === true && c.tier === t).length;
           want += row.basic[t] + row.upgraded[t];
           have += nB + nU;
           total += nB + nU + nS;
-          const count = kind => plan.find(p => p.tier === t && p.kind === kind).count;
+          const count = (kind: string) => must(plan.find(p => p.tier === t && p.kind === kind), 'piano').count;
           expect(count('basic'), `${where}: Basic Tier ${t}`).toBe(nB);
           expect(count('upgraded'), `${where}: Upgraded Tier ${t}`).toBe(nU);
           expect(count('specific'), `${where}: Specific Tier ${t}`).toBe(nS);
@@ -84,7 +87,7 @@ function checkDeck(collection, label) {
         expect(new Set(deck).size, where + ' (doppioni)').toBe(deck.length);
         // Si pesca dalla fine: in cima (fine dell'array) il Tier 1, all'inizio il Tier 3
         const tiers = deck.map(c => c.tier);
-        expect(tiers, where + ' (ordine dei Tier)').toEqual(tiers.slice().sort((a, b) => b - a));
+        expect(tiers, where + ' (ordine dei Tier)').toEqual(tiers.slice().sort((a, b) => Number(b) - Number(a)));
         // Avviso del mazzo corto
         expect(Mazzo.deckShortfall(db, collection, s), where + ' (mazzo corto)').toEqual(have < want ? { want, have } : null);
       }
@@ -112,7 +115,7 @@ describe('mazzo nemesi: Nemesis Deck Setup', () => {
 
   it('blocco di Unisci: battaglia con Upgraded e wave della nemesi senza Upgraded', () => {
     const collection = new Set(['1', '4']);
-    const wave1 = nemeses.find(n => n.boxCode === '1' && n.battle >= 2 && Mazzo.isPlayable(db, collection, n));
+    const wave1 = must(nemeses.find(n => n.boxCode === '1' && Number(n.battle) >= 2 && Mazzo.isPlayable(db, collection, n)), 'nemesi della wave 1 con battaglia ≥ 2');
     expect(wave1, 'serve una nemesi della wave 1 con battaglia ≥ 2').toBeTruthy();
     const s = { players: 2, nemesis: wave1.name, battleMode: true, mergeCollection: false };
     expect(cards.some(c => c.category === 'Upgraded' && c.inNemesisDeck && c.boxCode === '1'), 'la scatola base della wave 1 non ha Upgraded').toBe(false);
@@ -131,7 +134,7 @@ describe('mazzo nemesi: Nemesis Deck Setup', () => {
   });
 
   it('inNemesisDeck e Tier: nessuna carta fuori dal mazzo nemesi nei mazzi possibili', () => {
-    for (const cat of ['Basic', 'Upgraded']) {
+    for (const cat of ['Basic', 'Upgraded'] as const) {
       for (const t of [1, 2, 3]) {
         const pool = Mazzo.deckPool(db, allProducts, cat, t, { players: 2, nemesis: 'Rageborne', battleMode: true, mergeCollection: true });
         expect(pool.length).toBeGreaterThan(0);
@@ -141,7 +144,7 @@ describe('mazzo nemesi: Nemesis Deck Setup', () => {
   });
 
   it('mazzo ripetibile con lo stesso caso; senza riga (nemesi inesistente) mazzo vuoto', () => {
-    const s = { players: 3, nemesis: nemeses.find(n => Mazzo.isPlayable(db, allProducts, n)).name, battleMode: true, mergeCollection: true };
+    const s = { players: 3, nemesis: must(nemeses.find(n => Mazzo.isPlayable(db, allProducts, n)), 'nemesi giocabile').name, battleMode: true, mergeCollection: true };
     const a = Mazzo.buildDeck(db, allProducts, s, seeded(42)).deck.map(c => c.id);
     const b = Mazzo.buildDeck(db, allProducts, s, seeded(42)).deck.map(c => c.id);
     expect(a).toEqual(b);
@@ -173,12 +176,12 @@ describe('nemesi giocabili e codici prodotto', () => {
     expect(nemeses.filter(n => Mazzo.isPlayable(db, null, n)).map(n => n.name)).toEqual(playable.map(n => n.name));
     // Con la sola wave 4 solo nemesi della wave 4
     const w4 = new Set(['4', '4.1', '4.2', '4.3']);
-    nemeses.filter(n => Mazzo.isPlayable(db, w4, n)).forEach(n => expect(w4.has(n.boxCode), n.name).toBe(true));
+    nemeses.filter(n => Mazzo.isPlayable(db, w4, n)).forEach(n => expect(w4.has(String(n.boxCode)), n.name).toBe(true));
     // Le 7 nemesi di The New Age e le 7 della wave 1 sono giocabili con la collezione completa
     ['Maggoth', 'Arachnos', 'Ageless Walker', 'Fenrix', 'The Wailing', 'The Wanderer', 'Necroswarm', 'Rageborne',
       'Crooked Mask', 'Horde-Crone', 'Blight Lord', 'Wayward One', 'Carapace Queen', 'Prince of Gluttons']
       .forEach(name => expect(playable.some(n => n.name === name), name).toBe(true));
-    expect(Mazzo.battleOf(db, 'Maggoth')).toBe(nemeses.find(n => n.name === 'Maggoth').battle);
+    expect(Mazzo.battleOf(db, 'Maggoth')).toBe(must(nemeses.find(n => n.name === 'Maggoth'), 'Maggoth').battle);
     expect(Mazzo.battleOf(db, 'Nessuna')).toBe(null);
   });
 

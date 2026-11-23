@@ -1,23 +1,31 @@
-// Turno nemesi e turno giocatori (src/regole/turno-nemesi.js) con le carte vere di cards.json: risoluzione (potere,
+// Turno nemesi e turno giocatori (src/regole/turno-nemesi.ts) con le carte vere di cards.json: risoluzione (potere,
 // minion, attacco), pesca (anche a mazzo vuoto), vittoria a mazzo vuoto, costo Æ, statistiche, minion a vita variabile.
 import { describe, it, expect } from 'vitest';
 import * as N from '../src/regole/turno-nemesi.ts';
-import { cards, cardByName } from './aiuto.js';
+import { cards, cardByName, must } from './aiuto.ts';
+import type { Carta, TipoCarta } from '../src/tipi/dati.ts';
+import type { Statistiche, VoceInGioco } from '../src/tipi/partita.ts';
 
-const byType = (type, pred = () => true) => cards.find(c => c.type === type && c.inNemesisDeck && pred(c));
+const byType = (type: TipoCarta, pred: (c: Carta) => boolean = () => true): Carta =>
+  must(cards.find(c => c.type === type && c.inNemesisDeck && pred(c)), type);
 const POWER2 = byType('Power', c => c.powerTokens === 2);
 const POWER1 = byType('Power', c => c.powerTokens === 1);
-const MINION = byType('Minion', c => !c.hpVariable && c.hp > 1);
+const MINION = byType('Minion', c => !c.hpVariable && Number(c.hp) > 1);
+const MINION_HP = must(MINION.hp, 'vita del minion');
 const ATTACK = byType('Attack');
-const VARIABLE = cards.find(c => c.type === 'Minion' && c.hpVariable === true);
+const VARIABLE = must(cards.find(c => c.type === 'Minion' && c.hpVariable === true), 'minion a vita variabile');
 
 // Partita minima, come la passa l'app (i campi di G usati dalle regole)
-function game(extra = {}) {
+type GiocoProva = N.Gioco & { newUid: () => number; add: (data: Carta) => VoceInGioco };
+function game(extra: Partial<N.Gioco> = {}): GiocoProva {
   let uid = 1;
-  const g = Object.assign({ queue: [], deck: [], discard: [], stats: N.emptyStats(0), turn: 1, currentIndex: 0,
-    newIndex: -1, resolving: false, maxTierDrawn: 1 }, extra);
-  g.newUid = () => uid++;
-  g.add = data => { const e = N.makeEntry(data, g.newUid(), g.turn); g.queue.push(e); return e; };
+  const newUid = () => uid++;
+  const g: GiocoProva = {
+    queue: extra.queue || [], deck: extra.deck || [], discard: extra.discard || [], stats: extra.stats || N.emptyStats(0),
+    turn: extra.turn !== undefined ? extra.turn : 1, currentIndex: 0, newIndex: -1, resolving: false, maxTierDrawn: 1,
+    newUid,
+    add: data => { const e = N.makeEntry(data, newUid(), g.turn); g.queue.push(e); return e; }
+  };
   return g;
 }
 
@@ -72,12 +80,12 @@ describe('turno nemesi', () => {
   });
 
   it('pesca: carta in fondo alla coda come nuova, Tier nuovo con l\'ora, poi attacco negli scarti o carta in gioco', () => {
-    const tier2 = cards.find(c => c.inNemesisDeck && c.tier === 2 && c.type === 'Attack');
-    const tier2m = cards.find(c => c.inNemesisDeck && c.tier === 2 && c.type === 'Minion' && !c.hpVariable);
+    const tier2 = must(cards.find(c => c.inNemesisDeck && c.tier === 2 && c.type === 'Attack'), 'attacco Tier 2');
+    const tier2m = must(cards.find(c => c.inNemesisDeck && c.tier === 2 && c.type === 'Minion' && !c.hpVariable), 'minion Tier 2');
     const g = game({ deck: [tier2m, tier2] });
     N.nemesisTurn(g);
     let clockReads = 0;
-    let r = N.drawNewCard(g, g.newUid, () => { clockReads++; return 1234; });
+    let r = must(N.drawNewCard(g, g.newUid, () => { clockReads++; return 1234; }), 'carta pescata');
     expect(r.entry.data).toBe(tier2);
     expect(r.entry.isNew).toBe(true);
     expect(r.newTier).toBe(2);
@@ -91,7 +99,7 @@ describe('turno nemesi', () => {
     expect(g.stats.attacksResolved).toBe(1);
     // Secondo Tier 2: nessuna scritta, l'orologio non si legge
     N.nemesisTurn(g);
-    r = N.drawNewCard(g, g.newUid, () => { clockReads++; return 99; });
+    r = must(N.drawNewCard(g, g.newUid, () => { clockReads++; return 99; }), 'carta pescata');
     expect(clockReads).toBe(1);
     expect(r.newTier).toBe(null);
     expect(g.stats.tierAt[2]).toBe(1234);
@@ -151,7 +159,7 @@ describe('turno nemesi', () => {
 
 describe('turno giocatori e statistiche', () => {
   it('costo Æ: removalCost numerico, altrimenti 0; poteri pagati nelle statistiche', () => {
-    const paid = cards.find(c => c.type === 'Power' && Number(c.removalCost) > 0);
+    const paid = must(cards.find(c => c.type === 'Power' && Number(c.removalCost) > 0), 'potere con costo');
     expect(paid).toBeTruthy();
     expect(N.aetherCost(paid)).toBe(Number(paid.removalCost));
     expect(N.aetherCost({ removalCost: null })).toBe(0);
@@ -187,16 +195,16 @@ describe('turno giocatori e statistiche', () => {
     const p = g.add(POWER2);
     const gone = N.applyDrafts(g, new Map([[m.uid, { hp: 0 }], [p.uid, { paid: true }], [999, { hp: 3 }]]), 'p2');
     expect(gone).toEqual([m, p]);
-    expect(g.stats.mages.p2).toEqual({ damage: MINION.hp, powers: 1, kills: 1 });
+    expect(g.stats.mages.p2).toEqual({ damage: MINION_HP, powers: 1, kills: 1 });
     expect(g.queue.length).toBe(0);
     expect(g.stats.minionsKilled).toBe(1);
     expect(g.stats.powersPaid).toBe(1);
     // Nessun giocatore (carta da scegliere): nessuna statistica dei maghi
     const h = game();
     const m2 = h.add(MINION);
-    N.applyDrafts(h, new Map([[m2.uid, { hp: MINION.hp - 1 }]]), null);
+    N.applyDrafts(h, new Map([[m2.uid, { hp: MINION_HP - 1 }]]), null);
     expect(h.stats.mages).toEqual({});
-    expect(m2.hp).toBe(MINION.hp - 1);
+    expect(m2.hp).toBe(MINION_HP - 1);
     // Cura: nessun danno negativo
     const k = game();
     const m3 = k.add(MINION);
@@ -237,8 +245,8 @@ describe('turno giocatori e statistiche', () => {
     const n = N.makeEntry(MINION, 3, 1);
     n.hp = 1;
     n.turnHp = 2;
-    expect(N.hpCap(n, true)).toBe(MINION.hp);
-    expect(N.hpCap(n, false)).toBe(Math.min(MINION.hp, 2));
+    expect(N.hpCap(n, true)).toBe(MINION_HP);
+    expect(N.hpCap(n, false)).toBe(Math.min(MINION_HP, 2));
     n.turnHp = null;
     expect(N.hpCap(n, false)).toBe(1);
     expect(N.hasHp(n)).toBe(true);
@@ -246,9 +254,9 @@ describe('turno giocatori e statistiche', () => {
   });
 
   it('statistiche: statCard su statistiche vecchie, partita nuova, carta negli scarti, voce per uid', () => {
-    const st = { minionsKilled: 0, minions: [] };
+    const st: Partial<Statistiche> = { minionsKilled: 0, minions: [] };
     N.statCard(st, 'powersPaid', { id: 'X' });
-    expect(st.cards.powersPaid).toEqual(['X']);
+    expect(must(st.cards, 'elenchi delle statistiche').powersPaid).toEqual(['X']);
     expect(N.emptyStats(12).deckSize).toBe(12);
     const g = game();
     const e = g.add(cardByName(MINION.name));

@@ -1,19 +1,23 @@
-// Mazzo dei turni (src/regole/mazzo-turni.js): carte per 2/3/4 giocatori, wild, carte 1/2 e 3/4, mescola e giro nuovo,
+// Mazzo dei turni (src/regole/mazzo-turni.ts): carte per 2/3/4 giocatori, wild, carte 1/2 e 3/4, mescola e giro nuovo,
 // pesca dalla cima, carte note, attesa e turno annullato, memoria delle coppie, carte tolte e aggiunte agli scarti,
 // carta del mazzo portata negli scarti, bozza della finestra, salvataggi vecchi del mazzo dei turni.
 import { describe, it, expect } from 'vitest';
 import * as T from '../src/regole/mazzo-turni.ts';
-import { seeded } from './aiuto.js';
+import { seeded, must } from './aiuto.ts';
+import type { CartaTurno, MazzoTurni } from '../src/tipi/partita.ts';
+import type { MazzoTurniLetto } from '../src/tipi/salvataggio.ts';
 
-const sorted = list => list.slice().sort();
+const sorted = (list: readonly string[]) => list.slice().sort();
 // Mazzo dei turni a mano: left dalla cima, il resto vuoto
-function orderWith(left, extra = {}) {
-  return Object.assign({ left: left.slice(), drawn: [], round: 1, wild: null, picks: {}, known: left.map(() => false),
-    waiting: false, pairNext: { p12: null, p34: null }, history: [] }, extra);
+function orderWith(left: CartaTurno[], extra: Partial<MazzoTurni> = {}): MazzoTurni {
+  const base: MazzoTurni = { left: left.slice(), drawn: [], round: 1, wild: null, picks: {}, known: left.map(() => false),
+    waiting: false, pairNext: { p12: null, p34: null }, history: [] };
+  return Object.assign(base, extra);
 }
 // Pesca quando il mazzo non è vuoto (le carte del giro nuovo non servono)
-function draw(order, opts = {}) {
-  return T.drawTurnCard(order, Object.assign({ players: 4, cards: () => { throw new Error('giro nuovo inatteso'); }, random: seeded(1) }, opts));
+function draw(order: MazzoTurni, opts: Partial<T.OpzioniPesca> = {}) {
+  const base: T.OpzioniPesca = { players: 4, cards: () => { throw new Error('giro nuovo inatteso'); }, random: seeded(1) };
+  return T.drawTurnCard(order, Object.assign(base, opts));
 }
 
 describe('carte e giri', () => {
@@ -30,7 +34,8 @@ describe('carte e giri', () => {
     expect(sorted(T.turnOrderCards(4, pairs))).toEqual(sorted(T.turnOrderCards(4, true)));
     expect(reads).toBe(1);
     expect(T.playerKinds(3)).toEqual(['p1', 'p2', 'p3']);
-    expect(T.playerKinds('4')).toEqual(['p1', 'p2', 'p3', 'p4']);
+    // (il numero di giocatori è un numero: i tipi non permettono più il testo "4")
+    expect(T.playerKinds(4)).toEqual(['p1', 'p2', 'p3', 'p4']);
     expect(T.isPairCard('p12')).toBe(true);
     expect(T.isPairCard('p1')).toBe(false);
     expect(T.pairOptions('p34')).toEqual(['p3', 'p4']);
@@ -57,7 +62,7 @@ describe('carte e giri', () => {
     expect(after.pairNext).toEqual({ p12: 'p2', p34: null });
     expect(after.wild).toBe(null);
     expect(after.pairNext).not.toBe(before.pairNext);
-    expect(before.drawn).toEqual(['p1', 'nemesis'], 'il mazzo di prima non cambia');
+    expect(before.drawn, 'il mazzo di prima non cambia').toEqual(['p1', 'nemesis']);
     expect(T.shuffleTurnOrder(before, 4, cards, seeded(3)).left).toEqual(after.left);
   });
 
@@ -125,7 +130,7 @@ describe('carte 1/2 e 3/4: memoria delle coppie', () => {
   it('carta scelta, poi la prossima della coppia è obbligata', () => {
     const order = orderWith(['p12', 'p34', 'p12', 'p34']);
     draw(order);
-    expect(T.currentTurn(order).player).toBe(null);
+    expect(must(T.currentTurn(order), 'turno in corso').player).toBe(null);
     expect(T.turnCardPlayer('p12', undefined, order, null)).toBe(null);
     expect(T.choosePairPlayer(order, 'p1')).toBe(true);
     expect(order.picks[0]).toEqual({ player: 'p1', forced: false });
@@ -133,7 +138,7 @@ describe('carte 1/2 e 3/4: memoria delle coppie', () => {
     expect(order.pairNext).toEqual({ p12: 'p2', p34: null });
     expect(T.choosePairPlayer(order, 'p2')).toBe(false);
     draw(order);
-    expect(T.currentTurn(order).player).toBe(null);
+    expect(must(T.currentTurn(order), 'turno in corso').player).toBe(null);
     T.choosePairPlayer(order, 'p4');
     expect(order.pairNext).toEqual({ p12: 'p2', p34: 'p3' });
     draw(order);
@@ -168,7 +173,7 @@ describe('carte 1/2 e 3/4: memoria delle coppie', () => {
     draw(order);
     expect(T.currentTurn(order)).toEqual({ kind: 'p12', player: 'p2', forced: true, pos: 1 });
     draw(order);
-    expect(T.currentTurn(order).player).toBe(null);
+    expect(must(T.currentTurn(order), 'turno in corso').player).toBe(null);
     T.choosePairPlayer(order, 'p2');
     expect(order.pairNext.p12).toBe('p1');
   });
@@ -230,7 +235,7 @@ describe('scarti dei turni e finestra del mazzo dei turni', () => {
     order.left = ['p12'];
     order.known = [true];
     draw(order);
-    expect(T.currentTurn(order).player).toBe(null);
+    expect(must(T.currentTurn(order), 'turno in corso').player).toBe(null);
   });
 
   it('bozza: copie, firma, rivela, copri, sposta, mescola, posizione numerica', () => {
@@ -241,7 +246,7 @@ describe('scarti dei turni e finestra del mazzo dei turni', () => {
     expect(d.left).not.toBe(order.left);
     T.turnDraftOps.revealTop(d);
     expect(d.known).toEqual([true, true, false, false]);
-    expect(order.known).toEqual([false, true, false, false], 'la bozza non tocca il mazzo dei turni');
+    expect(order.known, 'la bozza non tocca il mazzo dei turni').toEqual([false, true, false, false]);
     expect(T.turnDraftKey(d)).not.toBe(key);
     // Sposta: solo carte note; posizioni valide
     expect(T.turnDraftOps.moveInDeck(d, 2, 0)).toBe(false);
@@ -257,7 +262,7 @@ describe('scarti dei turni e finestra del mazzo dei turni', () => {
     T.turnDraftOps.pileToDeck(d, 0, 2);
     expect(d.left).toEqual(['p2', 'nemesis', 'p4', 'p3', 'p1']);
     expect(d.known[2]).toBe(true);
-    expect(d.history).toEqual([{ kind: 'p4', player: null, forced: false, pos: null }], 'il turno giocato resta nella storia');
+    expect(d.history, 'il turno giocato resta nella storia').toEqual([{ kind: 'p4', player: null, forced: false, pos: null }]);
     expect(T.turnDraftOps.pileToDeck(d, 0, 'top'), 'scarti vuoti').toBe(false);
     // Mescola: tutto coperto, ripetibile con lo stesso caso
     const e = JSON.parse(JSON.stringify(d));
@@ -301,7 +306,7 @@ describe('salvataggi del mazzo dei turni', () => {
   const cards2 = () => T.turnOrderCards(2, false);
 
   it('mazzo dei turni completo letto com\'è (copie)', () => {
-    const saved = { left: ['p34', 'nemesis'], drawn: ['p12', 'p12', 'p34'], round: 3, wild: null,
+    const saved: MazzoTurniLetto = { left: ['p34', 'nemesis'], drawn: ['p12', 'p12', 'p34'], round: 3, wild: null,
       picks: { 0: { player: 'p1', forced: false }, 1: { player: 'p2', forced: true }, 2: { player: 'p4', forced: false } },
       known: [true, false], waiting: false, pairNext: { p12: null, p34: 'p3' },
       history: [{ kind: 'p12', player: 'p1', forced: false, pos: 0 }, { kind: 'p12', player: 'p2', forced: true, pos: 1 },
@@ -312,7 +317,7 @@ describe('salvataggi del mazzo dei turni', () => {
   });
 
   it('prima della v220/v222: picks a stringhe, senza memoria né storia; la seconda carta della coppia è obbligata', () => {
-    const old = { left: ['nemesis'], drawn: ['p12', 'p12', 'p34', 'nemesis'], round: 2, picks: { 0: 'p2', 2: 'p3' } };
+    const old: MazzoTurniLetto = { left: ['nemesis'], drawn: ['p12', 'p12', 'p34', 'nemesis'], round: 2, picks: { 0: 'p2', 2: 'p3' } };
     const o = T.restoreTurnOrder(old, { players: 4, resolving: false, turn: 4, cards: () => [], random: seeded(1) });
     expect(o.picks).toEqual({ 0: { player: 'p2', forced: false }, 1: { player: 'p1', forced: true }, 2: { player: 'p3', forced: false } });
     expect(o.pairNext).toEqual({ p12: null, p34: 'p4' });

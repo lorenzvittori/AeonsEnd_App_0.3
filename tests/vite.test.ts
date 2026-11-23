@@ -1,8 +1,8 @@
-// Vite di Gravehold e della nemesi (src/regole/vite.js) con nemesis.json vero: valori iniziali, tetto, passi,
+// Vite di Gravehold e della nemesi (src/regole/vite.ts) con nemesis.json vero: valori iniziali, tetto, passi,
 // Vittoria a 0 della nemesi, Sconfitta a 0 di Gravehold.
 import { describe, it, expect } from 'vitest';
 import * as V from '../src/regole/vite.ts';
-import { nemeses } from './aiuto.js';
+import { nemeses } from './aiuto.ts';
 
 describe('vite e fine partita', () => {
   it('valori iniziali: Gravehold 30, nemesi dal campo life di nemesis.json', () => {
@@ -16,7 +16,7 @@ describe('vite e fine partita', () => {
     });
     expect(V.nemesisStartLife(nemeses, 'Nessuna')).toBe(0);
     expect(V.nemesisStartLife(null, 'Rageborne')).toBe(0);
-    expect(V.nemesisStartLife([{ name: 'X', life: '70' }], 'X'), 'life non numerico').toBe(0);
+    expect(V.nemesisStartLife([{ ...nemeses[0], name: 'X', life: null }], 'X'), 'life mancante (null)').toBe(0);
   });
 
   it('tetto: il valore iniziale, o la vita attuale se è più alta; passi tra 0 e il tetto', () => {

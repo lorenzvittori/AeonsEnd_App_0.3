@@ -1,5 +1,5 @@
 // Configurazione di Vite (npm run dev / build / preview) e di Vitest (npm test).
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   // Il sito è pubblicato su GitHub Pages in https://lorenzvittori.github.io/AeonsEnd_App_0.2/: Vite aggiunge questo
@@ -19,6 +19,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.{js,ts}']
+    include: ['tests/**/*.test.ts']
   }
 });

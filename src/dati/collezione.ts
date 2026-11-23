@@ -106,7 +106,7 @@ export function ownsProduct(id: CodiceProdotto): boolean {
 }
 
 // Carta Basic / Upgraded ammessa: il suo prodotto (boxCode) è nella collezione (o non si sa di che prodotto è)
-export function cardAllowed(card: Pick<Carta, 'boxCode'>): boolean {
+export function cardAllowed(card: { boxCode: CodiceProdotto | null }): boolean {
   return Mazzo.cardAllowed(G.collection, card);
 }
 

@@ -50,7 +50,7 @@ export function ownsProduct(collection: Collezione, code: CodiceProdotto): boole
 }
 
 // Carta Basic / Upgraded ammessa: il suo prodotto è nella collezione (o la carta non ha prodotto)
-export function cardAllowed(collection: Collezione, card: Pick<Carta, 'boxCode'>): boolean {
+export function cardAllowed(collection: Collezione, card: { boxCode: CodiceProdotto | null }): boolean {
   return !card.boxCode || ownsProduct(collection, card.boxCode);
 }
 
