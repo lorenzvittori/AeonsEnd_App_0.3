@@ -1,14 +1,14 @@
 // avvio.ts: telefono in orizzontale, tasto Indietro e avvio dell'app (init: lettura e controllo dei dati, pagina
 // iniziale).
-// Dipende da: stato/, dati/ (dati, controllo), ui/ (componenti, dialoghi, scarti, menu, opzioni, turno-nemesi,
-// pesca-undo). Usato da: main.ts (avvio, ultimo modulo), ui/schermate/opzioni (Riprova).
+// I dati letti vanno nel catalogo (stato/catalogo.ts); poi la prima partita da zero (nuovaPartita, come sempre: il mazzo
+// della nemesi scelta è pronto per la pagina iniziale).
+// Dipende da: stato/ (catalogo, partita), dati/ (dati, controllo), ui/ (pagina, componenti, dialoghi, scarti, menu,
+// opzioni, turno-nemesi, pesca-undo). Usato da: main.ts (avvio, ultimo modulo), ui/schermate/opzioni (Riprova).
 
-import { G } from './stato/condivise.ts';
 import { I18N_IT } from './ui/testi.ts';
-import { CARD_BACK, DATA_ROOT, THUMB_DIR, discardLayer, startBtn, startError, startLayer } from './stato/stato.ts';
 import { loadJson } from './dati/dati.ts';
 import { checkCards, checkDeckSetup, checkNemesisArt, checkNemeses, checkProducts, reportProblems } from './dati/controllo.ts';
-import { newGame } from './stato/partita.ts';
+import { nuovaPartita } from './stato/partita.ts';
 import { el } from './ui/componenti/componenti.ts';
 import { loadImage, modals, showToast, updateInert } from './ui/componenti/dialoghi.ts';
 import { closeDiscard } from './ui/componenti/scarti.ts';
@@ -16,6 +16,8 @@ import { buildStartPage, setStartMode, startMode } from './ui/schermate/menu.ts'
 import { showStartError, showStartSkeleton } from './ui/schermate/opzioni.ts';
 import { preloadBannerFont, render } from './ui/schermate/turno-nemesi.ts';
 import { closeDeckPopover, closeUndoFloat, deckPopover, undoFloat } from './ui/componenti/pesca-undo.ts';
+import { caricaCatalogo } from './stato/catalogo.ts';
+import { CARD_BACK, DATA_ROOT, THUMB_DIR, discardLayer, startBtn, startError, startLayer } from './ui/pagina.ts';
 
 // Tasto / gesto Indietro (Android, swipe di iOS): chiude il livello in primo piano invece di uscire dall'app.
 // Nella cronologia c'è sempre una voce in più (stesso indirizzo): Indietro la consuma e qui la si rimette.
@@ -69,20 +71,15 @@ export async function init(): Promise<void> {
     const nemeses = checkNemeses(nemesisData);
     const setup = checkDeckSetup(setupData);
     reportProblems([...cards.problems, ...nemeses.problems, ...products.problems, ...art.problems]);
-    G.nemesisArt = art.value;
-    G.products = products.value;
     if (cards.value.length === 0) throw new Error('Nessuna carta trovata in cards.json');
     // Le scansioni delle carte stanno nella cartella Data/, le miniature in thumbs/ con lo stesso percorso
     cards.value.forEach(c => {
       c.thumb = DATA_ROOT + String(c.image).replace(/^Data\//, THUMB_DIR);
       c.image = DATA_ROOT + c.image;
     });
-    G.allCards = cards.value;
-    G.deckSetup = setup;
-    G.nemeses = nemeses.value;
-    G.cardsById = new Map(G.allCards.map(c => [c.id, c]));
+    caricaCatalogo({ cards: cards.value, deckSetup: setup, nemeses: nemeses.value, products: products.value, nemesisArt: art.value });
     buildStartPage();
-    newGame();
+    nuovaPartita();
     // Il retro si scarica subito, così alla prima pesca è già pronto
     loadImage(CARD_BACK);
     preloadBannerFont();

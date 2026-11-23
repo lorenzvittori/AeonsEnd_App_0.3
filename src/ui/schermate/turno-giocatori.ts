@@ -1,24 +1,22 @@
 // ui/schermate/turno-giocatori.ts: turno giocatori (VistaCoda): fascia piccola, carte grandi con i comandi, "Salva
 // modifiche", finestra della carta con la vita in bozza (anche per i minion nel turno nemesi).
-// Dipende da: regole/turno-nemesi.ts, stato/ (condivise, stato, partita, salvataggio), ui/testi.ts, ui/componenti
-// (componenti, dialoghi, testata), ui/eventi.ts, ui/schermate (turno-nemesi, mazzo-turni, crea-mazzo). Usato da:
-// turno nemesi (render), eventi, testata, menu laterale.
+// La partita si cambia con le azioni di stato/partita.ts (salvaModifiche, cambiaVitaMinion); le bozze (ui.drafts) sono
+// dell'interfaccia finché non si salvano.
+// Dipende da: stato/partita.ts, ui/ (testi, pagina, eventi), ui/componenti (componenti, dialoghi, testata),
+// ui/schermate (turno-nemesi, mazzo-turni, crea-mazzo). Usato da: turno nemesi (render), eventi, testata, menu laterale.
 
-import * as Nemesi from '../../regole/turno-nemesi.ts';
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { ANCHOR_RATIO, discardBtn, focusEl, nemesisBtn, queueEmpty, queueList, queueView, queueViewport, reducedMotion, resolveBtn, turnInfo, ui } from '../../stato/stato.ts';
-import type { AncoraCoda } from '../../stato/stato.ts';
-import { awaitingTurnCard, currentTurnCard, hpCap, hpUnset, turnCardPlayer } from '../../stato/partita.ts';
+import { awaitingTurnCard, cambiaVitaMinion, hpCap, hpUnset, partita, salvaModifiche } from '../../stato/partita.ts';
 import { cardArt, displayEntry, draftHp, draftOf, el, hasHp, icon, query, queryAll, queueItem, setDraft, tokenIcons, typeName } from '../componenti/componenti.ts';
 import { button, openModal, showToast } from '../componenti/dialoghi.ts';
-import { act } from '../../stato/salvataggio.ts';
 import { PEEK_GAP, PEEK_VISIBLE, render, sharedCardWidth, sizeColumn } from './turno-nemesi.ts';
 import { trackDrag } from '../eventi.ts';
 import { needsPairChoice } from './mazzo-turni.ts';
 import { flyToDiscard } from '../componenti/testata.ts';
 import { tween } from './crea-mazzo.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
+import { ANCHOR_RATIO, discardBtn, focusEl, nemesisBtn, queueEmpty, queueList, queueView, queueViewport, reducedMotion, resolveBtn, turnInfo, ui } from '../pagina.ts';
+import type { AncoraCoda } from '../pagina.ts';
 
 // Un'animazione di scorrimento in corso
 interface Scorrimento {
@@ -27,9 +25,9 @@ interface Scorrimento {
 }
 
 export function updateInfo(): void {
-  turnInfo.textContent = I18N_IT.turnInfo(G.turn, G.deck.length);
-  discardBtn.textContent = I18N_IT.discardButton(G.discard.length);
-  discardBtn.setAttribute('aria-label', I18N_IT.discardButtonLabel(G.discard.length));
+  turnInfo.textContent = I18N_IT.turnInfo(partita.turn, partita.deck.length);
+  discardBtn.textContent = I18N_IT.discardButton(partita.discard.length);
+  discardBtn.setAttribute('aria-label', I18N_IT.discardButtonLabel(partita.discard.length));
 }
 
 // VistaCoda: in alto la fascia compatta con tutta la coda (come nel turno nemesi), sotto le carte grandi, una e mezza
@@ -149,7 +147,7 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
     const b = button(label, variant, e => {
       e.stopPropagation();
       // Anche con la scelta del giocatore 1/2 o 3/4 in sospeso non si toccano le carte
-      if (G.resolving || ui.isTransitioning || queueViewport.dataset.dragged === '1' || needsPairChoice()) return;
+      if (partita.resolving || ui.isTransitioning || queueViewport.dataset.dragged === '1' || needsPairChoice()) return;
       handler();
     });
     b.dataset.uid = String(uid);
@@ -213,7 +211,7 @@ export function sizeQueue(): void {
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
   // Stessa regola del carosello del turno nemesi (sizeFocus): la carta riempie l'altezza, ai lati si vede un pezzo delle
   // vicine (stessa larghezza della carta)
-  const peekRoom = G.queue.length > 1 ? 2 * (PEEK_VISIBLE + PEEK_GAP) : 0;
+  const peekRoom = partita.queue.length > 1 ? 2 * (PEEK_VISIBLE + PEEK_GAP) : 0;
   // Come sizeFocus: sopra la carta il box vita/token (41px) e 8px di spazio. I comandi stanno fuori dal flusso, sotto la
   // carta, così la carta ha la stessa posizione e dimensione del turno nemesi; solo su schermi bassi la si rimpicciolisce
   // quanto basta perché i comandi (52px) restino dentro l'area (il blocco è centrato in verticale).
@@ -239,20 +237,20 @@ export function renderQueue(): void {
   const previousTop = queueViewport.scrollTop;
   const railEl = ensureQueueRail();
   const railScroll = railEl.scrollLeft;
-  railEl.replaceChildren(...G.queue.map((entry, i) => {
-    const item = queueItem(displayEntry(entry), { compact: true, index: i, total: G.queue.length });
+  railEl.replaceChildren(...partita.queue.map((entry, i) => {
+    const item = queueItem(displayEntry(entry), { compact: true, index: i, total: partita.queue.length });
     // Vita del minion in modifica: "HP: −x" anche sulla carta piccola, al centro
     const d = draftOf(entry);
     if (d && d.hp !== undefined) addHpTag(item, 'queue-hp-tag rail-hp-tag', d.hp - Number(entry.hp));
     return item;
   }));
   railEl.scrollLeft = railScroll;
-  railEl.hidden = G.queue.length === 0;
-  queueList.replaceChildren(...G.queue.map((entry, i) => {
+  railEl.hidden = partita.queue.length === 0;
+  queueList.replaceChildren(...partita.queue.map((entry, i) => {
     // Ogni carta grande con i suoi comandi subito sotto (vita del minion, rimozione del potere)
     const slot = el('div', 'queue-slot');
     slot.setAttribute('role', 'listitem');
-    const card = queueItem(displayEntry(entry), { full: true, index: i, total: G.queue.length, lazy: i > 3 });
+    const card = queueItem(displayEntry(entry), { full: true, index: i, total: partita.queue.length, lazy: i > 3 });
     card.removeAttribute('role');
     const d = draftOf(entry);
     // Danno in bozza (non ancora salvato), in alto a destra sulla carta: sparisce con "Salva"
@@ -261,18 +259,18 @@ export function renderQueue(): void {
     // Le modifiche si salvano tutte insieme con "Salva modifiche" (il pulsante principale)
     return slot;
   }));
-  queueEmpty.hidden = G.queue.length > 0;
+  queueEmpty.hidden = partita.queue.length > 0;
   // Suggerimento solo prima del primo turno nemesi
   const emptyHint = queueEmpty.querySelector('p');
   if (emptyHint) {
-    emptyHint.hidden = G.turn > 0;
+    emptyHint.hidden = partita.turn > 0;
     emptyHint.textContent = awaitingTurnCard() ? I18N_IT.emptyHintStart : I18N_IT.emptyHintWait;
   }
   sizeQueue();
 
   const anchor = ui.queueAnchor;
   ui.queueAnchor = null;
-  if (G.queue.length === 0) {
+  if (partita.queue.length === 0) {
     queueViewport.scrollLeft = 0;
     queueViewport.scrollTop = 0;
   } else if (anchor) {
@@ -324,25 +322,16 @@ export function focusQueueItem(uid: number | null): void {
 // "Salva modifiche" (pulsante principale del turno giocatori): tutte le bozze diventano definitive in un solo passo di
 // undo; le carte grigie (potere con costo pagato, minion a 0) vanno negli scarti volando verso la pila in alto
 export function saveAllDrafts(): void {
-  if (G.resolving || ui.isTransitioning || !ui.drafts.size) return;
+  if (partita.resolving || ui.isTransitioning || !ui.drafts.size) return;
   const drafts = new Map(ui.drafts);
   ui.drafts.clear();
-  const gone: VoceInGioco[] = [];
-  act(() => {
-    // Statistiche maghi: tutto va al giocatore del turno in corso (il wild conta per il giocatore che è wild nel giro);
-    // la prima impostazione della vita di un minion a vita variabile non è danno (regole/turno-nemesi.ts, applyDrafts)
-    const kind = turnCardPlayer(currentTurnCard());
-    gone.push(...Nemesi.applyDrafts(G, drafts, kind));
-  });
+  // Statistiche maghi: tutto va al giocatore del turno in corso; la prima impostazione della vita di un minion a vita
+  // variabile non è danno (stato/partita.ts, salvaModifiche)
+  const gone = salvaModifiche(drafts);
   // Le carte sono ancora nella pagina (non ridisegnata): partono da lì
   flyToDiscard(gone.map(e => queueList.querySelector(`.ae-queue-item[data-uid="${e.uid}"] .ae-card-art`)));
   render();
   nemesisBtn.focus({ preventScroll: true });
-}
-
-// Dopo un minion eliminato nel turno nemesi: gli indici della risoluzione seguono la coda
-export function removeWhileResolving(entry: VoceInGioco): void {
-  Nemesi.removeWhileResolving(G, entry);
 }
 
 // VistaCartaCoda: dialogo della carta toccata. Minion = punti vita in bozza; potere = rimozione esplicita.
@@ -351,7 +340,7 @@ export function removeWhileResolving(entry: VoceInGioco): void {
 // poteri e attacchi.
 export function openCardDialog(entry: VoceInGioco): void {
   // Nel turno nemesi si apre solo per i minion (−1 / +1 alla vita)
-  if (ui.isTransitioning || (G.resolving && entry.data.type !== 'Minion')) return;
+  if (ui.isTransitioning || (partita.resolving && entry.data.type !== 'Minion')) return;
   const { data } = entry;
   let close = () => {};
   const cancel = () => close();
@@ -403,7 +392,7 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
   const unset = hpUnset(entry);
   // Turno giocatori: si parte dalla vita in bozza e la conferma scrive una bozza (si salva con "Salva modifiche").
   // (Number: la vita di un minion c'è sempre; null varrebbe 0, come nei conti di JavaScript)
-  const original = Number(G.resolving ? entry.hp : draftHp(entry));
+  const original = Number(partita.resolving ? entry.hp : draftHp(entry));
   let draft = original;
   let committing = false;
 
@@ -415,9 +404,9 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
   const controls = el('div', 'ae-hp-controls');
   // Turno giocatori: −5, −1 e +1 (solo fino alla vita di inizio turno); turno nemesi: −1 e +1; vita "?" da impostare:
   // −5, −1, +1 e +5 nei due turni
-  const cap = Number(hpCap(entry, G.resolving));
+  const cap = Number(hpCap(entry, partita.resolving));
   const stepButtons: [number, HTMLButtonElement][] = [];
-  (unset ? [-5, -1, 1, 5] : G.resolving ? [-1, 1] : [-5, -1, 1]).forEach(step => {
+  (unset ? [-5, -1, 1, 5] : partita.resolving ? [-1, 1] : [-5, -1, 1]).forEach(step => {
     const b = button(step > 0 ? '+' + step : '−' + Math.abs(step), 'secondary', () => {
       draft = Math.min(cap, Math.max(0, draft + step));
       update();
@@ -444,7 +433,7 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
     if (dies) delta.append(icon('heart'), el('span', '', I18N_IT.willBeDeleted));
     else if (change !== 0 && !unset) delta.append(icon('heart'), el('span', '', I18N_IT.hpDelta(change)));
     stepButtons.forEach(([step, b]) => {
-      if (step > 0 && !G.resolving) { b.disabled = draft >= cap; b.classList.toggle('is-dimmed', draft >= cap); }
+      if (step > 0 && !partita.resolving) { b.disabled = draft >= cap; b.classList.toggle('is-dimmed', draft >= cap); }
     });
     confirm.textContent = dies ? I18N_IT.deleteMinion : I18N_IT.confirmHp;
     confirm.className = 'ae-button ' + (dies ? 'ae-button--danger' : 'ae-button--primary');
@@ -453,13 +442,13 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
   function commit() {
     if (committing) return;
     committing = true;
-    const index = G.queue.indexOf(entry);
+    const index = partita.queue.indexOf(entry);
     const name = entry.data.name;
     const value = draft;
     close();
     // Vita invariata: si chiude senza aggiungere un passo di undo
     if (value === original || index < 0) return;
-    if (!G.resolving) {
+    if (!partita.resolving) {
       setDraft(entry, { hp: value });
       ui.queueAnchor = { uid: entry.uid, align: 'nearest' };
       render();
@@ -469,22 +458,15 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
     ui.drafts.delete(entry.uid);
     // Minion ucciso nel turno nemesi: vola negli scarti
     const killedArt = value <= 0 ? query(focusEl, `.ae-focus-slide[data-uid="${entry.uid}"] .ae-focus-stage`, HTMLElement) : null;
-    const wasResolving = G.resolving;
-    act(() => {
-      entry.hp = value;
-      // Prima impostazione della vita di un minion a vita variabile: da qui valgono le regole normali (è anche la sua
-      // vita massima)
-      if (unset && value > 0) { entry.hpSet = true; entry.turnHp = value; entry.hpMax = value; }
-      if (value <= 0 && !unset) {
-        // turno nemesi: esce subito; turno giocatori: resta grigio fino al turno nemesi (isGone)
-        if (G.resolving) removeWhileResolving(entry);
-      }
-    });
+    const wasResolving = partita.resolving;
+    // Prima impostazione della vita di un minion a vita variabile: da qui valgono le regole normali (è anche la sua vita
+    // massima); a 0 il minion esce subito (stato/partita.ts, cambiaVitaMinion)
+    cambiaVitaMinion(entry, value, unset);
     if (wasResolving) {
       ui.viewedUid = null;
       if (killedArt) flyToDiscard([killedArt]);
       render();
-      if (G.resolving) resolveBtn.focus(); else nemesisBtn.focus();
+      if (partita.resolving) resolveBtn.focus(); else nemesisBtn.focus();
       showToast(value <= 0 ? I18N_IT.minionDeleted(name) : I18N_IT.hpLeftToast(name, value));
       return;
     }

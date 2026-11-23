@@ -1,19 +1,20 @@
 // ui/schermate/menu.ts: menu iniziale e pagina Nuova partita (giocatori, opzioni del mazzo, wave, nemesi con la sua
 // carta). Provvisorio: Nuova partita andrà in un file suo.
-// Dipende da: stato/ (condivise, stato, partita, salvataggio), dati/ (dati, collezione), ui/testi.ts, ui/componenti
+// Dipende da: stato/ (catalogo, preferenze, partita, salvataggio), dati/ (dati, collezione), ui/ (testi, pagina), ui/componenti
 // (componenti, dialoghi), ui/schermate (opzioni, test). Usato da: avvio, opzioni, crea-mazzo (scelte), Indietro.
 
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { DRAG_THRESHOLD, SWIPE_MIN_DISTANCE, byId, reducedMotion, resumeBtn, startBtn, startLayer } from '../../stato/stato.ts';
 import { battleOf } from '../../dati/dati.ts';
 import { collectionCatalog, isMiniCode, isPlayable, loadCollection, ownsProduct, productName, productOfNemesis, waveOfCode, waveOfNemesis } from '../../dati/collezione.ts';
-import { deckShortfall, loadDeckOptions, mergeActive, mergeLockedWave, saveDeckOptions } from '../../stato/partita.ts';
+import { deckShortfall, mergeActive, mergeLockedWave } from '../../stato/partita.ts';
 import { el, icon, need, query } from '../componenti/componenti.ts';
 import { button, showToast } from '../componenti/dialoghi.ts';
 import { ensureCollectionButton, openCollection, openOptions, resumeGame } from './opzioni.ts';
 import { readSave } from '../../stato/salvataggio.ts';
 import { openTestScreen } from './test.ts';
+import { catalogo, impostaSceltePagina } from '../../stato/catalogo.ts';
+import { preferenze, loadDeckOptions, saveDeckOptions } from '../../stato/preferenze.ts';
+import { DRAG_THRESHOLD, SWIPE_MIN_DISTANCE, byId, reducedMotion, resumeBtn, startBtn, startLayer } from '../pagina.ts';
 
 // Un punto dello schermo
 interface Punto { x: number; y: number }
@@ -26,17 +27,17 @@ function pageEl<T extends HTMLElement>(root: ParentNode, selector: string, type:
 // --- Pagina iniziale e nuova partita ---
 export function renderPlayers(): void {
   const container = byId('choices-players', HTMLDivElement);
-  const options = need(G.startOptions, 'scelte della pagina iniziale');
+  const options = need(catalogo.startOptions, 'scelte della pagina iniziale');
   container.replaceChildren(...options.players.map(value => {
     const b = el('button', '', String(value));
     b.type = 'button';
-    b.setAttribute('aria-pressed', String(value === G.settings.players));
+    b.setAttribute('aria-pressed', String(value === preferenze.settings.players));
     b.setAttribute('aria-label', I18N_IT.players(value));
     b.addEventListener('click', () => {
-      G.settings.players = value;
+      preferenze.settings.players = value;
       renderPlayers();
       // Le opzioni del mazzo dipendono anche dai giocatori (blocco di "Unisci" e riga di avviso)
-      if (G.startOptions && document.getElementById('deck-options')) renderDeckOptions();
+      if (catalogo.startOptions && document.getElementById('deck-options')) renderDeckOptions();
       pageEl(container, '[aria-pressed="true"]', HTMLElement).focus();
     });
     return b;
@@ -92,8 +93,8 @@ export function renderNemesisPreview(): void {
   const item = list.querySelector('.nemesis-item.is-selected');
   if (item) item.after(preview); else list.after(preview);
 
-  const nemesis = G.settings.nemesis;
-  const art = nemesis ? G.nemesisArt[nemesis] : undefined;
+  const nemesis = preferenze.settings.nemesis;
+  const art = nemesis ? catalogo.nemesisArt[nemesis] : undefined;
   const open = !!art && nemesisPreviewOpen;
   preview.hidden = !open;
   const expand = item && query(item, '.nemesis-expand', HTMLElement);
@@ -174,8 +175,8 @@ export function buildNemesisFlip(preview: HTMLElement): void {
   };
   const openZoomLayer = () => {
     if (zoom.layer) return;
-    const nemesis = G.settings.nemesis;
-    const art = nemesis !== null ? G.nemesisArt[nemesis] : undefined;
+    const nemesis = preferenze.settings.nemesis;
+    const art = nemesis !== null ? catalogo.nemesisArt[nemesis] : undefined;
     if (!art) return;
     const showBack = nemesisShowBack && !!art.back;
     const layer = el('div', 'nemesis-zoom-layer');
@@ -357,7 +358,7 @@ export function renderBosses(): void {
   // in ognuno dei due gruppi per battaglia
   const byBattle = (n: { battle: number | null }) => (n.battle === null || n.battle === undefined ? 99 : n.battle);
   const inSelectedWaves = (wave: string | null) => wave !== null && selectedWaves.includes(wave);
-  const ofWave = G.nemeses.filter(n => n.boxCode && inSelectedWaves(waveOfNemesis(n)))
+  const ofWave = catalogo.nemeses.filter(n => n.boxCode && inSelectedWaves(waveOfNemesis(n)))
     .map((n, i) => ({ n, i }))
     .sort((a, b) => (Number(waveOfNemesis(a.n)) - Number(waveOfNemesis(b.n))) || (Number(isMiniCode(a.n.boxCode)) - Number(isMiniCode(b.n.boxCode)))
       || (byBattle(a.n) - byBattle(b.n)) || (a.i - b.i))
@@ -365,15 +366,15 @@ export function renderBosses(): void {
   const playable = ofWave.filter(isPlayable);
   const others = ofWave.filter(n => !isPlayable(n));
 
-  if (!playable.some(n => n.name === G.settings.nemesis)) G.settings.nemesis = playable.length ? playable[0].name : null;
+  if (!playable.some(n => n.name === preferenze.settings.nemesis)) preferenze.settings.nemesis = playable.length ? playable[0].name : null;
 
   list.replaceChildren(...playable.map(info => {
     const b = el('button', 'nemesis-option');
     b.type = 'button';
-    b.setAttribute('aria-pressed', String(info.name === G.settings.nemesis));
+    b.setAttribute('aria-pressed', String(info.name === preferenze.settings.nemesis));
     const tags = el('span', 'nemesis-tags');
     tags.appendChild(el('span', '', info.battle ? I18N_IT.battle(info.battle) : I18N_IT.battleMissing));
-    const art = G.nemesisArt[info.name];
+    const art = catalogo.nemesisArt[info.name];
     if (art) {
       // Parte dell'illustrazione a destra del pulsante (come nella wiki)
       b.classList.add('has-art');
@@ -387,14 +388,14 @@ export function renderBosses(): void {
     if (isMiniCode(info.boxCode)) b.appendChild(el('span', 'nemesis-expansion', productName(String(info.boxCode))));
     b.addEventListener('click', () => {
       // Toccare di nuovo la nemesi già scelta apre o chiude la sua carta (come le frecce)
-      if (G.settings.nemesis === info.name) {
+      if (preferenze.settings.nemesis === info.name) {
         if (art) {
           setNemesisPreview(!nemesisPreviewOpen);
           b.focus({ preventScroll: true });
         }
         return;
       }
-      G.settings.nemesis = info.name;
+      preferenze.settings.nemesis = info.name;
       nemesisPreviewOpen = false;
       renderBosses();
       const selected = query(list, '.nemesis-item.is-selected .nemesis-option', HTMLElement);
@@ -402,7 +403,7 @@ export function renderBosses(): void {
     });
     const item = el('div', 'nemesis-item');
     item.appendChild(b);
-    if (info.name === G.settings.nemesis) {
+    if (info.name === preferenze.settings.nemesis) {
       item.classList.add('is-selected');
       // Freccia verso il basso al centro del pulsante scelto: apre la carta della nemesi
       if (art) item.appendChild(chevronButton('nemesis-expand', I18N_IT.showNemesisCard(info.name), () => setNemesisPreview(true)));
@@ -429,7 +430,7 @@ export function renderBosses(): void {
     // "Non in collezione" a destra. Le altre (senza battaglia o senza carte) restano con il "!" rosso.
     // (String: una nemesi senza prodotto si cerca come "null", che non è nella collezione)
     const notOwned = info.battle !== null && !ownsProduct(String(productOfNemesis(info)))
-      && G.allCards.some(c => c.category === 'Specific' && c.nemesis === info.name);
+      && catalogo.allCards.some(c => c.category === 'Specific' && c.nemesis === info.name);
     const li = el('li', 'nemesis-locked' + (notOwned ? ' is-not-owned' : ''));
     li.setAttribute('aria-label', notOwned ? I18N_IT.notInCollectionNemesis(info.name) : I18N_IT.unavailableNemesis(info.name));
     li.appendChild(el('span', '', info.name));
@@ -441,11 +442,11 @@ export function renderBosses(): void {
 
 export function renderStartChoices(): void {
   nemesisPreviewOpen = false;
-  const options = need(G.startOptions, 'scelte della pagina iniziale');
+  const options = need(catalogo.startOptions, 'scelte della pagina iniziale');
   options.waves = ownedWaves();
   ensureCollectionButton();
   renderPlayers();
-  const current = G.nemeses.find(n => n.name === G.settings.nemesis);
+  const current = catalogo.nemeses.find(n => n.name === preferenze.settings.nemesis);
   // Wave scelte: quelle di prima ancora nella collezione; se nessuna, la wave della nemesi scelta (o la prima)
   selectedWaves = selectedWaves.filter(w => options.waves.includes(w));
   if (!selectedWaves.length) {
@@ -509,7 +510,7 @@ export function startHomeActions(): HTMLElement {
 export function updateHomeCollection(): void {
   const box = document.getElementById('start-home');
   if (!box) return;
-  const empty = !G.collection || G.collection.size === 0;
+  const empty = !preferenze.collection || preferenze.collection.size === 0;
   pageEl(box, '.start-home-collection', HTMLElement).hidden = !empty;
   const fresh = pageEl(box, '.start-home-new', HTMLButtonElement);
   fresh.disabled = empty;
@@ -542,7 +543,7 @@ export function setStartMode(mode: string, focus?: boolean): void {
   const saved = readSave();
   startMode = mode === 'setup' ? 'setup' : 'home';
   // Pagina Nuova partita: le opzioni del mazzo ripartono dalla preferenza del browser
-  if (startMode === 'setup') Object.assign(G.settings, loadDeckOptions());
+  if (startMode === 'setup') Object.assign(preferenze.settings, loadDeckOptions());
   const panel = startChoicePanel();
   const home = startHomeActions();
   const isHome = startMode === 'home';
@@ -566,7 +567,7 @@ export function setStartMode(mode: string, focus?: boolean): void {
     const old = head.querySelector('.nemesis-art');
     if (old) old.remove();
     const nemesis = saved.settings.nemesis;
-    const art = nemesis !== null ? G.nemesisArt[nemesis] : undefined;
+    const art = nemesis !== null ? catalogo.nemesisArt[nemesis] : undefined;
     head.classList.toggle('has-art', !!art);
     if (art) {
       const portrait = el('span', 'nemesis-art');
@@ -590,7 +591,7 @@ export function updateStartActions(): void {
   resumeBtn.className = 'ae-button ae-button--full ae-button--secondary start-resume-alt';
   startBtn.textContent = I18N_IT.startNew;
   startBtn.className = 'ae-button ae-button--full ae-button--primary';
-  startBtn.disabled = !G.settings.nemesis || !battleOf(G.settings.nemesis);
+  startBtn.disabled = !preferenze.settings.nemesis || !battleOf(preferenze.settings.nemesis);
   startBtn.title = startBtn.disabled ? I18N_IT.chooseNemesis : '';
   renderDeckOptions();
 }
@@ -618,7 +619,7 @@ export function deckOptionsGroup(): HTMLElement {
     r.append(texts, input, sw);
     input.addEventListener('change', () => {
       if (input.disabled) return;
-      G.settings[key] = input.checked;
+      preferenze.settings[key] = input.checked;
       saveDeckOptions();
       renderDeckOptions();
     });
@@ -633,12 +634,12 @@ export function deckOptionsGroup(): HTMLElement {
 }
 
 export function renderDeckOptions(): void {
-  if (!G.deckSetup || !G.nemeses.length) return;
+  if (!catalogo.deckSetup || !catalogo.nemeses.length) return;
   const group = deckOptionsGroup();
   const battle = pageEl(group, '[data-option="battleMode"]', HTMLInputElement);
   const merge = pageEl(group, '[data-option="mergeCollection"]', HTMLInputElement);
   const lockNote = pageEl(group, '.deck-option-lock', HTMLElement);
-  battle.checked = G.settings.battleMode !== false;
+  battle.checked = preferenze.settings.battleMode !== false;
   const locked = mergeLockedWave();
   merge.checked = mergeActive();
   merge.disabled = !!locked;
@@ -654,7 +655,7 @@ export function renderDeckOptions(): void {
     warn.setAttribute('role', 'status');
     startBtn.before(warn);
   }
-  const short = G.settings.nemesis ? deckShortfall() : null;
+  const short = preferenze.settings.nemesis ? deckShortfall() : null;
   warn.hidden = !short;
   warn.textContent = short ? I18N_IT.deckShort(short.have, short.want) : '';
 }
@@ -662,17 +663,17 @@ export function renderDeckOptions(): void {
 // Wave nella scelta della nemesi: solo quelle della collezione (se nessuna, tutte)
 export function ownedWaves(): string[] {
   const all = collectionCatalog().map(w => w.wave);
-  const owned = all.filter(w => [...need(G.collection, 'collezione')].some(id => waveOfCode(id) === w));
+  const owned = all.filter(w => [...need(preferenze.collection, 'collezione')].some(id => waveOfCode(id) === w));
   return owned.length ? owned : all;
 }
 
 export function buildStartPage(): void {
   loadCollection();
-  const setup = need(G.deckSetup, 'deck-setup.json');
+  const setup = need(catalogo.deckSetup, 'deck-setup.json');
   const options = { players: Object.keys(setup.battles[0].players).map(Number), waves: ownedWaves() };
-  G.startOptions = options;
-  const firstPlayable = G.nemeses.find(isPlayable);
-  G.settings = Object.assign({ players: options.players[0], nemesis: firstPlayable ? firstPlayable.name : null }, loadDeckOptions());
+  impostaSceltePagina(options);
+  const firstPlayable = catalogo.nemeses.find(isPlayable);
+  preferenze.settings = Object.assign({ players: options.players[0], nemesis: firstPlayable ? firstPlayable.name : null }, loadDeckOptions());
   renderStartChoices();
 }
 
@@ -752,7 +753,7 @@ export function renderWavePills(): void {
   const dropdown = byId('wave-pills', HTMLDivElement);
   const text = pageEl(dropdown, '.wave-dropdown-text', HTMLElement);
   const menu = pageEl(dropdown, '.wave-menu', HTMLElement);
-  const options = need(G.startOptions, 'scelte della pagina iniziale');
+  const options = need(catalogo.startOptions, 'scelte della pagina iniziale');
   const chosen = options.waves.filter(w => selectedWaves.includes(w));
   text.textContent = !chosen.length ? I18N_IT.wavesNone
     : chosen.length === 1 ? waveLabel(chosen[0]) : I18N_IT.wavesMore(waveLabel(chosen[0]), chosen.length - 1);
@@ -777,14 +778,14 @@ export function renderWavePills(): void {
 // Dado: una nemesi a caso tra tutte quelle giocabili della collezione (se possibile diversa da quella scelta); la sua
 // wave si aggiunge alle wave scelte e la pagina scorre fino a lei
 export function pickRandomNemesis(): void {
-  const all = G.nemeses.filter(isPlayable);
+  const all = catalogo.nemeses.filter(isPlayable);
   if (!all.length) return;
-  const pool = all.length > 1 ? all.filter(n => n.name !== G.settings.nemesis) : all;
+  const pool = all.length > 1 ? all.filter(n => n.name !== preferenze.settings.nemesis) : all;
   const pick = pool[Math.floor(Math.random() * pool.length)];
   // (una nemesi giocabile ha sempre un prodotto, quindi una wave)
   const wave = waveOfNemesis(pick);
   if (wave !== null && !selectedWaves.includes(wave)) selectedWaves.push(wave);
-  G.settings.nemesis = pick.name;
+  preferenze.settings.nemesis = pick.name;
   nemesisPreviewOpen = false;
   renderWavePills();
   renderBosses();

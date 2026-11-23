@@ -15,7 +15,7 @@ const MINION_HP = must(MINION.hp, 'vita del minion');
 const ATTACK = byType('Attack');
 const VARIABLE = must(cards.find(c => c.type === 'Minion' && c.hpVariable === true), 'minion a vita variabile');
 
-// Partita minima, come la passa l'app (i campi di G usati dalle regole)
+// Partita minima, come la passa l'app (i campi di stato/partita.ts usati dalle regole)
 type GiocoProva = N.Gioco & { newUid: () => number; add: (data: Carta) => VoceInGioco };
 function game(extra: Partial<N.Gioco> = {}): GiocoProva {
   let uid = 1;

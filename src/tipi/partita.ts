@@ -1,8 +1,10 @@
-// tipi/partita.ts: i tipi della partita in corso: carte in gioco, mazzo dei turni, statistiche, scelte della partita
-// e la partita intera (i campi di gioco dello stato condiviso G).
-// Dipende da: tipi/dati.ts. Usato da: regole/, stato/, ui/, tipi/salvataggio.ts e tipi/condivise.ts.
+// tipi/partita.ts: i tipi della partita in corso: carte in gioco, mazzo dei turni, statistiche, scelte della partita,
+// la partita intera (Partita: i campi di gioco) e lo stato della partita (StatoPartita: più uid, undo e Modalità test).
+// Dipende da: tipi/dati.ts, tipi/salvataggio.ts (fotografie dell'undo). Usato da: regole/, stato/, ui/,
+// tipi/salvataggio.ts.
 
 import type { Carta } from './dati.ts';
+import type { FotografiaLetta } from './salvataggio.ts';
 
 // --- Carte in gioco ---
 
@@ -165,4 +167,20 @@ export interface Partita {
   nemesisLife: number;           // vita della nemesi
   stats: Statistiche;            // statistiche
   turnOrder: MazzoTurni;         // mazzo dei turni
+}
+
+// Partita della Modalità test in corso (il salvataggio non scrive niente finché c'è)
+export interface ProvaInCorso {
+  prevSettings: Impostazioni;    // scelte della partita vera, rimesse all'uscita dal test
+  id?: string;                   // id dello scenario
+  name?: string;                 // nome dello scenario
+  pairs?: boolean | null;        // carte 1/2 e 3/4 solo per lo scenario (null: come le preferenze)
+  turnCards?: CartaTurno[] | null; // carte del mazzo dei turni solo per lo scenario (null: quelle normali)
+}
+
+// Lo stato della partita in corso (stato/partita.ts): i campi di gioco più quello che serve a salvarli e annullarli
+export interface StatoPartita extends Partita {
+  nextUid: number;               // prossimo uid per una carta in gioco (continua tra le partite: un uid non torna mai)
+  undoStack: FotografiaLetta[];  // passi di undo (fotografie prima di ogni azione, dal più vecchio)
+  testRun: ProvaInCorso | null;  // Modalità test in corso
 }

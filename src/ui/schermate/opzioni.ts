@@ -1,20 +1,20 @@
 // ui/schermate/opzioni.ts: Opzioni, La mia collezione, inizio e ripresa della partita, errori della pagina iniziale.
 // Provvisorio: inizio e ripresa andranno con il menu.
-// Dipende da: stato/ (condivise, stato, partita, salvataggio), dati/ (dati, collezione, rete), ui/testi.ts,
-// ui/componenti (componenti, dialoghi, scarti, pesca-undo, menu-laterale), ui/schermate (menu, turno-nemesi, crea-mazzo,
-// test). Usato da: menu iniziale, menu laterale, statistiche, avvio, test.
+// Nuova partita e ripresa cambiano la partita solo con le funzioni di stato/partita.ts (nuovaPartita; restore e
+// impostaUndo per la ripresa).
+// Dipende da: stato/ (catalogo, preferenze, partita, salvataggio), dati/ (dati, collezione, rete), ui/ (testi, pagina,
+// ripristino), ui/componenti (componenti, dialoghi, scarti, pesca-undo, menu-laterale), ui/schermate (menu,
+// turno-nemesi, crea-mazzo, test). Usato da: menu iniziale, menu laterale, statistiche, avvio, test.
 
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { byId, nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../../stato/stato.ts';
 import { battleOf } from '../../dati/dati.ts';
 import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, saveCollection, waveOfNemesis } from '../../dati/collezione.ts';
-import { newGame, setTurnPairs, turnPairsOn } from '../../stato/partita.ts';
+import { impostaUndo, nuovaPartita, partita } from '../../stato/partita.ts';
 import { el, icon, queryAll } from '../componenti/componenti.ts';
 import { button, closeAllModals, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.ts';
 import { closeDiscard } from '../componenti/scarti.ts';
 import { renderStartChoices, setStartMode, updateHomeCollection, waveLabel } from './menu.ts';
-import { clearTransition, readSave, restore } from '../../stato/salvataggio.ts';
+import { readSave } from '../../stato/salvataggio.ts';
 import { render } from './turno-nemesi.ts';
 import { showDeckBuild } from './crea-mazzo.ts';
 import { slideToGame } from '../componenti/pesca-undo.ts';
@@ -23,6 +23,10 @@ import { prefetchDeckImages } from '../../dati/rete.ts';
 import { endTest } from './test.ts';
 import type { CodiceProdotto, Nemesi } from '../../tipi/dati.ts';
 import type { SalvataggioValido } from '../../tipi/salvataggio.ts';
+import { preferenze, setTurnPairs, turnPairsOn } from '../../stato/preferenze.ts';
+import { catalogo } from '../../stato/catalogo.ts';
+import { byId, nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../pagina.ts';
+import { clearTransition, restore } from '../ripristino.ts';
 
 // Il pulsante "La mia collezione" non è nella pagina "Nuova partita" (sta in Opzioni e nel Menu): si toglie anche da
 // un index.html vecchio
@@ -32,7 +36,7 @@ export function ensureCollectionButton(): void {
 }
 
 export function collectionSummaryText(): string {
-  const owned = G.collection;
+  const owned = preferenze.collection;
   if (!owned) throw new TypeError('collezione non ancora letta');
   const waves = new Set([...owned].map(id => id.split('|')[0]));
   return I18N_IT.collectionSummary(waves.size, owned.size);
@@ -103,7 +107,7 @@ function inputOf(row: HTMLElement): HTMLInputElement {
 // mini espansioni. Togliendo una wave si tolgono anche le sue mini espansioni. Le scelte valgono solo con
 // "Salva collezione"; la X torna indietro senza salvare.
 export function openCollection(trigger?: HTMLElement | null, onSaved?: () => void): void {
-  const draft = new Set<CodiceProdotto>(G.collection);
+  const draft = new Set<CodiceProdotto>(preferenze.collection);
   const layer = el('div', 'collection-screen');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
@@ -195,7 +199,7 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
   });
   const footer = el('div', 'collection-footer');
   const saveBtn = button(I18N_IT.collectionSave, 'primary', () => {
-    G.collection = draft;
+    preferenze.collection = draft;
     saveCollection();
     close();
     renderStartChoices();
@@ -240,21 +244,17 @@ export function onStartClick(): void {
 
 // Inizia: nuova partita con le scelte fatte (la partita salvata viene sostituita)
 export function startGame(): void {
-  if (!battleOf(G.settings.nemesis)) return;
+  if (!battleOf(preferenze.settings.nemesis)) return;
   clearTransition();
   closeAllModals();
-  G.queue = [];
-  G.resolving = false;
-  G.currentIndex = 0;
-  G.newIndex = -1;
   ui.viewedUid = null;
   ui.reveal = null;
   ui.lastDrawnUid = null;
   ui.drafts.clear();
   ui.flyingDiscards = 0;
-  G.undoStack = [];
   ui.gameSaved = false;
-  newGame();
+  // Partita da zero (coda vuota, niente undo) con il mazzo nuovo
+  nuovaPartita();
   // Prima del turno giocatori: i 9 mazzi da cui nasce il mazzo nemesi e il pulsante "Crea mazzo"
   ui.deckBuilding = true;
   ui.deckShown = 0;
@@ -271,8 +271,8 @@ export function startGame(): void {
 export function resumeGame(): void {
   const saved = readSave();
   if (!saved) return;
-  const info = G.nemeses.find(n => n.name === saved.settings.nemesis);
-  const owned = G.collection;
+  const info = catalogo.nemeses.find(n => n.name === saved.settings.nemesis);
+  const owned = preferenze.collection;
   const product = info ? info.boxCode : null;
   const wave = info ? waveOfNemesis(info) : null;
   if (info && product && wave && owned && collectionWaveEnabled(wave) && !owned.has(product)) {
@@ -306,22 +306,22 @@ export function openMissingNemesis(info: Nemesi, onContinue: () => void): void {
 
 export function resumeSavedGame(saved: SalvataggioValido): void {
   try {
-    const previousSettings = G.settings;
-    G.settings = saved.settings;
+    const previousSettings = preferenze.settings;
+    preferenze.settings = saved.settings;
     try {
       restore(saved.state);
     } catch (err) {
-      G.settings = previousSettings;
+      preferenze.settings = previousSettings;
       throw err;
     }
-    G.undoStack = Array.isArray(saved.undo) ? saved.undo : [];
+    impostaUndo(Array.isArray(saved.undo) ? saved.undo : []);
     ui.gameSaved = true;
     ui.deckDark = false;
     startError.hidden = true;
     closeStart();
     render();
     prefetchDeckImages();
-    (G.resolving ? resolveBtn : nemesisBtn).focus();
+    (partita.resolving ? resolveBtn : nemesisBtn).focus();
   } catch (err) {
     console.error(err);
     showStartError(I18N_IT.resumeError, false);

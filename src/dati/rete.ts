@@ -1,8 +1,8 @@
 // dati/rete.ts: schermo sempre acceso, service worker, immagini del mazzo per l'uso senza rete. Provvisorio.
-// Dipende da: stato/condivise.ts. Usato da: ui (inizio partita), main.ts (avvio).
+// Dipende da: stato/ (catalogo, partita: lettura). Usato da: ui (inizio partita), main.ts (avvio).
 
-import { G } from '../stato/condivise.ts';
 import { isRecord } from '../regole/json.ts';
+import { partita } from '../stato/partita.ts';
 
 // Schermo sempre acceso finché l'app è aperta e visibile (Screen Wake Lock). Il browser lo toglie da solo quando la
 // pagina va in secondo piano: si richiede di nuovo al ritorno e, se il browser lo vuole dopo un tocco, al primo tocco.
@@ -26,7 +26,7 @@ function saveDataOn(): boolean {
 export async function prefetchDeckImages(): Promise<void> {
   if (!('caches' in window) || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
   if (saveDataOn()) return;
-  const urls = [...new Set(G.deck.concat(G.queue.map(e => e.data), G.discard).flatMap(d => [d.image, d.thumb])
+  const urls = [...new Set(partita.deck.concat(partita.queue.map(e => e.data), partita.discard).flatMap(d => [d.image, d.thumb])
     .filter((u): u is string => !!u))];
   const todo: string[] = [];
   for (const u of urls) if (!(await caches.match(u))) todo.push(u);

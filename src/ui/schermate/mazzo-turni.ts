@@ -1,22 +1,22 @@
 // ui/schermate/mazzo-turni.ts: finestra del mazzo dei turni (scarti e mazzo dei turni in una riga, carte da spostare
 // con il dito o con due tocchi, Rivela / Copri, Mescola) e scelta "Chi gioca questo turno?" delle carte 1/2 e 3/4.
-// Dipende da: regole/mazzo-turni.ts, stato/ (condivise, stato, partita, salvataggio), ui/testi.ts, ui/componenti
-// (componenti, dialoghi, testata, menu-laterale), ui/eventi.ts, ui/schermate/turno-nemesi. Usato da: eventi (barra dei
-// turni), turno nemesi, turno giocatori, componenti, testata, menu laterale (animDone).
+// Il mazzo dei turni si cambia con stato/partita.ts: applicaBozzaTurni a ogni modifica della finestra (senza undo),
+// aggiungiPassoUndo alla chiusura (un passo per visita), conMazzoTurni per disegnare l'anteprima della barra.
+// Dipende da: regole/mazzo-turni.ts (bozza), stato/partita.ts, ui/ (testi, pagina, eventi), ui/componenti (componenti,
+// dialoghi, testata, menu-laterale), ui/schermate/turno-nemesi. Usato da: eventi (barra dei turni), turno nemesi,
+// turno giocatori, componenti, testata, menu laterale (animDone).
 
 import * as Turni from '../../regole/mazzo-turni.ts';
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { app, byId, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.ts';
-import { chooseTurnPlayer, currentTurnCard, isPairCard, pairOptions, turnCardPlayer } from '../../stato/partita.ts';
+import { aggiungiPassoUndo, applicaBozzaTurni, conMazzoTurni, currentTurnCard, isPairCard, pairOptions, turnCardPlayer, partita, snapshot } from '../../stato/partita.ts';
 import { el, icon, need, query } from '../componenti/componenti.ts';
 import { announce, button, dialogShell, modals, openModal } from '../componenti/dialoghi.ts';
-import { pushUndo, save, snapshot } from '../../stato/salvataggio.ts';
 import { fitPhaseName, render } from './turno-nemesi.ts';
-import { renderTurnTrack, turnTrack } from '../eventi.ts';
+import { renderTurnTrack, turnTrack, chooseTurnPlayer } from '../eventi.ts';
 import { headerPiles } from '../componenti/testata.ts';
 import { openSideMenu } from '../componenti/menu-laterale.ts';
 import type { BozzaTurni, CartaTurno, Giocatore, MazzoTurni } from '../../tipi/partita.ts';
+import { app, byId, mainEl, nemesisBtn, reducedMotion, ui } from '../pagina.ts';
 
 // Carta toccata o presa nella finestra: del mazzo (posizione dalla cima) o degli scarti (posizione negli scarti)
 interface Selezione {
@@ -56,7 +56,7 @@ export interface FinestraTurni {
 // un tondino con il suo numero nel suo colore (.ae-turn-card-who). i: posizione negli scarti (drawn), -1 = nel mazzo.
 // order: turnOrder o la bozza della finestra
 export function turnCardFace(kind: CartaTurno, i: number | undefined, tag: 'span' | 'button' = 'span',
-  order: Pick<MazzoTurni, 'history' | 'waiting' | 'picks'> = G.turnOrder): HTMLSpanElement | HTMLButtonElement {
+  order: Pick<MazzoTurni, 'history' | 'waiting' | 'picks'> = partita.turnOrder): HTMLSpanElement | HTMLButtonElement {
   const who = turnCardPlayer(kind, i, order);
   const face = el(tag, 'ae-turn-card');
   face.dataset.kind = who || kind;
@@ -72,7 +72,7 @@ export function turnCardFace(kind: CartaTurno, i: number | undefined, tag: 'span
   return face;
 }
 
-export function turnCardName(kind: CartaTurno, i: number | undefined, order: Pick<MazzoTurni, 'history' | 'waiting' | 'picks'> = G.turnOrder): string {
+export function turnCardName(kind: CartaTurno, i: number | undefined, order: Pick<MazzoTurni, 'history' | 'waiting' | 'picks'> = partita.turnOrder): string {
   const who = turnCardPlayer(kind, i, order);
   if (kind === 'nemesis') return I18N_IT.trackNemesisName;
   if (kind === 'wild') return who ? I18N_IT.trackWildOf(Number(who.slice(1))) : I18N_IT.trackWildName;
@@ -121,8 +121,7 @@ export function turnDeckMovable(d: BozzaTurni, i: number): boolean {
 // Scrive la bozza nel mazzo dei turni (il turno in corso continua sempre). Senza passo di undo: il passo di undo è uno
 // solo per tutta la visita della finestra, aggiunto alla chiusura (openTurnScreen, shut)
 export function saveTurnDraft(d: BozzaTurni): void {
-  Turni.applyTurnDraft(G.turnOrder, d);
-  save();
+  applicaBozzaTurni(d);
   render();
 }
 
@@ -137,17 +136,18 @@ export function viewOnlyCopy(node: HTMLElement): HTMLElement {
 }
 
 // Copia della barra della fase con la bozza della finestra (carte note, turno annullato): per un attimo turnOrder è la
-// bozza, si disegna la barra e la si copia, poi si rimette tutto. ui.trackPreview evita scelta 1/2 o 3/4 e riquadro.
+// bozza (stato/partita.ts, conMazzoTurni), si disegna la barra e la si copia, poi si rimette tutto. ui.trackPreview
+// evita scelta 1/2 o 3/4 e riquadro.
 export function trackPreviewCopy(d: BozzaTurni): HTMLElement {
-  const real = G.turnOrder;
+  const real = partita.turnOrder;
   ui.trackPreview = true;
   try {
-    G.turnOrder = Object.assign({}, real, { left: d.left, known: d.known, drawn: d.drawn, picks: d.picks, pairNext: d.pairNext,
-      history: d.history, waiting: d.waiting });
-    renderTurnTrack();
-    return viewOnlyCopy(turnTrack);
+    return conMazzoTurni(Object.assign({}, real, { left: d.left, known: d.known, drawn: d.drawn, picks: d.picks, pairNext: d.pairNext,
+      history: d.history, waiting: d.waiting }), () => {
+      renderTurnTrack();
+      return viewOnlyCopy(turnTrack);
+    });
   } finally {
-    G.turnOrder = real;
     renderTurnTrack();
     ui.trackPreview = false;
   }
@@ -172,8 +172,8 @@ export function openTurnScreen(): void {
   if (turnDeckBlocked()) return;
   // d.old: carte già note all'apertura (scurite, si spostano solo dalla cima); parallelo a d.left, solo nella finestra
   const fresh = (order: MazzoTurni | BozzaTurni) => { const x = turnDraftFrom(order); x.old = x.known.slice(); return x; };
-  const initial = fresh(G.turnOrder);
-  let d = fresh(G.turnOrder);
+  const initial = fresh(partita.turnOrder);
+  let d = fresh(partita.turnOrder);
   let savedKey = turnDraftKey(d);
   // Fotografia della partita all'apertura: alla chiusura, se il mazzo dei turni è cambiato, diventa l'unico passo di
   // undo della visita (Annulla porta da dopo tutte le modifiche a prima di tutte)
@@ -992,8 +992,7 @@ export function openTurnScreen(): void {
     if (committed) return;
     committed = true;
     if (!dirty()) return;
-    pushUndo(before);
-    save();
+    aggiungiPassoUndo(before);
   }
   function tryClose() {
     if (drag) { endDrag(false); return; }
@@ -1080,12 +1079,12 @@ export let pairDock: HTMLDivElement;
 
 export function needsPairChoice(): boolean {
   const cur = currentTurnCard();
-  return !G.resolving && !ui.deckBuilding && isPairCard(cur) && !turnCardPlayer(cur);
+  return !partita.resolving && !ui.deckBuilding && isPairCard(cur) && !turnCardPlayer(cur);
 }
 
 // Carta 1/2 o 3/4 in attesa di scelta (giro e posizione): la finestra ridotta vale solo per questa carta
 export function pairChoiceKey(): string {
-  return G.turnOrder.round + ':' + ((G.turnOrder.history || []).length - 1);
+  return partita.turnOrder.round + ':' + ((partita.turnOrder.history || []).length - 1);
 }
 
 export function pairButtons(kind: CartaTurno | null, cls: string, label: (p: Giocatore) => string): HTMLButtonElement[] {

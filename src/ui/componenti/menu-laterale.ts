@@ -1,25 +1,25 @@
 // ui/componenti/menu-laterale.ts: sfondo dell'app e di Gravehold, menu laterale della partita, scelta del dorso delle
 // carte, pulsanti tenuti premuti, swipe per chiudere, scorrimento con la rotella; in avvio i pulsanti principali.
-// Dipende da: stato/ (condivise, stato, salvataggio), ui/testi.ts, ui/componenti (componenti, dialoghi, scarti,
+// Dipende da: stato/partita.ts (lettura), ui/ (testi, pagina, ripristino), ui/componenti (componenti, dialoghi, scarti,
 // pesca-undo), ui/schermate (turno-giocatori, opzioni, turno-nemesi, mazzo-turni, statistiche, crea-mazzo, test),
 // avvio.ts (init). Usato da: opzioni (scelte di sfondo e dorso), turno nemesi (vite), mazzo dei turni, pesca-undo.
 
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { app, backBtn, CARD_BACKS, cssUrl, currentCardBack, focusEl, menuBtn, nemesisBtn, queueViewport, rail, reducedMotion, resolveBtn, resumeBtn, retryBtn, setCardBack, startBtn, startLayer, ui, undoBtn } from '../../stato/stato.ts';
 import { el, query } from './componenti.ts';
 import { button, dialogShell, openModal } from './dialoghi.ts';
 import { sizeQueue } from '../schermate/turno-giocatori.ts';
 import { openDiscard } from './scarti.ts';
 import { onStartClick, openStart, resumeGame } from '../schermate/opzioni.ts';
-import { undo } from '../../stato/salvataggio.ts';
-import { backToActive, buzz, onNemesisClick, onResolveClick, render, renderLives, sizeFocus } from '../schermate/turno-nemesi.ts';
+import { backToActive, buzz, onNemesisClick, onResolveClick, render, renderLives, resetFocusSignature, setCancelDraftsBtn, sizeFocus } from '../schermate/turno-nemesi.ts';
 import { animDone } from '../schermate/mazzo-turni.ts';
 import { showVictory } from '../schermate/statistiche.ts';
-import { buildDeckSlider, rebuildDeck } from '../schermate/crea-mazzo.ts';
+import { createDeckSlider, rebuildDeck } from '../schermate/crea-mazzo.ts';
 import { openExitConfirm, openUndoFloat } from './pesca-undo.ts';
 import { restartScenario } from '../schermate/test.ts';
 import { init } from '../../avvio.ts';
+import { partita } from '../../stato/partita.ts';
+import { app, backBtn, CARD_BACKS, cssUrl, currentCardBack, focusEl, menuBtn, nemesisBtn, queueViewport, rail, reducedMotion, resolveBtn, resumeBtn, retryBtn, setCardBack, startBtn, startLayer, ui, undoBtn } from '../pagina.ts';
+import { undo } from '../ripristino.ts';
 
 // Uno sfondo (dell'app o del box della vita di Gravehold)
 export interface Sfondo {
@@ -107,8 +107,8 @@ export function openSideMenu(leave?: () => void): void {
   const panel = dialogShell(I18N_IT.menu, '', cancel, { displayTitle: false });
   panel.classList.add('ae-side-menu');
   const statsList = el('dl', 'ae-side-stats');
-  statsList.append(el('dt', '', I18N_IT.menuTurn), el('dd', '', String(G.turn)),
-    el('dt', '', I18N_IT.menuDeck), el('dd', '', String(G.deck.length)));
+  statsList.append(el('dt', '', I18N_IT.menuTurn), el('dd', '', String(partita.turn)),
+    el('dt', '', I18N_IT.menuDeck), el('dd', '', String(partita.deck.length)));
   // Sfondo: anteprima dello sfondo scelto con il nome; si tocca per scegliere tra le anteprime di tutti gli sfondi
   const bgRow = el('div', 'ae-side-field ae-side-field--row');
   bgRow.append(el('span', 'ae-side-field-label', I18N_IT.background), backgroundChoiceButton(null, { compact: true }));
@@ -119,19 +119,19 @@ export function openSideMenu(leave?: () => void): void {
   // Dorso delle carte: miniatura del dorso scelto con il nome; si tocca per scegliere tra tutti i dorsi
   const backRow = el('div', 'ae-side-field ae-side-field--row');
   backRow.append(el('span', 'ae-side-field-label', I18N_IT.cardBack), cardBackChoiceButton(null, { compact: true }));
-  const discardOpen = button(I18N_IT.discardButton(G.discard.length), 'secondary', () => { go(); openDiscard(); });
+  const discardOpen = button(I18N_IT.discardButton(partita.discard.length), 'secondary', () => { go(); openDiscard(); });
   discardOpen.classList.add('ae-button--full');
-  discardOpen.setAttribute('aria-label', I18N_IT.discardButtonLabel(G.discard.length));
+  discardOpen.setAttribute('aria-label', I18N_IT.discardButtonLabel(partita.discard.length));
   // Nemesi uccisa al tavolo (vita a 0): si va alla schermata Vittoria; la partita non cambia (Chiudi torna indietro)
   const killed = button(I18N_IT.nemesisKilled, 'secondary', () => { go(); showVictory(); });
   killed.classList.add('ae-button--full');
   // Esci dalla partita (rosso): finestra di conferma, poi il menu iniziale (Modalità test: "Esci dal test")
-  const exit = button(G.testRun ? I18N_IT.testExit : I18N_IT.exitGame, 'danger', () => openExitConfirm(() => { go(); openStart(); }));
+  const exit = button(partita.testRun ? I18N_IT.testExit : I18N_IT.exitGame, 'danger', () => openExitConfirm(() => { go(); openStart(); }));
   exit.classList.add('ae-button--full', 'ae-side-exit', 'ae-hold-exit');
   // Undo: annulla l'ultima azione (prima le modifiche non salvate)
   const undoItem = button(I18N_IT.undoAction, 'secondary', () => { go(); undo(); openUndoFloat(); });
   undoItem.classList.add('ae-button--full');
-  undoItem.disabled = G.undoStack.length === 0 && ui.drafts.size === 0;
+  undoItem.disabled = partita.undoStack.length === 0 && ui.drafts.size === 0;
   const items: HTMLElement[] = [statsList, undoItem, discardOpen, killed];
   // Durante "Crea mazzo": Ricomincia la partita (mazzo nuovo con la stessa nemesi e gli stessi giocatori)
   if (ui.deckBuilding) {
@@ -140,7 +140,7 @@ export function openSideMenu(leave?: () => void): void {
     items.splice(1, 0, restart);
   }
   // Modalità test: "Ricomincia lo scenario" (di nuovo dallo stato iniziale, undo vuoto)
-  if (G.testRun) {
+  if (partita.testRun) {
     const restartTest = button(I18N_IT.testRestart, 'secondary', () => { go(); restartScenario(); });
     restartTest.classList.add('ae-button--full', 'ae-side-test-restart');
     items.splice(1, 0, restartTest);
@@ -262,7 +262,7 @@ export function openCardBackPicker(onChosen: (() => void) | null, onClosed: (() 
       close();
       if (onChosen) onChosen();
       // Il carosello si ridisegna anche se non è cambiato niente, così il dorso da pescare prende quello nuovo
-      G.focusSignature = '';
+      resetFocusSignature();
       if (startLayer.hidden) render();
     });
     grid.appendChild(item);
@@ -401,20 +401,19 @@ export function avvio(): void {
   // Turno giocatori con modifiche non salvate: "Annulla modifiche" accanto a "Salva modifiche" (stessa riga) toglie tutte
   // le bozze (vita dei minion, costi pagati); non è un passo di undo, perché le bozze non sono ancora nella partita
   const cancelDrafts = el('button', 'ae-button ae-button--secondary ae-cancel-drafts', I18N_IT.cancelChanges);
-  G.cancelDraftsBtn = cancelDrafts;
+  setCancelDraftsBtn(cancelDrafts);
   cancelDrafts.type = 'button';
   cancelDrafts.hidden = true;
 
   {
     const row = el('div', 'ae-main-row');
     nemesisBtn.before(row);
-    const slider = buildDeckSlider();
-    G.deckSlider = slider;
+    const slider = createDeckSlider();
     row.append(cancelDrafts, nemesisBtn, slider.box);
   }
 
   cancelDrafts.addEventListener('click', () => {
-    if (G.resolving || ui.isTransitioning || !ui.drafts.size) return;
+    if (partita.resolving || ui.isTransitioning || !ui.drafts.size) return;
     ui.drafts.clear();
     render();
     nemesisBtn.focus({ preventScroll: true });

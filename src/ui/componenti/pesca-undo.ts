@@ -1,20 +1,20 @@
 // ui/componenti/pesca-undo.ts: passo Pesca animato, undo sospeso, "Pesca carta" dal mazzo in alto, conferma di uscita,
 // passaggio dalla pagina iniziale alla partita. Provvisorio.
-// Dipende da: stato/ (condivise, stato, salvataggio), ui/testi.ts, ui/componenti (componenti, dialoghi, testata,
-// menu-laterale), ui/schermate (opzioni, turno-nemesi, crea-mazzo). Usato da: menu laterale, eventi, turno nemesi,
-// menu, avvio (Indietro).
+// Dipende da: stato/partita.ts (lettura, scartaCimaDelMazzo), ui/ (testi, pagina, ripristino), ui/componenti
+// (componenti, dialoghi, testata, menu-laterale), ui/schermate (opzioni, turno-nemesi, crea-mazzo). Usato da: menu
+// laterale, eventi, turno nemesi, menu, avvio (Indietro).
 
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { CARD_BACK, app, focusEl, reducedMotion, startLayer, ui } from '../../stato/stato.ts';
 import { cardArt, el, query } from './componenti.ts';
 import { button, dialogShell, loadImage, openModal, showToast } from './dialoghi.ts';
 import { closeStart } from '../schermate/opzioni.ts';
-import { act, lockFor, undo } from '../../stato/salvataggio.ts';
 import { DRAW_UID, render, scrollFocusTo } from '../schermate/turno-nemesi.ts';
 import { dockDeck, flyToDiscard } from './testata.ts';
 import { specificCardsOf } from '../schermate/crea-mazzo.ts';
 import { currentBackground } from './menu-laterale.ts';
+import { partita, scartaCimaDelMazzo } from '../../stato/partita.ts';
+import { CARD_BACK, app, focusEl, reducedMotion, startLayer, ui } from '../pagina.ts';
+import { lockFor, undo } from '../ripristino.ts';
 
 // Passo Pesca: una carta coperta parte dal mazzo in alto a sinistra e vola al centro, dove diventa la carta da pescare
 // (che resta nascosta finché la copia non arriva). Poi tutto funziona come prima (tocco sul dorso o "Pesca").
@@ -75,7 +75,7 @@ export function openUndoFloat(): void {
     sync();
   });
   b.classList.add('ae-undo-float-button');
-  const sync = () => { b.disabled = G.undoStack.length === 0 && ui.drafts.size === 0; };
+  const sync = () => { b.disabled = partita.undoStack.length === 0 && ui.drafts.size === 0; };
   layer.addEventListener('click', e => { if (e.target === layer) closeUndoFloat(); });
   layer.appendChild(b);
   document.body.appendChild(layer);
@@ -105,7 +105,7 @@ export function openDeckPopover(): void {
     openDeckDraw();
   });
   b.classList.add('ae-deck-popover-button');
-  b.disabled = G.deck.length === 0;
+  b.disabled = partita.deck.length === 0;
   b.style.left = Math.max(8, r.left) + 'px';
   b.style.top = (r.bottom + 8) + 'px';
   layer.addEventListener('click', e => { if (e.target === layer) closeDeckPopover(); });
@@ -136,7 +136,7 @@ export function openExitConfirm(onExit: () => void): void {
 }
 
 export function openDeckDraw(): void {
-  const data = G.deck[G.deck.length - 1];
+  const data = partita.deck[partita.deck.length - 1];
   if (!data) return;
   let close = () => {};
   const putBack = () => { close(); showToast(I18N_IT.cardPutBack(data.name)); };
@@ -148,7 +148,7 @@ export function openDeckDraw(): void {
   const discardBtnEl = button(I18N_IT.discardDrawn, 'danger', () => {
     const source = art.getBoundingClientRect().width ? art : null;
     // La carta in cima va negli scarti (la finestra è aperta solo con il mazzo non vuoto)
-    act(() => { const top = G.deck.pop(); if (top) G.discard.push(top); });
+    scartaCimaDelMazzo();
     // La carta vola dalla finestra alla pila degli scarti
     if (source) flyToDiscard([source]);
     close();

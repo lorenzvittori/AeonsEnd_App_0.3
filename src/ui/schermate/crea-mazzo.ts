@@ -1,22 +1,23 @@
 // ui/schermate/crea-mazzo.ts: "Crea mazzo": i 9 mazzi da cui nasce il mazzo nemesi, il cursore da trascinare, le
 // carte Specifiche in grande, la finestra della nemesi con il numero di giocatori.
-// Dipende da: stato/ (condivise, stato, partita, salvataggio), dati/ (dati, rete), ui/testi.ts, ui/componenti
+// Ricomincia e cambio dei giocatori rifanno la partita da zero con stato/partita.ts (nuovaPartita).
+// Dipende da: stato/ (catalogo, preferenze, partita), dati/ (dati, rete), ui/ (testi, pagina, ripristino), ui/componenti
 // (componenti, dialoghi, testata), ui/schermate/turno-nemesi. Usato da: opzioni (inizio partita), menu laterale (cursore,
-// Ricomincia), testata, pesca-undo (immagini delle Specifiche), stato/salvataggio.ts (closeDeckBuild).
+// Ricomincia), testata, turno-nemesi (cursore), pesca-undo (immagini delle Specifiche), ui/ripristino.ts (closeDeckBuild).
 
-import { G } from '../../stato/condivise.ts';
-import type { CursoreMazzo } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { CARD_BACK, app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.ts';
 import { battleOf, shuffle } from '../../dati/dati.ts';
-import { deckPlan, newGame } from '../../stato/partita.ts';
+import { deckPlan, nuovaPartita, partita } from '../../stato/partita.ts';
 import { cardArt, el, query, queryAll } from '../componenti/componenti.ts';
 import { button, closeAllModals, dialogShell, openModal } from '../componenti/dialoghi.ts';
-import { clearTransition, lockFor } from '../../stato/salvataggio.ts';
 import { TIER_BANNER_MS, buzz, render, showBanner } from './turno-nemesi.ts';
 import { dockDeck, renderDockPiles } from '../componenti/testata.ts';
 import { prefetchDeckImages } from '../../dati/rete.ts';
 import type { Carta } from '../../tipi/dati.ts';
+import { catalogo } from '../../stato/catalogo.ts';
+import { preferenze } from '../../stato/preferenze.ts';
+import { CARD_BACK, app, mainEl, nemesisBtn, reducedMotion, ui } from '../pagina.ts';
+import { clearTransition, lockFor } from '../ripristino.ts';
 
 // --- Creazione del mazzo nemesi (dopo "Inizia partita") ---
 // Si vedono i 9 mazzi da cui nasce il mazzo nemesi: righe Tier 1-3, colonne Base / Potenziate / Specifiche. Base e
@@ -25,7 +26,7 @@ import type { Carta } from '../../tipi/dati.ts';
 // "Crea mazzo" fa volare le carte una alla volta nel mazzo nemesi in alto a sinistra: prima il Tier 3 (in fondo al
 // mazzo), poi il 2, poi l'1 (in cima), senza pause tra un Tier e l'altro; dentro ogni Tier le carte partono in ordine
 // casuale dai tre mazzi. Il numero del mazzo sale a ogni carta. Alla fine la schermata sparisce e si è nel turno
-// giocatori. Il mazzo vero è già fatto (newGame): l'animazione lo mostra soltanto.
+// giocatori. Il mazzo vero è già fatto (nuovaPartita): l'animazione lo mostra soltanto.
 
 const KINDS = ['basic', 'upgraded', 'specific'] as const;
 
@@ -50,7 +51,7 @@ interface VoloMazzo {
 
 // Carte Specifiche della nemesi della partita per un Tier (come in buildDeck)
 export function specificCardsOf(tier: number): Carta[] {
-  return G.allCards.filter(c => c.category === 'Specific' && c.nemesis === G.settings.nemesis && c.inNemesisDeck === true && c.tier === tier);
+  return catalogo.allCards.filter(c => c.category === 'Specific' && c.nemesis === preferenze.settings.nemesis && c.inNemesisDeck === true && c.tier === tier);
 }
 
 export function showDeckBuild(): void {
@@ -123,7 +124,7 @@ export function openSpecificViewer(tier: number): void {
   if (!cards.length) return;
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.specificTitle, G.settings.nemesis, cancel, { displayTitle: false });
+  const dialog = dialogShell(I18N_IT.specificTitle, preferenze.settings.nemesis, cancel, { displayTitle: false });
   dialog.classList.add('ae-spec-viewer');
   const nav = el('div', 'ae-spec-tiers');
   const dots: { d: HTMLSpanElement; group: HTMLButtonElement }[] = [];
@@ -184,14 +185,14 @@ export function closeDeckBuild(): void {
   const old = document.getElementById('deck-build');
   if (old) old.remove();
   deckFlight = null;
-  if (G.deckSlider) { G.deckSlider.lock(false); G.deckSlider.setProgress(0, true); }
+  if (deckSlider) { deckSlider.lock(false); deckSlider.setProgress(0, true); }
 }
 
 // Ricomincia (Menu, durante "Crea mazzo") o cambio dei giocatori: mazzo nuovo con le scelte correnti, di nuovo i 9 mazzi
 export function rebuildDeck(): void {
   clearTransition();
   closeAllModals();
-  newGame();
+  nuovaPartita();
   ui.deckBuilding = true;
   ui.deckShown = 0;
   ui.deckDark = true;
@@ -209,10 +210,10 @@ export function openGameSetup(): void {
   const dialog = dialogShell(I18N_IT.gameSetupTitle, '', cancel, { displayTitle: false });
   dialog.classList.add('ae-game-setup');
   const head = el('div', 'start-choice-head ae-game-setup-head');
-  head.appendChild(el('p', 'start-choice-info', G.settings.nemesis || ''));
-  const battleNo = battleOf(G.settings.nemesis);
+  head.appendChild(el('p', 'start-choice-info', preferenze.settings.nemesis || ''));
+  const battleNo = battleOf(preferenze.settings.nemesis);
   head.appendChild(el('p', 'ae-game-setup-battle', battleNo ? I18N_IT.battle(battleNo) : I18N_IT.battleMissing));
-  const art = G.settings.nemesis !== null ? G.nemesisArt[G.settings.nemesis] : undefined;
+  const art = preferenze.settings.nemesis !== null ? catalogo.nemesisArt[preferenze.settings.nemesis] : undefined;
   head.classList.toggle('has-art', !!art);
   if (art) {
     const portrait = el('span', 'nemesis-art');
@@ -227,18 +228,18 @@ export function openGameSetup(): void {
   choices.setAttribute('role', 'group');
   choices.setAttribute('aria-labelledby', label.id);
   const renderChoices = () => {
-    const options = G.startOptions;
+    const options = catalogo.startOptions;
     if (!options) throw new TypeError('scelte della pagina iniziale non ancora pronte');
     choices.replaceChildren(...options.players.map(value => {
       const b = el('button', '', String(value));
       b.type = 'button';
-      b.setAttribute('aria-pressed', String(value === G.settings.players));
+      b.setAttribute('aria-pressed', String(value === preferenze.settings.players));
       b.setAttribute('aria-label', I18N_IT.players(value));
       b.addEventListener('click', () => {
-        if (G.settings.players === value) return;
-        G.settings.players = value;
+        if (preferenze.settings.players === value) return;
+        preferenze.settings.players = value;
         // Il mazzo dipende dai giocatori: si rifà, con la finestra ancora aperta
-        newGame();
+        nuovaPartita();
         ui.deckShown = 0;
         showDeckBuild();
         render();
@@ -262,7 +263,7 @@ export function openGameSetup(): void {
 // (e le carte tornano nei loro mazzi). Prima il Tier 3 (in fondo al mazzo), poi il 2, poi l'1; dentro ogni Tier le
 // carte partono in ordine casuale dai tre mazzi.
 // Ogni carta ha una copia (fantasma) che vola dal suo mazzo a quello in alto; DECK_FLY_WINDOW carte sono in volo
-// insieme. Il mazzo vero è già fatto (newGame): l'animazione lo mostra soltanto.
+// insieme. Il mazzo vero è già fatto (nuovaPartita): l'animazione lo mostra soltanto.
 export const DECK_FLY_WINDOW = 3;
 
 // Oltre questa frazione del cursore, al rilascio, il mazzo si completa
@@ -352,7 +353,7 @@ export function setDeckProgress(p: number): void {
     pile.classList.toggle('is-empty', left <= 0);
   });
   const before = ui.deckShown || 0;
-  const shown = Math.min(G.deck.length, landed);
+  const shown = Math.min(partita.deck.length, landed);
   ui.deckShown = shown;
   renderDockPiles();
   if (shown > before) {
@@ -372,7 +373,7 @@ export function finishDeckBuild(): void {
   deckFlight = null;
   ui.deckBuilding = false;
   ui.deckShown = null;
-  if (G.deckSlider) { G.deckSlider.lock(false); G.deckSlider.setProgress(0, true); }
+  if (deckSlider) { deckSlider.lock(false); deckSlider.setProgress(0, true); }
   mainEl.classList.remove('is-deck-building');
   if (layer && layer.animate && !reducedMotion.matches) {
     const fade = layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });
@@ -400,8 +401,8 @@ export function runDeckBuild(): void {
   const from = flight.p;
   const ms = Math.max(250, (1 - from) * Math.min(2400, flight.order.length * 70));
   lockFor(ms + 120, finishDeckBuild);
-  if (G.deckSlider) G.deckSlider.lock(true);
-  tween(from, 1, ms, p => { setDeckProgress(p); if (G.deckSlider) G.deckSlider.setProgress(p); });
+  if (deckSlider) deckSlider.lock(true);
+  tween(from, 1, ms, p => { setDeckProgress(p); if (deckSlider) deckSlider.setProgress(p); });
 }
 
 // Piccola animazione numerica (requestAnimationFrame, con riserva setTimeout per il browser di prova)
@@ -422,6 +423,21 @@ export function tween(from: number, to: number, ms: number, step: (value: number
 
 // Cursore di "Crea mazzo" nel dock, al posto del pulsante principale: box con il quadratino dorato che si trascina a
 // destra. Pulsa finché non lo si tocca. Da tastiera: freccia destra / Invio completano.
+// Cursore del mazzo in fondo allo schermo durante "Crea mazzo" (al posto del pulsante principale)
+export interface CursoreMazzo {
+  box: HTMLElement;              // elemento del cursore
+  lock(on: boolean): void;       // blocca o sblocca il trascinamento
+  setProgress(p: number, instant?: boolean): void; // posizione 0-1
+}
+
+// Il cursore: lo crea all'avvio il menu laterale (createDeckSlider), che lo mette nella riga del pulsante principale
+export let deckSlider: CursoreMazzo | null = null;
+
+export function createDeckSlider(): CursoreMazzo {
+  deckSlider = buildDeckSlider();
+  return deckSlider;
+}
+
 export function buildDeckSlider(): CursoreMazzo {
   const box = el('div', 'ae-deck-slider');
   box.setAttribute('role', 'slider');
@@ -499,5 +515,5 @@ export function buildDeckSlider(): CursoreMazzo {
 
 // Codice eseguito all'avvio, nell'ordine di sempre (il cursore lo crea il menu laterale)
 export function avvio(): void {
-  G.deckSlider = null;
+  deckSlider = null;
 }

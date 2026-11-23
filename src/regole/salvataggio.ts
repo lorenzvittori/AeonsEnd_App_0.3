@@ -3,7 +3,7 @@
 // le carte per id, gli uid nuovi, i giocatori, le nemesi (vita iniziale), il caso e le carte del mazzo dei turni.
 // Restituisce oggetti nuovi; non cambia `g` né la fotografia.
 // Dipende da: regole/mazzo-turni.ts, regole/turno-nemesi.ts, regole/vite.ts, regole/json.ts, tipi/.
-// Usato da: stato/salvataggio.ts (snapshot, restore, save, readSave), test in tests/salvataggio.test.ts.
+// Usato da: stato/partita.ts (snapshot, preparaRipristino), stato/salvataggio.ts (save, readSave), test in tests/salvataggio.test.ts.
 //
 // Formato della fotografia: Fotografia in tipi/salvataggio.ts (il salvataggio è { version, settings, state, undo }).
 // Lettura dei salvataggi senza i campi più recenti (FotografiaLetta): maxTierDrawn = Tier più alto tra coda e scarti;

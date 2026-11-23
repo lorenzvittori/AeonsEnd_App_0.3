@@ -20,7 +20,7 @@ const MAIN_V228: SalvataggioValido = (() => {
   return saved;
 })();
 
-// Partita di prova: i campi della partita più le scelte e il prossimo uid (come G)
+// Partita di prova: i campi della partita più le scelte e il prossimo uid (come in stato/partita.ts)
 type PartitaProva = Partita & { settings: Impostazioni; nextUid: number };
 
 // Fotografia attesa dopo un ripristino. Bug noto (annotato, non corretto): al passo Pesca con carte in coda
@@ -30,7 +30,7 @@ function afterRestore(snap: FotografiaLetta): FotografiaLetta {
   if (s.resolving && s.queue.length && s.newIndex < 0 && s.currentIndex >= s.queue.length) s.currentIndex = s.queue.length - 1;
   return s;
 }
-// Partita come i campi di G usati dalle regole
+// Partita come i campi usati dalle regole (stato/partita.ts)
 function newGame(settings: Impostazioni, random: () => number): PartitaProva {
   const deck = buildDeck(db, allProducts, settings, random).deck;
   return { settings, nextUid: 1, turn: 0, deck, discard: [], queue: [], resolving: false, currentIndex: 0, newIndex: -1,

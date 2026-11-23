@@ -1,19 +1,19 @@
 // ui/schermate/statistiche.ts: schermate Vittoria e Sconfitta, finestra Statistiche (righe, carte, tempi, minion,
 // maghi).
-// Dipende da: stato/ (condivise, partita, salvataggio), ui/testi.ts, ui/componenti (componenti, dialoghi, scarti),
-// ui/eventi.ts (trackDrag), ui/schermate/opzioni (menu iniziale). Usato da: testata (Vittoria a mazzo vuoto), menu
-// laterale ("Nemesi uccisa"), finestra della vita (a 0).
+// Dipende da: stato/ (catalogo, preferenze, partita: lettura e segnaFinePartita), ui/testi.ts, ui/componenti
+// (componenti, dialoghi, scarti), ui/eventi.ts (trackDrag), ui/schermate/opzioni (menu iniziale). Usato da: testata
+// (Vittoria a mazzo vuoto), menu laterale ("Nemesi uccisa"), finestra della vita (a 0).
 
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { isVariableMinion, playerKinds } from '../../stato/partita.ts';
+import { isVariableMinion, playerKinds, partita, segnaFinePartita } from '../../stato/partita.ts';
 import { cardArt, el, icon, typeName } from '../componenti/componenti.ts';
 import { button, dialogShell, openModal } from '../componenti/dialoghi.ts';
 import { openDiscardZoom } from '../componenti/scarti.ts';
 import { openStart } from './opzioni.ts';
-import { save } from '../../stato/salvataggio.ts';
 import { trackDrag } from '../eventi.ts';
 import type { Carta } from '../../tipi/dati.ts';
+import { preferenze } from '../../stato/preferenze.ts';
+import { catalogo } from '../../stato/catalogo.ts';
 
 // Schermata Vittoria: scritta "Vittoria" come il banner dei Tier, ma resta ferma sullo schermo; sotto Statistiche e
 // Menu iniziale; un tocco su una parte vuota torna alla partita com'era. Si apre da sola (checkVictory) o dal Menu
@@ -25,8 +25,7 @@ export function showDefeat(): void { showEndScreen(I18N_IT.defeatTitle, true); }
 
 export function showEndScreen(text: string, defeat: boolean): void {
   // Fine del tempo di partita (statistiche): l'ultima volta che si arriva alla Vittoria (o alla Sconfitta)
-  G.stats.endedAt = Date.now();
-  save();
+  segnaFinePartita();
   let close = () => {};
   const cancel = () => close();
   const screen = el('div', 'ae-victory-screen' + (defeat ? ' is-defeat' : ''));
@@ -56,27 +55,27 @@ type RigaStatistiche = [string, number, Carta[]?, string?];
 export function openStats(): void {
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.statsTitle, G.settings.nemesis || '', cancel, { displayTitle: false });
+  const dialog = dialogShell(I18N_IT.statsTitle, preferenze.settings.nemesis || '', cancel, { displayTitle: false });
   dialog.classList.add('ae-stats');
   const rows = I18N_IT.statsRows;
   const lists = I18N_IT.statsLists;
-  const ids: Partial<Record<string, string[]>> = (G.stats && G.stats.cards) || {};
-  const byId = (list: string[] | undefined): Carta[] => (Array.isArray(list) ? list : []).map(id => G.cardsById.get(id))
+  const ids: Partial<Record<string, string[]>> = (partita.stats && partita.stats.cards) || {};
+  const byId = (list: string[] | undefined): Carta[] => (Array.isArray(list) ? list : []).map(id => catalogo.cardsById.get(id))
     .filter((c): c is Carta => !!c);
   // Carte giocate: tutte quelle uscite dal mazzo (scarti, dalla più vecchia, e carte ancora in gioco)
-  const played = G.discard.concat(G.queue.map(e => e.data));
+  const played = partita.discard.concat(partita.queue.map(e => e.data));
   // Carte rimanenti: per Tier e nome (l'ordine del mazzo non si mostra). Number: il Tier come nei confronti di JavaScript
-  const left = G.deck.slice().sort((x, y) => Number(x.tier || 0) - Number(y.tier || 0) || x.name.localeCompare(y.name));
+  const left = partita.deck.slice().sort((x, y) => Number(x.tier || 0) - Number(y.tier || 0) || x.name.localeCompare(y.name));
   const list = el('div', 'ae-stats-list');
   const lines: RigaStatistiche[] = [
-    [rows.turns, G.turn],
-    [rows.played, Math.max(0, G.stats.deckSize - G.deck.length), played, lists.played],
-    [rows.left, G.deck.length, left, lists.left],
-    [rows.minionsKilled, G.stats.minionsKilled, byId(ids.minionsKilled), lists.minionsKilled],
-    [rows.powersPaid, G.stats.powersPaid, byId(ids.powersPaid), lists.powersPaid],
-    [rows.powersResolved, G.stats.powersResolved, byId(ids.powersResolved), lists.powersResolved],
-    [rows.aetherSpent, G.stats.aetherSpent],
-    [rows.attacksResolved, G.stats.attacksResolved, byId(ids.attacksResolved), lists.attacksResolved]
+    [rows.turns, partita.turn],
+    [rows.played, Math.max(0, partita.stats.deckSize - partita.deck.length), played, lists.played],
+    [rows.left, partita.deck.length, left, lists.left],
+    [rows.minionsKilled, partita.stats.minionsKilled, byId(ids.minionsKilled), lists.minionsKilled],
+    [rows.powersPaid, partita.stats.powersPaid, byId(ids.powersPaid), lists.powersPaid],
+    [rows.powersResolved, partita.stats.powersResolved, byId(ids.powersResolved), lists.powersResolved],
+    [rows.aetherSpent, partita.stats.aetherSpent],
+    [rows.attacksResolved, partita.stats.attacksResolved, byId(ids.attacksResolved), lists.attacksResolved]
   ];
   lines.forEach(([label, value, cards, listLabel]) => {
     const row = el('dl', 'ae-side-stats ae-stats-row');
@@ -91,10 +90,10 @@ export function openStats(): void {
     el('dd', '', ms === null ? I18N_IT.statsTimeUnknown : formatDuration(ms))));
   // Turni in gioco di ogni minion: prima quelli uccisi, poi quelli ancora in gioco. Ogni minion con la sua carta (le
   // partite vecchie non hanno l'id: si cerca per nome)
-  const minionCard = (m: { id?: string; name: string }): Carta | null => (m.id && G.cardsById.get(m.id)) || G.allCards.find(c => c.type === 'Minion' && c.name === m.name) || null;
+  const minionCard = (m: { id?: string; name: string }): Carta | null => (m.id && catalogo.cardsById.get(m.id)) || catalogo.allCards.find(c => c.type === 'Minion' && c.name === m.name) || null;
   const minions = [
-    ...G.stats.minions.map(m => ({ name: m.name, data: minionCard(m), turns: m.turns, alive: false })),
-    ...G.queue.filter(e => e.data.type === 'Minion').map(e => ({ name: e.data.name, data: e.data, turns: Math.max(0, G.turn - (e.bornTurn || 0)), alive: true }))
+    ...partita.stats.minions.map(m => ({ name: m.name, data: minionCard(m), turns: m.turns, alive: false })),
+    ...partita.queue.filter(e => e.data.type === 'Minion').map(e => ({ name: e.data.name, data: e.data, turns: Math.max(0, partita.turn - (e.bornTurn || 0)), alive: true }))
   ];
   const minionTitle = el('h3', 'ae-stats-subtitle', I18N_IT.statsMinionsTitle);
   let minionList: HTMLElement;
@@ -131,7 +130,7 @@ export function openStats(): void {
   const body = magesTable.appendChild(el('tbody'));
   // Una riga per giocatore (il wild non ha una riga sua: i suoi turni contano per il giocatore che era wild)
   playerKinds().forEach(kind => {
-    const m = (G.stats.mages && G.stats.mages[kind]) || { damage: 0, powers: 0, kills: 0 };
+    const m = (partita.stats.mages && partita.stats.mages[kind]) || { damage: 0, powers: 0, kills: 0 };
     const tr = el('tr');
     const name = el('th', '');
     name.scope = 'row';
@@ -151,9 +150,9 @@ export function openStats(): void {
 // Tempi delle statistiche: [etichetta, millisecondi o null]. La fine è la Vittoria (stats.endedAt) o adesso.
 // Il tempo è quello dell'orologio: comprende anche le pause con l'app chiusa.
 export function statsTimes(): [string, number | null][] {
-  const start = G.stats.startedAt;
-  const at = G.stats.tierAt || {};
-  const end = G.stats.endedAt || Date.now();
+  const start = partita.stats.startedAt;
+  const at = partita.stats.tierAt || {};
+  const end = partita.stats.endedAt || Date.now();
   if (!start) return [[I18N_IT.statsTime, null], [I18N_IT.statsTierTime(1), null], [I18N_IT.statsTierTime(2), null], [I18N_IT.statsTierTime(3), null]];
   const t2 = at[2] || null;
   const t3 = at[3] || null;

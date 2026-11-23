@@ -1,9 +1,9 @@
 // dati/dati.ts: lettura dei file JSON, caso del browser (shuffle) e battaglia della nemesi.
-// Dipende da: regole/ (caso, mazzo-nemesi), stato/condivise.ts. Usato da: avvio.ts, ui/.
+// Dipende da: regole/ (caso, mazzo-nemesi), stato/catalogo.ts. Usato da: avvio.ts, ui/.
 
-import { G } from '../stato/condivise.ts';
 import * as Caso from '../regole/caso.ts';
 import * as Mazzo from '../regole/mazzo-nemesi.ts';
+import { catalogo } from '../stato/catalogo.ts';
 
 // Un file JSON di public/ (senza cache del browser). Il contenuto è `unknown`: lo controlla chi lo usa
 // (dati/controllo.ts per i dati delle carte)
@@ -26,7 +26,7 @@ export function pickRandom<T>(cards: readonly T[], n: number): T[] {
 
 // La battaglia dipende dal boss scelto (colonna Expedition Battle di nemesis.json)
 export function battleOf(nemesisName: string | null): number | null {
-  return Mazzo.battleOf({ nemeses: G.nemeses }, nemesisName);
+  return Mazzo.battleOf({ nemeses: catalogo.nemeses }, nemesisName);
 }
 
 // Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)

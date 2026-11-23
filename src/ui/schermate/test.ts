@@ -1,23 +1,27 @@
 // ui/schermate/test.ts: Modalità test: scenari (partite che partono già in un momento preciso) e schermata Test.
-// Dipende da: stato/ (condivise, stato, partita, salvataggio), dati/rete.ts, ui/testi.ts, ui/componenti (componenti,
-// dialoghi, scarti), ui/schermate (opzioni, turno-nemesi). Usato da: menu iniziale (Test), menu laterale (Ricomincia lo
-// scenario), prove degli operatori (app.SCENARI, app.startScenario).
+// La partita dello scenario la mettono stato/partita.ts (iniziaProva, impostaUndo, esciDalTest) e ui/ripristino.ts
+// (restore, come una ripresa).
+// Dipende da: stato/ (catalogo, preferenze, partita), dati/rete.ts, ui/ (testi, pagina, ripristino), ui/componenti
+// (componenti, dialoghi, scarti, testata), ui/schermate (opzioni, turno-nemesi). Usato da: menu iniziale (Test), menu
+// laterale (Ricomincia lo scenario), prove degli operatori (app.SCENARI, app.startScenario).
 
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { emptyStats, nemesisBtn, resolveBtn, startLayer, ui } from '../../stato/stato.ts';
-import { aetherCost, emptyPairNext, isVariableMinion, makeEntry } from '../../stato/partita.ts';
+import { aetherCost, emptyPairNext, esciDalTest, impostaUndo, iniziaProva, isVariableMinion, makeEntry, partita, emptyStats } from '../../stato/partita.ts';
+import { resetVictoryKey } from '../componenti/testata.ts';
 import { el, icon, query } from '../componenti/componenti.ts';
 import { closeAllModals, showToast, updateInert } from '../componenti/dialoghi.ts';
 import { closeDiscard } from '../componenti/scarti.ts';
 import { closeStart } from './opzioni.ts';
-import { clearTransition, restore } from '../../stato/salvataggio.ts';
 import { render } from './turno-nemesi.ts';
 import { prefetchDeckImages } from '../../dati/rete.ts';
 import { jsonCopy } from '../../regole/json.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import type { CartaTurno, Giocatore, MemoriaCoppie, SceltaCoppia, StatisticheMago } from '../../tipi/partita.ts';
 import type { FotografiaLetta, VoceLetta } from '../../tipi/salvataggio.ts';
+import { catalogo } from '../../stato/catalogo.ts';
+import { preferenze } from '../../stato/preferenze.ts';
+import { nemesisBtn, resolveBtn, startLayer, ui } from '../pagina.ts';
+import { clearTransition, restore } from '../ripristino.ts';
 
 // --- Modalità test --------------------------------------------------------------------------------------------------
 // Dal menu iniziale ("Test") si sceglie uno scenario: la partita parte già in un momento preciso, senza giocarla fino
@@ -191,7 +195,7 @@ export const SCENARI: Scenario[] = [
 export function scenarioCard(ref: CartaScenario): Carta {
   const name = typeof ref === 'string' ? ref : ref.name;
   const box = typeof ref === 'object' && ref.boxCode !== undefined ? String(ref.boxCode) : null;
-  const found = G.allCards.filter(c => c.name === name && (box === null || c.boxCode === box));
+  const found = catalogo.allCards.filter(c => c.name === name && (box === null || c.boxCode === box));
   if (!found.length) throw new Error(I18N_IT.testCardMissing(box ? `${name} (${box})` : name));
   if (found.length > 1) throw new Error(I18N_IT.testCardAmbiguous(name));
   return found[0];
@@ -212,7 +216,7 @@ export function buildScenarioState(sc: Scenario): FotografiaLetta {
   const stats = Object.assign(emptyStats(deckCards.length + queueCards.length + discardCards.length), {
     minionsKilled: killed.length, powersPaid: paid.length, powersResolved: (st.powersResolved || []).length,
     attacksResolved: (st.attacksResolved || []).length,
-    aetherSpent: paid.reduce((sum, id) => { const card = G.cardsById.get(id); return sum + (card ? aetherCost(card) : 0); }, 0),
+    aetherSpent: paid.reduce((sum, id) => { const card = catalogo.cardsById.get(id); return sum + (card ? aetherCost(card) : 0); }, 0),
     minions: killed, mages: jsonCopy(st.mages || {}),
     cards: { minionsKilled: killed.map(m => m.id), powersPaid: paid, powersResolved: ids(st.powersResolved),
       attacksResolved: ids(st.attacksResolved) },
@@ -249,22 +253,21 @@ export function buildScenarioState(sc: Scenario): FotografiaLetta {
 
 // Avvia (o riavvia) uno scenario. Restituisce null se è partito, altrimenti il motivo (per esempio una carta che manca)
 export function startScenario(sc: Scenario | null | undefined): string | null {
-  if (!G.allCards.length || !sc) return I18N_IT.testNotReady;
+  if (!catalogo.allCards.length || !sc) return I18N_IT.testNotReady;
   let state: FotografiaLetta;
   try {
     state = buildScenarioState(sc);
   } catch (err) {
     return err instanceof Error ? err.message : String(err);
   }
-  if (!G.testRun) G.testRun = { prevSettings: jsonCopy(G.settings) };
-  Object.assign(G.testRun, { id: sc.id, name: sc.name, pairs: typeof sc.pairs === 'boolean' ? sc.pairs : null,
+  iniziaProva({ id: sc.id, name: sc.name, pairs: typeof sc.pairs === 'boolean' ? sc.pairs : null,
     turnCards: Array.isArray(sc.turnCards) ? sc.turnCards.slice() : null });
   clearTransition();
   closeAllModals();
   closeDiscard();
   closeTestScreen();
-  G.settings = { players: sc.players, nemesis: sc.nemesis, battleMode: true, mergeCollection: true };
-  G.undoStack = [];
+  preferenze.settings = { players: sc.players, nemesis: sc.nemesis, battleMode: true, mergeCollection: true };
+  impostaUndo([]);
   ui.drafts.clear();
   ui.deckBuilding = false;
   ui.deckShown = null;
@@ -273,25 +276,23 @@ export function startScenario(sc: Scenario | null | undefined): string | null {
   ui.trackShuffle = false;
   ui.lastDrawnUid = null;
   ui.tierBanner = null;
-  G.victoryKey = '';
+  resetVictoryKey();
   restore(state);
   closeStart();
   render();
   prefetchDeckImages();
-  (G.resolving ? resolveBtn : nemesisBtn).focus({ preventScroll: true });
+  (partita.resolving ? resolveBtn : nemesisBtn).focus({ preventScroll: true });
   return null;
 }
 
-// Fine del test (menu iniziale): tornano le scelte di prima della pagina iniziale. La partita in memoria è quella di
-// test, ma "Riprendi partita" ricarica quella salvata e "Nuova partita" ne fa una nuova
+// Fine del test (menu iniziale): tornano le scelte di prima della pagina iniziale e la partita di test si butta
+// (stato/partita.ts, esciDalTest): "Riprendi partita" ricarica quella salvata, "Nuova partita" ne fa una nuova
 export function endTest(): void {
-  if (!G.testRun) return;
-  G.settings = G.testRun.prevSettings;
-  G.testRun = null;
+  esciDalTest();
 }
 
 export function restartScenario(): void {
-  const run = G.testRun;
+  const run = partita.testRun;
   const sc = run && SCENARI.find(s => s.id === run.id);
   const problem = startScenario(sc);
   if (problem) showToast(problem);

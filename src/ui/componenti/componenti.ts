@@ -1,16 +1,16 @@
 // ui/componenti/componenti.ts: componenti dell'interfaccia: creazione degli elementi (el, icon), immagine della carta,
 // box di vita e token, miniatura della coda, bozze del turno giocatori.
-// Dipende da: regole/turno-nemesi.ts, ui/testi.ts, stato/ (stato, partita), ui/schermate (turno-nemesi: DRAW_UID,
+// Dipende da: regole/turno-nemesi.ts, ui/testi.ts, stato/partita.ts, ui/pagina.ts, ui/schermate (turno-nemesi: DRAW_UID,
 // mazzo-turni: needsPairChoice). Usato da: quasi tutti i moduli di ui/.
 
 import * as Nemesi from '../../regole/turno-nemesi.ts';
 import { I18N_IT } from '../testi.ts';
-import { CARD_BACK, ui } from '../../stato/stato.ts';
 import { hpMaxOf, hpUnset } from '../../stato/partita.ts';
 import { DRAW_UID } from '../schermate/turno-nemesi.ts';
 import { needsPairChoice } from '../schermate/mazzo-turni.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import type { BozzaCarta, VoceInGioco } from '../../tipi/partita.ts';
+import { CARD_BACK, ui } from '../pagina.ts';
 
 // Carta in gioco come si disegna: con la vita in bozza (isDraft) e la vita di prima (hpBefore)
 export interface VoceMostrata extends VoceInGioco {

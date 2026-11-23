@@ -1,31 +1,34 @@
 // ui/schermate/turno-nemesi.ts: turno nemesi (VistaRisoluzione: carosello, fascia, pulsante principale, pesca), vite
 // di Gravehold e della nemesi, banner al centro, e render() di tutta l'app. Provvisorio: render() andrà in ui/.
-// Dipende da: regole/ (vite, turno-nemesi), stato/ (condivise, stato, partita, salvataggio), dati/dati.ts, ui/testi.ts,
-// ui/componenti (componenti, dialoghi, testata, pesca-undo, menu-laterale), ui/eventi.ts, ui/schermate
-// (turno-giocatori, mazzo-turni, statistiche, crea-mazzo). Usato da: quasi tutta l'interfaccia (render), eventi,
-// stato/partita.ts, stato/salvataggio.ts.
+// La partita si legge da stato/partita.ts e si cambia con le sue azioni (pescaCarta, risolviCarta, cambiaVita,
+// pescaCartaTurno, fineTurnoGiocatore); qui le animazioni e il ridisegno dopo l'azione.
+// Dipende da: regole/ (vite, turno-nemesi: solo letture), stato/ (catalogo, preferenze, partita), dati/dati.ts, ui/
+// (testi, pagina, ripristino, eventi), ui/componenti (componenti, dialoghi, testata, pesca-undo, menu-laterale),
+// ui/schermate (turno-giocatori, mazzo-turni, statistiche, crea-mazzo). Usato da: quasi tutta l'interfaccia (render),
+// eventi, ui/ripristino.ts.
 
 import * as Vite from '../../regole/vite.ts';
 import * as Nemesi from '../../regole/turno-nemesi.ts';
-import type { Effetto } from '../../regole/turno-nemesi.ts';
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { app, backBtn, byId, CARD_BACK, CARD_RATIO, cssUrl, DRAW_MS, duration, focusEl, GRAVEHOLD_LIFE, nemesisBtn, nemesisStartLife, phaseLabel, queueView, rail, reducedMotion, resolveBtn, resolveHint, resolveView, ui } from '../../stato/stato.ts';
-import type { CartaDaGirare } from '../../stato/stato.ts';
 import { battleOf } from '../../dati/dati.ts';
-import { awaitingTurnCard, currentTurnCard, drawFirstTurn, entryByUid, hpUnset, isPairCard, nextTurnCard, turnCardPlayer, turnRoundOver } from '../../stato/partita.ts';
+import { awaitingTurnCard, cambiaVita, currentTurnCard, entryByUid, fineTurnoGiocatore, hpUnset, isPairCard, pescaCarta, pescaCartaTurno, risolviCarta, turnCardPlayer, turnRoundOver, partita, GRAVEHOLD_LIFE, nemesisStartLife } from '../../stato/partita.ts';
 import { cardArt, el, hasHp, icon, need, nextCardItem, nextSlotItem, placeholderArt, query, queryAll, queueItem, statusText, tokenIcons } from '../componenti/componenti.ts';
 import { announce, button, loadImage, modals, openModal } from '../componenti/dialoghi.ts';
 import { FAST_SCROLL_MS, cancelFastScroll, centredQueueUid, ensureQueueRail, fastScrollTo, openCardDialog, queueRail, renderQueue, saveAllDrafts, scrollItemInto, updateInfo } from './turno-giocatori.ts';
-import { act, lockFor, updateUndoBtn } from '../../stato/salvataggio.ts';
 import { renderTurnTrack, turnTrack, turnTrackBar } from '../eventi.ts';
 import { animDone, needsPairChoice } from './mazzo-turni.ts';
 import { BG_SLIDE_MS, ENTER_MS, FLY_MS, MORPH_MS, checkVictory, flyToDiscard, renderDockPiles, toPlayersTurn } from '../componenti/testata.ts';
 import { showDefeat, showVictory } from './statistiche.ts';
-import { openGameSetup } from './crea-mazzo.ts';
+import { deckSlider, openGameSetup } from './crea-mazzo.ts';
 import { animateDrawIn } from '../componenti/pesca-undo.ts';
 import { currentGraveholdBg } from '../componenti/menu-laterale.ts';
 import type { TipoVita, VoceInGioco } from '../../tipi/partita.ts';
+import type { CartaPescata } from '../../regole/turno-nemesi.ts';
+import { preferenze } from '../../stato/preferenze.ts';
+import { catalogo } from '../../stato/catalogo.ts';
+import { app, backBtn, byId, CARD_BACK, CARD_RATIO, cssUrl, DRAW_MS, duration, focusEl, nemesisBtn, phaseLabel, queueView, rail, reducedMotion, resolveBtn, resolveHint, resolveView, ui } from '../pagina.ts';
+import type { CartaDaGirare } from '../pagina.ts';
+import { lockFor, updateUndoBtn } from '../ripristino.ts';
 
 // --- VistaRisoluzione (turno nemesi) ---
 
@@ -102,32 +105,32 @@ export function render(): void {
   // fiamma, Assets/ui/icons/flame.png), l'icona del numero di giocatori (Assets/ui/icons/players-1..4.png, usata come
   // maschera) e "Turno N" (giri del mazzo dei turni, nascosto prima del primo turno nemesi); separati da |
   const turnLine = el('span', 'ae-phase-turn');
-  const players = Math.max(1, Math.min(4, Number(G.settings.players) || 1));
+  const players = Math.max(1, Math.min(4, Number(preferenze.settings.players) || 1));
   const playersIcon = el('span', 'ae-players-icon');
   playersIcon.style.setProperty('--ae-players-icon', cssUrl(`Assets/ui/icons/players-${players}.png`));
   playersIcon.setAttribute('role', 'img');
   playersIcon.setAttribute('aria-label', I18N_IT.players(players));
-  const turnText = el('span', '', I18N_IT.turnN(G.turnOrder.round));
-  turnText.hidden = !(G.turnOrder.round >= 1);
-  const battleNo = battleOf(G.settings.nemesis);
+  const turnText = el('span', '', I18N_IT.turnN(partita.turnOrder.round));
+  turnText.hidden = !(partita.turnOrder.round >= 1);
+  const battleNo = battleOf(preferenze.settings.nemesis);
   const battle = el('span', 'ae-battle-flame', battleNo ? String(battleNo) : '?');
   battle.setAttribute('role', 'img');
   battle.setAttribute('aria-label', battleNo ? I18N_IT.battle(battleNo) : I18N_IT.battleMissing);
   const sep = () => { const s = el('span', 'ae-info-sep', '|'); s.setAttribute('aria-hidden', 'true'); return s; };
   const sep2 = sep();
-  sep2.hidden = G.turn < 1;
+  sep2.hidden = partita.turn < 1;
   turnLine.append(battle, sep(), playersIcon, sep2, turnText);
-  phaseLabel.replaceChildren(el('span', 'ae-phase-name', G.settings.nemesis || ''), turnLine);
+  phaseLabel.replaceChildren(el('span', 'ae-phase-name', preferenze.settings.nemesis || ''), turnLine);
   // Modalità test: "TEST · <scenario>" sempre visibile, sotto il nome della nemesi (non copre i comandi)
-  if (G.testRun) phaseLabel.appendChild(el('span', 'ae-phase-test', I18N_IT.testLabel(String(G.testRun.name))));
-  queueView.hidden = G.resolving;
+  if (partita.testRun) phaseLabel.appendChild(el('span', 'ae-phase-test', I18N_IT.testLabel(String(partita.testRun.name))));
+  queueView.hidden = partita.resolving;
   // la classe si toglie solo a vista nascosta (toglierla a vista visibile farebbe ripartire la dissolvenza)
-  if (G.resolving) queueView.classList.remove('is-from-nemesis');
-  resolveView.hidden = !G.resolving;
-  app.classList.toggle('is-nemesis-turn', G.resolving);
-  if (!G.resolving) app.classList.remove('is-draw-phase');
-  nemesisBtn.hidden = G.resolving;
-  nemesisBtn.disabled = !G.deckSetup;
+  if (partita.resolving) queueView.classList.remove('is-from-nemesis');
+  resolveView.hidden = !partita.resolving;
+  app.classList.toggle('is-nemesis-turn', partita.resolving);
+  if (!partita.resolving) app.classList.remove('is-draw-phase');
+  nemesisBtn.hidden = partita.resolving;
+  nemesisBtn.disabled = !catalogo.deckSetup;
   // "Turno Nemesi" con l'illustrazione della nemesi della partita (come nel menu iniziale), velata per leggere la
   // scritta. Turno di un giocatore: niente illustrazione, fondo tenue del colore del giocatore (wild: il colore del
   // giocatore che è wild nel giro; carta 1/2 o 3/4 non ancora scelta: metà e metà dei due colori; attesa di "Pesca carta
@@ -138,38 +141,38 @@ export function render(): void {
   nemesisBtn.classList.toggle('has-player-color', !!playerKind);
   if (playerKind) nemesisBtn.dataset.kind = playerKind;
   else delete nemesisBtn.dataset.kind;
-  const nemesisArtNow = !playerKind && G.settings.nemesis ? G.nemesisArt[G.settings.nemesis] : undefined;
+  const nemesisArtNow = !playerKind && preferenze.settings.nemesis ? catalogo.nemesisArt[preferenze.settings.nemesis] : undefined;
   nemesisBtn.classList.toggle('has-nemesis-art', !!nemesisArtNow);
   if (nemesisArtNow) nemesisBtn.style.setProperty('--ae-nemesis-art', cssUrl(encodeURI(String(nemesisArtNow.portrait))));
   else nemesisBtn.style.removeProperty('--ae-nemesis-art');
   nemesisBtn.setAttribute('aria-disabled', String(ui.isTransitioning));
   // Turno giocatori con modifiche non salvate: il pulsante principale le salva
-  const saving = !G.resolving && ui.drafts.size > 0;
+  const saving = !partita.resolving && ui.drafts.size > 0;
   // A inizio giro (dopo il primo) "Pesca la prima carta turno"; all'ultimo turno del giro "Fine turno · Mischia mazzo"
   // (anche durante l'animazione del mazzo mischiato)
   nemesisBtn.textContent = saving ? I18N_IT.saveChanges
     : ui.trackShuffle ? I18N_IT.endTurnShuffle
-    : awaitingTurnCard() ? (G.turnOrder.round >= 1 && !(G.turnOrder.history || []).length ? I18N_IT.drawFirstTurnCard : I18N_IT.drawTurnCard)
+    : awaitingTurnCard() ? (partita.turnOrder.round >= 1 && !(partita.turnOrder.history || []).length ? I18N_IT.drawFirstTurnCard : I18N_IT.drawTurnCard)
     : turnRoundOver() ? I18N_IT.endTurnShuffle : I18N_IT.endTurn;
   nemesisBtn.classList.toggle('is-save', saving);
   // "Crea mazzo": al posto del pulsante il cursore; sfondo nero fino alla fine del banner "Partita iniziata"
   if (ui.deckBuilding) nemesisBtn.hidden = true;
-  if (G.deckSlider) G.deckSlider.box.hidden = !ui.deckBuilding;
+  if (deckSlider) deckSlider.box.hidden = !ui.deckBuilding;
   app.classList.toggle('is-deck-dark', ui.deckDark);
   app.classList.toggle('is-deck-building', ui.deckBuilding);
   // Nome della nemesi: durante "Crea mazzo" si tocca e apre la finestra con nemesi e giocatori
   const phaseName = phaseLabel.querySelector('.ae-phase-name');
   if (ui.deckBuilding && phaseName) {
-    const nameBtn = el('button', 'ae-phase-name ae-phase-name--button', G.settings.nemesis || '');
+    const nameBtn = el('button', 'ae-phase-name ae-phase-name--button', preferenze.settings.nemesis || '');
     nameBtn.type = 'button';
     nameBtn.setAttribute('aria-haspopup', 'dialog');
     nameBtn.addEventListener('click', openGameSetup);
     phaseName.replaceWith(nameBtn);
   }
   fitPhaseName();
-  if (G.cancelDraftsBtn) {
-    G.cancelDraftsBtn.hidden = !saving || ui.deckBuilding;
-    need(G.cancelDraftsBtn.parentElement, 'riga del pulsante principale').hidden = G.resolving;
+  if (cancelDraftsBtn) {
+    cancelDraftsBtn.hidden = !saving || ui.deckBuilding;
+    need(cancelDraftsBtn.parentElement, 'riga del pulsante principale').hidden = partita.resolving;
   }
   updateInfo();
   renderDockPiles();
@@ -181,7 +184,7 @@ export function render(): void {
     ui.tierBanner = null;
   }
   renderLives();
-  if (G.resolving) renderResolve();
+  if (partita.resolving) renderResolve();
   else {
     resolveBtn.hidden = true;
     backBtn.hidden = true;
@@ -192,7 +195,7 @@ export function render(): void {
 }
 
 export function activeEntry(): VoceInGioco | null {
-  return G.queue[G.currentIndex] || null;
+  return partita.queue[partita.currentIndex] || null;
 }
 
 // Passo "da pescare": tutte le carte in gioco sono state risolte; si vede la prossima carta del mazzo coperta e il
@@ -200,11 +203,11 @@ export function activeEntry(): VoceInGioco | null {
 export const DRAW_UID = -1;
 
 export function isDrawStep(): boolean {
-  return Nemesi.isDrawStep(G);
+  return Nemesi.isDrawStep(partita);
 }
 
 export function canDraw(): boolean {
-  return Nemesi.canDraw(G);
+  return Nemesi.canDraw(partita);
 }
 
 // Testo del pulsante per la carta da risolvere. Anche sull'ultima carta si va solo avanti: la pesca è un passo a parte,
@@ -252,7 +255,7 @@ export function ensureLivesRow(): HTMLDivElement {
 export function renderLives(): void {
   const row = ensureLivesRow();
   const railParent = need(rail.parentElement, 'contenitore della fascia');
-  const anchor = G.resolving ? (railParent.classList.contains('ae-rail-row') ? railParent : rail) : ensureQueueRail();
+  const anchor = partita.resolving ? (railParent.classList.contains('ae-rail-row') ? railParent : rail) : ensureQueueRail();
   if (row.previousElementSibling !== anchor) anchor.after(row);
   row.hidden = !!ui.deckBuilding;
   // Sfondi dei box: Gravehold = immagine scelta nel Menu; nemesi = ritratto della nemesi della partita
@@ -265,9 +268,9 @@ export function renderLives(): void {
   // Il box resta nascosto solo mentre la sua finestra è aperta
   if (!document.querySelector('.ae-life-modal')) queryAll(row, '.ae-life-box', HTMLElement).forEach(b => { b.style.visibility = ''; });
   setBg(lifeBox('grave'), currentGraveholdBg().src);
-  const art = G.settings.nemesis ? G.nemesisArt[G.settings.nemesis] : undefined;
+  const art = preferenze.settings.nemesis ? catalogo.nemesisArt[preferenze.settings.nemesis] : undefined;
   setBg(lifeBox('nemesis'), art && art.portrait);
-  const lives: [TipoVita, string, number][] = [['grave', I18N_IT.graveholdName, G.graveLife], ['nemesis', G.settings.nemesis || '', G.nemesisLife]];
+  const lives: [TipoVita, string, number][] = [['grave', I18N_IT.graveholdName, partita.graveLife], ['nemesis', preferenze.settings.nemesis || '', partita.nemesisLife]];
   lives.forEach(([kind, name, value]) => {
     const b = lifeBox(kind);
     need(b.querySelector('.ae-life-value'), 'numero della vita').textContent = String(value);
@@ -281,8 +284,8 @@ export function renderLives(): void {
 export function openLifeDialog(kind: TipoVita): void {
   if (ui.isTransitioning || modals.length) return;
   const grave = kind === 'grave';
-  const name = grave ? I18N_IT.graveholdName : (G.settings.nemesis || '');
-  const original = grave ? G.graveLife : G.nemesisLife;
+  const name = grave ? I18N_IT.graveholdName : (preferenze.settings.nemesis || '');
+  const original = grave ? partita.graveLife : partita.nemesisLife;
   // Tetto: il valore iniziale, o la vita attuale se è più alta (regole/vite.ts)
   const cap = Vite.lifeCap(original, grave ? GRAVEHOLD_LIFE : nemesisStartLife());
   let draft = original;
@@ -343,7 +346,7 @@ export function openLifeDialog(kind: TipoVita): void {
     const changed = draft !== original;
     const value = draft;
     if (changed) {
-      act(() => { Vite.setLife(G, kind, value); });
+      cambiaVita(kind, value);
       render();
     }
     const done = () => {
@@ -426,7 +429,7 @@ export function renderResolve(): void {
   renderResolveInfo(drawStep);
   const active = activeEntry();
   if (!active && !drawStep) return;
-  const isNewStep = G.newIndex >= 0;
+  const isNewStep = partita.newIndex >= 0;
   const viewedUid = ui.holdUid || ui.viewedUid;
   // Nel passo da pescare la carta "da risolvere" è la carta coperta (DRAW_UID)
   const viewed = (viewedUid === DRAW_UID && drawStep) ? null : (entryByUid(viewedUid) || active);
@@ -438,16 +441,16 @@ export function renderResolve(): void {
   // Fascia compatta: rosso = da risolvere, avorio = mostrata
   const railScroll = rail.scrollLeft;
   const railScrollTop = rail.scrollTop;
-  const railItems: (HTMLButtonElement | HTMLDivElement)[] = G.queue.map((entry, i) => queueItem(entry, {
-    compact: true, index: i, total: G.queue.length, current: entry === active, viewed: entry === viewed
+  const railItems: (HTMLButtonElement | HTMLDivElement)[] = partita.queue.map((entry, i) => queueItem(entry, {
+    compact: true, index: i, total: partita.queue.length, current: entry === active, viewed: entry === viewed
   }));
   // Potere da risolvere: anche nella fascia il token lampeggia e diventa grigio insieme a quello della carta grande.
   // La fascia si ridisegna spesso: l'animazione riparte dal punto giusto (ritardo negativo) o il token resta nascosto.
-  if (G.newIndex < 0 && active && active.data.type === 'Power') {
-    const key = G.turn + ':' + G.currentIndex + ':' + active.uid + ':' + active.tokens;
+  if (partita.newIndex < 0 && active && active.data.type === 'Power') {
+    const key = partita.turn + ':' + partita.currentIndex + ':' + active.uid + ':' + active.tokens;
     // Prima carta del turno: l'animazione parte quando lo sfondo ha finito di scorrere (ui.bgSlideUntil)
     if (ui.autoTokenKey !== key) { ui.autoTokenKey = key; ui.autoTokenAt = Math.max(performance.now(), ui.bgSlideUntil || 0); }
-    const badge = railItems[G.currentIndex] && query(railItems[G.currentIndex], '.ae-status-badge', HTMLElement);
+    const badge = railItems[partita.currentIndex] && query(railItems[partita.currentIndex], '.ae-status-badge', HTMLElement);
     if (badge) {
       badge.classList.add('is-auto-token');
       badge.style.setProperty('--ae-token-delay', (ui.autoTokenAt - performance.now()) + 'ms');
@@ -456,7 +459,7 @@ export function renderResolve(): void {
   // In fondo alla fascia, al passo Pesca: la prossima carta del mazzo, coperta (retro) con NUOVA
   if (drawStep && canDraw()) railItems.push(nextCardItem({ current: drawStep, viewed: viewingDraw }));
   // Fase di risoluzione: al posto della carta da pescare solo una cornice tratteggiata grigia (come mazzo e scarti vuoti)
-  else if (!drawStep && G.newIndex < 0 && canDraw()) railItems.push(nextSlotItem());
+  else if (!drawStep && partita.newIndex < 0 && canDraw()) railItems.push(nextSlotItem());
   rail.replaceChildren(...railItems);
   rail.scrollLeft = railScroll;
   rail.scrollTop = railScrollTop;
@@ -514,6 +517,21 @@ export const PEEK_VISIBLE = 14;
 // spazio tra le carte
 export const PEEK_GAP = 12;
 
+// Firma dello stato disegnato nel carosello (focusStateSignature): se non cambia, il carosello non si ridisegna
+let focusSignature: string | undefined;
+
+// Il carosello va ridisegnato (per esempio dopo il cambio del dorso delle carte)
+export function resetFocusSignature(): void {
+  focusSignature = '';
+}
+
+// "Annulla modifiche" del turno giocatori, accanto al pulsante principale (lo crea il menu laterale all'avvio)
+let cancelDraftsBtn: HTMLButtonElement | null = null;
+
+export function setCancelDraftsBtn(b: HTMLButtonElement): void {
+  cancelDraftsBtn = b;
+}
+
 // Il carosello (creato al primo disegno)
 export let focusTrack: HTMLDivElement | null = null;
 
@@ -541,7 +559,7 @@ export function focusSlide(entry: VoceInGioco): HTMLDivElement {
   const status = focusStatus(entry);
   if (ui.holdUid === entry.uid) status.classList.add('is-dropping', 'is-bumped');
   // Potere da risolvere: dopo 1 secondo un token sfuma da solo (il pulsante poi va solo avanti o scarta)
-  if (G.newIndex < 0 && entry === G.queue[G.currentIndex] && entry.data.type === 'Power') {
+  if (partita.newIndex < 0 && entry === partita.queue[partita.currentIndex] && entry.data.type === 'Power') {
     status.classList.add('is-auto-token');
     // stesso istante della fascia (dopo lo scorrimento dello sfondo, se è la prima carta del turno)
     status.style.setProperty('--ae-token-delay', ((ui.autoTokenAt || 0) - performance.now()) + 'ms');
@@ -550,9 +568,9 @@ export function focusSlide(entry: VoceInGioco): HTMLDivElement {
   // la rotazione. Un attacco pescato lampeggia di rosso.
   if (reveal && reveal.status === 'loading') slide.classList.add('is-draw-loading');
   if (reveal && (reveal.status === 'ready' || reveal.status === 'flipping')) slide.classList.add('is-drawing');
-  if (entry.isNew && G.newIndex >= 0 && entry.data.type === 'Attack' && !(reveal && reveal.status === 'loading')) stage.classList.add('is-attack-drawn');
+  if (entry.isNew && partita.newIndex >= 0 && entry.data.type === 'Attack' && !(reveal && reveal.status === 'loading')) stage.classList.add('is-attack-drawn');
   // Carta da risolvere: lampeggia di rosso come l'attacco pescato (non i poteri con più di un token)
-  if (G.newIndex < 0 && entry === G.queue[G.currentIndex] && !(entry.data.type === 'Power' && Number(entry.tokens) > 1)) {
+  if (partita.newIndex < 0 && entry === partita.queue[partita.currentIndex] && !(entry.data.type === 'Power' && Number(entry.tokens) > 1)) {
     stage.classList.add('is-to-resolve');
   }
   slide.append(status, stage);
@@ -581,7 +599,7 @@ export function drawSlide(): HTMLDivElement {
 }
 
 export function focusStateSignature(): string {
-  return (isDrawStep() || G.newIndex >= 0 ? 'solo' + G.newIndex + ':' + ui.viewedUid + '|' : '') + 'c' + G.currentIndex + '|' + G.queue.map(e => [e.uid, e.hp, e.tokens, e.isNew ? 1 : 0].join(':')).join('|')
+  return (isDrawStep() || partita.newIndex >= 0 ? 'solo' + partita.newIndex + ':' + ui.viewedUid + '|' : '') + 'c' + partita.currentIndex + '|' + partita.queue.map(e => [e.uid, e.hp, e.tokens, e.isNew ? 1 : 0].join(':')).join('|')
     + '#' + (ui.reveal ? ui.reveal.uid + ':' + ui.reveal.status : '') + '#' + (ui.holdUid || '');
 }
 
@@ -591,31 +609,31 @@ export function renderFocus(viewed: { uid: number }): void {
     track = el('div', 'ae-focus-track');
     focusTrack = track;
     focusEl.replaceChildren(track);
-    G.focusSignature = '';
+    focusSignature = '';
   }
   // Token e vita della carta pescata compaiono dopo il banner Tier (se c'è)
   focusEl.style.setProperty('--ae-tier-wait', Math.max(0, Math.round(ui.tierWaitUntil - performance.now())) + 'ms');
   const prevUid = focusEl.dataset.uid;
   const viewedChanged = prevUid !== String(viewed.uid);
   focusEl.dataset.uid = String(viewed.uid);
-  if (focusStateSignature() !== G.focusSignature || !track.children.length) {
+  if (focusStateSignature() !== focusSignature || !track.children.length) {
     // Passo Pesca: si vede solo la carta da girare (le carte già risolte a sinistra spariscono); se si guarda un'altra
     // carta dalla fascia, c'è solo quella accanto
     let slides: HTMLDivElement[];
     // Anche dopo la pesca si vede solo la carta pescata. La carta da pescare e quella pescata sono un po' più grandi.
-    if (isDrawStep() || G.newIndex >= 0) {
-      const drawn = G.newIndex >= 0 ? G.queue[G.newIndex] : null;
+    if (isDrawStep() || partita.newIndex >= 0) {
+      const drawn = partita.newIndex >= 0 ? partita.queue[partita.newIndex] : null;
       const mainUid = drawn ? drawn.uid : DRAW_UID;
       const other = viewed.uid !== mainUid ? entryByUid(viewed.uid) : null;
       const main = drawn ? focusSlide(drawn) : drawSlide();
       main.classList.add('is-big');
       slides = [...(other ? [focusSlide(other)] : []), main];
     } else {
-      slides = G.queue.map(focusSlide);
+      slides = partita.queue.map(focusSlide);
     }
     track.replaceChildren(...slides);
     // La firma si calcola dopo: disegnare la carta pescata può far avanzare il suo stato (pronta → si gira)
-    G.focusSignature = focusStateSignature();
+    focusSignature = focusStateSignature();
     sizeFocus(false);
     const prevStill = prevUid && track.querySelector(`.ae-focus-slide[data-uid="${prevUid}"]`);
     if (prevUid && viewedChanged && prevStill) {
@@ -715,7 +733,7 @@ export function sizeFocus(recentre = true): void {
   sizeColumn(focusEl);
   const style = getComputedStyle(focusEl);
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-  const peekRoom = G.queue.length > 1 ? 2 * (PEEK_VISIBLE + PEEK_GAP) : 0;
+  const peekRoom = partita.queue.length > 1 ? 2 * (PEEK_VISIBLE + PEEK_GAP) : 0;
   const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom));
   focusEl.style.setProperty('--ae-focus-w', width + 'px');
   focusEl.style.setProperty('--cw', width + 'px');
@@ -782,29 +800,20 @@ export function startReveal(entry: VoceInGioco): void {
   loadImage(encodeURI(entry.data.image)).then(ok => {
     if (ui.reveal !== reveal) return;
     reveal.status = ok ? 'ready' : 'error';
-    if (G.resolving) renderResolve();
+    if (partita.resolving) renderResolve();
   });
 }
 
 // Scarica in anticipo le immagini che serviranno: prossima carta del mazzo e carta dopo quella da risolvere
 export function preloadNext(): void {
-  const next = G.deck[G.deck.length - 1];
+  const next = partita.deck[partita.deck.length - 1];
   if (next) loadImage(encodeURI(next.image));
-  const after = G.queue[G.currentIndex + 1];
+  const after = partita.queue[partita.currentIndex + 1];
   if (after) loadImage(encodeURI(after.data.image));
 }
 
-export function startResolution(): void {
-  // Un nuovo turno: la carta pescata nel turno precedente non è più "nuova"; coda vuota: si va subito alla carta da
-  // pescare (o, se non c'è niente da pescare, il turno finisce) (regole/turno-nemesi.ts)
-  Nemesi.startResolution(G);
-}
-
-// Pesca una carta in fondo alla coda e la mostra come nuova (NUOVA, entra girandosi dal retro)
-export function drawNewCard(): void {
-  // La carta in cima entra in gioco come nuova (regole/turno-nemesi.ts: anche il tempo del Tier nelle statistiche);
-  // mazzo vuoto (non si rimescola): si torna alla VistaCoda
-  const drawn = Nemesi.drawNewCard(G, () => G.nextUid++, () => Date.now());
+// Carta appena pescata (azione pescaCarta): la si mostra come nuova (NUOVA, entra girandosi dal retro)
+export function showDrawnCard(drawn: CartaPescata | null): void {
   if (!drawn) return;
   const { data } = drawn.entry;
   ui.lastDrawnUid = drawn.entry.uid;
@@ -812,31 +821,6 @@ export function drawNewCard(): void {
   buzz(data.type === 'Attack' ? [80, 60, 80] : 30);
   // Prima carta del Tier 2 o del Tier 3: scritta "Tier N" al centro (mostrata da render)
   if (drawn.newTier) ui.tierBanner = drawn.newTier;
-}
-
-// Ritorno alla VistaCoda
-export function endResolution(): void {
-  Nemesi.endResolution(G);
-}
-
-export function nemesisTurn(): void {
-  Nemesi.nemesisTurn(G);
-}
-
-// "Fine turno" nel turno di un giocatore: finisce il turno e si estrae il turno dopo dal mazzo dei turni.
-// Nemesi: parte il turno nemesi; giocatore o wild: resta il turno giocatori, con il colore nuovo nella barra.
-export function endPlayerTurn(): void {
-  // Le modifiche non salvate si perdono; danno e cura del turno si azzerano (la vita attuale diventa il riferimento) e
-  // le carte grigie (poteri pagati, minion a 0) vanno negli scarti (regole/turno-nemesi.ts)
-  ui.drafts.clear();
-  Nemesi.endPlayerTurnCards(G);
-  if (nextTurnCard() === 'nemesis') nemesisTurn();
-}
-
-// Fine del turno nemesi ("Metti in gioco · Fine turno nemesi"): si estrae il turno dopo; se è di nuovo la nemesi, il
-// turno nemesi riparte subito. Ultima carta del giro: mazzo dei turni mischiato e attesa
-export function afterNemesisTurn(): void {
-  if (nextTurnCard() === 'nemesis') nemesisTurn();
 }
 
 // Animazione "mazzo mischiato" della barra della fase, a fine giro. Le scritte sotto la barra svaniscono e le caselle
@@ -881,32 +865,23 @@ export function playTurnShuffle(fadeMs: number): void {
   }, fade);
 }
 
-// Logica del pulsante principale: agisce sulla carta da risolvere in base al suo tipo.
-// Restituisce cosa è successo, per l'animazione: 'token', 'discard', 'next', 'play'.
-export function resolveCurrent(): Effetto {
-  return Nemesi.resolveCurrent(G);
-}
-
 // Tocco sul pulsante principale: prima la partita cambia (un passo di undo, salvataggio), poi l'animazione.
 // Fino alla fine dell'animazione il pulsante non accetta altri tocchi (un tocco = un solo evento di gioco).
 export function onResolveClick(): void {
-  if (!G.resolving || ui.isTransitioning) return;
+  if (!partita.resolving || ui.isTransitioning) return;
   if (isDrawStep()) {
     // "Pesca": la carta coperta diventa la carta pescata, che si gira
     if (ui.viewedUid !== DRAW_UID) return;
-    const roundAtDraw = G.turnOrder.round;
-    act(() => {
-      drawNewCard();
-      // Mazzo vuoto: il turno nemesi finisce e si estrae il turno dopo
-      if (!G.resolving) afterNemesisTurn();
-    });
-    if (G.resolving) {
+    const roundAtDraw = partita.turnOrder.round;
+    // Mazzo vuoto: il turno nemesi finisce e si estrae il turno dopo (stato/partita.ts, pescaCarta)
+    showDrawnCard(pescaCarta());
+    if (partita.resolving) {
       showActive(activeEntry());
       lockFor(duration('focus'));
     }
     render();
     // Mazzo vuoto all'ultimo turno del giro: mazzo dei turni mischiato
-    if (!G.resolving && awaitingTurnCard() && G.turnOrder.round !== roundAtDraw) playTurnShuffle(SHUFFLE_FADE_MS);
+    if (!partita.resolving && awaitingTurnCard() && partita.turnOrder.round !== roundAtDraw) playTurnShuffle(SHUFFLE_FADE_MS);
     return;
   }
   const active = activeEntry();
@@ -918,32 +893,28 @@ export function onResolveClick(): void {
     return;
   }
   const ghostSource = query(focusEl, `.ae-focus-slide[data-uid="${active.uid}"] .ae-focus-stage`, HTMLElement);
-  const wasNewStep = G.newIndex >= 0;
-  const turnBefore = G.turn;
-  const roundBefore = G.turnOrder.round;
-  const effect = act(() => {
-    const result = resolveCurrent();
-    // Fine del turno nemesi: si estrae il turno dopo dal mazzo dei turni
-    if (!G.resolving) afterNemesisTurn();
-    return result;
-  });
+  const wasNewStep = partita.newIndex >= 0;
+  const turnBefore = partita.turn;
+  const roundBefore = partita.turnOrder.round;
+  // Fine del turno nemesi: si estrae il turno dopo dal mazzo dei turni (stato/partita.ts, risolviCarta)
+  const effect = risolviCarta();
   // Dal mazzo dei turni è uscita di nuovo la nemesi: il turno nemesi riparte (scossa e annuncio)
-  if (G.resolving && G.turn !== turnBefore) {
+  if (partita.resolving && partita.turn !== turnBefore) {
     shakeApp();
     announce(I18N_IT.trackNemesisResolve);
   }
 
   // Fine dell'ultimo turno del giro: mazzo dei turni mischiato; scritte e colori della barra svaniscono durante il
   // passaggio al turno giocatori, poi le caselle si uniscono e si separano
-  const roundShuffled = !G.resolving && awaitingTurnCard() && G.turnOrder.round !== roundBefore;
+  const roundShuffled = !partita.resolving && awaitingTurnCard() && partita.turnOrder.round !== roundBefore;
   const shuffleAfter = roundShuffled ? () => playTurnShuffle(0) : undefined;
   if (roundShuffled) beginTrackShuffle();
-  if (!G.resolving) {
+  if (!partita.resolving) {
     // Fine del turno nemesi: si torna alla VistaCoda con la carta pescata in vista
     // Carta appena pescata e messa in gioco (si prende dalla carta risolta, non da ui.lastDrawnUid: dopo un undo gli uid cambiano)
     const kept = (wasNewStep && entryByUid(active.uid)) || entryByUid(ui.lastDrawnUid);
-    const anchorUid = kept ? kept.uid : (G.queue.length ? G.queue[G.queue.length - 1].uid : null);
-    ui.queueAnchor = anchorUid ? { uid: anchorUid, align: G.queue.length === 1 ? 'center' : 'anchor' } : null;
+    const anchorUid = kept ? kept.uid : (partita.queue.length ? partita.queue[partita.queue.length - 1].uid : null);
+    ui.queueAnchor = anchorUid ? { uid: anchorUid, align: partita.queue.length === 1 ? 'center' : 'anchor' } : null;
     ui.reveal = null;
     ui.viewedUid = null;
     if (effect === 'discard' && ghostSource) {
@@ -981,7 +952,7 @@ export function showActive(entry?: VoceInGioco | null): void {
   void entry;
   const current = activeEntry();
   ui.viewedUid = current ? current.uid : (isDrawStep() ? DRAW_UID : null);
-  if (current && G.newIndex >= 0 && current.isNew && (!ui.reveal || ui.reveal.uid !== current.uid)) {
+  if (current && partita.newIndex >= 0 && current.isNew && (!ui.reveal || ui.reveal.uid !== current.uid)) {
     startReveal(current);
     announce(I18N_IT.cardDrawn(current.data.name));
   }
@@ -989,7 +960,7 @@ export function showActive(entry?: VoceInGioco | null): void {
 }
 
 export function onNemesisClick(): void {
-  if (G.resolving || ui.isTransitioning || !G.deckSetup) return;
+  if (partita.resolving || ui.isTransitioning || !catalogo.deckSetup) return;
   // Durante "Crea mazzo" al posto del pulsante c'è il cursore (deckSlider)
   if (ui.deckBuilding) return;
   // Con modifiche non salvate il pulsante è "Salva modifiche"
@@ -1001,12 +972,12 @@ export function onNemesisClick(): void {
   if (needsPairChoice()) return;
   // Fine dell'ultimo turno del giro: mazzo dei turni mischiato, animazione, poi "Pesca la prima carta turno"
   const roundEnding = !awaitingTurnCard() && turnRoundOver();
-  act(awaitingTurnCard() ? drawFirstTurn : endPlayerTurn);
+  if (awaitingTurnCard()) pescaCartaTurno(); else fineTurnoGiocatore();
   if (roundEnding) {
     playTurnShuffle(SHUFFLE_FADE_MS);
     return;
   }
-  if (!G.resolving) {
+  if (!partita.resolving) {
     // Dal mazzo dei turni è uscito un giocatore (o il wild): si resta nel turno giocatori, cambia il colore della barra
     render();
     announce(turnTrack.getAttribute('aria-label'));
@@ -1029,21 +1000,21 @@ export function enterNemesisTurnView(): void {
   // (stesso scorrimento); cambiano solo lo sfondo e i pulsanti
   const railScroll = queueRail ? queueRail.scrollLeft : 0;
   // Le carte grandi partono dalla carta che si stava guardando e scorrono fino alla prima da risolvere (renderFocus)
-  const shownUid = G.queue.length ? centredQueueUid() : null;
+  const shownUid = partita.queue.length ? centredQueueUid() : null;
   if (shownUid !== null && entryByUid(shownUid)) focusEl.dataset.uid = String(shownUid);
   else delete focusEl.dataset.uid;
-  if (G.resolving) {
+  if (partita.resolving) {
     showActive(activeEntry());
     resolveView.classList.remove('is-entering');
     lockFor(duration('phase'));
   }
   render();
-  if (G.resolving) {
+  if (partita.resolving) {
     rail.scrollLeft = railScroll;
     const current = query(rail, '[aria-current="true"]', HTMLElement);
     if (current) scrollItemInto(rail, current, 'nearest');
   }
-  if (G.resolving) resolveBtn.focus();
+  if (partita.resolving) resolveBtn.focus();
   // Coda vuota: si va subito alla carta da pescare, che arriva dal mazzo
   if (isDrawStep()) animateDrawIn();
 }
@@ -1060,15 +1031,15 @@ export function shakeApp(): void {
 
 // Mostra un'altra carta senza risolvere nulla (anteprima): non cambia mazzo, vita, token, scarti, turno, undo
 export function viewCard(uid: number): void {
-  if (!G.resolving || ui.holdUid) return;
+  if (!partita.resolving || ui.holdUid) return;
   if ((uid === DRAW_UID ? !isDrawStep() : !entryByUid(uid)) || ui.viewedUid === uid) return;
   ui.viewedUid = uid;
   renderResolve();
 }
 
 export function moveView(step: number): void {
-  const i = G.queue.findIndex(e => e.uid === ui.viewedUid);
-  const next = G.queue[i + step];
+  const i = partita.queue.findIndex(e => e.uid === ui.viewedUid);
+  const next = partita.queue[i + step];
   if (next) viewCard(next.uid);
 }
 
@@ -1096,14 +1067,14 @@ export function avvio(): void {
 
   if ('fonts' in document) document.fonts.ready.then(() => fitPhaseName());
 
-  G.focusSignature = '';
+  focusSignature = '';
 
   focusEl.addEventListener('scroll', () => {
     if (focusScrollFrame) return;
     // circa un controllo per fotogramma (setTimeout invece di requestAnimationFrame: funziona anche a pagina in background)
     focusScrollFrame = setTimeout(() => {
       focusScrollFrame = 0;
-      if (!G.resolving || ui.holdUid || ui.isTransitioning || performance.now() < focusProgrammaticUntil) return;
+      if (!partita.resolving || ui.holdUid || ui.isTransitioning || performance.now() < focusProgrammaticUntil) return;
       const uid = centredFocusUid();
       if (uid === null || uid === ui.viewedUid) return;
       ui.viewedUid = uid;

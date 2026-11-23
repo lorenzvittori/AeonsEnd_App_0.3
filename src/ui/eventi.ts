@@ -1,23 +1,22 @@
 // ui/eventi.ts: eventi (tocchi, tastiera, scorrimento), pulsanti degli scarti e del menu, barra dei turni.
 // Provvisorio: la barra dei turni andrà in ui/componenti/.
-// Dipende da: stato/ (condivise, stato, partita), regole/mazzo-turni.ts (playerOf), ui/testi.ts, ui/componenti
-// (componenti, dialoghi, scarti, pesca-undo, menu-laterale), ui/schermate (turno-giocatori, turno-nemesi, mazzo-turni).
-// Usato da: turno nemesi (render), mazzo dei turni, stato/partita.ts (barra dei turni).
+// Dipende da: stato/partita.ts (lettura e azione scegliGiocatoreCoppia), regole/mazzo-turni.ts (playerOf), ui/ (testi,
+// pagina), ui/componenti (componenti, dialoghi, scarti, pesca-undo, menu-laterale), ui/schermate (turno-giocatori,
+// turno-nemesi, mazzo-turni). Usato da: turno nemesi (render), mazzo dei turni (barra, chooseTurnPlayer).
 
-import { G } from '../stato/condivise.ts';
 import { I18N_IT } from './testi.ts';
-import { DRAG_THRESHOLD, app, discardBtn, discardClose, discardLayer, focusEl, infoRow, mainEl, menuBtn, queueList, queueViewport, rail, ui } from '../stato/stato.ts';
-import { awaitingTurnCard, currentTurn, currentTurnCard, entryByUid, historyPlayer, hpUnset, isPairCard, pairOptions, predictedPairPlayers, turnCardPlayer } from '../stato/partita.ts';
+import { awaitingTurnCard, currentTurn, currentTurnCard, entryByUid, historyPlayer, hpUnset, isPairCard, pairOptions, predictedPairPlayers, scegliGiocatoreCoppia, turnCardPlayer, partita } from '../stato/partita.ts';
 import { playerOf } from '../regole/mazzo-turni.ts';
 import { el, query } from './componenti/componenti.ts';
-import { focusables, modals, topLayer } from './componenti/dialoghi.ts';
+import { announce, focusables, modals, topLayer } from './componenti/dialoghi.ts';
 import { centredQueueUid, markQueueRail, openCardDialog, scrollQueueTo } from './schermate/turno-giocatori.ts';
 import { closeDiscard, openDiscard } from './componenti/scarti.ts';
-import { DRAW_UID, isDrawStep, moveView, onResolveClick, viewCard } from './schermate/turno-nemesi.ts';
+import { DRAW_UID, isDrawStep, moveView, onResolveClick, render, viewCard } from './schermate/turno-nemesi.ts';
 import { openTurnScreen, renderPairChoice } from './schermate/mazzo-turni.ts';
 import { closeDeckPopover, closeUndoFloat, deckPopover, undoFloat } from './componenti/pesca-undo.ts';
 import { openSideMenu } from './componenti/menu-laterale.ts';
-import type { CartaTurno } from '../tipi/partita.ts';
+import type { CartaTurno, Giocatore } from '../tipi/partita.ts';
+import { DRAG_THRESHOLD, app, discardBtn, discardClose, discardLayer, focusEl, infoRow, mainEl, menuBtn, nemesisBtn, queueList, queueViewport, rail, ui } from './pagina.ts';
 
 // Una casella della barra dei turni: carta, giocatore, turno passato / in corso / futuro noto
 interface Casella {
@@ -71,8 +70,8 @@ export function renderTurnTrack(): void {
   // Barra dei TURNI del giro, non delle carte: prima la storia (turni giocati e turno in corso, history), poi le carte
   // del mazzo dei turni (turni futuri, dalla cima). Una carta rimessa nel mazzo resta come turno passato e compare anche
   // come turno futuro, quindi le caselle possono essere più di 6 (si stringono: style.css --ae-seg-n)
-  const history = G.turnOrder.history || [];
-  const left = G.turnOrder.left || [];
+  const history = partita.turnOrder.history || [];
+  const left = partita.turnOrder.left || [];
   const total = Math.max(1, history.length + left.length);
   while (turnTrackBar.children.length < total) turnTrackBar.appendChild(el('span', 'ae-turn-seg'));
   while (turnTrackBar.children.length > total) {
@@ -86,8 +85,8 @@ export function renderTurnTrack(): void {
   const pastCount = cur >= 0 ? cur : history.length;
   // Carte del mazzo note (turnOrder.known): colore tenue (is-known); per le 1/2 e 3/4 il giocatore dedotto dalla
   // memoria delle coppie (predictedPairPlayers)
-  const known = G.turnOrder.known || [];
-  const predicted = predictedPairPlayers(G.turnOrder);
+  const known = partita.turnOrder.known || [];
+  const predicted = predictedPairPlayers(partita.turnOrder);
   const segInfo = (i: number): Casella => {
     if (i < history.length) {
       const e = history[i];
@@ -96,7 +95,7 @@ export function renderTurnTrack(): void {
     const j = i - history.length;
     if (!known[j]) return { kind: null };
     const kind = left[j];
-    const player = kind === 'wild' ? playerOf(G.turnOrder.wild)
+    const player = kind === 'wild' ? playerOf(partita.turnOrder.wild)
       : isPairCard(kind) ? predicted[j] : (kind !== 'nemesis' ? kind : null);
     return { kind, player, past: false, current: false, known: true };
   };
@@ -118,7 +117,7 @@ export function renderTurnTrack(): void {
     seg.classList.toggle('is-past', !!info.past);
     seg.classList.toggle('is-known', !!info.known);
   });
-  turnTrack.classList.toggle('is-nemesis', G.resolving);
+  turnTrack.classList.toggle('is-nemesis', partita.resolving);
   // Nessun turno in corso (attesa della carta turno): caselle tutte uguali
   turnTrackBar.classList.toggle('is-idle', cur < 0);
   // Mazzo dei turni appena mischiato (playTurnShuffle): le scritte di prima restano e svaniscono (is-shuffling)
@@ -128,14 +127,14 @@ export function renderTurnTrack(): void {
     return;
   }
   // Scritta sotto la casella accesa, centrata sotto di lei (anche alle due estremità)
-  const drawStep = G.resolving && (isDrawStep() || G.newIndex >= 0);
+  const drawStep = partita.resolving && (isDrawStep() || partita.newIndex >= 0);
   const curKind = currentTurnCard();
   // Carta 1/2 o 3/4 senza giocatore: la scelta è nella finestra al centro (renderPairChoice); sotto la casella "x / y"
-  const choosing = !G.resolving && isPairCard(curKind) && !turnCardPlayer(curKind);
+  const choosing = !partita.resolving && isPairCard(curKind) && !turnCardPlayer(curKind);
   turnTrackLabel.classList.toggle('is-choice', choosing);
   if (choosing) {
     turnTrackLabel.replaceChildren(pairOptions(curKind).map(p => p.slice(1)).join(' / '));
-  } else if (G.resolving) {
+  } else if (partita.resolving) {
     turnTrackLabel.replaceChildren(I18N_IT.trackNemesisName, el('span', 'ae-turn-label-dot'),
       drawStep ? I18N_IT.trackDraw : I18N_IT.trackResolve);
   } else {
@@ -151,7 +150,7 @@ export function renderTurnTrack(): void {
         : owner ? I18N_IT.trackPlayerName(Number(owner.slice(1))) : '');
     }
   }
-  const labelKind = G.resolving ? 'nemesis' : (turnCardPlayer(currentTurnCard()) || currentTurnCard());
+  const labelKind = partita.resolving ? 'nemesis' : (turnCardPlayer(currentTurnCard()) || currentTurnCard());
   if (labelKind && !choosing) turnTrackLabel.dataset.kind = labelKind;
   else delete turnTrackLabel.dataset.kind;
   // Sotto le caselle dei turni già passati nel giro e delle carte note del mazzo (più chiare): N = nemesi, 1-4 =
@@ -191,12 +190,26 @@ export function renderTurnTrack(): void {
   renderPairChoice();
 }
 
+// Scelta del giocatore per la carta 1/2 o 3/4 del turno in corso (un passo di undo: stato/partita.ts,
+// scegliGiocatoreCoppia), poi la barra dei turni con l'annuncio e il lampo della casella
+export function chooseTurnPlayer(player: Giocatore): void {
+  const cur = currentTurn();
+  if (partita.resolving || ui.isTransitioning || !cur || !isPairCard(cur.kind) || cur.player) return;
+  scegliGiocatoreCoppia(player);
+  render();
+  announce(turnTrack.getAttribute('aria-label'));
+  nemesisBtn.focus({ preventScroll: true });
+  turnTrack.classList.remove('is-changed');
+  void turnTrack.offsetWidth;
+  turnTrack.classList.add('is-changed');
+}
+
 // Nome del turno in corso per i lettori di schermo
 function trackName(drawStep: boolean): string {
   const card = currentTurnCard();
   if (awaitingTurnCard()) return I18N_IT.trackWaiting;
-  if (G.resolving) return drawStep ? I18N_IT.trackNemesisDraw : I18N_IT.trackNemesisResolve;
-  if (card === 'wild') return G.turnOrder.wild ? I18N_IT.trackWildOf(G.turnOrder.wild) : I18N_IT.trackWild;
+  if (partita.resolving) return drawStep ? I18N_IT.trackNemesisDraw : I18N_IT.trackNemesisResolve;
+  if (card === 'wild') return partita.turnOrder.wild ? I18N_IT.trackWildOf(partita.turnOrder.wild) : I18N_IT.trackWild;
   if (isPairCard(card)) {
     const player = turnCardPlayer(card);
     if (player) return I18N_IT.trackPlayer(Number(player.slice(1)));
@@ -239,7 +252,7 @@ export function avvio(): void {
   // Carosello del turno nemesi: toccando il retro della carta da pescare si pesca; toccando un minion (quello al centro)
   // si apre la stessa finestra del turno giocatori, con −1 e +1 alla vita
   focusEl.addEventListener('click', e => {
-    if (!G.resolving || ui.isTransitioning) return;
+    if (!partita.resolving || ui.isTransitioning) return;
     const target = e.target;
     const stage = target instanceof Element ? target.closest('.ae-focus-stage') : null;
     const slide = stage && stage.closest('.ae-focus-slide');

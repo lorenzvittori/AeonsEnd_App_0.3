@@ -2,7 +2,7 @@
 // Riceve: kind ('grave' = Gravehold, 'nemesis' = nemesi), i valori delle vite, nemeses (nemesis.json) e il nome della
 // nemesi; setLife riceve `g` (la partita) e ne cambia graveLife / nemesisLife.
 // Restituisce numeri (vite, tetto) o l'esito della partita ('victory', 'defeat', null); solo setLife modifica qualcosa.
-// Dipende da: tipi/. Usato da: stato/stato.ts, stato/partita.ts, ui/schermate/turno-nemesi.ts (finestra della vita),
+// Dipende da: tipi/. Usato da: stato/partita.ts, ui/schermate/turno-nemesi.ts (finestra della vita),
 // regole/salvataggio.ts, test in tests/vite.test.ts.
 //
 // Come funziona: Gravehold parte da 30, la nemesi dal campo "life" di nemesis.json (0 se manca). Nella finestra della

@@ -1,6 +1,6 @@
 // regole/turno-nemesi.ts: le carte in gioco, il turno nemesi (risoluzione e pesca), la fine del turno dei giocatori,
 // la vittoria a mazzo vuoto e le statistiche delle carte uscite.
-// Riceve `g`, la partita (nell'app lo stato condiviso G), di cui usa e modifica solo i campi del tipo Gioco qui sotto:
+// Riceve `g`, la partita (nell'app lo stato di stato/partita.ts), di cui usa e modifica solo i campi del tipo Gioco qui sotto:
 //   queue (carte in gioco, dalla più vecchia), deck (si pesca dalla fine), discard, stats, turn (turni nemesi),
 //   currentIndex (carta da risolvere), newIndex (carta appena pescata, -1 = nessuna), resolving (turno nemesi in
 //   corso), maxTierDrawn (Tier più alto pescato).

@@ -1,13 +1,11 @@
 // ui/componenti/testata.ts: testata (mazzo nemesi e pila degli scarti in alto), voli delle carte verso gli scarti,
 // passaggio animato dal turno nemesi al turno giocatori, Vittoria a mazzo vuoto.
-// Dipende da: stato/ (condivise, stato, partita), ui/testi.ts, ui/componenti (componenti, dialoghi, scarti,
+// Dipende da: stato/partita.ts (lettura), ui/ (testi, pagina), ui/componenti (componenti, dialoghi, scarti,
 // pesca-undo), ui/schermate (turno-giocatori, turno-nemesi, mazzo-turni, statistiche). Usato da: turno nemesi, turno
-// giocatori, mazzo dei turni, crea mazzo, pesca-undo.
+// giocatori, mazzo dei turni, crea mazzo, pesca-undo, test (resetVictoryKey).
 
-import { G } from '../../stato/condivise.ts';
 import { I18N_IT } from '../testi.ts';
-import { CARD_BACK, queueList, queueView, rail, reducedMotion, startLayer, ui, undoBtn } from '../../stato/stato.ts';
-import { isVictory } from '../../stato/partita.ts';
+import { isVictory, partita } from '../../stato/partita.ts';
 import { el, query, queryAll } from './componenti.ts';
 import { modals } from './dialoghi.ts';
 import { queueRail } from '../schermate/turno-giocatori.ts';
@@ -16,6 +14,7 @@ import { render } from '../schermate/turno-nemesi.ts';
 import { needsPairChoice } from '../schermate/mazzo-turni.ts';
 import { showVictory } from '../schermate/statistiche.ts';
 import { openDeckPopover } from './pesca-undo.ts';
+import { CARD_BACK, queueList, queueView, rail, reducedMotion, startLayer, ui, undoBtn } from '../pagina.ts';
 
 // In alto a sinistra, uno accanto all'altro e uguali nei due turni: il mazzo nemesi (dorso con il numero di carte
 // rimaste) e la pila degli scarti (ultima carta scartata con il numero; toccandola si apre). Creati qui (avvio).
@@ -46,14 +45,14 @@ export function pileContent(node: HTMLElement, imgSrc: string | null, count: num
 // Le carte ancora in volo verso gli scarti non si contano finché non atterrano (ui.flyingDiscards)
 export function renderDockPiles(): void {
   // Durante la creazione del mazzo il numero sale man mano che le carte arrivano (ui.deckShown)
-  const deckCount = ui.deckShown !== null && ui.deckShown !== undefined ? ui.deckShown : G.deck.length;
+  const deckCount = ui.deckShown !== null && ui.deckShown !== undefined ? ui.deckShown : partita.deck.length;
   pileContent(dockDeck, deckCount ? CARD_BACK : null, deckCount);
-  dockDeck.setAttribute('aria-label', I18N_IT.deckLabel(G.deck.length));
+  dockDeck.setAttribute('aria-label', I18N_IT.deckLabel(partita.deck.length));
   dockDeck.setAttribute('aria-haspopup', 'true');
-  const shown = Math.max(0, G.discard.length - ui.flyingDiscards);
-  const last = G.discard[shown - 1];
+  const shown = Math.max(0, partita.discard.length - ui.flyingDiscards);
+  const last = partita.discard[shown - 1];
   pileContent(dockDiscard, last ? encodeURI(last.thumb || last.image) : null, shown);
-  dockDiscard.setAttribute('aria-label', I18N_IT.discardButtonLabel(G.discard.length));
+  dockDiscard.setAttribute('aria-label', I18N_IT.discardButtonLabel(partita.discard.length));
 }
 
 // Animazione dello scarto: una copia della carta si stacca (si alza e si inclina), vola in arco verso la pila degli
@@ -174,13 +173,23 @@ function queueAll(root: ParentNode, selector: string): HTMLElement[] {
   return queryAll(root, selector, HTMLElement);
 }
 
+// Finestra "Vittoria" quando la condizione si avvera nel turno giocatori. Chiusa una volta, non si ripropone finché lo
+// stato non cambia (per esempio con Undo si torna indietro e la condizione non vale più): victoryKey è la partita
+// (turno, scarti, coda) per cui è già stata mostrata. Stato dell'interfaccia, non della partita
+let victoryKey = '';
+
+// Una partita nuova (scenario della Modalità test): la Vittoria si può mostrare di nuovo
+export function resetVictoryKey(): void {
+  victoryKey = '';
+}
+
 export function checkVictory(): void {
-  if (G.resolving || !isVictory()) { G.victoryKey = ''; return; }
-  const key = G.turn + ':' + G.discard.length + ':' + G.queue.length;
-  if (G.victoryKey === key || modals.length || !startLayer.hidden) return;
-  G.victoryKey = key;
+  if (partita.resolving || !isVictory()) { victoryKey = ''; return; }
+  const key = partita.turn + ':' + partita.discard.length + ':' + partita.queue.length;
+  if (victoryKey === key || modals.length || !startLayer.hidden) return;
+  victoryKey = key;
   setTimeout(() => {
-    if (G.resolving || !isVictory() || modals.length) return;
+    if (partita.resolving || !isVictory() || modals.length) return;
     showVictory();
   }, reducedMotion.matches ? 0 : MORPH_MS + 100);
 }
@@ -205,8 +214,4 @@ export function avvio(): void {
   headerPiles.append(dockDeck, dockDiscard);
   undoBtn.before(headerPiles);
   undoBtn.hidden = true;
-
-  // Finestra "Vittoria" quando la condizione si avvera nel turno giocatori. Chiusa una volta, non si ripropone finché lo
-  // stato non cambia (per esempio con Undo si torna indietro e la condizione non vale più).
-  G.victoryKey = '';
 }

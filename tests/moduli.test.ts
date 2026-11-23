@@ -1,12 +1,13 @@
 // Moduli di src/: si caricano senza DOM; quelli avviati da main.ts esportano avvio(), le regole (src/regole/) no e sono
 // pure (il controllo vero della purezza è in tools/check-moduli.mjs, npm run check); il caso (regole/caso.ts); il
-// collegamento stato/partita.ts usa le regole con lo stato condiviso G.
+// modulo della partita (stato/partita.ts) usa le regole con il catalogo e le preferenze.
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { G } from '../src/stato/condivise.ts';
+import { caricaCatalogo } from '../src/stato/catalogo.ts';
+import { preferenze } from '../src/stato/preferenze.ts';
 import { buildDeck, deckSetupRow, deckShortfall } from '../src/stato/partita.ts';
-import * as partita from '../src/stato/partita.ts';
+import * as statoPartita from '../src/stato/partita.ts';
 import { shuffle, pickRandom } from '../src/regole/caso.ts';
 import { isRecord } from '../src/regole/json.ts';
 import { cards, deckSetup, nemeses, products, seeded, must } from './aiuto.ts';
@@ -46,6 +47,14 @@ describe('moduli di src/', () => {
     if (!isRecord(mod)) throw new Error('modulo non caricato: ' + name);
     if (name.startsWith('src/regole/')) expect(mod.avvio, 'le regole non hanno codice di avvio').toBeUndefined();
     else if (started.has(name)) expect(typeof mod.avvio, 'avviato da main').toBe('function');
+  });
+
+  it('niente più G (stato condiviso): stato/condivise.ts e stato/stato.ts non esistono', () => {
+    expect(files.map(rel).filter(f => /stato\/(condivise|stato)\.ts$/.test(f))).toEqual([]);
+    for (const f of [...files, join(ROOT, 'src', 'main.ts')]) {
+      const code = readFileSync(f, 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+      expect(/\bG\./.test(code), rel(f)).toBe(false);
+    }
   });
 
   it('src/regole/ non nomina document, window, localStorage, G, Math.random, Date (fuori dai commenti)', () => {
@@ -95,25 +104,22 @@ describe('caso (regole/caso.ts)', () => {
 
 describe('stato/partita.ts: regole con lo stato della partita (dati veri)', () => {
   beforeAll(() => {
-    G.allCards = cards;
-    G.nemeses = nemeses;
-    G.deckSetup = deckSetup;
-    G.products = products;
-    G.collection = new Set(Object.keys(G.products));
+    caricaCatalogo({ cards, nemeses, deckSetup, products, nemesisArt: {} });
+    preferenze.collection = new Set(Object.keys(products));
   });
 
   it('mazzo per le scelte della partita: righe di deck-setup.json, plan e ordine dei Tier', () => {
     for (const players of [2, 3, 4]) {
-      G.settings = { players, nemesis: 'Maggoth', battleMode: true, mergeCollection: true };
+      preferenze.settings = { players, nemesis: 'Maggoth', battleMode: true, mergeCollection: true };
       const row = must(deckSetupRow(), 'riga del Deck Setup');
       const deck = buildDeck();
       for (const t of TIERS) {
-        const count = (kind: string) => must(partita.deckPlan.find(p => p.tier === t && p.kind === kind), 'piano').count;
+        const count = (kind: string) => must(statoPartita.deckPlan.find(p => p.tier === t && p.kind === kind), 'piano').count;
         expect(count('basic')).toBe(row.basic[t]);
         expect(count('upgraded')).toBe(row.upgradedBasic[t]);
       }
       expect(deckShortfall()).toBe(null);
-      expect(deck.length).toBe(partita.deckPlan.reduce((s, p) => s + p.count, 0));
+      expect(deck.length).toBe(statoPartita.deckPlan.reduce((s, p) => s + p.count, 0));
       const tiers = deck.map(c => c.tier);
       expect(tiers).toEqual([...tiers].sort((a, b) => Number(b) - Number(a)));
     }
