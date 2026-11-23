@@ -4,8 +4,14 @@
 // - nessun modulo scrive variabili globali (window.x = ..., globalThis.x = ...), tranne window.app in main.ts;
 // - src/regole/ è logica pura: importa solo da src/regole/ e (solo tipi) da src/tipi/, non usa nomi del browser né
 //   l'orologio (Date) e non chiama Math.random (il caso arriva come argomento);
-// - nessun "any" nei tipi; ogni @ts-expect-error ha il motivo sulla stessa riga (@ts-ignore e @ts-nocheck no).
-// --conta stampa quanti "any", @ts-expect-error / @ts-ignore e file .js ci sono in src/. Esce con 1 se trova problemi.
+// - nessun "any" nei tipi; ogni @ts-expect-error ha il motivo sulla stessa riga (@ts-ignore e @ts-nocheck no);
+// - la partita in corso (`partita`, stato/partita.ts) si cambia solo in stato/partita.ts: fuori da lì nessuno assegna
+//   un suo campo (partita.turn = ..., partita.stats.endedAt = ..., partita.nextUid++), chiama un metodo che cambia un
+//   suo elenco (partita.deck.pop(), Object.assign(partita.x, ...)) o le passa a una regola che la modifica
+//   (Nemesi.resolveCurrent(partita)). TypeScript lo vede già per i campi diretti (partita è Readonly); qui anche per
+//   quelli annidati. Non si vede un elenco della partita preso in una variabile e poi cambiato: lì vale la revisione.
+// --conta stampa quanti "any", @ts-expect-error / @ts-ignore, file .js e usi di G (lo stato condiviso di prima) ci sono
+// in src/. Esce con 1 se trova problemi.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +24,20 @@ const IMPURE = new Set(['window', 'document', 'globalThis', 'self', 'localStorag
   'performance', 'location', 'history', 'Date', 'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval',
   'requestAnimationFrame', 'matchMedia', 'getComputedStyle', 'console', 'G', 'caches', 'Image', 'alert', 'confirm']);
 const count = process.argv.includes('--conta');
+// Il modulo che possiede la partita
+const STORE = 'src/stato/partita.ts';
+// Metodi che cambiano un elenco
+const MUTATORS = new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin', 'set', 'delete', 'clear', 'add']);
+// Regole (src/regole/) che modificano la partita che ricevono
+const MUTATING_RULES = new Set(['setLife', 'resolveCurrent', 'drawNewCard', 'startResolution', 'endResolution', 'nemesisTurn',
+  'applyDrafts', 'endPlayerTurnCards', 'removeWhileResolving', 'discardEntry', 'discardGone', 'drawFromDeck', 'countMinionKilled',
+  'countPowerPaid', 'statCard', 'choosePairPlayer', 'applyTurnDraft']);
+// L'espressione parte da `partita` (partita, partita.queue, partita.stats.cards...)
+function rootedAtPartita(n) {
+  const wrappers = ['TSNonNullExpression', 'TSAsExpression', 'TSSatisfiesExpression', 'TSTypeAssertion', 'ParenthesizedExpression'];
+  while (n && (n.type === 'MemberExpression' || wrappers.includes(n.type))) n = n.type === 'MemberExpression' ? n.object : n.expression;
+  return !!n && n.type === 'Identifier' && n.name === 'partita';
+}
 
 const files = [];
 (function walk(dir) {
@@ -71,10 +91,12 @@ const parsed = files.map(f => {
 });
 
 let anyCount = 0;
+let gCount = 0;
 const expectList = [];
 for (const { f, code, ast } of parsed) {
   const rel = relative(ROOT, f).split(sep).join('/');
   const pure = rel.startsWith('src/regole/');
+  const store = rel === STORE;
   // Import: il modulo esiste e il nome è esportato
   ast.body.filter(s => s.type === 'ImportDeclaration' || ((s.type === 'ExportNamedDeclaration' || s.type === 'ExportAllDeclaration') && s.source))
     .forEach(s => {
@@ -114,6 +136,23 @@ for (const { f, code, ast } of parsed) {
       && !(/^src\/main\.(js|ts)$/.test(rel) && n.left.property.name === 'app')) {
       problems.push(`${rel}:${lineOf(code, n.start)}: variabile globale ${n.left.object.name}.${n.left.property.name || '?'}`);
     }
+    // G, lo stato condiviso di prima (non esiste più)
+    if (n.type === 'Identifier' && n.name === 'G' && !(parent && parent.type === 'MemberExpression' && parent.property === n && !parent.computed)) gCount++;
+    // La partita si cambia solo nel suo modulo
+    if (!store) {
+      const where = `${rel}:${lineOf(code, n.start)}: la partita si cambia solo in ${STORE}`;
+      if (n.type === 'AssignmentExpression' && n.left.type === 'MemberExpression' && rootedAtPartita(n.left)) problems.push(`${where} (assegnazione)`);
+      if (n.type === 'UpdateExpression' && n.argument.type === 'MemberExpression' && rootedAtPartita(n.argument)) problems.push(`${where} (${n.operator})`);
+      if (n.type === 'UnaryExpression' && n.operator === 'delete' && rootedAtPartita(n.argument)) problems.push(`${where} (delete)`);
+      if (n.type === 'CallExpression') {
+        const c = n.callee;
+        const name = c.type === 'Identifier' ? c.name : (c.type === 'MemberExpression' && !c.computed ? c.property.name : null);
+        if (c.type === 'MemberExpression' && MUTATORS.has(name) && rootedAtPartita(c.object)) problems.push(`${where} (${name})`);
+        const args = n.arguments || [];
+        if (name === 'assign' && args[0] && rootedAtPartita(args[0])) problems.push(`${where} (Object.assign)`);
+        if (MUTATING_RULES.has(name) && args.some(a => rootedAtPartita(a))) problems.push(`${where} (regola ${name})`);
+      }
+    }
     if (!pure) return;
     if (n.type === 'MemberExpression' && n.object.type === 'Identifier' && n.object.name === 'Math' && !n.computed && n.property.name === 'random') {
       problems.push(`${rel}:${lineOf(code, n.start)}: regole pure: Math.random (il caso si passa come argomento)`);
@@ -139,10 +178,11 @@ if (count) {
   console.log(`@ts-expect-error / @ts-ignore: ${expectList.length}`);
   expectList.forEach(l => console.log('  ' + l));
   console.log(`file .js in src/: ${files.filter(f => f.endsWith('.js')).length}`);
+  console.log(`usi di G: ${gCount}`);
 }
 if (problems.length) {
   console.error(problems.join('\n'));
   console.error(`\nModuli: ${problems.length} problemi`);
   process.exit(1);
 }
-console.log(`Moduli: ${files.length} file di src/ controllati (import, nessuna variabile globale, src/regole/ pura, niente any)`);
+console.log(`Moduli: ${files.length} file di src/ controllati (import, nessuna variabile globale, src/regole/ pura, niente any, partita cambiata solo in ${STORE})`);
