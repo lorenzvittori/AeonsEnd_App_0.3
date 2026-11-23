@@ -5,7 +5,7 @@
 import * as Mazzo from '../regole/mazzo-nemesi.ts';
 import { parseJson } from '../regole/json.ts';
 import { G } from '../stato/condivise.ts';
-import { I18N_IT } from '../ui/testi.js';
+import { I18N_IT } from '../ui/testi.ts';
 import type { Carta, CodiceProdotto, Nemesi } from '../tipi/dati.ts';
 
 // --- Collezione: wave possedute e, per ogni wave, scatola base e mini espansioni (scelte nella schermata "La mia

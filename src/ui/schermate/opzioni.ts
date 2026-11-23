@@ -1,39 +1,45 @@
-// ui/schermate/opzioni.js: Opzioni, La mia collezione, inizio e ripresa della partita. Provvisorio: inizio e ripresa andranno con il menu.
-// Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
-// funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
+// ui/schermate/opzioni.ts: Opzioni, La mia collezione, inizio e ripresa della partita, errori della pagina iniziale.
+// Provvisorio: inizio e ripresa andranno con il menu.
+// Dipende da: stato/ (condivise, stato, partita, salvataggio), dati/ (dati, collezione, rete), ui/testi.ts,
+// ui/componenti (componenti, dialoghi, scarti, pesca-undo, menu-laterale), ui/schermate (menu, turno-nemesi, crea-mazzo,
+// test). Usato da: menu iniziale, menu laterale, statistiche, avvio, test.
 
 import { G } from '../../stato/condivise.ts';
-import { I18N_IT } from '../testi.js';
-import { nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../../stato/stato.ts';
+import { I18N_IT } from '../testi.ts';
+import { byId, nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../../stato/stato.ts';
 import { battleOf } from '../../dati/dati.ts';
-import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, productOfNemesis, saveCollection, waveOfNemesis } from '../../dati/collezione.ts';
+import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, saveCollection, waveOfNemesis } from '../../dati/collezione.ts';
 import { newGame, setTurnPairs, turnPairsOn } from '../../stato/partita.ts';
-import { el, icon } from '../componenti/componenti.js';
-import { button, closeAllModals, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.js';
-import { closeDiscard } from '../componenti/scarti.js';
+import { el, icon, queryAll } from '../componenti/componenti.ts';
+import { button, closeAllModals, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.ts';
+import { closeDiscard } from '../componenti/scarti.ts';
 import { renderStartChoices, setStartMode, updateHomeCollection, waveLabel } from './menu.js';
 import { clearTransition, readSave, restore } from '../../stato/salvataggio.ts';
 import { render } from './turno-nemesi.js';
-import { showDeckBuild } from './crea-mazzo.js';
-import { slideToGame } from '../componenti/pesca-undo.js';
-import { backgroundChoiceButton, cardBackChoiceButton } from '../componenti/menu-laterale.js';
+import { showDeckBuild } from './crea-mazzo.ts';
+import { slideToGame } from '../componenti/pesca-undo.ts';
+import { backgroundChoiceButton, cardBackChoiceButton } from '../componenti/menu-laterale.ts';
 import { prefetchDeckImages } from '../../dati/rete.ts';
-import { endTest } from './test.js';
+import { endTest } from './test.ts';
+import type { CodiceProdotto, Nemesi } from '../../tipi/dati.ts';
+import type { SalvataggioValido } from '../../tipi/salvataggio.ts';
 
-// Il pulsante "La mia collezione" non è più nella pagina "Nuova partita" (sta in Opzioni e nel Menu): si toglie anche
-// da una versione vecchia
-export function ensureCollectionButton() {
+// Il pulsante "La mia collezione" non è nella pagina "Nuova partita" (sta in Opzioni e nel Menu): si toglie anche da
+// un index.html vecchio
+export function ensureCollectionButton(): void {
   const row = document.getElementById('collection-row');
   if (row) row.remove();
 }
 
-export function collectionSummaryText() {
-  const waves = new Set([...G.collection].map(id => id.split('|')[0]));
-  return I18N_IT.collectionSummary(waves.size, G.collection.size);
+export function collectionSummaryText(): string {
+  const owned = G.collection;
+  if (!owned) throw new TypeError('collezione non ancora letta');
+  const waves = new Set([...owned].map(id => id.split('|')[0]));
+  return I18N_IT.collectionSummary(waves.size, owned.size);
 }
 
-// Opzioni (dal menu iniziale): La mia collezione (con il riepilogo), Dorso delle carte e Sfondo
-export function openOptions(trigger) {
+// Opzioni (dal menu iniziale): La mia collezione (con il riepilogo), Dorso delle carte, Sfondo, Carte turno 1/2 e 3/4
+export function openOptions(trigger?: HTMLElement | null): void {
   const layer = el('div', 'collection-screen options-screen');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
@@ -57,9 +63,8 @@ export function openOptions(trigger) {
   const summary = el('span', 'options-item-note', collectionSummaryText());
   item.append(el('span', 'options-item-label', I18N_IT.myCollection), summary);
   item.addEventListener('click', () => openCollection(item, () => { summary.textContent = collectionSummaryText(); }));
-  // Dorso delle carte: miniatura e nome del dorso scelto; si tocca per la griglia di tutti i dorsi. Chiusa la griglia,
-  // la pagina iniziale resta coperta dalle Opzioni
-  // (la miniatura sta piccola a destra della scritta)
+  // Dorso delle carte: miniatura (piccola, a destra della scritta) e nome del dorso scelto; si tocca per la griglia di
+  // tutti i dorsi. Chiusa la griglia, la pagina iniziale resta coperta dalle Opzioni
   const backItem = el('div', 'options-item options-item--row');
   backItem.append(el('span', 'options-item-label', I18N_IT.cardBack),
     cardBackChoiceButton(() => { if (layer.isConnected) startLayer.inert = true; }, { compact: true }));
@@ -67,7 +72,7 @@ export function openOptions(trigger) {
   const bgItem = el('div', 'options-item options-item--row');
   bgItem.append(el('span', 'options-item-label', I18N_IT.background),
     backgroundChoiceButton(() => { if (layer.isConnected) startLayer.inert = true; }, { compact: true }));
-  // Carte turno 1/2 e 3/4 (wave 4, v192; dalla v193 qui e non nel Menu della partita): interruttore, attivo di default
+  // Carte turno 1/2 e 3/4 (wave 4): interruttore, attivo di default
   const pairsItem = el('label', 'options-item options-item--row ae-switch-row options-switch');
   const pairsInput = document.createElement('input');
   pairsInput.type = 'checkbox';
@@ -87,11 +92,18 @@ export function openOptions(trigger) {
   item.focus();
 }
 
+// Interruttore di una riga della collezione (ogni riga ne ha uno)
+function inputOf(row: HTMLElement): HTMLInputElement {
+  const input = row.querySelector('input');
+  if (!input) throw new TypeError('riga della collezione senza interruttore');
+  return input;
+}
+
 // Schermata "La mia collezione": per ogni wave un interruttore (la wave, cioè la sua scatola base) e sotto le sue
 // mini espansioni. Togliendo una wave si tolgono anche le sue mini espansioni. Le scelte valgono solo con
 // "Salva collezione"; la X torna indietro senza salvare.
-export function openCollection(trigger, onSaved) {
-  const draft = new Set(G.collection);
+export function openCollection(trigger?: HTMLElement | null, onSaved?: () => void): void {
+  const draft = new Set<CodiceProdotto>(G.collection);
   const layer = el('div', 'collection-screen');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
@@ -112,13 +124,13 @@ export function openCollection(trigger, onSaved) {
   head.append(el('h2', 'collection-title', I18N_IT.myCollection), x);
   const body = el('div', 'collection-body');
   body.appendChild(el('p', 'start-note', I18N_IT.collectionHint));
-  // Seleziona tutto / Deseleziona tutto: spuntano o tolgono tutte le wave e le mini espansioni (valgono con "Salva")
+  // Seleziona tutto / Deseleziona tutto: spuntano o tolgono tutte le wave (solo quelle che si possono scegliere) e le
+  // mini espansioni (valgono con "Salva")
   const bulk = el('div', 'collection-bulk');
-  // (solo le wave che si possono scegliere, v199)
-  const setAll = on => {
+  const setAll = (on: boolean) => {
     collectionCatalog().filter(({ wave }) => collectionWaveEnabled(wave))
       .forEach(({ products }) => products.forEach(p => { if (on) draft.add(p.id); else draft.delete(p.id); }));
-    body.querySelectorAll('.collection-wave:not(.is-locked) .collection-item input').forEach(input => {
+    queryAll(body, '.collection-wave:not(.is-locked) .collection-item input', HTMLInputElement).forEach(input => {
       input.checked = on;
       if (input.closest('.is-mini')) input.disabled = !on;
     });
@@ -127,7 +139,7 @@ export function openCollection(trigger, onSaved) {
   bulk.append(button(I18N_IT.selectAll, 'secondary', () => setAll(true)), button(I18N_IT.deselectAll, 'secondary', () => setAll(false)));
   body.appendChild(bulk);
 
-  const toggle = (label, id, extraClass) => {
+  const toggle = (label: string, id: CodiceProdotto, extraClass: string) => {
     const row = el('label', 'ae-switch-row collection-item' + (extraClass ? ' ' + extraClass : ''));
     const input = document.createElement('input');
     input.type = 'checkbox';
@@ -147,31 +159,37 @@ export function openCollection(trigger, onSaved) {
     const sync = () => {
       const on = draft.has(base.id);
       minis.forEach(r => {
-        const input = r.querySelector('input');
+        const input = inputOf(r);
         input.disabled = !on;
         r.classList.toggle('is-disabled', !on);
       });
     };
-    waveRow.querySelector('input').addEventListener('change', e => {
-      if (e.target.checked) draft.add(base.id);
-      else { draft.delete(base.id); products.slice(1).forEach(m => draft.delete(m.id)); minis.forEach(r => { r.querySelector('input').checked = false; }); }
+    const waveInput = inputOf(waveRow);
+    waveInput.addEventListener('change', () => {
+      if (waveInput.checked) draft.add(base.id);
+      else { draft.delete(base.id); products.slice(1).forEach(m => draft.delete(m.id)); minis.forEach(r => { inputOf(r).checked = false; }); }
       sync();
     });
-    minis.forEach(r => r.querySelector('input').addEventListener('change', e => {
-      if (e.target.checked) draft.add(e.target.dataset.id); else draft.delete(e.target.dataset.id);
-    }));
+    minis.forEach(r => {
+      const input = inputOf(r);
+      input.addEventListener('change', () => {
+        const id = String(input.dataset.id);
+        if (input.checked) draft.add(id); else draft.delete(id);
+      });
+    });
     block.append(waveRow, ...minis);
     sync();
-    // Wave non ancora disponibili (v199): visibili ma spente e non si toccano
+    // Wave non ancora disponibili: visibili ma spente e non si toccano
     if (!collectionWaveEnabled(wave)) {
       block.classList.add('is-locked');
       [waveRow, ...minis].forEach(r => {
-        const input = r.querySelector('input');
+        const input = inputOf(r);
         input.checked = false;
         input.disabled = true;
         r.classList.add('is-disabled');
       });
-      waveRow.querySelector('span').append(el('span', 'collection-locked-note', I18N_IT.collectionLocked));
+      const label = waveRow.querySelector('span');
+      if (label) label.append(el('span', 'collection-locked-note', I18N_IT.collectionLocked));
     }
     body.appendChild(block);
   });
@@ -194,12 +212,12 @@ export function openCollection(trigger, onSaved) {
   x.focus();
 }
 
-export function showStartSkeleton() {
-  document.getElementById('nemesis-list').replaceChildren(...[0, 1, 2, 3].map(() => el('div', 'nemesis-skeleton')));
+export function showStartSkeleton(): void {
+  byId('nemesis-list', HTMLDivElement).replaceChildren(...[0, 1, 2, 3].map(() => el('div', 'nemesis-skeleton')));
 }
 
-export function openStart() {
-  // (v215: uscendo da un test, Esci dal test o Menu iniziale della Vittoria, tornano le scelte di prima)
+export function openStart(): void {
+  // Uscendo da un test (Esci dal test o Menu iniziale della Vittoria) tornano le scelte di prima
   endTest();
   closeAllModals();
   closeDiscard();
@@ -209,19 +227,19 @@ export function openStart() {
   setStartMode('home', true);
 }
 
-export function closeStart() {
+export function closeStart(): void {
   startLayer.hidden = true;
   updateInert();
 }
 
 // Inizia partita: la scelta "Nuova partita" nella finestra sotto il titolo vale già come conferma di sostituire
 // la partita salvata, quindi qui non si chiede altro
-export function onStartClick() {
+export function onStartClick(): void {
   startGame();
 }
 
 // Inizia: nuova partita con le scelte fatte (la partita salvata viene sostituita)
-export function startGame() {
+export function startGame(): void {
   if (!battleOf(G.settings.nemesis)) return;
   clearTransition();
   closeAllModals();
@@ -247,18 +265,20 @@ export function startGame() {
   prefetchDeckImages();
 }
 
-// Riprendi partita: si ricarica lo stato salvato nel browser, compreso l'undo.
-// v194: se la nemesi della partita non è più nella collezione, una finestra lo dice; "Continua" rimette nella
-// collezione il suo prodotto (e la scatola base della sua wave) e riprende la partita.
-export function resumeGame() {
+// Riprendi partita: si ricarica lo stato salvato nel browser, compreso l'undo. Se la nemesi della partita non è più
+// nella collezione, una finestra lo dice; "Continua" rimette nella collezione il suo prodotto (e la scatola base della
+// sua wave) e riprende la partita. Nemesi di una wave non ancora disponibile nella collezione: si riprende e basta
+export function resumeGame(): void {
   const saved = readSave();
   if (!saved) return;
   const info = G.nemeses.find(n => n.name === saved.settings.nemesis);
-  // (nemesi di una wave non ancora disponibile nella collezione, v199: si riprende e basta)
-  if (info && info.boxCode && G.collection && collectionWaveEnabled(waveOfNemesis(info)) && !G.collection.has(productOfNemesis(info))) {
+  const owned = G.collection;
+  const product = info ? info.boxCode : null;
+  const wave = info ? waveOfNemesis(info) : null;
+  if (info && product && wave && owned && collectionWaveEnabled(wave) && !owned.has(product)) {
     openMissingNemesis(info, () => {
-      G.collection.add(waveOfNemesis(info));
-      G.collection.add(productOfNemesis(info));
+      owned.add(wave);
+      owned.add(product);
       saveCollection();
       renderStartChoices();
       updateHomeCollection();
@@ -269,13 +289,14 @@ export function resumeGame() {
   resumeSavedGame(saved);
 }
 
-export function openMissingNemesis(info, onContinue) {
+export function openMissingNemesis(info: Nemesi, onContinue: () => void): void {
   let close = () => {};
   const cancel = () => close();
   const dialog = dialogShell(I18N_IT.nemesisMissingTitle, '', cancel, { displayTitle: false });
   dialog.classList.add('ae-exit-confirm');
+  const product = String(info.boxCode);
   dialog.appendChild(el('p', 'ae-modal-text', I18N_IT.nemesisMissingText(info.name,
-    isMiniCode(info.boxCode) ? productName(info.boxCode) : waveLabel(waveOfNemesis(info)))));
+    isMiniCode(info.boxCode) ? productName(product) : waveLabel(waveOfNemesis(info)))));
   const footer = el('div', 'ae-modal-footer');
   const go = button(I18N_IT.continueLabel, 'primary', () => { close(); onContinue(); });
   footer.append(button(I18N_IT.cancel, 'secondary', cancel), go);
@@ -283,7 +304,7 @@ export function openMissingNemesis(info, onContinue) {
   close = openModal(dialog, { onCancel: cancel, initialFocus: go });
 }
 
-export function resumeSavedGame(saved) {
+export function resumeSavedGame(saved: SalvataggioValido): void {
   try {
     const previousSettings = G.settings;
     G.settings = saved.settings;
@@ -307,12 +328,12 @@ export function resumeSavedGame(saved) {
   }
 }
 
-export function showStartError(text, withRetry) {
+export function showStartError(text: string, withRetry: boolean): void {
   startError.hidden = false;
   startErrorText.textContent = text;
   retryBtn.hidden = !withRetry;
 }
 
-// Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima
-export function avvio() {
+// Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
+export function avvio(): void {
 }

@@ -1,49 +1,74 @@
-// ui/schermate/crea-mazzo.js: "Crea mazzo": i 9 mazzi, lo slider, le carte specifiche.
-// Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
-// funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
+// ui/schermate/crea-mazzo.ts: "Crea mazzo": i 9 mazzi da cui nasce il mazzo nemesi, il cursore da trascinare, le
+// carte Specifiche in grande, la finestra della nemesi con il numero di giocatori.
+// Dipende da: stato/ (condivise, stato, partita, salvataggio), dati/ (dati, rete), ui/testi.ts, ui/componenti
+// (componenti, dialoghi, testata), ui/schermate/turno-nemesi. Usato da: opzioni (inizio partita), menu laterale (cursore,
+// Ricomincia), testata, pesca-undo (immagini delle Specifiche), stato/salvataggio.ts (closeDeckBuild).
 
 import { G } from '../../stato/condivise.ts';
-import { I18N_IT } from '../testi.js';
+import type { CursoreMazzo } from '../../stato/condivise.ts';
+import { I18N_IT } from '../testi.ts';
 import { CARD_BACK, app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.ts';
 import { battleOf, shuffle } from '../../dati/dati.ts';
 import { deckPlan, newGame } from '../../stato/partita.ts';
-import { cardArt, el } from '../componenti/componenti.js';
-import { button, closeAllModals, dialogShell, openModal } from '../componenti/dialoghi.js';
+import { cardArt, el, query, queryAll } from '../componenti/componenti.ts';
+import { button, closeAllModals, dialogShell, openModal } from '../componenti/dialoghi.ts';
 import { clearTransition, lockFor } from '../../stato/salvataggio.ts';
 import { TIER_BANNER_MS, buzz, render, showBanner } from './turno-nemesi.js';
-import { dockDeck, renderDockPiles } from '../componenti/testata.js';
+import { dockDeck, renderDockPiles } from '../componenti/testata.ts';
 import { prefetchDeckImages } from '../../dati/rete.ts';
+import type { Carta } from '../../tipi/dati.ts';
 
 // --- Creazione del mazzo nemesi (dopo "Inizia partita") ---
 // Si vedono i 9 mazzi da cui nasce il mazzo nemesi: righe Tier 1-3, colonne Base / Potenziate / Specifiche. Base e
 // Potenziate sono mazzi coperti con il numero di carte che ne verranno prese; le Specifiche (sempre tutte) sono a faccia
 // in su, aperte a ventaglio; toccandole si vedono grandi, scorrendo a destra e sinistra.
-// "Crea mazzo" (il pulsante principale) fa volare le carte una alla volta nel mazzo nemesi in alto a sinistra: prima il
-// Tier 3 (in fondo al mazzo), poi il 2, poi l'1 (in cima), senza pause tra un Tier e l'altro; dentro ogni Tier
-// le carte partono in ordine casuale dai tre mazzi. Il numero del mazzo sale a ogni carta. Alla fine la schermata
-// sparisce e si è nel turno giocatori. Il mazzo vero è già fatto (newGame): l'animazione lo mostra soltanto.
+// "Crea mazzo" fa volare le carte una alla volta nel mazzo nemesi in alto a sinistra: prima il Tier 3 (in fondo al
+// mazzo), poi il 2, poi l'1 (in cima), senza pause tra un Tier e l'altro; dentro ogni Tier le carte partono in ordine
+// casuale dai tre mazzi. Il numero del mazzo sale a ogni carta. Alla fine la schermata sparisce e si è nel turno
+// giocatori. Il mazzo vero è già fatto (newGame): l'animazione lo mostra soltanto.
+
+const KINDS = ['basic', 'upgraded', 'specific'] as const;
+
+// Una carta che vola dal suo mazzo a quello in alto
+interface CartaInVolo {
+  pile: HTMLElement;             // mazzo di partenza
+  fanCard: HTMLElement | null;   // carta del ventaglio (Specifiche), o null per i mazzi coperti
+  i: number;                     // posizione nell'ordine dei voli
+  ghost: HTMLElement | null;     // copia in volo (creata al primo movimento)
+  state: number;                 // (non usato dal disegno: 0)
+  cx: number;                    // centro di partenza (x), misurato quando nasce la copia
+  cy: number;                    // centro di partenza (y)
+  w: number;                     // larghezza di partenza
+}
+
+// I voli di una schermata "Crea mazzo"
+interface VoloMazzo {
+  layer: HTMLElement;            // la schermata
+  order: CartaInVolo[];          // carte nell'ordine in cui volano
+  p: number;                     // avanzamento 0-1
+}
 
 // Carte Specifiche della nemesi della partita per un Tier (come in buildDeck)
-export function specificCardsOf(tier) {
+export function specificCardsOf(tier: number): Carta[] {
   return G.allCards.filter(c => c.category === 'Specific' && c.nemesis === G.settings.nemesis && c.inNemesisDeck === true && c.tier === tier);
 }
 
-export function showDeckBuild() {
+export function showDeckBuild(): void {
   closeDeckBuild();
   const layer = el('div', 'deck-build');
   layer.id = 'deck-build';
   const grid = el('div', 'deck-build-grid');
   grid.appendChild(el('span', 'deck-build-corner'));
-  ['basic', 'upgraded', 'specific'].forEach(kind => grid.appendChild(el('span', 'deck-build-head', I18N_IT.deckBuildKinds[kind])));
+  KINDS.forEach(kind => grid.appendChild(el('span', 'deck-build-head', I18N_IT.deckBuildKinds[kind])));
   [1, 2, 3].forEach(tier => {
     grid.appendChild(el('span', 'deck-build-tier', I18N_IT.tierN(tier)));
-    ['basic', 'upgraded', 'specific'].forEach(kind => {
+    KINDS.forEach(kind => {
       const plan = deckPlan.find(p => p.tier === tier && p.kind === kind) || { count: 0 };
       const pile = el('div', 'deck-build-pile' + (plan.count ? '' : ' is-empty'));
-      pile.dataset.tier = tier;
+      pile.dataset.tier = String(tier);
       pile.dataset.kind = kind;
-      pile.dataset.left = plan.count;
-      pile.dataset.count = plan.count;
+      pile.dataset.left = String(plan.count);
+      pile.dataset.count = String(plan.count);
       pile.setAttribute('aria-label', I18N_IT.deckBuildPile(plan.count, I18N_IT.deckBuildKinds[kind].toLowerCase(), tier));
       if (kind === 'specific') {
         // A faccia in su, a ventaglio (come le carte in mano); si toccano per vederle grandi
@@ -60,7 +85,7 @@ export function showDeckBuild() {
           const img = document.createElement('img');
           img.alt = '';
           img.className = 'deck-build-fan-front';
-          img.src = data.thumb;
+          img.src = String(data.thumb);
           img.addEventListener('error', () => { img.src = encodeURI(data.image); }, { once: true });
           const back = document.createElement('img');
           back.alt = '';
@@ -91,9 +116,9 @@ export function showDeckBuild() {
 }
 
 // Carte Specifiche in grande: tutte quelle della nemesi (Tier 1, 2, 3), si scorrono a destra e sinistra; si parte dalla
-// prima del Tier toccato. Sopra: "Tier 1 | Tier 2 | Tier 3" e sotto ogni Tier un pallino per carta (come i carosello):
+// prima del Tier toccato. Sopra: "Tier 1 | Tier 2 | Tier 3" e sotto ogni Tier un pallino per carta (come i caroselli):
 // il pallino acceso è la carta mostrata. Toccando un Tier si va alla sua prima carta.
-export function openSpecificViewer(tier) {
+export function openSpecificViewer(tier: number): void {
   const cards = [1, 2, 3].flatMap(t => specificCardsOf(t).map(data => ({ data, t })));
   if (!cards.length) return;
   let close = () => {};
@@ -101,8 +126,8 @@ export function openSpecificViewer(tier) {
   const dialog = dialogShell(I18N_IT.specificTitle, G.settings.nemesis, cancel, { displayTitle: false });
   dialog.classList.add('ae-spec-viewer');
   const nav = el('div', 'ae-spec-tiers');
-  const dots = [];
-  [1, 2, 3].forEach((t, ti) => {
+  const dots: { d: HTMLSpanElement; group: HTMLButtonElement }[] = [];
+  [1, 2, 3].forEach(t => {
     const ofTier = cards.filter(c => c.t === t);
     if (!ofTier.length) return;
     if (nav.children.length) {
@@ -112,7 +137,7 @@ export function openSpecificViewer(tier) {
     }
     const group = el('button', 'ae-spec-tier');
     group.type = 'button';
-    group.dataset.tier = t;
+    group.dataset.tier = String(t);
     const row = el('span', 'ae-spec-dots');
     row.setAttribute('aria-hidden', 'true');
     ofTier.forEach(() => { const d = el('span'); row.appendChild(d); dots.push({ d, group }); });
@@ -123,12 +148,12 @@ export function openSpecificViewer(tier) {
   const track = el('div', 'ae-spec-track');
   cards.forEach(({ data, t }) => {
     const slide = el('div', 'ae-spec-slide');
-    slide.dataset.tier = t;
+    slide.dataset.tier = String(t);
     slide.appendChild(cardArt(data));
     track.appendChild(slide);
   });
   let current = -1;
-  const mark = i => {
+  const mark = (i: number) => {
     if (i === current || i < 0 || i >= cards.length) return;
     current = i;
     dots.forEach(({ d, group }, k) => {
@@ -140,9 +165,9 @@ export function openSpecificViewer(tier) {
     });
   };
   const indexNow = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth + 12));
-  const goTo = (i, smooth) => {
+  const goTo = (i: number, smooth: boolean) => {
     const slide = track.children[i];
-    if (!slide) return;
+    if (!(slide instanceof HTMLElement)) return;
     track.scrollTo({ left: slide.offsetLeft - track.offsetLeft, behavior: smooth && !reducedMotion.matches ? 'smooth' : 'auto' });
     mark(i);
   };
@@ -154,7 +179,7 @@ export function openSpecificViewer(tier) {
   goTo(Math.max(0, cards.findIndex(c => c.t === tier)), false);
 }
 
-export function closeDeckBuild() {
+export function closeDeckBuild(): void {
   mainEl.classList.remove('is-deck-building');
   const old = document.getElementById('deck-build');
   if (old) old.remove();
@@ -163,7 +188,7 @@ export function closeDeckBuild() {
 }
 
 // Ricomincia (Menu, durante "Crea mazzo") o cambio dei giocatori: mazzo nuovo con le scelte correnti, di nuovo i 9 mazzi
-export function rebuildDeck() {
+export function rebuildDeck(): void {
   clearTransition();
   closeAllModals();
   newGame();
@@ -177,7 +202,7 @@ export function rebuildDeck() {
 
 // Finestra della nemesi (tocco sul nome in alto, solo durante "Crea mazzo"): nome e illustrazione come nel menu, e il
 // numero di giocatori, che si può cambiare (il mazzo si rifà subito)
-export function openGameSetup() {
+export function openGameSetup(): void {
   if (!ui.deckBuilding || ui.isTransitioning) return;
   let close = () => {};
   const cancel = () => close();
@@ -187,12 +212,13 @@ export function openGameSetup() {
   head.appendChild(el('p', 'start-choice-info', G.settings.nemesis || ''));
   const battleNo = battleOf(G.settings.nemesis);
   head.appendChild(el('p', 'ae-game-setup-battle', battleNo ? I18N_IT.battle(battleNo) : I18N_IT.battleMissing));
-  const art = G.nemesisArt[G.settings.nemesis];
+  const art = G.settings.nemesis !== null ? G.nemesisArt[G.settings.nemesis] : undefined;
   head.classList.toggle('has-art', !!art);
   if (art) {
     const portrait = el('span', 'nemesis-art');
     portrait.setAttribute('aria-hidden', 'true');
-    portrait.style.backgroundImage = `url("${encodeURI(art.portrait)}")`;
+    // (String: senza ritratto l'indirizzo è "undefined", come prima)
+    portrait.style.backgroundImage = `url("${encodeURI(String(art.portrait))}")`;
     head.prepend(portrait);
   }
   const label = el('h3', 'start-label', 'Giocatori');
@@ -200,24 +226,29 @@ export function openGameSetup() {
   const choices = el('div', 'choices');
   choices.setAttribute('role', 'group');
   choices.setAttribute('aria-labelledby', label.id);
-  const renderChoices = () => choices.replaceChildren(...G.startOptions.players.map(value => {
-    const b = el('button', '', String(value));
-    b.type = 'button';
-    b.setAttribute('aria-pressed', String(value === G.settings.players));
-    b.setAttribute('aria-label', I18N_IT.players(value));
-    b.addEventListener('click', () => {
-      if (G.settings.players === value) return;
-      G.settings.players = value;
-      // Il mazzo dipende dai giocatori: si rifà, con la finestra ancora aperta
-      newGame();
-      ui.deckShown = 0;
-      showDeckBuild();
-      render();
-      renderChoices();
-      choices.querySelector('[aria-pressed="true"]').focus();
-    });
-    return b;
-  }));
+  const renderChoices = () => {
+    const options = G.startOptions;
+    if (!options) throw new TypeError('scelte della pagina iniziale non ancora pronte');
+    choices.replaceChildren(...options.players.map(value => {
+      const b = el('button', '', String(value));
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(value === G.settings.players));
+      b.setAttribute('aria-label', I18N_IT.players(value));
+      b.addEventListener('click', () => {
+        if (G.settings.players === value) return;
+        G.settings.players = value;
+        // Il mazzo dipende dai giocatori: si rifà, con la finestra ancora aperta
+        newGame();
+        ui.deckShown = 0;
+        showDeckBuild();
+        render();
+        renderChoices();
+        const pressed = query(choices, '[aria-pressed="true"]', HTMLElement);
+        if (pressed) pressed.focus();
+      });
+      return b;
+    }));
+  };
   renderChoices();
   const footer = el('div', 'ae-modal-footer');
   footer.appendChild(button(I18N_IT.close, 'secondary', cancel));
@@ -225,7 +256,7 @@ export function openGameSetup() {
   close = openModal(dialog, { onCancel: cancel });
 }
 
-// --- "Crea mazzo" con lo slider: il quadratino si trascina da sinistra a destra e le carte vanno nel mazzo in alto
+// --- "Crea mazzo" con il cursore: il quadratino si trascina da sinistra a destra e le carte vanno nel mazzo in alto
 // seguendo il dito. Avanzamento p (0..1): con p = 0 si vedono tutti i mazzi, a metà strada è nel mazzo circa metà delle
 // carte, alla fine il mazzo è completo e la partita inizia. Lasciando prima della fine il quadratino torna indietro
 // (e le carte tornano nei loro mazzi). Prima il Tier 3 (in fondo al mazzo), poi il 2, poi l'1; dentro ogni Tier le
@@ -234,24 +265,25 @@ export function openGameSetup() {
 // insieme. Il mazzo vero è già fatto (newGame): l'animazione lo mostra soltanto.
 export const DECK_FLY_WINDOW = 3;
 
-// Oltre questa frazione dello slider, al rilascio, il mazzo si completa
+// Oltre questa frazione del cursore, al rilascio, il mazzo si completa
 export const DECK_SLIDE_DONE = 0.94;
 
-export let deckFlight = null;
+export let deckFlight: VoloMazzo | null = null;
 
 // Prepara i voli (una volta per schermata): ordine delle carte, mazzo di partenza, copie da far volare
-export function prepareDeckFlight() {
+export function prepareDeckFlight(): VoloMazzo | null {
   const layer = document.getElementById('deck-build');
   if (!layer) return null;
   if (deckFlight && deckFlight.layer === layer) return deckFlight;
-  const order = [];
+  const order: CartaInVolo[] = [];
   [3, 2, 1].forEach(tier => {
-    const ofTier = [];
-    ['basic', 'upgraded', 'specific'].forEach(kind => {
-      const pile = layer.querySelector(`.deck-build-pile[data-tier="${tier}"][data-kind="${kind}"]`);
-      const fan = kind === 'specific' ? [...pile.querySelectorAll('.deck-build-fan-card')] : null;
-      const total = kind === 'specific' ? fan.length : Number(pile.dataset.count);
-      for (let i = 0; i < total; i++) ofTier.push({ pile, fanCard: fan ? fan[i] : null });
+    const ofTier: CartaInVolo[] = [];
+    KINDS.forEach(kind => {
+      const pile = query(layer, `.deck-build-pile[data-tier="${tier}"][data-kind="${kind}"]`, HTMLElement);
+      if (!pile) throw new TypeError(`mazzo Tier ${tier} ${kind} mancante in "Crea mazzo"`);
+      const fan = kind === 'specific' ? queryAll(pile, '.deck-build-fan-card', HTMLElement) : null;
+      const total = fan ? fan.length : Number(pile.dataset.count);
+      for (let i = 0; i < total; i++) ofTier.push({ pile, fanCard: fan ? fan[i] : null, i: 0, ghost: null, state: 0, cx: 0, cy: 0, w: 0 });
     });
     order.push(...shuffle(ofTier));
   });
@@ -261,9 +293,10 @@ export function prepareDeckFlight() {
 }
 
 // Copia della carta in volo, creata al primo movimento (le misure si prendono allora)
-export function deckGhost(c) {
+export function deckGhost(c: CartaInVolo): HTMLElement {
   if (c.ghost) return c.ghost;
-  const source = c.fanCard || c.pile.querySelector(':scope > img');
+  const source = c.fanCard || query(c.pile, ':scope > img', HTMLElement);
+  if (!source) throw new TypeError('carta di partenza mancante in "Crea mazzo"');
   const from = source.getBoundingClientRect();
   const w = c.fanCard ? source.offsetWidth : from.width;
   const h = c.fanCard ? source.offsetHeight : from.height;
@@ -282,17 +315,17 @@ export function deckGhost(c) {
 }
 
 // Disegna i mazzi e le carte in volo per l'avanzamento p
-export function setDeckProgress(p) {
+export function setDeckProgress(p: number): void {
   const flight = prepareDeckFlight();
   if (!flight) return;
   flight.p = p;
   const n = flight.order.length;
-  // Le Specifiche si girano (dorso in su) appena lo slider si muove; tornano a faccia in su a slider fermo all'inizio
+  // Le Specifiche si girano (dorso in su) appena il cursore si muove; tornano a faccia in su a cursore fermo all'inizio
   flight.layer.classList.toggle('is-flipping', p > 0);
   const to = dockDeck.getBoundingClientRect();
   const x = p * (n + DECK_FLY_WINDOW - 1);
   let landed = 0;
-  const taken = new Map();
+  const taken = new Map<HTMLElement, number>();
   flight.order.forEach(c => {
     const t = n ? Math.max(0, Math.min(1, (x - c.i) / DECK_FLY_WINDOW)) : 1;
     if (t >= 1) landed++;
@@ -310,16 +343,19 @@ export function setDeckProgress(p) {
     ghost.style.visibility = '';
     ghost.style.transform = `translate(${dx * t}px, ${dy * t - 30 * arc}px) rotate(${(c.i % 2 ? 8 : -8) * arc}deg) scale(${s})`;
   });
-  flight.layer.querySelectorAll('.deck-build-pile').forEach(pile => {
+  queryAll(flight.layer, '.deck-build-pile', HTMLElement).forEach(pile => {
     const left = Math.max(0, Number(pile.dataset.count) - (taken.get(pile) || 0));
-    pile.dataset.left = left;
-    pile.querySelector('.ae-pile-count').textContent = String(left);
+    pile.dataset.left = String(left);
+    const count = pile.querySelector('.ae-pile-count');
+    if (!count) throw new TypeError('numero del mazzo mancante in "Crea mazzo"');
+    count.textContent = String(left);
     pile.classList.toggle('is-empty', left <= 0);
   });
   const before = ui.deckShown || 0;
-  ui.deckShown = Math.min(G.deck.length, landed);
+  const shown = Math.min(G.deck.length, landed);
+  ui.deckShown = shown;
   renderDockPiles();
-  if (ui.deckShown > before) {
+  if (shown > before) {
     dockDeck.classList.remove('is-bump');
     void dockDeck.offsetWidth;
     dockDeck.classList.add('is-bump');
@@ -330,7 +366,7 @@ export function setDeckProgress(p) {
 // turno giocatori
 export const DECK_DARK_FADE_MS = 900;
 
-export function finishDeckBuild() {
+export function finishDeckBuild(): void {
   const layer = document.getElementById('deck-build');
   if (deckFlight) deckFlight.order.forEach(c => { if (c.ghost) c.ghost.remove(); });
   deckFlight = null;
@@ -345,7 +381,7 @@ export function finishDeckBuild() {
   } else if (layer) {
     layer.remove();
   }
-  // v193: niente carta turno pescata da sola: il pulsante è "Pesca carta turno"
+  // Niente carta turno pescata da sola: il pulsante è "Pesca carta turno"
   render();
   nemesisBtn.focus({ preventScroll: true });
   // Banner "Partita iniziata", uguale a quello dei Tier; finito il banner lo sfondo si accende
@@ -356,8 +392,8 @@ export function finishDeckBuild() {
   }, reducedMotion.matches ? 0 : TIER_BANNER_MS);
 }
 
-// Completa il mazzo da dove è arrivato lo slider (rilascio vicino alla fine, tastiera), poi la partita inizia
-export function runDeckBuild() {
+// Completa il mazzo da dove è arrivato il cursore (rilascio vicino alla fine, tastiera), poi la partita inizia
+export function runDeckBuild(): void {
   if (!ui.deckBuilding || ui.isTransitioning) return;
   const flight = prepareDeckFlight();
   if (!flight || reducedMotion.matches) { finishDeckBuild(); return; }
@@ -369,7 +405,7 @@ export function runDeckBuild() {
 }
 
 // Piccola animazione numerica (requestAnimationFrame, con riserva setTimeout per il browser di prova)
-export function tween(from, to, ms, step, done) {
+export function tween(from: number, to: number, ms: number, step: (value: number) => void, done?: () => void): void {
   const t0 = performance.now();
   let finished = false;
   const tick = () => {
@@ -378,13 +414,15 @@ export function tween(from, to, ms, step, done) {
     const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
     step(from + (to - from) * e);
     if (k >= 1) { finished = true; if (done) done(); return; }
-    if (window.requestAnimationFrame) requestAnimationFrame(tick); else setTimeout(tick, 16);
+    if (typeof window.requestAnimationFrame === 'function') requestAnimationFrame(tick); else setTimeout(tick, 16);
   };
   tick();
   setTimeout(() => { if (!finished) { finished = true; step(to); if (done) done(); } }, ms + 200);
 }
 
-export function buildDeckSlider() {
+// Cursore di "Crea mazzo" nel dock, al posto del pulsante principale: box con il quadratino dorato che si trascina a
+// destra. Pulsa finché non lo si tocca. Da tastiera: freccia destra / Invio completano.
+export function buildDeckSlider(): CursoreMazzo {
   const box = el('div', 'ae-deck-slider');
   box.setAttribute('role', 'slider');
   box.setAttribute('aria-label', I18N_IT.slideToBuildLabel);
@@ -401,9 +439,9 @@ export function buildDeckSlider() {
   box.append(fill, label, knob);
   let p = 0;
   let locked = false;
-  let drag = null;
+  let drag: { x: number; id: number } | null = null;
   const range = () => Math.max(1, box.clientWidth - knob.offsetWidth - 8);
-  const setProgress = (value, quiet) => {
+  const setProgress = (value: number, quiet?: boolean) => {
     p = Math.max(0, Math.min(1, value));
     box.style.setProperty('--p', String(p));
     knob.style.transform = `translateX(${p * range()}px)`;
@@ -412,7 +450,7 @@ export function buildDeckSlider() {
     if (!quiet) box.classList.toggle('is-started', p > 0);
     if (quiet && p === 0) box.classList.remove('is-started', 'is-dragging');
   };
-  const lock = on => { locked = on; if (on) box.classList.add('is-started'); };
+  const lock = (on: boolean) => { locked = on; if (on) box.classList.add('is-started'); };
   const release = () => {
     if (!drag) return;
     drag = null;
@@ -459,9 +497,7 @@ export function buildDeckSlider() {
   return { box, setProgress, lock };
 }
 
-// Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima
-export function avvio() {
-  // Slider di "Crea mazzo" nel dock, al posto del pulsante principale: box con il quadratino dorato che si trascina
-  // a destra. Pulsa finché non lo si tocca. Da tastiera: freccia destra / Invio completano.
+// Codice eseguito all'avvio, nell'ordine di sempre (il cursore lo crea il menu laterale)
+export function avvio(): void {
   G.deckSlider = null;
 }

@@ -3,16 +3,16 @@
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
 import { G } from '../../stato/condivise.ts';
-import { I18N_IT } from '../testi.js';
+import { I18N_IT } from '../testi.ts';
 import { DRAG_THRESHOLD, SWIPE_MIN_DISTANCE, reducedMotion, resumeBtn, startBtn, startLayer } from '../../stato/stato.ts';
 import { battleOf } from '../../dati/dati.ts';
 import { collectionCatalog, isMiniCode, isPlayable, loadCollection, ownsProduct, productName, productOfNemesis, waveOfCode, waveOfNemesis } from '../../dati/collezione.ts';
 import { deckShortfall, loadDeckOptions, mergeActive, mergeLockedWave, saveDeckOptions } from '../../stato/partita.ts';
-import { el, icon } from '../componenti/componenti.js';
-import { button, showToast } from '../componenti/dialoghi.js';
-import { ensureCollectionButton, openCollection, openOptions, resumeGame } from './opzioni.js';
+import { el, icon } from '../componenti/componenti.ts';
+import { button, showToast } from '../componenti/dialoghi.ts';
+import { ensureCollectionButton, openCollection, openOptions, resumeGame } from './opzioni.ts';
 import { readSave } from '../../stato/salvataggio.ts';
-import { openTestScreen } from './test.js';
+import { openTestScreen } from './test.ts';
 
 // --- 6. Pagina iniziale e nuova partita -----------------------------------------------------------------------------
 export function renderPlayers() {

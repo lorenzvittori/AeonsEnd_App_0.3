@@ -15,8 +15,8 @@ export interface ProvaInCorso {
   prevSettings: Impostazioni;    // scelte della partita vera, rimesse all'uscita dal test
   id?: string;                   // id dello scenario
   name?: string;                 // nome dello scenario
-  pairs?: boolean;               // carte 1/2 e 3/4 solo per lo scenario
-  turnCards?: CartaTurno[];      // carte del mazzo dei turni solo per lo scenario
+  pairs?: boolean | null;        // carte 1/2 e 3/4 solo per lo scenario (null: come le preferenze)
+  turnCards?: CartaTurno[] | null; // carte del mazzo dei turni solo per lo scenario (null: quelle normali)
 }
 
 // Scelte possibili della pagina Nuova partita

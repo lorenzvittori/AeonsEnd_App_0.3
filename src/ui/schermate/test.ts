@@ -1,20 +1,25 @@
-// ui/schermate/test.js: Modalità test: scenari e schermata Test.
-// Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
-// funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
+// ui/schermate/test.ts: Modalità test: scenari (partite che partono già in un momento preciso) e schermata Test.
+// Dipende da: stato/ (condivise, stato, partita, salvataggio), dati/rete.ts, ui/testi.ts, ui/componenti (componenti,
+// dialoghi, scarti), ui/schermate (opzioni, turno-nemesi). Usato da: menu iniziale (Test), menu laterale (Ricomincia lo
+// scenario), prove degli operatori (app.SCENARI, app.startScenario).
 
 import { G } from '../../stato/condivise.ts';
-import { I18N_IT } from '../testi.js';
+import { I18N_IT } from '../testi.ts';
 import { emptyStats, nemesisBtn, resolveBtn, startLayer, ui } from '../../stato/stato.ts';
 import { aetherCost, emptyPairNext, isVariableMinion, makeEntry } from '../../stato/partita.ts';
-import { el, icon } from '../componenti/componenti.js';
-import { closeAllModals, showToast, updateInert } from '../componenti/dialoghi.js';
-import { closeDiscard } from '../componenti/scarti.js';
-import { closeStart } from './opzioni.js';
+import { el, icon, query } from '../componenti/componenti.ts';
+import { closeAllModals, showToast, updateInert } from '../componenti/dialoghi.ts';
+import { closeDiscard } from '../componenti/scarti.ts';
+import { closeStart } from './opzioni.ts';
 import { clearTransition, restore } from '../../stato/salvataggio.ts';
 import { render } from './turno-nemesi.js';
 import { prefetchDeckImages } from '../../dati/rete.ts';
+import { jsonCopy } from '../../regole/json.ts';
+import type { Carta } from '../../tipi/dati.ts';
+import type { CartaTurno, Giocatore, MemoriaCoppie, SceltaCoppia, StatisticheMago } from '../../tipi/partita.ts';
+import type { FotografiaLetta, VoceLetta } from '../../tipi/salvataggio.ts';
 
-// --- Modalità test (v215) ------------------------------------------------------------------------------------------
+// --- Modalità test --------------------------------------------------------------------------------------------------
 // Dal menu iniziale ("Test") si sceglie uno scenario: la partita parte già in un momento preciso, senza giocarla fino
 // lì. Isolata dalla partita vera: niente salvataggio (save() non scrive con testRun), la partita salvata e "Riprendi
 // partita" non cambiano; la collezione non conta (le carte le sceglie lo scenario); le preferenze (dorso, sfondo,
@@ -32,14 +37,51 @@ import { prefetchDeckImages } from '../../dati/rete.ts';
 //   (carte per NOME; { name, boxCode } quando il nome è di più carte, per esempio Sunder "1" e "4")
 //   turnOrder                 { left: dalla cima, drawn: scarti dei turni (l'ultima è il turno in corso), round, wild,
 //                             picks: { pos: { player, forced } }, pairNext: { p12, p34 } } con 'p1'..'p4', 'wild',
-//                             'nemesis', 'p12', 'p34' (picks e pairNext: carte 1/2 e 3/4, v220)
+//                             'nemesis', 'p12', 'p34' (picks e pairNext: carte 1/2 e 3/4)
 //   turnCards                 (facoltativo) carte del mazzo dei turni per i giri nuovi, al posto di quelle normali
 //   pairs                     (facoltativo) carte 1/2 e 3/4 attive o no solo per lo scenario
 //   turn, maxTier             turni nemesi giocati e Tier più alto già uscito (per la scritta "Tier N")
+//   graveLife, nemesisLife    (facoltativi) vite di Gravehold e della nemesi
 //   stats                     (facoltativo) { startedMinAgo, tierMinAgo: { 2, 3 }, minionsKilled: [{ name, turns }],
 //                             powersPaid, powersResolved, attacksResolved (nomi), mages: { p1: { damage, powers, kills } } }
 // Per aggiungere uno scenario basta un oggetto in più qui sotto (CONTESTO_SVILUPPO.md, sezione 9).
-export const SCENARI = [
+// Una carta di uno scenario: il nome, o { name, boxCode } quando il nome è di più carte
+export type CartaScenario = string | { name: string; boxCode?: string };
+
+// Una carta in gioco di uno scenario: il nome, o il nome con lo stato
+export type VoceScenario = string | { name: string; boxCode?: string; hp?: number; tokens?: number; hpSet?: boolean; bornTurn?: number };
+
+// Uno scenario della Modalità test (campi descritti qui sopra)
+export interface Scenario {
+  id: string;
+  name: string;
+  desc: string;
+  players: number;
+  nemesis: string;
+  phase: 'players' | 'nemesis';
+  deck?: CartaScenario[];
+  queue?: VoceScenario[];
+  discard?: CartaScenario[];
+  turnOrder?: { left?: CartaTurno[]; drawn?: CartaTurno[]; round?: number; wild?: number | null;
+    picks?: Record<number, SceltaCoppia>; pairNext?: Partial<MemoriaCoppie> };
+  turnCards?: CartaTurno[];
+  pairs?: boolean;
+  turn?: number;
+  maxTier?: number;
+  graveLife?: number;
+  nemesisLife?: number;
+  stats?: {
+    startedMinAgo?: number;
+    tierMinAgo?: Record<number, number>;
+    minionsKilled?: { name: string; turns?: number }[];
+    powersPaid?: CartaScenario[];
+    powersResolved?: CartaScenario[];
+    attacksResolved?: CartaScenario[];
+    mages?: Partial<Record<Giocatore, StatisticheMago>>;
+  };
+}
+
+export const SCENARI: Scenario[] = [
   {
     id: 'turn-deck', name: 'Carte sul mazzo dei turni',
     desc: 'Solo carte nemesi nel mazzo dei turni; in cima Hissing Acid, Sunder e Thunderous Tempest (riquadri e finestra)',
@@ -88,7 +130,7 @@ export const SCENARI = [
     players: 4, nemesis: 'Maggoth', phase: 'players', turn: 1, maxTier: 1, pairs: true,
     queue: ['Carriode Colony'],
     deck: ['Drillbeak Wurm', 'Rend', 'Disorient', 'Blind Enigma'],
-    // (v220: il 4 ha scelto la 3/4, quindi la prossima 3/4 tocca al 3; nessuno per la 1/2: si sceglie)
+    // Il 4 ha scelto la 3/4, quindi la prossima 3/4 tocca al 3; nessuno per la 1/2: si sceglie
     turnOrder: { left: ['p12', 'nemesis', 'p34', 'p12', 'nemesis'], drawn: ['p34'], picks: { 0: { player: 'p4', forced: false } },
       pairNext: { p12: null, p34: 'p3' }, round: 1 }
   },
@@ -146,7 +188,7 @@ export const SCENARI = [
 ];
 
 // Carta di uno scenario: nome (o { name, boxCode }); errore se non c'è o se il nome è di più carte
-export function scenarioCard(ref) {
+export function scenarioCard(ref: CartaScenario): Carta {
   const name = typeof ref === 'string' ? ref : ref.name;
   const box = typeof ref === 'object' && ref.boxCode !== undefined ? String(ref.boxCode) : null;
   const found = G.allCards.filter(c => c.name === name && (box === null || c.boxCode === box));
@@ -156,64 +198,65 @@ export function scenarioCard(ref) {
 }
 
 // Fotografia della partita (stesso formato di snapshot) costruita dai dati dello scenario; la applica restore()
-export function buildScenarioState(sc) {
+export function buildScenarioState(sc: Scenario): FotografiaLetta {
   const now = Date.now();
-  const ago = m => now - m * 60000;
+  const ago = (m: number) => now - m * 60000;
   const turnNo = sc.turn || 0;
   const deckCards = (sc.deck || []).map(scenarioCard);
   const queueCards = (sc.queue || []).map(ref => ({ ref: typeof ref === 'string' ? { name: ref } : ref, data: scenarioCard(ref) }));
   const discardCards = (sc.discard || []).map(scenarioCard);
   const st = sc.stats || {};
-  const ids = list => (list || []).map(n => scenarioCard(n).id);
+  const ids = (list: CartaScenario[] | undefined) => (list || []).map(n => scenarioCard(n).id);
   const killed = (st.minionsKilled || []).map(m => ({ id: scenarioCard(m.name).id, name: m.name, turns: m.turns || 0 }));
   const paid = ids(st.powersPaid);
   const stats = Object.assign(emptyStats(deckCards.length + queueCards.length + discardCards.length), {
     minionsKilled: killed.length, powersPaid: paid.length, powersResolved: (st.powersResolved || []).length,
     attacksResolved: (st.attacksResolved || []).length,
-    aetherSpent: paid.reduce((sum, id) => sum + aetherCost(G.cardsById.get(id)), 0),
-    minions: killed, mages: JSON.parse(JSON.stringify(st.mages || {})),
+    aetherSpent: paid.reduce((sum, id) => { const card = G.cardsById.get(id); return sum + (card ? aetherCost(card) : 0); }, 0),
+    minions: killed, mages: jsonCopy(st.mages || {}),
     cards: { minionsKilled: killed.map(m => m.id), powersPaid: paid, powersResolved: ids(st.powersResolved),
       attacksResolved: ids(st.attacksResolved) },
     startedAt: ago(st.startedMinAgo || 0), tierAt: {}, endedAt: null
   });
-  Object.entries(st.tierMinAgo || {}).forEach(([tier, m]) => { stats.tierAt[tier] = ago(m); });
+  Object.entries(st.tierMinAgo || {}).forEach(([tier, m]) => { stats.tierAt[Number(tier)] = ago(m); });
   const order = sc.turnOrder || { left: [], drawn: [] };
+  const queue: VoceLetta[] = queueCards.map(({ ref, data }) => {
+    const base = makeEntry(data);
+    const hp = ref.hp !== undefined ? ref.hp : base.hp;
+    return { id: data.id, tokens: ref.tokens !== undefined ? ref.tokens : base.tokens, hp,
+      turnHp: ref.hp !== undefined ? ref.hp : base.turnHp, isNew: false, paid: false,
+      bornTurn: ref.bornTurn !== undefined ? ref.bornTurn : Math.max(0, turnNo - 1),
+      ...(isVariableMinion(data) ? { hpSet: !!ref.hpSet } : {}) };
+  });
   return {
     turn: turnNo,
     deck: deckCards.slice().reverse().map(c => c.id), // si pesca dalla fine: la prima dell'elenco va in fondo all'array
     discard: discardCards.map(c => c.id),
-    queue: queueCards.map(({ ref, data }) => {
-      const base = makeEntry(data);
-      const hp = ref.hp !== undefined ? ref.hp : base.hp;
-      return { id: data.id, tokens: ref.tokens !== undefined ? ref.tokens : base.tokens, hp,
-        turnHp: ref.hp !== undefined ? ref.hp : base.turnHp, isNew: false, paid: false,
-        bornTurn: ref.bornTurn !== undefined ? ref.bornTurn : Math.max(0, turnNo - 1),
-        ...(isVariableMinion(data) ? { hpSet: !!ref.hpSet } : {}) };
-    }),
+    queue,
     resolving: sc.phase === 'nemesis',
     currentIndex: 0,
     newIndex: -1,
     maxTierDrawn: sc.maxTier || 0,
-    // v254: vite dello scenario (se mancano: valori iniziali, li mette restore)
+    // Vite dello scenario (se mancano: valori iniziali, li mette restore)
     ...(typeof sc.graveLife === 'number' ? { graveLife: sc.graveLife } : {}),
     ...(typeof sc.nemesisLife === 'number' ? { nemesisLife: sc.nemesisLife } : {}),
     stats,
     turnOrder: { left: (order.left || []).slice(), drawn: (order.drawn || []).slice(), round: order.round || 1,
-      wild: order.wild || null, picks: JSON.parse(JSON.stringify(order.picks || {})), known: (order.left || []).map(() => false),
+      wild: order.wild || null, picks: jsonCopy(order.picks || {}), known: (order.left || []).map(() => false),
       waiting: false, pairNext: emptyPairNext(order.pairNext) }
   };
 }
 
 // Avvia (o riavvia) uno scenario. Restituisce null se è partito, altrimenti il motivo (per esempio una carta che manca)
-export function startScenario(sc) {
+export function startScenario(sc: Scenario | null | undefined): string | null {
   if (!G.allCards.length || !sc) return I18N_IT.testNotReady;
-  let state;
+  let state: FotografiaLetta;
   try {
     state = buildScenarioState(sc);
   } catch (err) {
-    return err.message;
+    return err instanceof Error ? err.message : String(err);
   }
-  if (!G.testRun) G.testRun = { prevSettings: JSON.parse(JSON.stringify(G.settings)) };
+  if (!G.testRun) G.testRun = { prevSettings: jsonCopy(G.settings) };
   Object.assign(G.testRun, { id: sc.id, name: sc.name, pairs: typeof sc.pairs === 'boolean' ? sc.pairs : null,
     turnCards: Array.isArray(sc.turnCards) ? sc.turnCards.slice() : null });
   clearTransition();
@@ -241,25 +284,28 @@ export function startScenario(sc) {
 
 // Fine del test (menu iniziale): tornano le scelte di prima della pagina iniziale. La partita in memoria è quella di
 // test, ma "Riprendi partita" ricarica quella salvata e "Nuova partita" ne fa una nuova
-export function endTest() {
+export function endTest(): void {
   if (!G.testRun) return;
   G.settings = G.testRun.prevSettings;
   G.testRun = null;
 }
 
-export function restartScenario() {
-  const sc = G.testRun && SCENARI.find(s => s.id === G.testRun.id);
+export function restartScenario(): void {
+  const run = G.testRun;
+  const sc = run && SCENARI.find(s => s.id === run.id);
   const problem = startScenario(sc);
   if (problem) showToast(problem);
 }
 
 // Schermata Test (dal menu iniziale): elenco degli scenari, nome e una riga di descrizione
-export function closeTestScreen() {
+export function closeTestScreen(): void {
   const layer = document.querySelector('.test-screen');
-  if (layer) layer.querySelector('.collection-head .ae-icon-button').click();
+  const x = layer && query(layer, '.collection-head .ae-icon-button', HTMLElement);
+  if (layer && !x) throw new TypeError('pulsante di chiusura della schermata Test mancante');
+  if (x) x.click();
 }
 
-export function openTestScreen(trigger) {
+export function openTestScreen(trigger?: HTMLElement | null): void {
   const layer = el('div', 'collection-screen options-screen test-screen');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
@@ -299,10 +345,10 @@ export function openTestScreen(trigger) {
   layer.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
   document.body.appendChild(layer);
   startLayer.inert = true;
-  const first = body.querySelector('.test-scenario');
+  const first = query(body, '.test-scenario', HTMLElement);
   if (first) first.focus();
 }
 
-// Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima
-export function avvio() {
+// Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
+export function avvio(): void {
 }

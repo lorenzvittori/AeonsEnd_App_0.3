@@ -4,16 +4,16 @@
 
 import * as Turni from '../../regole/mazzo-turni.ts';
 import { G } from '../../stato/condivise.ts';
-import { I18N_IT } from '../testi.js';
+import { I18N_IT } from '../testi.ts';
 import { app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.ts';
 import { chooseTurnPlayer, currentTurnCard, isPairCard, pairOptions, turnCardPlayer } from '../../stato/partita.ts';
-import { el, icon } from '../componenti/componenti.js';
-import { announce, button, dialogShell, modals, openModal } from '../componenti/dialoghi.js';
+import { el, icon } from '../componenti/componenti.ts';
+import { announce, button, dialogShell, modals, openModal } from '../componenti/dialoghi.ts';
 import { pushUndo, save, snapshot } from '../../stato/salvataggio.ts';
 import { fitPhaseName, render } from './turno-nemesi.js';
-import { renderTurnTrack, turnTrack } from '../eventi.js';
-import { headerPiles } from '../componenti/testata.js';
-import { openSideMenu } from '../componenti/menu-laterale.js';
+import { renderTurnTrack, turnTrack } from '../eventi.ts';
+import { headerPiles } from '../componenti/testata.ts';
+import { openSideMenu } from '../componenti/menu-laterale.ts';
 
 // --- Mazzo dei turni: finestra unica (v211, al posto del menu e delle tre finestre della v206) ---
 // Si apre toccando la barra della fase. È uno strumento libero: nessun vincolo per carta, le regole delle carte che

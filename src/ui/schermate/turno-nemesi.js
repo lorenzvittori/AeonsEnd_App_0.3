@@ -5,21 +5,21 @@
 import * as Vite from '../../regole/vite.ts';
 import * as Nemesi from '../../regole/turno-nemesi.ts';
 import { G } from '../../stato/condivise.ts';
-import { I18N_IT } from '../testi.js';
+import { I18N_IT } from '../testi.ts';
 import { app, backBtn, CARD_BACK, CARD_RATIO, cssUrl, DRAW_MS, duration, focusEl, GRAVEHOLD_LIFE, nemesisBtn, nemesisStartLife, phaseLabel, queueView, rail, reducedMotion, resolveBtn, resolveHint, resolveView, ui } from '../../stato/stato.ts';
 import { battleOf } from '../../dati/dati.ts';
 import { awaitingTurnCard, currentTurnCard, drawFirstTurn, entryByUid, hpUnset, isPairCard, nextTurnCard, turnCardPlayer, turnRoundOver } from '../../stato/partita.ts';
-import { cardArt, el, hasHp, icon, nextCardItem, nextSlotItem, placeholderArt, queueItem, statusText, tokenIcons } from '../componenti/componenti.js';
-import { announce, button, loadImage, modals, openModal } from '../componenti/dialoghi.js';
-import { FAST_SCROLL_MS, cancelFastScroll, centredQueueUid, ensureQueueRail, fastScrollTo, openCardDialog, queueRail, renderQueue, saveAllDrafts, scrollItemInto, updateInfo } from './turno-giocatori.js';
+import { cardArt, el, hasHp, icon, nextCardItem, nextSlotItem, placeholderArt, queueItem, statusText, tokenIcons } from '../componenti/componenti.ts';
+import { announce, button, loadImage, modals, openModal } from '../componenti/dialoghi.ts';
+import { FAST_SCROLL_MS, cancelFastScroll, centredQueueUid, ensureQueueRail, fastScrollTo, openCardDialog, queueRail, renderQueue, saveAllDrafts, scrollItemInto, updateInfo } from './turno-giocatori.ts';
 import { act, lockFor, updateUndoBtn } from '../../stato/salvataggio.ts';
-import { renderTurnTrack, turnTrack, turnTrackBar } from '../eventi.js';
+import { renderTurnTrack, turnTrack, turnTrackBar } from '../eventi.ts';
 import { animDone, needsPairChoice } from './mazzo-turni.js';
-import { BG_SLIDE_MS, ENTER_MS, FLY_MS, MORPH_MS, checkVictory, flyToDiscard, renderDockPiles, toPlayersTurn } from '../componenti/testata.js';
-import { showDefeat, showVictory } from './statistiche.js';
-import { openGameSetup } from './crea-mazzo.js';
-import { animateDrawIn } from '../componenti/pesca-undo.js';
-import { currentGraveholdBg } from '../componenti/menu-laterale.js';
+import { BG_SLIDE_MS, ENTER_MS, FLY_MS, MORPH_MS, checkVictory, flyToDiscard, renderDockPiles, toPlayersTurn } from '../componenti/testata.ts';
+import { showDefeat, showVictory } from './statistiche.ts';
+import { openGameSetup } from './crea-mazzo.ts';
+import { animateDrawIn } from '../componenti/pesca-undo.ts';
+import { currentGraveholdBg } from '../componenti/menu-laterale.ts';
 
 // --- 8. VistaRisoluzione (turno nemesi) ---------------------------------------------------------------------------
 

@@ -10,7 +10,7 @@ import * as Vite from '../regole/vite.ts';
 import { GRAVEHOLD_LIFE } from '../regole/vite.ts';
 import { newTurnOrder } from '../regole/mazzo-turni.ts';
 import { G } from './condivise.ts';
-import { loadImage } from '../ui/componenti/dialoghi.js';
+import { loadImage } from '../ui/componenti/dialoghi.ts';
 import type { Carta } from '../tipi/dati.ts';
 import type { BozzaCarta, GruppoStatistiche, Statistiche } from '../tipi/partita.ts';
 
@@ -148,7 +148,8 @@ export function statCard(group: GruppoStatistiche, data: Carta): void {
 // Carta pescata da girare nel turno nemesi
 export interface CartaDaGirare {
   uid: number;                   // carta in gioco
-  status: 'loading' | 'ready' | 'error'; // immagine in caricamento, pronta, non caricata
+  status: 'loading' | 'ready' | 'error' | 'flipping' | 'done'; // immagine in caricamento, pronta, non caricata; carta
+                                 // che si gira, girata
 }
 
 // Carta su cui allineare la coda al prossimo disegno

@@ -1,30 +1,29 @@
-// ui/componenti/testata.js: Testata: mazzo e scarti, voli verso gli scarti, passaggio tra i turni.
-// Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
-// funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
+// ui/componenti/testata.ts: testata (mazzo nemesi e pila degli scarti in alto), voli delle carte verso gli scarti,
+// passaggio animato dal turno nemesi al turno giocatori, Vittoria a mazzo vuoto.
+// Dipende da: stato/ (condivise, stato, partita), ui/testi.ts, ui/componenti (componenti, dialoghi, scarti,
+// pesca-undo), ui/schermate (turno-giocatori, turno-nemesi, mazzo-turni, statistiche). Usato da: turno nemesi, turno
+// giocatori, mazzo dei turni, crea mazzo, pesca-undo.
 
 import { G } from '../../stato/condivise.ts';
-import { I18N_IT } from '../testi.js';
+import { I18N_IT } from '../testi.ts';
 import { CARD_BACK, queueList, queueView, rail, reducedMotion, startLayer, ui, undoBtn } from '../../stato/stato.ts';
 import { isVictory } from '../../stato/partita.ts';
-import { el } from './componenti.js';
-import { modals } from './dialoghi.js';
-import { queueRail } from '../schermate/turno-giocatori.js';
-import { openDiscard } from './scarti.js';
+import { el, query, queryAll } from './componenti.ts';
+import { modals } from './dialoghi.ts';
+import { queueRail } from '../schermate/turno-giocatori.ts';
+import { openDiscard } from './scarti.ts';
 import { render } from '../schermate/turno-nemesi.js';
 import { needsPairChoice } from '../schermate/mazzo-turni.js';
-import { showVictory } from '../schermate/statistiche.js';
-import { openDeckPopover } from './pesca-undo.js';
+import { showVictory } from '../schermate/statistiche.ts';
+import { openDeckPopover } from './pesca-undo.ts';
 
-// In alto a sinistra, al posto di Undo (che è nel Menu), uno accanto all'altro e uguali nei due turni: il mazzo nemesi
-// (dorso con il numero di carte rimaste) e la pila degli scarti (ultima carta scartata con il numero; toccandola si apre).
-// Creati qui, così valgono anche con un index.html vecchio.
-export let headerPiles; // costante assegnata in avvio()
+// In alto a sinistra, uno accanto all'altro e uguali nei due turni: il mazzo nemesi (dorso con il numero di carte
+// rimaste) e la pila degli scarti (ultima carta scartata con il numero; toccandola si apre). Creati qui (avvio).
+export let headerPiles: HTMLDivElement;
+export let dockDeck: HTMLDivElement;
+export let dockDiscard: HTMLButtonElement;
 
-export let dockDeck; // costante assegnata in avvio()
-
-export let dockDiscard; // costante assegnata in avvio()
-
-export function pileContent(node, imgSrc, count) {
+export function pileContent(node: HTMLElement, imgSrc: string | null, count: number): void {
   node.classList.toggle('is-empty', !imgSrc);
   const img = node.querySelector('img');
   if (imgSrc) {
@@ -35,7 +34,7 @@ export function pileContent(node, imgSrc, count) {
   } else if (img) {
     img.remove();
   }
-  let n = node.querySelector('.ae-pile-count');
+  let n: Element | null = node.querySelector('.ae-pile-count');
   if (!n) {
     n = el('span', 'ae-pile-count');
     n.setAttribute('aria-hidden', 'true');
@@ -45,7 +44,7 @@ export function pileContent(node, imgSrc, count) {
 }
 
 // Le carte ancora in volo verso gli scarti non si contano finché non atterrano (ui.flyingDiscards)
-export function renderDockPiles() {
+export function renderDockPiles(): void {
   // Durante la creazione del mazzo il numero sale man mano che le carte arrivano (ui.deckShown)
   const deckCount = ui.deckShown !== null && ui.deckShown !== undefined ? ui.deckShown : G.deck.length;
   pileContent(dockDeck, deckCount ? CARD_BACK : null, deckCount);
@@ -64,13 +63,14 @@ export const FLY_MS = 720;
 
 export const FLY_STAGGER = 120;
 
-export function flyToDiscard(nodes) {
+export function flyToDiscard(nodes: readonly (Element | null)[]): void {
   const target = dockDiscard.getBoundingClientRect();
-  nodes.filter(Boolean).forEach((node, i) => {
+  nodes.filter((n): n is HTMLElement => n instanceof HTMLElement).forEach((node, i) => {
     const r = node.getBoundingClientRect();
     if (!r.width || !target.width) return;
-    ui.flyingDiscards++;
     const ghost = node.cloneNode(true);
+    if (!(ghost instanceof HTMLElement)) return;
+    ui.flyingDiscards++;
     ghost.classList.add('ae-fly-ghost');
     ghost.removeAttribute('id');
     Object.assign(ghost.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
@@ -120,21 +120,22 @@ export const ENTER_MS = 320;
 // Durata dello scorrimento dello sfondo tra i due turni (uguale alla transizione di .ae-shell in style.css)
 export const BG_SLIDE_MS = 800;
 
-export function toPlayersTurn(morphUid, fromNode) {
+export function toPlayersTurn(morphUid: number | null, fromNode: HTMLElement | null): void {
   const railScroll = rail.scrollLeft;
   const fromRect = fromNode && fromNode.getBoundingClientRect().width ? fromNode.getBoundingClientRect() : null;
   // Riga vita/token sopra la carta grande del turno nemesi: anche lei si sposta nel box del turno giocatori
-  const fromStatusEl = fromNode && fromNode.closest('.ae-focus-slide') && fromNode.closest('.ae-focus-slide').querySelector('.ae-focus-status > *');
-  const fromStatus = fromStatusEl ? fromStatusEl.parentElement.getBoundingClientRect() : null;
+  const fromSlide = fromNode && fromNode.closest('.ae-focus-slide');
+  const fromStatusEl = fromSlide && fromSlide.querySelector('.ae-focus-status > *');
+  const fromStatus = fromStatusEl && fromStatusEl.parentElement ? fromStatusEl.parentElement.getBoundingClientRect() : null;
   const motion = !reducedMotion.matches && !!document.body.animate;
-  // (lo sfondo non sfuma più: è un'immagine sola che scorre da destra a sinistra, vedi style.css .ae-shell)
+  // Lo sfondo non sfuma: è un'immagine sola che scorre da destra a sinistra (style.css .ae-shell)
   queueView.classList.add('is-from-nemesis');
   render();
   if (queueRail) queueRail.scrollLeft = railScroll;
   if (!motion) return;
-  const art = morphUid !== null && queueList.querySelector(`.queue-slot .ae-queue-item[data-uid="${morphUid}"] .ae-card-art`);
+  const art = morphUid !== null ? query(queueList, `.queue-slot .ae-queue-item[data-uid="${morphUid}"] .ae-card-art`, HTMLElement) : null;
   const toRect = art && art.getBoundingClientRect();
-  if (fromRect && toRect && toRect.width) {
+  if (art && fromRect && toRect && toRect.width) {
     const dx = fromRect.left + fromRect.width / 2 - (toRect.left + toRect.width / 2);
     const dy = fromRect.top + fromRect.height / 2 - (toRect.top + toRect.height / 2);
     const s = fromRect.width / toRect.width;
@@ -144,9 +145,9 @@ export function toPlayersTurn(morphUid, fromNode) {
     ], { duration: MORPH_MS, easing: 'cubic-bezier(.3, 0, .2, 1)' });
   }
   // Box vita/token della stessa carta: scivola dalla posizione del turno nemesi a quella nuova (stessa misura)
-  const badge = art && art.parentElement.querySelector('.ae-status-badge:not(.ae-status-badge--empty)');
+  const badge = art && art.parentElement ? art.parentElement.querySelector('.ae-status-badge:not(.ae-status-badge--empty)') : null;
   const badgeRect = badge && badge.getBoundingClientRect();
-  if (fromStatus && badgeRect && badgeRect.width) {
+  if (badge && fromStatus && badgeRect && badgeRect.width) {
     const bx = fromStatus.left + fromStatus.width / 2 - (badgeRect.left + badgeRect.width / 2);
     const by = fromStatus.top + fromStatus.height / 2 - (badgeRect.top + badgeRect.height / 2);
     badge.animate([{ transform: `translate(${bx}px, ${by}px)` }, { transform: 'none' }],
@@ -155,7 +156,7 @@ export function toPlayersTurn(morphUid, fromNode) {
   // A metà della trasformazione: le altre carte della coda entrano da sinistra; comandi, NUOVA (e il box, se non
   // scivola) della carta che si trasforma compaiono con una breve dissolvenza
   const delay = art ? MORPH_MS / 2 : 0;
-  queueList.querySelectorAll('.queue-slot').forEach(slot => {
+  queueAll(queueList, '.queue-slot').forEach(slot => {
     if (art && slot.contains(art)) {
       const parts = [...slot.querySelectorAll('.queue-controls, .ae-new-tag')]
         .concat(badge && fromStatus ? [] : [...slot.querySelectorAll('.ae-status-badge')]);
@@ -168,7 +169,12 @@ export function toPlayersTurn(morphUid, fromNode) {
   });
 }
 
-export function checkVictory() {
+// Elementi HTML di un selettore (le carte della coda sono tutte elementi HTML)
+function queueAll(root: ParentNode, selector: string): HTMLElement[] {
+  return queryAll(root, selector, HTMLElement);
+}
+
+export function checkVictory(): void {
   if (G.resolving || !isVictory()) { G.victoryKey = ''; return; }
   const key = G.turn + ':' + G.discard.length + ':' + G.queue.length;
   if (G.victoryKey === key || modals.length || !startLayer.hidden) return;
@@ -179,34 +185,25 @@ export function checkVictory() {
   }, reducedMotion.matches ? 0 : MORPH_MS + 100);
 }
 
-// Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima
-export function avvio() {
+// Codice eseguito all'avvio, nell'ordine di sempre
+export function avvio(): void {
   headerPiles = el('div', 'ae-header-piles');
-
   dockDeck = el('div', 'ae-pile ae-pile--deck');
-
   dockDiscard = el('button', 'ae-pile ae-pile--discard');
-
   dockDiscard.type = 'button';
-
   dockDiscard.addEventListener('click', () => { if (!ui.isTransitioning && !ui.deckBuilding) openDiscard(); });
 
-  // Tocco sul mazzo: compare il pulsante "Pesca carta" (per gli effetti che fanno pescare o guardare la carta in cima)
+  // Tocco sul mazzo: compare il pulsante "Pesca carta" (per gli effetti che fanno pescare o guardare la carta in cima);
+  // non con la scelta del giocatore 1/2 o 3/4 in sospeso
   dockDeck.setAttribute('role', 'button');
-
   dockDeck.tabIndex = 0;
-
-  // (v200: non con la scelta del giocatore x/y in sospeso)
   dockDeck.addEventListener('click', () => {
     if (!ui.isTransitioning && !modals.length && !ui.deckBuilding && !needsPairChoice()) openDeckPopover();
   });
-
   dockDeck.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dockDeck.click(); } });
 
   headerPiles.append(dockDeck, dockDiscard);
-
   undoBtn.before(headerPiles);
-
   undoBtn.hidden = true;
 
   // Finestra "Vittoria" quando la condizione si avvera nel turno giocatori. Chiusa una volta, non si ripropone finché lo

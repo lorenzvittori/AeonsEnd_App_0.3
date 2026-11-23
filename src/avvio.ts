@@ -4,18 +4,18 @@
 // pesca-undo). Usato da: main.ts (avvio, ultimo modulo), ui/schermate/opzioni (Riprova).
 
 import { G } from './stato/condivise.ts';
-import { I18N_IT } from './ui/testi.js';
+import { I18N_IT } from './ui/testi.ts';
 import { CARD_BACK, DATA_ROOT, THUMB_DIR, discardLayer, startBtn, startError, startLayer } from './stato/stato.ts';
 import { loadJson } from './dati/dati.ts';
 import { checkCards, checkDeckSetup, checkNemesisArt, checkNemeses, checkProducts, reportProblems } from './dati/controllo.ts';
 import { newGame } from './stato/partita.ts';
-import { el } from './ui/componenti/componenti.js';
-import { loadImage, modals, showToast, updateInert } from './ui/componenti/dialoghi.js';
-import { closeDiscard } from './ui/componenti/scarti.js';
+import { el } from './ui/componenti/componenti.ts';
+import { loadImage, modals, showToast, updateInert } from './ui/componenti/dialoghi.ts';
+import { closeDiscard } from './ui/componenti/scarti.ts';
 import { buildStartPage, setStartMode, startMode } from './ui/schermate/menu.js';
-import { showStartError, showStartSkeleton } from './ui/schermate/opzioni.js';
+import { showStartError, showStartSkeleton } from './ui/schermate/opzioni.ts';
 import { preloadBannerFont, render } from './ui/schermate/turno-nemesi.js';
-import { closeDeckPopover, closeUndoFloat, deckPopover, undoFloat } from './ui/componenti/pesca-undo.js';
+import { closeDeckPopover, closeUndoFloat, deckPopover, undoFloat } from './ui/componenti/pesca-undo.ts';
 
 // Tasto / gesto Indietro (Android, swipe di iOS): chiude il livello in primo piano invece di uscire dall'app.
 // Nella cronologia c'è sempre una voce in più (stesso indirizzo): Indietro la consuma e qui la si rimette.

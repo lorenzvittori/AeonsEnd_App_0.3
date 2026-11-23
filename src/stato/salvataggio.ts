@@ -6,13 +6,13 @@
 import * as Salv from '../regole/salvataggio.ts';
 import { parseJson } from '../regole/json.ts';
 import { G } from './condivise.ts';
-import { I18N_IT } from '../ui/testi.js';
+import { I18N_IT } from '../ui/testi.ts';
 import { SAVE_KEY, SAVE_VERSION, UNDO_LIMIT, ui, undoBtn } from './stato.ts';
 import { turnOrderCards } from './partita.ts';
-import { closeAllModals, showToast } from '../ui/componenti/dialoghi.js';
-import { closeDiscard } from '../ui/componenti/scarti.js';
+import { closeAllModals, showToast } from '../ui/componenti/dialoghi.ts';
+import { closeDiscard } from '../ui/componenti/scarti.ts';
 import { DRAW_UID, render } from '../ui/schermate/turno-nemesi.js';
-import { closeDeckBuild } from '../ui/schermate/crea-mazzo.js';
+import { closeDeckBuild } from '../ui/schermate/crea-mazzo.ts';
 import type { Fotografia, FotografiaLetta, SalvataggioValido } from '../tipi/salvataggio.ts';
 
 // Fotografia della partita (solo dati semplici, così si può salvare nel browser; formato in regole/salvataggio.ts)

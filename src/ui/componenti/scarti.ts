@@ -1,18 +1,19 @@
-// ui/componenti/scarti.js: Pila degli scarti.
-// Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
-// funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
+// ui/componenti/scarti.ts: pila degli scarti (finestra con le carte dalla più recente) e carta degli scarti ingrandita.
+// Dipende da: stato/ (condivise, stato), ui/testi.ts, ui/componenti (componenti, dialoghi). Usato da: eventi (pulsante
+// degli scarti), avvio, stato/salvataggio.ts (restore), Indietro.
 
 import { G } from '../../stato/condivise.ts';
-import { I18N_IT } from '../testi.js';
+import { I18N_IT } from '../testi.ts';
 import { discardBtn, discardClose, discardEmpty, discardGrid, discardLayer, discardTitle } from '../../stato/stato.ts';
-import { cardArt, el, typeName } from './componenti.js';
-import { button, dialogShell, openModal, restoreFocus, updateInert } from './dialoghi.js';
+import { cardArt, el, typeName } from './componenti.ts';
+import { button, dialogShell, openModal, restoreFocus, updateInert } from './dialoghi.ts';
+import type { Carta } from '../../tipi/dati.ts';
 
-// --- 5. Pila degli scarti --------------------------------------------------------------------------------------------
-export let discardTrigger = null;
+// Elemento che aveva il focus all'apertura degli scarti
+export let discardTrigger: Element | null = null;
 
 // Scarti dalla più recente alla più vecchia; un tocco apre la carta in sola lettura
-export function openDiscard() {
+export function openDiscard(): void {
   discardTrigger = document.activeElement;
   discardTitle.textContent = I18N_IT.discardTitle(G.discard.length);
   discardGrid.replaceChildren();
@@ -34,7 +35,7 @@ export function openDiscard() {
   discardClose.focus();
 }
 
-export function closeDiscard() {
+export function closeDiscard(): void {
   if (discardLayer.hidden) return;
   discardLayer.hidden = true;
   discardGrid.replaceChildren();
@@ -43,7 +44,7 @@ export function closeDiscard() {
 }
 
 // Carta degli scarti ingrandita: sola lettura, solo "Chiudi immagine"
-export function openDiscardZoom(data) {
+export function openDiscardZoom(data: Carta): void {
   let close = () => {};
   const cancel = () => close();
   const dialog = dialogShell(I18N_IT.discardZoomTitle, data.name, cancel, { displayTitle: false });
@@ -55,6 +56,6 @@ export function openDiscardZoom(data) {
   close = openModal(dialog, { onCancel: cancel });
 }
 
-// Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima
-export function avvio() {
+// Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
+export function avvio(): void {
 }
