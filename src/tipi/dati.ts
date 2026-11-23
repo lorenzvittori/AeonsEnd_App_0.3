@@ -77,7 +77,7 @@ export interface BattagliaDeckSetup {
 
 // deck-setup.json (Nemesis Deck Setup)
 export interface DeckSetup {
-  description: string;           // spiegazione per chi legge il file
+  description?: string;          // spiegazione per chi legge il file (non usata dall'app)
   battles: BattagliaDeckSetup[]; // una voce per battaglia
 }
 

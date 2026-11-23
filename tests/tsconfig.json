@@ -1,0 +1,9 @@
+{
+  // Test (Vitest, in Node): come tsconfig.json di src/, con in più i tipi di Node (node:fs, import.meta.dirname).
+  // src/ resta con i soli tipi del browser.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"]
+  },
+  "include": ["."]
+}

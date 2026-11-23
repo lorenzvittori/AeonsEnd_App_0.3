@@ -7,10 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "tsc --noEmit && node tools/check-moduli.mjs",
+    "check": "tsc --noEmit && tsc --noEmit -p tests && node tools/check-moduli.mjs",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/node": "22.20.5",
     "acorn": "8.19.0",
     "typescript": "7.0.2",
     "vite": "8.3.8",

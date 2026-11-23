@@ -79,8 +79,9 @@ export function collectionWaveEnabled(wave: string | number | null): boolean {
 export function loadCollection(): void {
   try {
     const raw = localStorage.getItem(COLLECTION_KEY);
-    const saved = raw === null ? null : parseJson(raw);
-    if (Array.isArray(saved)) {
+    const read = raw === null ? null : parseJson(raw);
+    if (Array.isArray(read)) {
+      const saved: unknown[] = read;
       // Chiavi del formato vecchio convertite nei codici prodotto e risalvate (la collezione non si perde)
       const converted = saved.map(convertCollectionKey).filter((id): id is CodiceProdotto => !!id);
       G.collection = new Set(converted.filter(id => collectionWaveEnabled(waveOfCode(id))));

@@ -16,11 +16,20 @@ describe('moduli di src/', () => {
   const files = [];
   (function walk(dir) { readdirSync(dir).forEach(f => { const p = join(dir, f); if (statSync(p).isDirectory()) walk(p); else if (/\.(js|ts)$/.test(f) && !/^main\.(js|ts)$/.test(f) && !p.includes(join('src', 'tipi'))) files.push(p); }); })(join(ROOT, 'src'));
   const rel = f => relative(ROOT, f).split(sep).join('/');
+  // Moduli avviati da main (elenco MODULI): devono esportare avvio()
+  const mainFile = ['main.ts', 'main.js'].map(n => join(ROOT, 'src', n)).find(p => { try { return statSync(p).isFile(); } catch (e) { return false; } });
+  const mainCode = readFileSync(mainFile, 'utf8');
+  const listed = new Set(/const MODULI = \[([^\]]*)\]/.exec(mainCode)[1].split(',').map(s => s.trim()));
+  const started = new Set([...mainCode.matchAll(/import \* as (\w+) from '\.\/([^']+)'/g)].filter(m => listed.has(m[1])).map(m => 'src/' + m[2]));
+
+  it('main avvia i moduli dell\'app (almeno 20)', () => {
+    expect(started.size).toBeGreaterThan(20);
+  });
 
   it.each(files.map(rel))('%s si importa senza DOM', async name => {
     const mod = await import('../' + name);
     if (name.startsWith('src/regole/')) expect(mod.avvio, 'le regole non hanno codice di avvio').toBeUndefined();
-    else if (!/condivise\.(js|ts)$/.test(name)) expect(typeof mod.avvio).toBe('function');
+    else if (started.has(name)) expect(typeof mod.avvio, 'avviato da main').toBe('function');
   });
 
   it('src/regole/ non nomina document, window, localStorage, G, Math.random, Date (fuori dai commenti)', () => {

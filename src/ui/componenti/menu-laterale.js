@@ -17,7 +17,7 @@ import { showVictory } from '../schermate/statistiche.js';
 import { buildDeckSlider, rebuildDeck } from '../schermate/crea-mazzo.js';
 import { openExitConfirm, openUndoFloat } from './pesca-undo.js';
 import { restartScenario } from '../schermate/test.js';
-import { init } from '../../avvio.js';
+import { init } from '../../avvio.ts';
 
 // Sfondo dell'app (maga a sinistra, nemesi a destra): si sceglie nel Menu, la scelta resta salvata nel browser.
 // Non fa parte della partita (niente undo).

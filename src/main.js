@@ -39,7 +39,7 @@ import * as pescaUndo from './ui/componenti/pesca-undo.js';
 import * as menuLaterale from './ui/componenti/menu-laterale.js';
 import * as rete from './dati/rete.ts';
 import * as test from './ui/schermate/test.js';
-import * as avvio from './avvio.js';
+import * as avvio from './avvio.ts';
 
 // Nell'ordine in cui le parti stavano in script.js (l'ordine delle avvio() conta)
 // (stato/partita.js sta dove c'erano i file delle regole di prima: le regole pure non hanno avvio())
