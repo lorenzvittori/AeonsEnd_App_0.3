@@ -38,6 +38,13 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   - **niente `version.json`** e niente `?v=N`: Vite dà ai file costruiti un nome con l'hash (vedi sezione 8);
   - il codice è in `src/` (moduli ES: ogni file importa quello che usa, niente variabili globali tranne
     `window.app` per il debug), i file serviti così come sono in `public/` (sezione 9).
+  - **TypeScript (dalla fase C):** tutto `src/` e `tests/` è `.ts`, `strict`. Niente `any` (né scritto né implicito);
+    dove il tipo esatto costa troppo si usa `unknown` con un controllo. `// @ts-ignore` è vietato; un
+    `// @ts-expect-error` deve avere il motivo sulla stessa riga (lo controlla `npm run check`). I tipi dei dati e dello
+    stato sono in `src/tipi/` (sezione 6): quando un dato cambia si cambia prima il tipo e si segue il compilatore.
+  - **Intestazione di ogni file di `src/`:** prima riga `// <percorso>: cosa contiene`, poi `Dipende da:` (o
+    `Non dipende da niente`) e `Usato da:` (lo controlla un test). Nei commenti niente storia delle versioni: solo il
+    perché, al presente.
 - **Commit e push:** dopo ogni richiesta si fa commit e push su `main` (sul branch `ts`: su `ts`).
   - Gli autori dei commit sono `Claude` e `noreply@anthropic.com`, passati con i flag del singolo comando. Non vanno mai
     scritti nella config, e il nome dell'utente non va mai usato:
@@ -820,25 +827,50 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   `G`, `Math.random` né l'orologio: ricevono tutto come argomenti (il caso come `random`, l'ora come `now()`, gli uid
   come `newUid()`) e restituiscono il risultato, oppure modificano solo l'oggetto che ricevono (lo dice l'intestazione
   della funzione). `npm run check` lo controlla.
-  - `caso.js`: mescolare e scegliere a caso.
-  - `mazzo-nemesi.js`: Deck Setup, collezione, Modalità battaglia, Unisci e il suo blocco, mazzo corto, nemesi
+  - `caso.ts`: mescolare e scegliere a caso (tipo `Caso` = la funzione del caso).
+  - `json.ts`: copie JSON tipizzate (`jsonCopy`), `parseJson` (restituisce `unknown`), `isRecord`.
+  - `mazzo-nemesi.ts`: Deck Setup, collezione, Modalità battaglia, Unisci e il suo blocco, mazzo corto, nemesi
     giocabili.
-  - `mazzo-turni.js`: carte per numero di giocatori, giri, pesca, coppie 1/2 e 3/4, scarti dei turni, bozza della
+  - `mazzo-turni.ts`: carte per numero di giocatori, giri, pesca, coppie 1/2 e 3/4, scarti dei turni, bozza della
     finestra, salvataggi vecchi del mazzo dei turni.
-  - `turno-nemesi.js`: carte in gioco, risoluzione, pesca, vittoria a mazzo vuoto, statistiche, fine del turno
+  - `turno-nemesi.ts`: carte in gioco, risoluzione, pesca, vittoria a mazzo vuoto, statistiche, fine del turno
     giocatori.
-  - `vite.js`: vite di Gravehold e della nemesi, Vittoria e Sconfitta a 0.
-  - `salvataggio.js`: fotografia, ripristino anche dai formati vecchi, controllo della versione.
+  - `vite.ts`: vite di Gravehold e della nemesi, Vittoria e Sconfitta a 0.
+  - `salvataggio.ts`: fotografia, ripristino anche dai formati vecchi, controllo della versione.
 
-  Il resto dell'app le chiama attraverso `src/stato/partita.js`, che passa lo stato di `G`, `Math.random` e
-  `Date.now`, oppure direttamente passando `G`.
+  Il resto dell'app le chiama attraverso `src/stato/partita.ts`, che passa lo stato di `G`, `Math.random` e
+  `Date.now`, oppure direttamente passando `G`. Le regole importano da fuori `src/regole/` solo tipi (`import type`
+  da `src/tipi/`).
+
+### Tipi (branch `ts`, dalla fase C)
+
+Una sola cartella, `src/tipi/`, perché i tipi sono il contratto comune a regole, stato, dati e interfaccia: chi tocca
+un pezzo legge lì cosa riceve e cosa restituisce. Ogni campo ha un commento di una riga; i valori ammessi sono unioni.
+- `dati.ts`: i JSON di `public/`: `Carta` (cards.json; `Categoria` = 'Basic' | 'Upgraded' | 'Specific', `TipoCarta`,
+  `Tier` = numero | '9+' | null, `thumb` aggiunta al caricamento), `Nemesi`, `Prodotti` (`CodiceProdotto`),
+  `DeckSetup` (righe e battaglie), `ArteNemesi`, `DatiRegole` (carte, nemesi e Deck Setup passati alle regole).
+- `partita.ts`: lo stato di gioco: `VoceInGioco` (carta in coda: uid, tokens, hp, turnHp, paid, isNew, bornTurn,
+  hpSet, hpMax...), `MazzoTurni` (left, drawn, round, wild, picks, pairNext, history, known, waiting) e la sua bozza,
+  `Statistiche`, `Impostazioni`, `Partita` (i campi di gioco di `G`).
+- `salvataggio.ts`: il formato scritto oggi (`Fotografia`, `Salvataggio`) e quelli letti, anche vecchi, con i campi
+  che possono mancare (`FotografiaLetta`, `SalvataggioLetto`, `SalvataggioValido`).
+
+Altri tipi stanno vicino a chi li usa: `Condivise` (tutto `G`, `stato/condivise.ts`), gli elementi della pagina e lo
+stato dell'interfaccia (`stato/stato.ts`), le opzioni delle funzioni delle regole. Per gli elementi del DOM:
+`byId(id, HTMLButtonElement)` (`stato/stato.ts`) e `query()` / `queryAll()` (`ui/componenti/componenti.ts`) controllano
+il tipo con `instanceof`; `need(valore, cosa)` per un elemento che c'è sempre (errore chiaro se manca).
+
+**Controllo dei JSON all'avvio** (`dati/controllo.ts`, chiamato da `avvio.ts`): campi obbligatori, tipi e valori
+ammessi. Una carta o una nemesi sbagliata si scarta con `console.error("Dati non validi: ...")` che dice l'id e il campo;
+un file con la forma sbagliata (o un `deck-setup.json` sbagliato) ferma l'avvio. `tests/dati-json.test.ts` passa lo
+stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati sbagliati, il test lo dice.
 
 ### Bug noti (annotati, non corretti)
 
 - **Undo / ripresa al passo Pesca:** se la fotografia è al passo Pesca con carte in coda (`currentIndex` = lunghezza
   della coda), il ripristino limita `currentIndex` all'ultima carta. Così l'ultima carta va risolta di nuovo invece di
-  pescare. Il codice è in `restoreGame` di `src/regole/salvataggio.js` (prima in `restore`). Il test
-  `tests/salvataggio.test.js` (`afterRestore`) lo descrive.
+  pescare. Il codice è in `restoreGame` di `src/regole/salvataggio.ts` (prima in `restore`). Il test
+  `tests/salvataggio.test.ts` (`afterRestore`) lo descrive.
 
 ## 7. Dati
 
@@ -932,22 +964,28 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 - **Branch `ts` (Vite, dalla fase A):**
   - `npm install` la prima volta (o `npm ci`); poi **`npm run dev`** e si apre `http://localhost:5173/AeonsEnd_App_0.2/`.
     Per il sito costruito: `npm run build` e `npm run preview` → `http://localhost:4173/AeonsEnd_App_0.2/`.
-  - **`npm run check`**: `tsc --noEmit` (in questa fase il codice è JavaScript e tsc non lo controlla ancora: la
-    conversione a TypeScript è la fase C) e `tools/check-moduli.mjs` (ogni nome usato è dichiarato, importato o del
-    browser; gli import esistono; nessuna variabile globale tranne `window.app`; `src/regole/` pura: import solo da
-    `src/regole/`, nessun nome del browser, niente `Date` né `Math.random`).
-  - **`npm test`**: i test con Vitest in `tests/*.test.js`. Si aggiunge un test con un file nuovo o un blocco
+  - **`npm run check`**: `tsc --noEmit` su `src/` (strict), `tsc --noEmit -p tests` sui test (con i tipi di Node,
+    `tests/tsconfig.json`) e `tools/check-moduli.mjs` (legge i `.ts` con il parser di rolldown: gli import esistono;
+    nessuna variabile globale tranne `window.app`; `src/regole/` pura: import solo da `src/regole/` o tipi da
+    `src/tipi/`, nessun nome del browser, niente `Date` né `Math.random`; nessun `any`; `@ts-ignore` vietato,
+    `@ts-expect-error` solo con il motivo). `node tools/check-moduli.mjs --conta` stampa quanti `any`, eccezioni ai tipi
+    e file `.js` ci sono in `src/` (attesi 0).
+  - **`npm test`**: i test con Vitest in `tests/*.test.ts`. Si aggiunge un test con un file nuovo o un blocco
     `it('cosa controlla', () => { ... })`; i moduli di `src/` si importano direttamente (al caricamento non toccano il
-    DOM). I test delle regole usano i JSON veri di `public/` e un caso ripetibile (`seeded` in `tests/aiuto.js`):
-    - `mazzo-nemesi.test.js`: ogni nemesi giocabile × 2/3/4 giocatori × Modalità battaglia × Unisci, su tre
+    DOM). I test delle regole usano i JSON veri di `public/` (passati dal controllo di `dati/controllo.ts`) e un caso
+    ripetibile (`seeded` in `tests/aiuto.ts`):
+    - `mazzo-nemesi.test.ts`: ogni nemesi giocabile × 2/3/4 giocatori × Modalità battaglia × Unisci, su tre
       collezioni;
-    - `mazzo-turni.test.js`, `turno-nemesi.test.js`, `vite.test.js`;
-    - `salvataggio.test.js`: con un salvataggio vero di main v228 in `tests/dati/`;
-    - `moduli.test.js`: i moduli si importano senza effetti e le regole sono pure.
-  - **Struttura:** `src/main.js` (avvio: CSS, `avvio()` dei moduli nell'ordine di prima, `window.app`, con le regole
-    pure in `app.regole`), `src/regole/` (logica di gioco pura, sezione 6), `src/stato/partita.js` (regole + stato),
-    `src/stato/` (`condivise.js`: l'oggetto `G` con le variabili assegnate da più moduli, provvisorio fino alla fase D),
-    `src/dati/`, `src/ui/componenti/`, `src/ui/schermate/`, `src/stili/` (il CSS di prima, così com'è). In `public/`:
+    - `mazzo-turni.test.ts`, `turno-nemesi.test.ts`, `vite.test.ts`;
+    - `salvataggio.test.ts`: con un salvataggio vero di main v228 in `tests/dati/`;
+    - `dati-json.test.ts`: i veri `public/*.json` rispettano i tipi;
+    - `moduli.test.ts`: i moduli si importano senza effetti, le regole sono pure, niente `.js` in `src/`, ogni file ha
+      l'intestazione.
+  - **Struttura:** `src/main.ts` (avvio: CSS, `avvio()` dei moduli nell'ordine di prima, `window.app`, con le regole
+    pure in `app.regole`), `src/tipi/` (tipi dei dati e dello stato, sezione 6), `src/regole/` (logica di gioco pura,
+    sezione 6), `src/stato/partita.ts` (regole + stato), `src/stato/` (`condivise.ts`: l'oggetto `G` con le variabili
+    assegnate da più moduli, provvisorio fino alla fase D), `src/dati/` (caricamento, `controllo.ts` per i JSON),
+    `src/ui/componenti/`, `src/ui/schermate/`, `src/stili/` (il CSS di prima, così com'è). In `public/`:
     `Data/`, `thumbs/`, `Assets/`, i JSON, `manifest.webmanifest`, `sw.js`, `scheletri/` (si copiano così come sono).
     Gli strumenti Python di `tools/` scrivono in `public/`.
   - **Console e pagina `scheletri/`:** niente più nomi globali; tutto è in **`window.app`**: `app.queue`,
@@ -995,6 +1033,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 | `v156-prima-menu-e-slider` | Prima della v157 (menu iniziale con Opzioni, slider di Crea mazzo, salvataggio dal primo turno nemesi). |
 | `v162-prima-voci-semplici` | Prima della v163 (testata invertita, menu iniziale a scritte, comandi solo sulla carta al centro, scorrimento veloce, Opzioni con dorso e sfondo). |
 | `v157-prima-nuova-partita-e-dorsi` | Prima della v158 (pagina Nuova partita con X e wave multiple, dorsi, tempi, zoom della carta nemesi). |
+| `ts-prima-fase-C` | Branch `ts`: fine della fase B (moduli ES in JavaScript, regole pure), prima del passaggio a TypeScript. |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 
