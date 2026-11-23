@@ -824,7 +824,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   (`isGone`) vanno negli scarti.
 - **Vittoria** (`isVictory`): `turn > 0`, mazzo vuoto e nessun potere né minion in coda.
 - **Branch `ts`, dalla fase B:** queste regole sono funzioni pure in `src/regole/`. Non toccano DOM, `localStorage`,
-  `G`, `Math.random` né l'orologio: ricevono tutto come argomenti (il caso come `random`, l'ora come `now()`, gli uid
+  lo stato, `Math.random` né l'orologio: ricevono tutto come argomenti (il caso come `random`, l'ora come `now()`, gli uid
   come `newUid()`) e restituiscono il risultato, oppure modificano solo l'oggetto che ricevono (lo dice l'intestazione
   della funzione). `npm run check` lo controlla.
   - `caso.ts`: mescolare e scegliere a caso (tipo `Caso` = la funzione del caso).
@@ -838,9 +838,38 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   - `vite.ts`: vite di Gravehold e della nemesi, Vittoria e Sconfitta a 0.
   - `salvataggio.ts`: fotografia, ripristino anche dai formati vecchi, controllo della versione.
 
-  Il resto dell'app le chiama attraverso `src/stato/partita.ts`, che passa lo stato di `G`, `Math.random` e
-  `Date.now`, oppure direttamente passando `G`. Le regole importano da fuori `src/regole/` solo tipi (`import type`
-  da `src/tipi/`).
+  Il resto dell'app le chiama attraverso `src/stato/partita.ts`, che passa lo stato della partita, `Math.random` e
+  `Date.now` (l'interfaccia passa `partita` alle regole solo per leggere: `isDrawStep`, `canDraw`...). Le regole
+  importano da fuori `src/regole/` solo tipi (`import type` da `src/tipi/`).
+
+### Stato (branch `ts`, dalla fase D)
+
+Lo stato è diviso in tre pezzi, ognuno con un solo compito; lo stato dell'interfaccia sta in `ui/`.
+
+| Pezzo | Dove | Campi | Chi lo cambia | Salvato |
+|---|---|---|---|---|
+| Catalogo | `stato/catalogo.ts` (`catalogo`, sola lettura) | `allCards`, `cardsById`, `deckSetup`, `nemeses`, `products`, `nemesisArt`, `startOptions` | `caricaCatalogo` (avvio), `impostaSceltePagina` (pagina Nuova partita) | no |
+| Preferenze | `stato/preferenze.ts` (`preferenze`) | `collection`, `settings` (+ opzioni del mazzo e carte 1/2 e 3/4 nel browser) | pagina Nuova partita, Opzioni, collezione, ripresa, Modalità test | collezione e opzioni nel browser; `settings` anche nel salvataggio |
+| Partita | `stato/partita.ts` (`partita`, sola lettura) | `queue`, `deck`, `discard`, `turn`, `resolving`, `currentIndex`, `newIndex`, `maxTierDrawn`, `graveLife`, `nemesisLife`, `stats`, `turnOrder`, `nextUid`, `undoStack`, `testRun` | solo le funzioni di `stato/partita.ts` | dopo ogni azione (`save`, `stato/salvataggio.ts`) |
+| Interfaccia | `ui/pagina.ts` (`ui`: carta mostrata, animazioni, bozze...), più variabili dei moduli: `cancelDraftsBtn`, `focusSignature` (turno-nemesi), `deckSlider` (crea-mazzo), `victoryKey` (testata), `selectedWaves` (menu) | | la schermata che la usa | no (`ui.gameSaved` dice se la partita è già scritta nel browser) |
+
+**Il giro di un'azione** (`act`, in `stato/partita.ts`): fotografia per l'undo → modifica (le regole) → salvataggio →
+ridisegno. Il ridisegno lo fa la schermata che ha chiamato l'azione, subito dopo, perché prima prepara le animazioni.
+Un'azione = un passo di undo. Le azioni: `pescaCartaTurno`, `fineTurnoGiocatore`, `scegliGiocatoreCoppia`,
+`pescaCarta`, `risolviCarta`, `cambiaVita`, `cambiaVitaMinion`, `salvaModifiche`, `scartaCimaDelMazzo`. Eccezioni
+dichiarate: la finestra del mazzo dei turni (`applicaBozzaTurni` senza undo a ogni modifica, `aggiungiPassoUndo` un
+passo alla chiusura) e la fine della partita (`segnaFinePartita`: ora di fine, senza undo).
+
+**Partita da zero:** `campiDaZero()` è l'unico punto che costruisce una partita vuota. `nuovaPartita()` (Nuova partita,
+Ricomincia, cambio dei giocatori in "Crea mazzo", avvio) = da zero + vite + mazzo nuovo; `applicaRipristino()` (ripresa,
+undo, scenari) = da zero + fotografia (prima `preparaRipristino()` legge le carte senza cambiare niente);
+`esciDalTest()` = scelte di prima + da zero. `nextUid` non riparte mai (le carte della partita di prima ancora nella
+pagina non si confondono con le nuove). Il ripristino nell'interfaccia (animazioni ferme, finestre chiuse, carta da
+mostrare) è `ui/ripristino.ts` (`restore`, `undo`).
+
+`npm run check` controlla che fuori da `stato/partita.ts` nessuno assegni un campo della partita (anche annidato), ne
+cambi un elenco o la passi a una regola che la modifica; TypeScript lo impedisce già per i campi diretti (`Readonly`).
+L'unica eccezione sono i setter di `window.app` (sezione 9), per la console e `scheletri/`.
 
 ### Tipi (branch `ts`, dalla fase C)
 
@@ -851,13 +880,14 @@ un pezzo legge lì cosa riceve e cosa restituisce. Ogni campo ha un commento di 
   `DeckSetup` (righe e battaglie), `ArteNemesi`, `DatiRegole` (carte, nemesi e Deck Setup passati alle regole).
 - `partita.ts`: lo stato di gioco: `VoceInGioco` (carta in coda: uid, tokens, hp, turnHp, paid, isNew, bornTurn,
   hpSet, hpMax...), `MazzoTurni` (left, drawn, round, wild, picks, pairNext, history, known, waiting) e la sua bozza,
-  `Statistiche`, `Impostazioni`, `Partita` (i campi di gioco di `G`).
+  `Statistiche`, `Impostazioni`, `Partita` (i campi di gioco), `StatoPartita` (più `nextUid`, `undoStack`, `testRun`),
+  `ProvaInCorso` (Modalità test).
 - `salvataggio.ts`: il formato scritto oggi (`Fotografia`, `Salvataggio`) e quelli letti, anche vecchi, con i campi
   che possono mancare (`FotografiaLetta`, `SalvataggioLetto`, `SalvataggioValido`).
 
-Altri tipi stanno vicino a chi li usa: `Condivise` (tutto `G`, `stato/condivise.ts`), gli elementi della pagina e lo
-stato dell'interfaccia (`stato/stato.ts`), le opzioni delle funzioni delle regole. Per gli elementi del DOM:
-`byId(id, HTMLButtonElement)` (`stato/stato.ts`) e `query()` / `queryAll()` (`ui/componenti/componenti.ts`) controllano
+Altri tipi stanno vicino a chi li usa: `Catalogo` (`stato/catalogo.ts`), `Preferenze` (`stato/preferenze.ts`), gli
+elementi della pagina e lo stato dell'interfaccia (`ui/pagina.ts`), le opzioni delle funzioni delle regole. Per gli
+elementi del DOM: `byId(id, HTMLButtonElement)` (`ui/pagina.ts`) e `query()` / `queryAll()` (`ui/componenti/componenti.ts`) controllano
 il tipo con `instanceof`; `need(valore, cosa)` per un elemento che c'è sempre (errore chiaro se manca).
 
 **Controllo dei JSON all'avvio** (`dati/controllo.ts`, chiamato da `avvio.ts`): campi obbligatori, tipi e valori
@@ -968,8 +998,9 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
     `tests/tsconfig.json`) e `tools/check-moduli.mjs` (legge i `.ts` con il parser di rolldown: gli import esistono;
     nessuna variabile globale tranne `window.app`; `src/regole/` pura: import solo da `src/regole/` o tipi da
     `src/tipi/`, nessun nome del browser, niente `Date` né `Math.random`; nessun `any`; `@ts-ignore` vietato,
-    `@ts-expect-error` solo con il motivo). `node tools/check-moduli.mjs --conta` stampa quanti `any`, eccezioni ai tipi
-    e file `.js` ci sono in `src/` (attesi 0).
+    `@ts-expect-error` solo con il motivo; la partita si cambia solo in `src/stato/partita.ts`, sezione 6).
+    `node tools/check-moduli.mjs --conta` stampa quanti `any`, eccezioni ai tipi, file `.js` e usi di `G` ci sono in
+    `src/` (attesi 0).
   - **`npm test`**: i test con Vitest in `tests/*.test.ts`. Si aggiunge un test con un file nuovo o un blocco
     `it('cosa controlla', () => { ... })`; i moduli di `src/` si importano direttamente (al caricamento non toccano il
     DOM). I test delle regole usano i JSON veri di `public/` (passati dal controllo di `dati/controllo.ts`) e un caso
@@ -979,18 +1010,30 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
     - `mazzo-turni.test.ts`, `turno-nemesi.test.ts`, `vite.test.ts`;
     - `salvataggio.test.ts`: con un salvataggio vero di main v228 in `tests/dati/`;
     - `dati-json.test.ts`: i veri `public/*.json` rispettano i tipi;
-    - `moduli.test.ts`: i moduli si importano senza effetti, le regole sono pure, niente `.js` in `src/`, ogni file ha
-      l'intestazione.
+    - `partita.test.ts`: il modulo della partita: `nuovaPartita()` dà sempre lo stesso stato, due partite di fila con
+      lo stesso caso danno lo stesso risultato, un'azione = un passo di undo, salvataggio → ripresa = stesso stato,
+      uscita dalla Modalità test (caso e orologio fissati, `localStorage` finto);
+    - `moduli.test.ts`: i moduli si importano senza effetti, le regole sono pure, niente `.js` in `src/`, niente `G`,
+      ogni file ha l'intestazione.
   - **Struttura:** `src/main.ts` (avvio: CSS, `avvio()` dei moduli nell'ordine di prima, `window.app`, con le regole
     pure in `app.regole`), `src/tipi/` (tipi dei dati e dello stato, sezione 6), `src/regole/` (logica di gioco pura,
-    sezione 6), `src/stato/partita.ts` (regole + stato), `src/stato/` (`condivise.ts`: l'oggetto `G` con le variabili
-    assegnate da più moduli, provvisorio fino alla fase D), `src/dati/` (caricamento, `controllo.ts` per i JSON),
-    `src/ui/componenti/`, `src/ui/schermate/`, `src/stili/` (il CSS di prima, così com'è). In `public/`:
+    sezione 6), `src/stato/` (solo lo stato, sezione 6: `catalogo.ts`, `preferenze.ts`, `partita.ts` con le azioni,
+    `salvataggio.ts` per il browser), `src/dati/` (caricamento, `controllo.ts` per i JSON), `src/ui/` (`pagina.ts`:
+    elementi, costanti e stato dell'interfaccia; `ripristino.ts`: restore e undo; `componenti/`, `schermate/`),
+    `src/stili/` (il CSS di prima, così com'è). In `public/`:
     `Data/`, `thumbs/`, `Assets/`, i JSON, `manifest.webmanifest`, `sw.js`, `scheletri/` (si copiano così come sono).
     Gli strumenti Python di `tools/` scrivono in `public/`.
-  - **Console e pagina `scheletri/`:** niente più nomi globali; tutto è in **`window.app`**: `app.queue`,
-    `app.settings`, `app.render()`, `app.startScenario(app.SCENARI[0])`... (`app.app` è l'elemento della shell,
-    `app.noSave = true` spegne il salvataggio).
+  - **Console e pagina `scheletri/`:** niente più nomi globali; tutto è in **`window.app`**: le funzioni esportate dai
+    moduli (`app.render()`, `app.act()`, `app.nuovaPartita()`, `app.startScenario(app.SCENARI[0])`...), i campi dello
+    stato per nome (`app.queue`, `app.turn`, `app.settings`, `app.allCards`...; assegnabili solo per il debug) e gli
+    oggetti interi `app.catalogo`, `app.preferenze`, `app.partita`. `app.app` è l'elemento della shell,
+    `app.noSave = true` spegne il salvataggio, `app.regole` le regole pure. `app.G` non c'è più; `app.newGame()` ora è
+    `app.nuovaPartita()` (che riparte anche da coda e undo vuoti).
+  - **Prove con una nemesi scelta da console:** la pagina Nuova partita mostra solo le nemesi delle wave spuntate nel
+    suo menu (`selectedWaves` in `ui/schermate/menu.ts`, ricordate finché la pagina resta aperta); `renderStartChoices()`
+    sostituisce una nemesi non visibile con la prima visibile. Per giocare davvero la nemesi voluta si spunta prima la
+    sua wave (casella in `#wave-menu`), come farebbe un utente; altrimenti il risultato dipende dalle partite fatte prima
+    nella stessa scheda (fase D: era la causa degli hash diversi della "prima partita Maggoth").
 - **Server (`main`, sito senza build):** `python -m http.server 8124 --bind 127.0.0.1`, lanciato in background dalla
   cartella del repo. Poi si apre `http://127.0.0.1:8124/` nel browser interno.
 - **Misura del telefono:** `resize_window` preset `mobile` (375×812); alla fine si torna a `desktop`.
@@ -1034,6 +1077,7 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
 | `v162-prima-voci-semplici` | Prima della v163 (testata invertita, menu iniziale a scritte, comandi solo sulla carta al centro, scorrimento veloce, Opzioni con dorso e sfondo). |
 | `v157-prima-nuova-partita-e-dorsi` | Prima della v158 (pagina Nuova partita con X e wave multiple, dorsi, tempi, zoom della carta nemesi). |
 | `ts-prima-fase-C` | Branch `ts`: fine della fase B (moduli ES in JavaScript, regole pure), prima del passaggio a TypeScript. |
+| `ts-prima-fase-D` | Branch `ts`: fine della fase C (TypeScript strict), prima dello stato unico al posto di G. |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 
