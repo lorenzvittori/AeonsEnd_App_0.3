@@ -6,7 +6,7 @@ import { G } from '../../stato/condivise.js';
 import { I18N_IT } from '../testi.js';
 import { CARD_BACK, app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.js';
 import { battleOf, shuffle } from '../../dati/dati.js';
-import { deckPlan, newGame } from '../../regole/mazzo.js';
+import { deckPlan, newGame } from '../../stato/partita.js';
 import { cardArt, el } from '../componenti/componenti.js';
 import { button, closeAllModals, dialogShell, openModal } from '../componenti/dialoghi.js';
 import { clearTransition, lockFor } from '../../stato/salvataggio.js';

@@ -5,9 +5,7 @@
 import { G } from '../stato/condivise.js';
 import { I18N_IT } from './testi.js';
 import { DRAG_THRESHOLD, app, discardBtn, discardClose, discardLayer, focusEl, infoRow, mainEl, menuBtn, queueList, queueViewport, rail, ui } from '../stato/stato.js';
-import { awaitingTurnCard, isPairCard, pairOptions } from '../regole/mazzo.js';
-import { currentTurn, currentTurnCard, historyPlayer, predictedPairPlayers, turnCardPlayer } from '../regole/mazzo-turni.js';
-import { entryByUid, hpUnset } from '../regole/turno-nemesi.js';
+import { awaitingTurnCard, currentTurn, currentTurnCard, entryByUid, historyPlayer, hpUnset, isPairCard, pairOptions, predictedPairPlayers, turnCardPlayer } from '../stato/partita.js';
 import { el } from './componenti/componenti.js';
 import { focusables, modals, topLayer } from './componenti/dialoghi.js';
 import { centredQueueUid, markQueueRail, openCardDialog, scrollQueueTo } from './schermate/turno-giocatori.js';

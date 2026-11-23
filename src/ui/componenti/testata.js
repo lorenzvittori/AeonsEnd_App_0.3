@@ -5,7 +5,7 @@
 import { G } from '../../stato/condivise.js';
 import { I18N_IT } from '../testi.js';
 import { CARD_BACK, queueList, queueView, rail, reducedMotion, startLayer, ui, undoBtn } from '../../stato/stato.js';
-import { isVictory } from '../../regole/turno-nemesi.js';
+import { isVictory } from '../../stato/partita.js';
 import { el } from './componenti.js';
 import { modals } from './dialoghi.js';
 import { queueRail } from '../schermate/turno-giocatori.js';

@@ -2,9 +2,10 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
+import * as Nemesi from '../../regole/turno-nemesi.js';
 import { I18N_IT } from '../testi.js';
 import { CARD_BACK, ui } from '../../stato/stato.js';
-import { hpMaxOf, hpUnset } from '../../regole/turno-nemesi.js';
+import { hpMaxOf, hpUnset } from '../../stato/partita.js';
 import { DRAW_UID } from '../schermate/turno-nemesi.js';
 import { needsPairChoice } from '../schermate/mazzo-turni.js';
 
@@ -27,7 +28,7 @@ export function typeName(data) {
 }
 
 export function hasHp(entry) {
-  return entry.data.type === 'Minion' && entry.hp !== null && entry.hp !== undefined;
+  return Nemesi.hasHp(entry);
 }
 
 // Stato numerico della carta in parole (per i lettori di schermo)
@@ -93,9 +94,9 @@ export function tokenIcons(n) {
 
 // Carta che va negli scarti all'inizio del prossimo turno nemesi: potere con costo pagato o minion ucciso (vita 0 salvata).
 // Nel turno giocatori resta in coda, grigia.
+// (un minion a vita variabile non ancora impostata non muore a 0: regole/turno-nemesi.js)
 export function isGone(entry) {
-  // (v214: un minion a vita variabile non ancora impostata non muore a 0)
-  return !!entry.paid || (hasHp(entry) && entry.hp <= 0 && !hpUnset(entry));
+  return Nemesi.isGone(entry);
 }
 
 // Turno giocatori: modifiche non ancora salvate di una carta (vita in bozza, costo pagato in bozza)

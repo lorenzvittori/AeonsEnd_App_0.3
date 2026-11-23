@@ -7,7 +7,7 @@ import { I18N_IT } from '../testi.js';
 import { DRAG_THRESHOLD, SWIPE_MIN_DISTANCE, reducedMotion, resumeBtn, startBtn, startLayer } from '../../stato/stato.js';
 import { battleOf } from '../../dati/dati.js';
 import { collectionCatalog, isMiniCode, isPlayable, loadCollection, ownsProduct, productName, productOfNemesis, waveOfCode, waveOfNemesis } from '../../dati/collezione.js';
-import { deckShortfall, loadDeckOptions, mergeActive, mergeLockedWave, saveDeckOptions } from '../../regole/mazzo.js';
+import { deckShortfall, loadDeckOptions, mergeActive, mergeLockedWave, saveDeckOptions } from '../../stato/partita.js';
 import { el, icon } from '../componenti/componenti.js';
 import { button, showToast } from '../componenti/dialoghi.js';
 import { ensureCollectionButton, openCollection, openOptions, resumeGame } from './opzioni.js';

@@ -15,9 +15,13 @@ import * as testi from './ui/testi.js';
 import * as stato from './stato/stato.js';
 import * as dati from './dati/dati.js';
 import * as collezione from './dati/collezione.js';
-import * as mazzo from './regole/mazzo.js';
-import * as mazzoTurni from './regole/mazzo-turni.js';
-import * as turnoNemesiRegole from './regole/turno-nemesi.js';
+import * as partita from './stato/partita.js';
+import * as regoleCaso from './regole/caso.js';
+import * as regoleMazzoNemesi from './regole/mazzo-nemesi.js';
+import * as regoleMazzoTurni from './regole/mazzo-turni.js';
+import * as regoleTurnoNemesi from './regole/turno-nemesi.js';
+import * as regoleVite from './regole/vite.js';
+import * as regoleSalvataggio from './regole/salvataggio.js';
 import * as componenti from './ui/componenti/componenti.js';
 import * as dialoghi from './ui/componenti/dialoghi.js';
 import * as turnoGiocatori from './ui/schermate/turno-giocatori.js';
@@ -38,7 +42,8 @@ import * as test from './ui/schermate/test.js';
 import * as avvio from './avvio.js';
 
 // Nell'ordine in cui le parti stavano in script.js (l'ordine delle avvio() conta)
-const MODULI = [compatibilita, testi, stato, dati, collezione, mazzo, mazzoTurni, turnoNemesiRegole, componenti, dialoghi,
+// (stato/partita.js sta dove c'erano i file delle regole di prima: le regole pure non hanno avvio())
+const MODULI = [compatibilita, testi, stato, dati, collezione, partita, componenti, dialoghi,
   turnoGiocatori, scarti, menu, opzioni, salvataggio, turnoNemesi, eventi, mazzoTurniFinestra, testata, statistiche,
   creaMazzo, pescaUndo, menuLaterale, rete, test, avvio];
 
@@ -56,6 +61,9 @@ function shareG(name) {
   Object.defineProperty(debug, name, { enumerable: true, get: () => G[name], set: v => { G[name] = v; } });
 }
 Object.defineProperty(debug, 'G', { value: G });
+// Le regole pure (src/regole/), per provarle da console: app.regole.turnoNemesi.isVictory(app.G)...
+Object.defineProperty(debug, 'regole', { value: { caso: regoleCaso, mazzoNemesi: regoleMazzoNemesi, mazzoTurni: regoleMazzoTurni,
+  turnoNemesi: regoleTurnoNemesi, vite: regoleVite, salvataggio: regoleSalvataggio } });
 window.app = debug;
 
 // Prima: il caricatore di index.html aggiungeva "ready" quando i CSS erano pronti, poi caricava script.js

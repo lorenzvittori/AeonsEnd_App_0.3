@@ -6,7 +6,7 @@ import { G } from './stato/condivise.js';
 import { I18N_IT } from './ui/testi.js';
 import { CARD_BACK, DATA_ROOT, THUMB_DIR, discardLayer, startBtn, startError, startLayer } from './stato/stato.js';
 import { loadJson } from './dati/dati.js';
-import { newGame } from './regole/mazzo.js';
+import { newGame } from './stato/partita.js';
 import { el } from './ui/componenti/componenti.js';
 import { loadImage, modals, showToast, updateInert } from './ui/componenti/dialoghi.js';
 import { closeDiscard } from './ui/componenti/scarti.js';

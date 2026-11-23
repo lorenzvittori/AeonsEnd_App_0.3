@@ -3,6 +3,8 @@
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
 import { G } from '../stato/condivise.js';
+import * as Caso from '../regole/caso.js';
+import * as Mazzo from '../regole/mazzo-nemesi.js';
 
 export async function loadJson(path) {
   const res = await fetch(path, { cache: 'no-cache' });
@@ -10,24 +12,19 @@ export async function loadJson(path) {
   return res.json();
 }
 
+// Copia mescolata con il caso del browser (regole/caso.js)
 export function shuffle(cards) {
-  const result = cards.slice();
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
+  return Caso.shuffle(cards, Math.random);
 }
 
 // n carte a caso dalla lista
 export function pickRandom(cards, n) {
-  return shuffle(cards).slice(0, n);
+  return Caso.pickRandom(cards, n, Math.random);
 }
 
 // La battaglia dipende dal boss scelto (colonna Expedition Battle di nemesis.json)
 export function battleOf(nemesisName) {
-  const info = G.nemeses.find(n => n.name === nemesisName);
-  return info ? info.battle : null;
+  return Mazzo.battleOf({ nemeses: G.nemeses }, nemesisName);
 }
 
 // Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima

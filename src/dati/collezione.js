@@ -2,6 +2,7 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
+import * as Mazzo from '../regole/mazzo-nemesi.js';
 import { G } from '../stato/condivise.js';
 import { I18N_IT } from '../ui/testi.js';
 
@@ -15,11 +16,11 @@ export const COLLECTION_KEY = 'aeonsend-app-0.2-collection';
 
 // Wave di un codice prodotto: la parte prima del punto ("4.1" -> "4")
 export function waveOfCode(code) {
-  return code === null || code === undefined ? null : String(code).split('.')[0];
+  return Mazzo.waveOfCode(code);
 }
 
 export function isMiniCode(code) {
-  return code !== null && code !== undefined && String(code).includes('.');
+  return Mazzo.isMiniCode(code);
 }
 
 export function productName(code) {
@@ -87,12 +88,12 @@ export function saveCollection() {
 }
 
 export function ownsProduct(id) {
-  return !G.collection || G.collection.has(id);
+  return Mazzo.ownsProduct(G.collection, id);
 }
 
 // Carta Basic / Upgraded ammessa: il suo prodotto (boxCode) è nella collezione (o non si sa di che prodotto è)
 export function cardAllowed(card) {
-  return !card.boxCode || ownsProduct(card.boxCode);
+  return Mazzo.cardAllowed(G.collection, card);
 }
 
 // (v210-v213: le nemesi con un minion a vita variabile nel mazzo non si potevano giocare; dalla v214 sì: il minion entra
@@ -101,8 +102,7 @@ export function cardAllowed(card) {
 // Un boss si può scegliere solo se ha un prodotto e una battaglia, le sue carte sono nel progetto e il suo prodotto è
 // nella collezione
 export function isPlayable(info) {
-  return !!info.boxCode && info.battle !== null && ownsProduct(productOfNemesis(info))
-    && G.allCards.some(c => c.category === 'Specific' && c.nemesis === info.name);
+  return Mazzo.isPlayable({ cards: G.allCards }, G.collection, info);
 }
 
 // Codice eseguito all'avvio (prima: al caricamento di script.js), nell'ordine di prima

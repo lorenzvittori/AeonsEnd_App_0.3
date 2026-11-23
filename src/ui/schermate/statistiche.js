@@ -4,8 +4,7 @@
 
 import { G } from '../../stato/condivise.js';
 import { I18N_IT } from '../testi.js';
-import { playerKinds } from '../../regole/mazzo.js';
-import { isVariableMinion } from '../../regole/turno-nemesi.js';
+import { isVariableMinion, playerKinds } from '../../stato/partita.js';
 import { cardArt, el, icon, typeName } from '../componenti/componenti.js';
 import { button, dialogShell, openModal } from '../componenti/dialoghi.js';
 import { openDiscardZoom } from '../componenti/scarti.js';

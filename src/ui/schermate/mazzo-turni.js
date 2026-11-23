@@ -2,12 +2,11 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
+import * as Turni from '../../regole/mazzo-turni.js';
 import { G } from '../../stato/condivise.js';
 import { I18N_IT } from '../testi.js';
 import { app, mainEl, nemesisBtn, reducedMotion, ui } from '../../stato/stato.js';
-import { shuffle } from '../../dati/dati.js';
-import { isPairCard, pairOptions } from '../../regole/mazzo.js';
-import { chooseTurnPlayer, currentTurn, currentTurnCard, emptyPairNext, takeFromTurnPile, turnCardPlayer } from '../../regole/mazzo-turni.js';
+import { chooseTurnPlayer, currentTurnCard, isPairCard, pairOptions, turnCardPlayer } from '../../stato/partita.js';
 import { el, icon } from '../componenti/componenti.js';
 import { announce, button, dialogShell, modals, openModal } from '../componenti/dialoghi.js';
 import { pushUndo, save, snapshot } from '../../stato/salvataggio.js';
@@ -57,19 +56,16 @@ export function turnDeckBlocked() {
 // giocatori delle carte 1/2 e 3/4 (picks), memoria delle coppie (pairNext, v220), storia dei turni del giro (history,
 // v222) e attesa (waiting). Niente act() finché non si salva.
 export function turnDraftFrom(order) {
-  return { left: order.left.slice(), known: order.left.map((k, i) => !!(order.known && order.known[i])),
-    drawn: order.drawn.slice(), picks: JSON.parse(JSON.stringify(order.picks || {})), waiting: !!order.waiting,
-    pairNext: emptyPairNext(order.pairNext), history: JSON.parse(JSON.stringify(order.history || [])) };
+  return Turni.turnDraftFrom(order);
 }
 
 export function turnDraftKey(d) {
-  return JSON.stringify([d.left, d.known, d.drawn, d.picks, d.waiting, d.pairNext, d.history]);
+  return Turni.turnDraftKey(d);
 }
 
 // Posizione negli scarti della carta del turno in corso (-1 = nessuna, anche se la sua carta è tornata nel mazzo)
 export function turnDraftCurrent(d) {
-  const cur = currentTurn(d);
-  return cur && cur.pos !== null && cur.pos !== undefined ? cur.pos : -1;
+  return Turni.turnDraftCurrent(d);
 }
 
 // (v211-v221 nel turno nemesi la carta in corso non si spostava, perché rimetterla nel mazzo annullava il turno; dalla
@@ -78,66 +74,23 @@ export function turnPileLocked() {
   return false;
 }
 
-// Azioni sulla bozza
+// Azioni sulla bozza (regole/mazzo-turni.js); "Mescola" usa il caso di Math.random
 export const turnDraftOps = {
-  revealTop(d) { if (d.left.length) d.known[0] = true; },
-  revealAll(d) { d.known = d.left.map(() => true); },
-  // v222: "Copri tutto" (dopo "Rivela tutto"): tutto il mazzo torna coperto, senza mescolare
-  coverAll(d) { d.known = d.left.map(() => false); if (d.old) d.old = d.left.map(() => false); },
-  // Carta del mazzo (solo se nota) spostata nel mazzo: from e to sono posizioni dalla cima. v224: una carta già nota
-  // all'apertura della finestra (d.old) si sposta solo se è in cima
-  moveInDeck(d, from, to) {
-    if (!turnDeckMovable(d, from) || from === to || to < 0 || to >= d.left.length) return false;
-    const [kind] = d.left.splice(from, 1);
-    const [known] = d.known.splice(from, 1);
-    d.left.splice(to, 0, kind);
-    d.known.splice(to, 0, known);
-    if (d.old) { const [old] = d.old.splice(from, 1); d.old.splice(to, 0, old); }
-    return true;
-  },
-  // Carta degli scarti nel mazzo: in cima ('top'), in fondo ('bottom') o, v212, in una posizione dalla cima (numero,
-  // rilasciata sulla rosa). Resta nota (scoperta) e torna nel mazzo senza giocatore (takeFromTurnPile). v222: il turno
-  // giocato con quella carta resta nella storia (barra dei turni) e, se è il turno in corso, continua; la memoria delle
-  // coppie 1/2 e 3/4 non cambia (quel turno è stato giocato)
-  pileToDeck(d, pos, where) {
-    if (pos < 0 || pos >= d.drawn.length) return false;
-    const [kind] = takeFromTurnPile(d, [pos]);
-    const at = where === 'top' ? 0 : where === 'bottom' ? d.left.length : Math.max(0, Math.min(d.left.length, Number(where) || 0));
-    d.left.splice(at, 0, kind);
-    d.known.splice(at, 0, true);
-    if (d.old) d.old.splice(at, 0, false);
-    return true;
-  },
-  // Mescola: mazzo mischiato e tutto coperto
-  shuffle(d) { d.left = shuffle(d.left); d.known = d.left.map(() => false); if (d.old) d.old = d.left.map(() => false); },
-  // v240: carta rivelata del mazzo negli scarti, solo in fondo a destra. Non è un turno: la storia del giro non cambia
-  // (il turno in corso resta quello), il turno di quella carta è perso; nessun giocatore per le carte 1/2 e 3/4
-  deckToPile(d, from) {
-    if (!turnDeckMovable(d, from)) return false;
-    const [kind] = d.left.splice(from, 1);
-    d.known.splice(from, 1);
-    if (d.old) d.old.splice(from, 1);
-    d.drawn.push(kind);
-    return true;
-  }
+  ...Turni.turnDraftOps,
+  shuffle(d) { Turni.turnDraftOps.shuffle(d, Math.random); }
 };
 
 // v224: carta del mazzo che si può spostare: nota e, se era già nota all'apertura della finestra (d.old, scurita),
 // solo quando è in cima
 export function turnDeckMovable(d, i) {
-  return !!d.known[i] && (!(d.old && d.old[i]) || i === 0);
+  return Turni.turnDeckMovable(d, i);
 }
 
 // Scrive la bozza nel mazzo dei turni: un solo passo di undo (v222: il turno in corso continua sempre)
 // v238: senza passo di undo (prima un act per modifica): il passo di undo è uno solo per tutta la visita della
 // finestra, aggiunto alla chiusura (openTurnScreen, shut)
 export function saveTurnDraft(d) {
-  G.turnOrder.left = d.left.slice();
-  G.turnOrder.known = d.known.slice();
-  G.turnOrder.drawn = d.drawn.slice();
-  G.turnOrder.picks = JSON.parse(JSON.stringify(d.picks));
-  G.turnOrder.pairNext = emptyPairNext(d.pairNext);
-  G.turnOrder.history = JSON.parse(JSON.stringify(d.history || []));
+  Turni.applyTurnDraft(G.turnOrder, d);
   save();
   render();
 }

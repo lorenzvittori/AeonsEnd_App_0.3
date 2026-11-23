@@ -2,16 +2,15 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
+import * as Nemesi from '../../regole/turno-nemesi.js';
 import { G } from '../../stato/condivise.js';
 import { I18N_IT } from '../testi.js';
 import { ANCHOR_RATIO, discardBtn, focusEl, nemesisBtn, queueEmpty, queueList, queueView, queueViewport, reducedMotion, resolveBtn, turnInfo, ui } from '../../stato/stato.js';
-import { awaitingTurnCard } from '../../regole/mazzo.js';
-import { currentTurnCard, turnCardPlayer } from '../../regole/mazzo-turni.js';
-import { countMinionKilled, discardEntry, discardGone, entryByUid, hpCap, hpUnset } from '../../regole/turno-nemesi.js';
-import { cardArt, displayEntry, draftHp, draftOf, el, hasHp, icon, isGone, queueItem, setDraft, tokenIcons, typeName } from '../componenti/componenti.js';
+import { awaitingTurnCard, currentTurnCard, hpCap, hpUnset, turnCardPlayer } from '../../stato/partita.js';
+import { cardArt, displayEntry, draftHp, draftOf, el, hasHp, icon, queueItem, setDraft, tokenIcons, typeName } from '../componenti/componenti.js';
 import { button, openModal, showToast } from '../componenti/dialoghi.js';
 import { act } from '../../stato/salvataggio.js';
-import { PEEK_GAP, PEEK_VISIBLE, canDraw, endResolution, render, sharedCardWidth, sizeColumn } from './turno-nemesi.js';
+import { PEEK_GAP, PEEK_VISIBLE, render, sharedCardWidth, sizeColumn } from './turno-nemesi.js';
 import { trackDrag } from '../eventi.js';
 import { needsPairChoice } from './mazzo-turni.js';
 import { flyToDiscard } from '../componenti/testata.js';
@@ -319,32 +318,10 @@ export function saveAllDrafts() {
   ui.drafts.clear();
   const gone = [];
   act(() => {
-    // Statistiche maghi: tutto va al giocatore del turno in corso (mazzo dei turni)
-    // (il jolly conta per il giocatore che è jolly in questo giro)
+    // Statistiche maghi: tutto va al giocatore del turno in corso (il wild conta per il giocatore che è wild nel giro);
+    // la prima impostazione della vita di un minion a vita variabile non è danno (regole/turno-nemesi.js, applyDrafts)
     const kind = turnCardPlayer(currentTurnCard());
-    const mage = kind ? (G.stats.mages[kind] = G.stats.mages[kind] || { damage: 0, powers: 0, kills: 0 }) : null;
-    drafts.forEach((d, uid) => {
-      const entry = entryByUid(uid);
-      if (!entry) return;
-      if (d.hp !== undefined) {
-        // (v214) Prima impostazione della vita di un minion a vita variabile: non è danno; diventa anche la vita di
-        // riferimento del turno
-        const firstSet = hpUnset(entry);
-        if (mage && entry.data.type === 'Minion' && !firstSet) {
-          mage.damage += Math.max(0, entry.hp - d.hp);
-          if (d.hp <= 0 && entry.hp > 0) mage.kills++;
-        }
-        entry.hp = d.hp;
-        // (v218: la vita impostata la prima volta è la vita massima del minion: il +1 non la supera)
-        if (firstSet && d.hp > 0) { entry.hpSet = true; entry.turnHp = d.hp; entry.hpMax = d.hp; }
-      }
-      if (d.paid) {
-        if (mage && !entry.paid) mage.powers++;
-        entry.paid = true;
-      }
-    });
-    gone.push(...G.queue.filter(isGone));
-    gone.forEach(discardGone);
+    gone.push(...Nemesi.applyDrafts(G, drafts, kind));
   });
   // Le carte sono ancora nella pagina (non ridisegnata): partono da lì
   flyToDiscard(gone.map(e => queueList.querySelector(`.ae-queue-item[data-uid="${e.uid}"] .ae-card-art`)));
@@ -354,14 +331,7 @@ export function saveAllDrafts() {
 
 // Dopo un minion eliminato nel turno nemesi: gli indici della risoluzione seguono la coda
 export function removeWhileResolving(entry) {
-  const index = G.queue.indexOf(entry);
-  const wasNew = G.newIndex >= 0 && index === G.newIndex;
-  countMinionKilled(entry);
-  discardEntry(entry);
-  if (wasNew) { endResolution(); return; }
-  if (index < G.currentIndex) G.currentIndex--;
-  if (G.newIndex > index) G.newIndex--;
-  if (G.currentIndex >= G.queue.length && G.newIndex < 0 && !canDraw()) endResolution();
+  Nemesi.removeWhileResolving(G, entry);
 }
 
 // VistaCartaCoda: dialogo della carta toccata. Minion = punti vita in bozza; potere = rimozione esplicita.

@@ -5,8 +5,7 @@
 import { G } from '../../stato/condivise.js';
 import { I18N_IT } from '../testi.js';
 import { emptyStats, nemesisBtn, resolveBtn, startLayer, ui } from '../../stato/stato.js';
-import { emptyPairNext } from '../../regole/mazzo-turni.js';
-import { aetherCost, isVariableMinion, makeEntry } from '../../regole/turno-nemesi.js';
+import { aetherCost, emptyPairNext, isVariableMinion, makeEntry } from '../../stato/partita.js';
 import { el, icon } from '../componenti/componenti.js';
 import { closeAllModals, showToast, updateInert } from '../componenti/dialoghi.js';
 import { closeDiscard } from '../componenti/scarti.js';

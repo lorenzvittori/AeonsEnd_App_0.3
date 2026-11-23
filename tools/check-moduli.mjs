@@ -4,7 +4,9 @@
 // - ogni nome usato in un modulo è dichiarato nel modulo, importato, o è un nome del browser / di JavaScript
 //   (elenco BROWSER qui sotto: un nome nuovo del browser si aggiunge lì);
 // - ogni nome importato esiste tra gli export del modulo da cui si importa;
-// - nessun modulo scrive variabili globali (window.x = ..., globalThis.x = ...), tranne window.app in main.js.
+// - nessun modulo scrive variabili globali (window.x = ..., globalThis.x = ...), tranne window.app in main.js;
+// - src/regole/ è logica pura: importa solo da src/regole/, usa solo i nomi di JavaScript dell'elenco PURE (niente
+//   document, window, localStorage, fetch, orologio...) e non chiama Math.random (il caso arriva come argomento).
 // --globali stampa i nomi del browser usati (per aggiornare l'elenco). Esce con codice 1 se trova qualcosa.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
@@ -22,6 +24,9 @@ const BROWSER = new Set(['Array', 'Boolean', 'Date', 'Element', 'Error', 'Event'
   'globalThis', 'queueMicrotask', 'structuredClone', 'Intl', 'RegExp', 'TypeError', 'decodeURIComponent', 'atob', 'btoa',
   'devicePixelRatio', 'scrollX', 'scrollY', 'visualViewport', 'Reflect', 'Proxy', 'BigInt', 'alert', 'confirm']);
 const listGlobals = process.argv.includes('--globali');
+// Nomi globali permessi in src/regole/ (solo JavaScript, niente browser né orologio: Date è escluso)
+const PURE = new Set(['Array', 'Boolean', 'Error', 'Infinity', 'JSON', 'Map', 'Math', 'NaN', 'Number', 'Object', 'Set',
+  'String', 'TypeError', 'undefined', 'isFinite', 'parseFloat', 'parseInt']);
 
 const files = [];
 (function walk(dir) { readdirSync(dir).forEach(f => { const p = join(dir, f); if (statSync(p).isDirectory()) walk(p); else if (f.endsWith('.js')) files.push(p); }); })(SRC);
@@ -76,6 +81,9 @@ const parsed = files.map(f => {
 
 for (const { f, ast } of parsed) {
   const rel = relative(ROOT, f).split(sep).join('/');
+  const pure = rel.startsWith('src/regole/');
+  if (pure) ast.body.filter(s => s.type === 'ImportDeclaration' || (s.type === 'ExportNamedDeclaration' && s.source) || s.type === 'ExportAllDeclaration')
+    .forEach(s => { if (!/^\.\/[^/]+$/.test(s.source.value)) problems.push(`${rel}:${s.loc.start.line}: regole pure: import fuori da src/regole/: ${s.source.value}`); });
   // Import: il modulo esiste e il nome è esportato
   ast.body.filter(s => s.type === 'ImportDeclaration').forEach(s => {
     if (!s.source.value.startsWith('.')) return;
@@ -88,7 +96,7 @@ for (const { f, ast } of parsed) {
   // Nomi liberi (né dichiarati né importati)
   const scopes = [new Set(blockDecls(ast.body))];
   const known = n => scopes.some(s => s.has(n));
-  const free = (id) => { if (!known(id.name)) { if (BROWSER.has(id.name)) usedGlobals.add(id.name); else problems.push(`${rel}:${id.loc.start.line}: nome non dichiarato né importato: ${id.name}`); } };
+  const free = (id) => { if (!known(id.name)) { if (pure && !PURE.has(id.name)) problems.push(`${rel}:${id.loc.start.line}: regole pure: nome globale non permesso: ${id.name}`); if (BROWSER.has(id.name)) usedGlobals.add(id.name); else problems.push(`${rel}:${id.loc.start.line}: nome non dichiarato né importato: ${id.name}`); } };
   function visit(node, parent) {
     if (!node || typeof node.type !== 'string') return;
     let pushed = 0;
@@ -116,6 +124,9 @@ for (const { f, ast } of parsed) {
       case 'MemberExpression':
         visit(node.object, node);
         if (node.computed) visit(node.property, node);
+        if (pure && node.object.type === 'Identifier' && node.object.name === 'Math' && !known('Math') && node.property.name === 'random') {
+          problems.push(`${rel}:${node.loc.start.line}: regole pure: Math.random (il caso si passa come argomento)`);
+        }
         // Scritture globali
         if (parent && parent.type === 'AssignmentExpression' && parent.left === node && node.object.type === 'Identifier'
           && ['window', 'globalThis', 'self'].includes(node.object.name) && !(rel === 'src/main.js' && node.property.name === 'app')) {
@@ -156,4 +167,4 @@ if (problems.length) {
   console.error(`\nModuli: ${problems.length} problemi`);
   process.exit(1);
 }
-console.log(`Moduli: ${files.length} file di src/ controllati (nomi, import, nessuna variabile globale)`);
+console.log(`Moduli: ${files.length} file di src/ controllati (nomi, import, nessuna variabile globale; src/regole/ pura)`);

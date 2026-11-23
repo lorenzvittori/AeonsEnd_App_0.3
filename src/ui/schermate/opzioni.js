@@ -7,7 +7,7 @@ import { I18N_IT } from '../testi.js';
 import { nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../../stato/stato.js';
 import { battleOf } from '../../dati/dati.js';
 import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, productOfNemesis, saveCollection, waveOfNemesis } from '../../dati/collezione.js';
-import { newGame, setTurnPairs, turnPairsOn } from '../../regole/mazzo.js';
+import { newGame, setTurnPairs, turnPairsOn } from '../../stato/partita.js';
 import { el, icon } from '../componenti/componenti.js';
 import { button, closeAllModals, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.js';
 import { closeDiscard } from '../componenti/scarti.js';

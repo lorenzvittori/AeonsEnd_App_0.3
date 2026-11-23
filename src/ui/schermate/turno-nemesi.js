@@ -2,14 +2,14 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
+import * as Vite from '../../regole/vite.js';
+import * as Nemesi from '../../regole/turno-nemesi.js';
 import { G } from '../../stato/condivise.js';
 import { I18N_IT } from '../testi.js';
-import { app, backBtn, CARD_BACK, CARD_RATIO, cssUrl, DRAW_MS, duration, focusEl, GRAVEHOLD_LIFE, nemesisBtn, nemesisStartLife, phaseLabel, queueView, rail, reducedMotion, resolveBtn, resolveHint, resolveView, statCard, ui } from '../../stato/stato.js';
+import { app, backBtn, CARD_BACK, CARD_RATIO, cssUrl, DRAW_MS, duration, focusEl, GRAVEHOLD_LIFE, nemesisBtn, nemesisStartLife, phaseLabel, queueView, rail, reducedMotion, resolveBtn, resolveHint, resolveView, ui } from '../../stato/stato.js';
 import { battleOf } from '../../dati/dati.js';
-import { awaitingTurnCard, drawFirstTurn, isPairCard, nextTurnCard, turnRoundOver } from '../../regole/mazzo.js';
-import { currentTurnCard, turnCardPlayer } from '../../regole/mazzo-turni.js';
-import { discardEntry, discardGone, drawFromDeck, entryByUid, hpUnset, makeEntry } from '../../regole/turno-nemesi.js';
-import { cardArt, el, hasHp, icon, isGone, nextCardItem, nextSlotItem, placeholderArt, queueItem, statusText, tokenIcons } from '../componenti/componenti.js';
+import { awaitingTurnCard, currentTurnCard, drawFirstTurn, entryByUid, hpUnset, isPairCard, nextTurnCard, turnCardPlayer, turnRoundOver } from '../../stato/partita.js';
+import { cardArt, el, hasHp, icon, nextCardItem, nextSlotItem, placeholderArt, queueItem, statusText, tokenIcons } from '../componenti/componenti.js';
 import { announce, button, loadImage, modals, openModal } from '../componenti/dialoghi.js';
 import { FAST_SCROLL_MS, cancelFastScroll, centredQueueUid, ensureQueueRail, fastScrollTo, openCardDialog, queueRail, renderQueue, saveAllDrafts, scrollItemInto, updateInfo } from './turno-giocatori.js';
 import { act, lockFor, updateUndoBtn } from '../../stato/salvataggio.js';
@@ -199,11 +199,11 @@ export function activeEntry() {
 export const DRAW_UID = -1;
 
 export function isDrawStep() {
-  return G.resolving && G.newIndex < 0 && G.currentIndex >= G.queue.length;
+  return Nemesi.isDrawStep(G);
 }
 
 export function canDraw() {
-  return G.deck.length > 0;
+  return Nemesi.canDraw(G);
 }
 
 // Testo del pulsante per la carta da risolvere (tabella §7.3). Anche sull'ultima carta si va solo avanti: la pesca è
@@ -278,7 +278,8 @@ export function openLifeDialog(kind) {
   const grave = kind === 'grave';
   const name = grave ? I18N_IT.graveholdName : (G.settings.nemesis || '');
   const original = grave ? G.graveLife : G.nemesisLife;
-  const cap = Math.max(original, grave ? GRAVEHOLD_LIFE : nemesisStartLife());
+  // Tetto: il valore iniziale, o la vita attuale se è più alta (regole/vite.js)
+  const cap = Vite.lifeCap(original, grave ? GRAVEHOLD_LIFE : nemesisStartLife());
   let draft = original;
   let close = () => {};
   // v259: finestra a pillola al centro, come il box (stesso sfondo): in alto il numero grande, sotto −5 −1 · +1 +5.
@@ -302,7 +303,7 @@ export function openLifeDialog(kind) {
   [-5, -1, 1, 5].forEach(step => {
     const b = el('button', 'ae-life-step', step > 0 ? '+' + step : '−' + Math.abs(step));
     b.type = 'button';
-    b.addEventListener('click', () => { draft = Math.min(cap, Math.max(0, draft + step)); update(); });
+    b.addEventListener('click', () => { draft = Vite.stepLife(draft, step, cap); update(); });
     b.setAttribute('aria-label', (step > 0 ? 'Aggiungi ' : 'Togli ') + Math.abs(step) + ' punti vita');
     steps.push([step, b]);
     if (step === 1) controls.appendChild(el('span', 'ae-life-step-gap'));
@@ -336,13 +337,15 @@ export function openLifeDialog(kind) {
     const changed = draft !== original;
     const value = draft;
     if (changed) {
-      act(() => { if (grave) G.graveLife = value; else G.nemesisLife = value; });
+      act(() => { Vite.setLife(G, kind, value); });
       render();
     }
     const done = () => {
       close();
       if (box) box.style.visibility = '';
-      if (changed && value === 0) { if (grave) showDefeat(); else showVictory(); }
+      // A 0: nemesi = Vittoria, Gravehold = Sconfitta (regole/vite.js)
+      const outcome = Vite.lifeOutcome(kind, value, changed);
+      if (outcome === 'defeat') showDefeat(); else if (outcome === 'victory') showVictory();
     };
     const to = animated() && zoomFrom();
     if (!to) { done(); return; }
@@ -777,61 +780,41 @@ export function preloadNext() {
 }
 
 export function startResolution() {
-  // Un nuovo turno: la carta pescata nel turno precedente non è più "nuova"
-  G.queue.forEach(e => { e.isNew = false; });
-  G.currentIndex = 0;
-  G.newIndex = -1;
-  G.resolving = true;
-  // Coda vuota: si va subito alla carta da pescare (o, se non c'è niente da pescare, il turno finisce)
-  if (G.queue.length === 0 && !canDraw()) endResolution();
+  // Un nuovo turno: la carta pescata nel turno precedente non è più "nuova"; coda vuota: si va subito alla carta da
+  // pescare (o, se non c'è niente da pescare, il turno finisce) (regole/turno-nemesi.js)
+  Nemesi.startResolution(G);
 }
 
 // Pesca una carta in fondo alla coda e la mostra come nuova (NUOVA, entra girandosi dal retro)
 export function drawNewCard() {
-  const data = drawFromDeck();
-  // Mazzo vuoto (non si rimescola): si torna alla VistaCoda
-  if (!data) {
-    endResolution();
-    return;
-  }
-  const entry = makeEntry(data);
-  entry.isNew = true;
-  G.queue.push(entry);
-  G.newIndex = G.queue.length - 1;
-  G.currentIndex = G.newIndex;
-  ui.lastDrawnUid = entry.uid;
+  // La carta in cima entra in gioco come nuova (regole/turno-nemesi.js: anche il tempo del Tier nelle statistiche);
+  // mazzo vuoto (non si rimescola): si torna alla VistaCoda
+  const drawn = Nemesi.drawNewCard(G, () => G.nextUid++, () => Date.now());
+  if (!drawn) return;
+  const { data } = drawn.entry;
+  ui.lastDrawnUid = drawn.entry.uid;
   // Carta pescata: vibrazione breve, doppia e più forte per un attacco (la scritta Tier, se c'è, ha la sua)
   buzz(data.type === 'Attack' ? [80, 60, 80] : 30);
   // Prima carta del Tier 2 o del Tier 3: scritta "Tier N" al centro (mostrata da render)
-  if (data.tier >= 2 && data.tier > G.maxTierDrawn) {
-    ui.tierBanner = data.tier;
-    // Statistiche: da qui comincia il tempo del nuovo Tier
-    if (!G.stats.tierAt) G.stats.tierAt = {};
-    G.stats.tierAt[data.tier] = Date.now();
-  }
-  if (data.tier > G.maxTierDrawn) G.maxTierDrawn = data.tier;
+  if (drawn.newTier) ui.tierBanner = drawn.newTier;
 }
 
 // Ritorno alla VistaCoda
 export function endResolution() {
-  G.newIndex = -1;
-  G.resolving = false;
-  G.currentIndex = 0;
+  Nemesi.endResolution(G);
 }
 
 export function nemesisTurn() {
-  G.turn++;
-  startResolution();
+  Nemesi.nemesisTurn(G);
 }
 
 // "Fine turno" nel turno di un giocatore: finisce il turno e si estrae il turno dopo dal mazzo dei turni.
 // Nemesi: parte il turno nemesi; giocatore o jolly: resta il turno giocatori, con il colore nuovo nella barra.
 export function endPlayerTurn() {
-  // Danno e cura del turno si azzerano (la vita attuale diventa il riferimento)
-  G.queue.forEach(e => { e.turnHp = e.hp; });
-  // Poteri con il costo pagato: vanno negli scarti; le modifiche non salvate si perdono
+  // Le modifiche non salvate si perdono; danno e cura del turno si azzerano (la vita attuale diventa il riferimento) e
+  // le carte grigie (poteri pagati, minion a 0) vanno negli scarti (regole/turno-nemesi.js)
   ui.drafts.clear();
-  G.queue.filter(isGone).forEach(discardGone);
+  Nemesi.endPlayerTurnCards(G);
   if (nextTurnCard() === 'nemesis') nemesisTurn();
 }
 
@@ -886,46 +869,7 @@ export function playTurnShuffle(fadeMs) {
 // Logica del pulsante principale (come nella v48): agisce sulla carta da risolvere in base al suo tipo.
 // Restituisce cosa è successo, per l'animazione: 'token', 'discard', 'next', 'play'.
 export function resolveCurrent() {
-  const entry = G.queue[G.currentIndex];
-  const { data, tokens } = entry;
-
-  // Carta appena pescata: un attacco si risolve subito ed esce dalla coda, le altre restano e smettono di essere nuove.
-  // Poi ritorno alla VistaCoda.
-  if (G.newIndex >= 0) {
-    let effect;
-    if (data.type === 'Attack') {
-      G.stats.attacksResolved++;
-      statCard('attacksResolved', data);
-      discardEntry(entry);
-      effect = 'discard';
-    } else {
-      entry.isNew = false;
-      effect = 'play';
-    }
-    endResolution();
-    return effect;
-  }
-
-  let effect;
-  if (data.type === 'Power' && tokens > 1) {
-    // Potere: si toglie un token e si passa alla carta dopo
-    entry.tokens--;
-    G.currentIndex++;
-    effect = 'token';
-  } else if (data.type === 'Minion') {
-    // Minion: resta in coda, si va avanti
-    G.currentIndex++;
-    effect = 'next';
-  } else {
-    // Potere all'ultimo token o attacco: risolto, va negli scarti (la carta dopo prende il suo posto)
-    if (data.type === 'Power') { G.stats.powersResolved++; statCard('powersResolved', data); }
-    else if (data.type === 'Attack') { G.stats.attacksResolved++; statCard('attacksResolved', data); }
-    discardEntry(entry);
-    effect = 'discard';
-  }
-  // Finita la coda: si passa alla carta da pescare (coperta); se non c'è niente da pescare il turno finisce
-  if (G.currentIndex >= G.queue.length && !canDraw()) endResolution();
-  return effect;
+  return Nemesi.resolveCurrent(G);
 }
 
 // Tocco sul pulsante principale: prima la partita cambia (un passo di undo, salvataggio), poi l'animazione.

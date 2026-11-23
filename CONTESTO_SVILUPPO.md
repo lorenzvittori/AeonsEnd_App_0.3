@@ -816,6 +816,29 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 - **Inizio turno nemesi** (`nemesisTurn`): `turnHp` diventa la vita attuale, le bozze si perdono, le carte grigie
   (`isGone`) vanno negli scarti.
 - **Vittoria** (`isVictory`): `turn > 0`, mazzo vuoto e nessun potere né minion in coda.
+- **Branch `ts`, dalla fase B:** queste regole sono funzioni pure in `src/regole/`. Non toccano DOM, `localStorage`,
+  `G`, `Math.random` né l'orologio: ricevono tutto come argomenti (il caso come `random`, l'ora come `now()`, gli uid
+  come `newUid()`) e restituiscono il risultato, oppure modificano solo l'oggetto che ricevono (lo dice l'intestazione
+  della funzione). `npm run check` lo controlla.
+  - `caso.js`: mescolare e scegliere a caso.
+  - `mazzo-nemesi.js`: Deck Setup, collezione, Modalità battaglia, Unisci e il suo blocco, mazzo corto, nemesi
+    giocabili.
+  - `mazzo-turni.js`: carte per numero di giocatori, giri, pesca, coppie 1/2 e 3/4, scarti dei turni, bozza della
+    finestra, salvataggi vecchi del mazzo dei turni.
+  - `turno-nemesi.js`: carte in gioco, risoluzione, pesca, vittoria a mazzo vuoto, statistiche, fine del turno
+    giocatori.
+  - `vite.js`: vite di Gravehold e della nemesi, Vittoria e Sconfitta a 0.
+  - `salvataggio.js`: fotografia, ripristino anche dai formati vecchi, controllo della versione.
+
+  Il resto dell'app le chiama attraverso `src/stato/partita.js`, che passa lo stato di `G`, `Math.random` e
+  `Date.now`, oppure direttamente passando `G`.
+
+### Bug noti (annotati, non corretti)
+
+- **Undo / ripresa al passo Pesca:** se la fotografia è al passo Pesca con carte in coda (`currentIndex` = lunghezza
+  della coda), il ripristino limita `currentIndex` all'ultima carta. Così l'ultima carta va risolta di nuovo invece di
+  pescare. Il codice è in `restoreGame` di `src/regole/salvataggio.js` (prima in `restore`). Il test
+  `tests/salvataggio.test.js` (`afterRestore`) lo descrive.
 
 ## 7. Dati
 
@@ -911,12 +934,18 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
     Per il sito costruito: `npm run build` e `npm run preview` → `http://localhost:4173/AeonsEnd_App_0.2/`.
   - **`npm run check`**: `tsc --noEmit` (in questa fase il codice è JavaScript e tsc non lo controlla ancora: la
     conversione a TypeScript è la fase C) e `tools/check-moduli.mjs` (ogni nome usato è dichiarato, importato o del
-    browser; gli import esistono; nessuna variabile globale tranne `window.app`).
+    browser; gli import esistono; nessuna variabile globale tranne `window.app`; `src/regole/` pura: import solo da
+    `src/regole/`, nessun nome del browser, niente `Date` né `Math.random`).
   - **`npm test`**: i test con Vitest in `tests/*.test.js`. Si aggiunge un test con un file nuovo o un blocco
     `it('cosa controlla', () => { ... })`; i moduli di `src/` si importano direttamente (al caricamento non toccano il
-    DOM). Oggi: ogni modulo si importa senza effetti, mazzo nemesi secondo `deck-setup.json` (le regole e i loro test
-    arrivano con la fase B).
-  - **Struttura:** `src/main.js` (avvio: CSS, `avvio()` dei moduli nell'ordine di prima, `window.app`), `src/regole/`,
+    DOM). I test delle regole usano i JSON veri di `public/` e un caso ripetibile (`seeded` in `tests/aiuto.js`):
+    - `mazzo-nemesi.test.js`: ogni nemesi giocabile × 2/3/4 giocatori × Modalità battaglia × Unisci, su tre
+      collezioni;
+    - `mazzo-turni.test.js`, `turno-nemesi.test.js`, `vite.test.js`;
+    - `salvataggio.test.js`: con un salvataggio vero di main v228 in `tests/dati/`;
+    - `moduli.test.js`: i moduli si importano senza effetti e le regole sono pure.
+  - **Struttura:** `src/main.js` (avvio: CSS, `avvio()` dei moduli nell'ordine di prima, `window.app`, con le regole
+    pure in `app.regole`), `src/regole/` (logica di gioco pura, sezione 6), `src/stato/partita.js` (regole + stato),
     `src/stato/` (`condivise.js`: l'oggetto `G` con le variabili assegnate da più moduli, provvisorio fino alla fase D),
     `src/dati/`, `src/ui/componenti/`, `src/ui/schermate/`, `src/stili/` (il CSS di prima, così com'è). In `public/`:
     `Data/`, `thumbs/`, `Assets/`, i JSON, `manifest.webmanifest`, `sw.js`, `scheletri/` (si copiano così come sono).

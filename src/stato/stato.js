@@ -2,6 +2,9 @@
 // Fase A del passaggio a Vite: codice spostato da script.js così com'era. Al caricamento il modulo dichiara solo
 // funzioni e costanti; il codice che prima girava al caricamento è in avvio(), chiamata da main.js nell'ordine di prima.
 
+import * as Nemesi from '../regole/turno-nemesi.js';
+import * as Vite from '../regole/vite.js';
+import { GRAVEHOLD_LIFE } from '../regole/vite.js';
 import { G } from './condivise.js';
 import { loadImage } from '../ui/componenti/dialoghi.js';
 
@@ -137,29 +140,20 @@ export function setCardBack(id) {
 
 // v254: vita di Gravehold (parte da 30) e della nemesi (campo "life" di nemesis.json); nessuna supera il valore iniziale.
 // Entrano nel salvataggio e nell'undo (snapshot / restore). (I box sotto la fascia arriveranno dopo)
-export const GRAVEHOLD_LIFE = 30;
+export { GRAVEHOLD_LIFE };
 
+// Vita iniziale della nemesi della partita (regole/vite.js)
 export function nemesisStartLife() {
-  const n = (typeof G.nemeses !== 'undefined' && G.nemeses || []).find(x => x.name === G.settings.nemesis);
-  return n && typeof n.life === 'number' ? n.life : 0;
+  return Vite.nemesisStartLife(G.nemeses, G.settings.nemesis);
 }
 
+// Statistiche di una partita nuova e carta aggiunta a un gruppo (regole/turno-nemesi.js)
 export function emptyStats(deckSize) {
-  // cards: id delle carte di ogni gruppo (elenchi delle Statistiche); i salvataggi vecchi non li hanno (elenchi vuoti)
-  // startedAt / tierAt[2|3] / endedAt: istanti (Date.now) di inizio partita, prima carta del Tier 2 e del Tier 3 pescata,
-  // prima Vittoria. Salvataggi vecchi: null (il tempo non si mostra)
-  // mages (v175): per ogni carta giocatore del mazzo dei turni ('p1'..'p4', 'wild') quello che è stato salvato nel suo
-  // turno: { damage, powers, kills } (danni ai minion, poteri scartati pagando, minion uccisi)
-  return { deckSize, minionsKilled: 0, powersPaid: 0, powersResolved: 0, aetherSpent: 0, attacksResolved: 0, minions: [], mages: {},
-    cards: { minionsKilled: [], powersPaid: [], powersResolved: [], attacksResolved: [] },
-    startedAt: null, tierAt: {}, endedAt: null };
+  return Nemesi.emptyStats(deckSize);
 }
 
-// Aggiunge una carta all'elenco di un gruppo delle statistiche
 export function statCard(group, data) {
-  if (!G.stats.cards) G.stats.cards = emptyStats(0).cards;
-  if (!Array.isArray(G.stats.cards[group])) G.stats.cards[group] = [];
-  G.stats.cards[group].push(data.id);
+  Nemesi.statCard(G.stats, group, data);
 }
 
 // Stato solo dell'interfaccia (non entra nel salvataggio né nell'undo)
