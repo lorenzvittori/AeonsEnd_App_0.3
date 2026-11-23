@@ -130,7 +130,7 @@ export function isResumableSave(saved: unknown): saved is SalvataggioValido {
 }
 
 // Salvataggio letto dal browser (già convertito da JSON): 'ok' se si può riprendere, 'other-version' se è di un'altra
-// versione del formato (si cancella: per esempio quelli di prima della v210, con gli id vecchi delle carte), null se
+// versione del formato (si cancella: per esempio quelli con gli id delle carte di prima del DataBase), null se
 // manca o non è valido
 export function checkSave(saved: unknown, version: number): StatoSalvataggio {
   // Qualsiasi valore (anche non un oggetto) senza la versione giusta è di un'altra versione

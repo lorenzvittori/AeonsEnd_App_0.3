@@ -84,7 +84,7 @@ export interface MazzoTurniLetto {
   pairNext?: Partial<MemoriaCoppie>; // mancante: ricostruita dagli scarti
   history?: Partial<TurnoStoria>[];  // mancante: un turno per carta negli scarti
   known?: boolean[];             // mancante: nessuna carta nota
-  waiting?: boolean;             // turno annullato (salvataggi v211-v221)
+  waiting?: boolean;             // turno annullato in attesa della carta turno (solo salvataggi vecchi)
 }
 
 // Fotografia letta (salvataggio o undo, anche di formati vecchi)

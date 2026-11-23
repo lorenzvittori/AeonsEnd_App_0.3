@@ -53,8 +53,7 @@ declare global {
 // Un modulo dell'app: ha il suo codice di avvio
 type ModuloAvviato = { avvio: () => void };
 
-// Nell'ordine in cui le avvio() devono partire (stato/partita.ts sta dove c'erano i file delle regole di prima: le
-// regole pure non hanno avvio())
+// Nell'ordine in cui le avvio() devono partire (le regole pure di src/regole/ non hanno avvio(): non sono nell'elenco)
 const MODULI: ModuloAvviato[] = [compatibilita, testi, stato, dati, collezione, partita, componenti, dialoghi,
   turnoGiocatori, scarti, menu, opzioni, salvataggio, turnoNemesi, eventi, mazzoTurniFinestra, testata, statistiche,
   creaMazzo, pescaUndo, menuLaterale, rete, test, avvio];
