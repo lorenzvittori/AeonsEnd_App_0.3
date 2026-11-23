@@ -6,6 +6,18 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8124", "--bind", "127.0.0.1"],
       "port": 8124
+    },
+    {
+      "name": "sito-main",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8125", "--bind", "127.0.0.1", "--directory", "../AeonsEnd_App_0.2-main"],
+      "port": 8125
+    },
+    {
+      "name": "anteprima",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "preview", "--", "--port", "4173", "--strictPort"],
+      "port": 4173
     }
   ]
 }
