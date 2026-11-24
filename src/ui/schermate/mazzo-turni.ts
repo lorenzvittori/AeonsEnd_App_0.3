@@ -3,7 +3,8 @@
 // Il mazzo dei turni si cambia con stato/partita.ts: applicaBozzaTurni a ogni modifica della finestra (senza undo),
 // aggiungiPassoUndo alla chiusura (un passo per visita), conMazzoTurni per disegnare l'anteprima della barra.
 // Dipende da: regole/mazzo-turni.ts (bozza), stato/partita.ts, ui/ (testi, pagina, eventi), ui/componenti (componenti,
-// dialoghi, testata, menu-laterale), ui/schermate/turno-nemesi. Usato da: eventi (barra dei turni), turno nemesi,
+// dialoghi, testata, menu-laterale), ui/schermate (turno-nemesi, mazzo-turni-riga: conti della riga). Usato da: eventi
+// (barra dei turni), turno nemesi,
 // turno giocatori, componenti, testata, menu laterale (animDone).
 
 import * as Turni from '../../regole/mazzo-turni.ts';
@@ -16,6 +17,8 @@ import { renderTurnTrack, turnTrack, chooseTurnPlayer } from '../eventi.ts';
 import { headerPiles } from '../componenti/testata.ts';
 import { openSideMenu } from '../componenti/menu-laterale.ts';
 import type { BozzaTurni, CartaTurno, Giocatore, MazzoTurni } from '../../tipi/partita.ts';
+import { TURN_SPREAD, inCardBand, spaceItems } from './mazzo-turni-riga.ts';
+import type { OggettoRiga } from './mazzo-turni-riga.ts';
 import { app, byId, mainEl, nemesisBtn, reducedMotion, ui } from '../pagina.ts';
 
 // Carta toccata o presa nella finestra: del mazzo (posizione dalla cima) o degli scarti (posizione negli scarti)
@@ -26,15 +29,6 @@ interface Selezione {
 
 // Dove si lascia una carta: in cima, in fondo, in fondo agli scarti, o in una posizione del mazzo
 type Destinazione = { type: 'top' | 'bottom' | 'pile' } | { type: 'pos'; index: number };
-
-// Un oggetto della riga equispaziata (carte, cerchi, segmento verticale) con la sua larghezza visibile e la posizione
-interface OggettoRiga {
-  kind: 'pile' | 'pileEmpty' | 'pileZone' | 'divider' | 'top' | 'deck' | 'deckEmpty' | 'bottom';
-  i: number;                     // posizione della carta (scarti o mazzo); -1 per gli altri oggetti
-  vis: number;                   // larghezza visibile
-  left: number;                  // bordo sinistro visibile (dopo spaceItems)
-  right: number;                 // bordo destro visibile (dopo spaceItems)
-}
 
 // La finestra aperta, per le verifiche e per il ridisegno al cambio di misura
 export interface FinestraTurni {
@@ -166,6 +160,16 @@ export const TURN_SHEET_MS = 320;
 // Fine di un gruppo di animazioni, con un tempo massimo (se il browser non le fa girare, si va avanti lo stesso)
 export function animDone(anims: readonly Animation[], ms: number): Promise<unknown> {
   return Promise.race([Promise.all(anims.map(a => a.finished.catch(() => {}))), new Promise(r => setTimeout(r, ms + 150))]);
+}
+
+// Simbolo dell'insieme vuoto (∅: cerchio con una barra obliqua che esce dal cerchio), nei posti vuoti di scarti e
+// mazzo dei turni; disegnato in SVG, colore del testo
+export function emptySetIcon(): HTMLSpanElement {
+  const s = el('span', 'ae-turn-empty-icon');
+  s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = '<svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+    '<path d="M5 19 L19 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  return s;
 }
 
 export function openTurnScreen(): void {
@@ -367,7 +371,7 @@ export function openTurnScreen(): void {
     const rr = row.getBoundingClientRect();
     // (centro del segmento nella disposizione finale, non dove si trova a metà transizione)
     const split = rowGeo ? rr.left + rowGeo.split * pageZoom() : (() => { const dv = divider.getBoundingClientRect(); return dv.left + dv.width / 2; })();
-    return x >= rr.left - 24 && x < split && y >= laneRect.top - 24 && y <= laneRect.bottom + 24;
+    return x >= rr.left - 24 && x < split && inCardBand(y, laneRect.top, laneRect.bottom);
   }
   const revealAll = el('button', 'ae-turn-eye ae-turn-eye--all');
   revealAll.type = 'button';
@@ -429,7 +433,15 @@ export function openTurnScreen(): void {
       return card;
     });
     lane.replaceChildren(...fanEls);
-    if (!n) lane.appendChild(el('span', 'ae-turn-fan-empty', I18N_IT.turnDeckEmpty));
+    // Mazzo vuoto: posto tratteggiato largo una carta con il simbolo dell'insieme vuoto ("Mazzo vuoto" resta come nome
+    // per i lettori di schermo)
+    if (!n) {
+      const empty = el('span', 'ae-turn-fan-empty');
+      empty.setAttribute('role', 'img');
+      empty.setAttribute('aria-label', I18N_IT.turnDeckEmpty);
+      empty.appendChild(emptySetIcon());
+      lane.appendChild(empty);
+    }
     revealTop.hidden = !n || d.known[0];
     insertBar.hidden = true;
     lane.append(revealTop, zoneTop, zoneBottom, insertBar);
@@ -460,12 +472,13 @@ export function openTurnScreen(): void {
       faces.push(face);
       return slot;
     });
-    // Scarti vuoti: un posto tratteggiato largo una carta
+    // Scarti vuoti: un posto tratteggiato largo una carta, con il simbolo dell'insieme vuoto
     if (slots.length) pileRow.replaceChildren(...slots);
     else {
       const empty = el('span', 'ae-turn-pile-empty');
       empty.setAttribute('role', 'img');
       empty.setAttribute('aria-label', I18N_IT.turnPileEmpty);
+      empty.appendChild(emptySetIcon());
       pileRow.replaceChildren(empty);
     }
     pileEls = faces;
@@ -491,51 +504,48 @@ export function openTurnScreen(): void {
   function selName(s: Selezione) {
     return s.source === 'deck' ? turnCardName(d.left[s.index], -1, d) : turnCardName(d.drawn[s.index], s.index, d);
   }
-  // Riga del mazzo dei turni EQUISPAZIATA. La riga è UNA sequenza di oggetti, da sinistra a destra:
+  // Riga del mazzo dei turni. La riga è UNA sequenza di oggetti, da sinistra a destra:
   //   carte degli scarti (o il posto tratteggiato) → [cerchio degli scarti, con una carta del mazzo in mano] →
-  //   segmento verticale → [cerchio Cima] → carte del mazzo (o "Mazzo vuoto") → [cerchio Fondo] (Cima e Fondo con una
-  //   carta in mano). La carta presa resta nella sequenza (segnaposto grigio).
-  // Un solo calcolo (rowItems + spaceItems): tutte le carte larghe w, i cerchi zd, il segmento 1px; lo spazio tra due
-  // oggetti consecutivi è UGUALE in tutta la riga, misurato sui bordi VISIBILI (con una carta in mano le altre sono
-  // all'85%, scalate attorno al centro); il primo oggetto parte dal bordo sinistro della riga e l'ultimo arriva al
-  // bordo destro. w è la più grande (al massimo 64px, al minimo 30px) che lascia almeno TURN_GAP_MIN tra due oggetti
-  // in TUTTI gli stati della finestra (a riposo, carta degli scarti in mano, carta del mazzo trascinata o
-  // selezionata): così le carte non cambiano misura quando se ne prende una. Niente sovrapposizioni: la guida sta al
-  // centro dello spazio tra due oggetti, che è uguale per tutti.
+  //   segmento verticale → [cerchio Cima] → carte del mazzo (o il posto tratteggiato) → [cerchio Fondo] (Cima e Fondo
+  //   con una carta in mano). La carta presa resta nella sequenza (segnaposto a righe).
+  // Un solo calcolo (rowItems + spaceItems, mazzo-turni-riga.ts): tutte le carte larghe w, i cerchi zd, il segmento
+  // 1px; la fila è compatta e centrata: lo spazio tra due oggetti è al massimo TURN_GAP_MAX, tra due carte vicine la
+  // metà, misurato sui bordi VISIBILI (con una carta in mano le altre sono all'85%, scalate attorno al centro). Alcuni
+  // oggetti non sono in fila ma centrati su un altro (it.on): senza scarti il cerchio degli scarti sul posto
+  // tratteggiato; trascinando la prima (ultima) carta del mazzo il cerchio Cima (Fondo) sul suo segnaposto, perché è
+  // già lì. w è la più grande (al massimo 64px, al minimo 30px) che lascia almeno TURN_GAP_MIN tra due oggetti in TUTTI
+  // gli stati della finestra (a riposo, carta degli scarti in mano, carta del mazzo trascinata o selezionata): così le
+  // carte non cambiano misura quando se ne prende una.
   const TURN_W_MAX = 64, TURN_W_MIN = 30;
   // (pallino della guida, 6px, più 2px per lato)
   const TURN_GAP_MIN = 10;
   function zoneD(w: number) { return Math.round(Math.min(14, w * 0.3)); }
   function rowWidth() { return row.clientWidth || 343; }
-  // st: { holding: null | 'pile' | 'deck', selected: carta selezionata, dragDeck: carta del mazzo trascinata }
-  function rowItems(w: number, st: { holding: Selezione['source'] | null; selected?: Selezione | null; dragDeck?: boolean }): OggettoRiga[] {
+  // st: { holding: null | 'pile' | 'deck', selected: carta selezionata, dragDeck: carta del mazzo trascinata, dragIndex:
+  // sua posizione nel mazzo }
+  function rowItems(w: number, st: { holding: Selezione['source'] | null; selected?: Selezione | null; dragDeck?: boolean; dragIndex?: number | null }): OggettoRiga[] {
     const k = d.drawn.length, n = d.left.length;
     const zd = zoneD(w);
     const tight = !!st.holding;
     // carta come si vede: con una carta in mano le altre all'85% (anche il segnaposto), quella selezionata al 100%
     const sc = (source: Selezione['source'], i: number) => !tight ? 1 : (st.selected && st.selected.source === source && st.selected.index === i ? 1 : 0.85);
+    const item = (kind: OggettoRiga['kind'], vis: number, i = -1, on?: OggettoRiga): OggettoRiga => ({ kind, i, vis, left: 0, right: 0, ...(on ? { on } : {}) });
     const items: OggettoRiga[] = [];
-    const add = (kind: OggettoRiga['kind'], vis: number, i = -1) => items.push({ kind, i, vis, left: 0, right: 0 });
-    if (k) d.drawn.forEach((x, i) => add('pile', sc('pile', i) * w, i));
-    else add('pileEmpty', w);
-    if (st.holding === 'deck') add('pileZone', zd);
-    add('divider', 1);
+    if (k) d.drawn.forEach((x, i) => items.push(item('pile', sc('pile', i) * w, i)));
+    else items.push(item('pileEmpty', w));
+    // Senza scarti il cerchio degli scarti sta al centro del posto tratteggiato
+    if (st.holding === 'deck') items.push(k ? item('pileZone', zd) : item('pileZone', zd, -1, items[0]));
+    items.push(item('divider', 1));
     // (Cima e Fondo solo se nel mazzo c'è una carta vera oltre al segnaposto della carta trascinata)
     const mReal = n - (st.dragDeck ? 1 : 0);
     const ends = tight && mReal > 0;
-    if (ends) add('top', zd);
-    if (n) d.left.forEach((x, i) => add('deck', sc('deck', i) * w, i));
-    else add('deckEmpty', w);
-    if (ends) add('bottom', zd);
+    const deckIt = n ? d.left.map((x, i) => item('deck', sc('deck', i) * w, i)) : [item('deckEmpty', w)];
+    // Trascinando la carta in cima (in fondo) il cerchio Cima (Fondo) sta sul suo segnaposto
+    const ph = st.dragDeck && st.dragIndex !== null && st.dragIndex !== undefined ? st.dragIndex : -1;
+    if (ends) items.push(ph === 0 ? item('top', zd, -1, deckIt[0]) : item('top', zd));
+    items.push(...deckIt);
+    if (ends) items.push(ph === n - 1 ? item('bottom', zd, -1, deckIt[n - 1]) : item('bottom', zd));
     return items;
-  }
-  // Mette gli oggetti in fila dal bordo sinistro (0) al destro (W) con spazi uguali; restituisce lo spazio
-  function spaceItems(items: OggettoRiga[], W: number) {
-    const sum = items.reduce((s, it) => s + it.vis, 0);
-    const g = items.length > 1 ? (W - sum) / (items.length - 1) : 0;
-    let x = 0;
-    items.forEach(it => { it.left = x; it.right = x + it.vis; x = it.right + g; });
-    return g;
   }
   function rowGeometry() {
     const k = d.drawn.length, n = d.left.length;
@@ -582,7 +592,7 @@ export function openTurnScreen(): void {
     row.style.marginTop = (16 + CUSP_H + cuspGap - 32 + 0.1 * h) + 'px';
     const holding = drag ? drag.source : sel ? sel.source : null;
     const tight = !!holding;
-    const st = { holding, selected: sel, dragDeck: !!drag && drag.source === 'deck' };
+    const st = { holding, selected: sel, dragDeck: !!drag && drag.source === 'deck', dragIndex: drag ? drag.index : null };
     const items = rowItems(w, st);
     const gap = spaceItems(items, W);
     const one = (kind: OggettoRiga['kind']) => items.find(it => it.kind === kind) || null;
@@ -607,11 +617,17 @@ export function openTurnScreen(): void {
     // Mazzo (coordinate della corsia = riga − laneOff)
     const deckObjs = items.filter(it => it.kind === 'deck');
     const m = deckObjs.length;
+    // (posto della guida nella fila vista: 0 = prima della prima carta, m = dopo l'ultima)
+    const overIdx = !over ? -1 : over.type === 'top' ? 0 : over.type === 'bottom' ? m : over.type === 'pos' ? over.index : -1;
+    // Guida tra due carte del mazzo: quelle due si scostano di TURN_SPREAD ciascuna (la sinistra a sinistra, la destra a
+    // destra) per farle spazio; solo da vedere: posti d'arrivo e centri (rowGeo) restano quelli senza scosto
+    const spreadAt = tight && over && over.type === 'pos' && overIdx > 0 && overIdx < m ? overIdx : -1;
+    const shiftOf = (kk: number) => spreadAt < 0 ? 0 : kk === spreadAt - 1 ? -TURN_SPREAD : kk === spreadAt ? TURN_SPREAD : 0;
     fanEls.forEach(c => c.classList.remove('is-away'));
     deckObjs.forEach((it, kk) => {
       const card = fanEls[it.i];
       if (!card) return;
-      card.style.left = (boxLeft(it) - laneOff) + 'px';
+      card.style.left = (boxLeft(it) + shiftOf(kk) - laneOff) + 'px';
       card.style.zIndex = String(1 + kk);
       card.classList.toggle('is-lifted', it.i === lifted);
       if (it.i === 0) {
@@ -644,6 +660,8 @@ export function openTurnScreen(): void {
     const pz = one('pileZone');
     const toPile = !!over && over.type === 'pile';
     pileZone.hidden = !pz;
+    // (cerchio sul posto vuoto degli scarti: il simbolo ∅ sotto di lui sparisce)
+    pileArea.classList.toggle('has-zone', !!pz);
     pileZone.classList.toggle('is-over', toPile && !!pz);
     if (pz) Object.assign(pileZone.style, { left: pz.left + 'px', top: (h / 2 - zd / 2) + 'px' });
     pileInsert.hidden = !(toPile && pz);
@@ -655,10 +673,9 @@ export function openTurnScreen(): void {
     board.style.setProperty('--ae-split', split + 'px');
     layoutHeads(split);
     const empty = one('deckEmpty');
-    if (empty) fitEmpty(empty.left - laneOff, h, w);
+    if (empty) placeEmpty(empty.left - laneOff, h, w);
     rowGeo = { centers: deckObjs.map(it => it.left + it.vis / 2), split, n: m };
-    // Guida (linea-pallino-linea): sul cerchio di Cima o Fondo, oppure al centro dello spazio tra due carte
-    const overIdx = !over ? -1 : over.type === 'top' ? 0 : over.type === 'bottom' ? m : over.type === 'pos' ? over.index : -1;
+    // Guida (linea-pallino-linea): sul cerchio di Cima o Fondo, oppure a metà tra due carte
     zoneTop.classList.toggle('is-over', !!top && overIdx === 0);
     zoneBottom.classList.toggle('is-over', !!bottom && overIdx === m);
     insertBar.hidden = !tight || !over || toPile;
@@ -667,7 +684,7 @@ export function openTurnScreen(): void {
       if (!m) x = empty ? empty.left + w / 2 : laneOff;
       else if (overIdx <= 0) x = top ? top.left + zd / 2 : deckObjs[0].left - gap / 2;
       else if (overIdx >= m) x = bottom ? bottom.left + zd / 2 : deckObjs[m - 1].right + gap / 2;
-      else x = deckObjs[overIdx - 1].right + gap / 2;
+      else x = (deckObjs[overIdx - 1].right + deckObjs[overIdx].left) / 2;
       // (alta come le carte al 100%, dall'alto al basso della carta)
       Object.assign(insertBar.style, { left: (x - laneOff - 3) + 'px', width: '6px', height: h + 'px', top: '0px' });
     }
@@ -758,27 +775,12 @@ export function openTurnScreen(): void {
     // (ultima risorsa, se a 8px non ci sta ancora: senza spazio tra le lettere)
     if (textW(node) > maxW) node.style.letterSpacing = '0';
   }
-  // "Mazzo vuoto" sta dentro il posto del mazzo, largo come una carta: il carattere scende finché ci sta, anche su due
-  // righe ("Mazzo" sopra e "vuoto" sotto). left = bordo sinistro del posto nella corsia, dalla disposizione
-  // equispaziata
-  function fitEmpty(left: number, h: number, w: number) {
+  // Posto del mazzo vuoto (tratteggiato, con il simbolo ∅): largo e alto come una carta; left = bordo sinistro del posto
+  // nella corsia, dalla disposizione della riga
+  function placeEmpty(left: number, h: number, w: number) {
     const e = query(lane, '.ae-turn-fan-empty', HTMLElement);
     if (!e) return;
-    const lw = w;
-    Object.assign(e.style, { left: left + 'px', right: 'auto', width: lw + 'px', transform: 'none', fontSize: '' });
-    // (misura del testo vero, con un Range: scrollWidth non vede il testo che esce da un contenitore a griglia)
-    const range = document.createRange();
-    range.selectNodeContents(e);
-    const fits = () => {
-      const r = range.getBoundingClientRect(), z = pageZoom();
-      // (mezzo pixel di margine: il testo resta dentro anche con gli arrotondamenti)
-      return r.width / z <= lw - 0.5 && r.height / z <= h - 0.5;
-    };
-    let size = parseFloat(getComputedStyle(e).fontSize) || 14;
-    for (let i = 0; i < 16 && !fits() && size > 8; i++) {
-      size = Math.max(8, size - 0.5);
-      e.style.fontSize = size + 'px';
-    }
+    Object.assign(e.style, { left: left + 'px', right: 'auto', width: w + 'px', height: h + 'px', transform: 'none' });
   }
   // Posto d'inserimento (0 = in cima, n = in fondo) per la carta che sta in x sul mazzo stretto: il numero di carte il
   // cui centro (nella disposizione finale, in coordinate della riga) sta a sinistra di x; la riga non si sposta durante
@@ -909,15 +911,21 @@ export function openTurnScreen(): void {
     let shownPos = -1; // posto nella fila VISTA (con il segnaposto), per la guida e le carte che si allargano
     const laneRect = lane.getBoundingClientRect();
     // Carta del mazzo sugli scarti (zona "scarti" = tutta l'area a sinistra del centro del segmento verticale, nella
-    // stessa fascia verticale della corsia del mazzo ±24px: nessuna fascia morta tra scarti e Cima): va in fondo a
-    // destra degli scarti (il turno di quella carta è perso)
+    // fascia verticale delle zone di rilascio: nessuna fascia morta tra scarti e Cima): va in fondo a destra degli
+    // scarti (il turno di quella carta è perso). Tutte le zone valgono solo nella fascia delle carte più 24px sopra e
+    // 32px sotto (inCardBand)
     if (drag.source === 'deck' && inPileZone(x, y, laneRect)) target = { type: 'pile' };
+    else if (!inCardBand(y, laneRect.top, laneRect.bottom)) target = null;
     else if (hit(zoneTop.getBoundingClientRect(), x, y, 6) && !zoneTop.hidden) target = { type: 'top' };
     else if (hit(zoneBottom.getBoundingClientRect(), x, y, 6) && !zoneBottom.hidden) target = { type: 'bottom' };
-    else if (hit(laneRect, x, y, 24)) {
+    else if (x >= laneRect.left - 24 && x <= laneRect.right + 24) {
       if (order.length) {
         shownPos = pileSlotAt(x);
         target = { type: 'pos', index: ph >= 0 && shownPos > ph ? shownPos - 1 : shownPos };
+        // La carta in cima (in fondo) presa e lasciata al suo posto = Cima (Fondo), il cerchio sul segnaposto
+        const last = d.left.length - 1;
+        if (ph === 0 && target.type === 'pos' && target.index === 0 && !zoneTop.hidden) { target = { type: 'top' }; shownPos = -1; }
+        else if (ph === last && target.type === 'pos' && target.index === last && !zoneBottom.hidden) { target = { type: 'bottom' }; shownPos = -1; }
       } else target = { type: 'top' };
     }
     drag.target = target;
