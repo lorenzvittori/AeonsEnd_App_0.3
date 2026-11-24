@@ -116,7 +116,7 @@ export const MORPH_MS = 380;
 // Entrata da sinistra delle altre carte della coda nel turno giocatori
 export const ENTER_MS = 320;
 
-// Durata dello scorrimento dello sfondo tra i due turni (uguale alla transizione di .ae-shell in style.css)
+// Durata dello scorrimento dello sfondo tra i due turni (uguale alla transizione di .ae-shell in base.css)
 export const BG_SLIDE_MS = 800;
 
 export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | null): void {
@@ -127,7 +127,7 @@ export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | 
   const fromStatusEl = fromSlide && fromSlide.querySelector('.ae-focus-status > *');
   const fromStatus = fromStatusEl && fromStatusEl.parentElement ? fromStatusEl.parentElement.getBoundingClientRect() : null;
   const motion = !reducedMotion.matches && !!document.body.animate;
-  // Lo sfondo non sfuma: è un'immagine sola che scorre da destra a sinistra (style.css .ae-shell)
+  // Lo sfondo non sfuma: è un'immagine sola che scorre da destra a sinistra (base.css .ae-shell)
   queueView.classList.add('is-from-nemesis');
   render();
   if (queueRail) queueRail.scrollLeft = railScroll;

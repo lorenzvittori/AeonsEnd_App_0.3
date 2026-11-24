@@ -1,0 +1,7 @@
+/* dialoghi.css: dialoghi e toast
+   Elementi creati da: ui/componenti/dialoghi.ts.
+   Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
+
+@media (min-width: 768px) {
+  .ae-toast { bottom: calc(140px + var(--ae-safe-bottom)); }
+}

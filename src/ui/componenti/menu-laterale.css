@@ -1,0 +1,111 @@
+/* menu-laterale.css: menu laterale della partita, pulsante Menu (tre linee / X), scelta dello sfondo e del dorso, pulsanti da tenere premuti (Esci dalla partita), pulsanti Annulla / Salva modifiche
+   Elementi creati da: ui/componenti/menu-laterale.ts.
+   Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
+
+/* Pulsante Menu in alto a destra (tre linee) e pannello laterale: 70% della larghezza a destra, il resto oscurato */
+.ae-menu-button .ae-menu-lines, .ae-menu-button .ae-menu-lines::before, .ae-menu-button .ae-menu-lines::after {
+  display: block; width: 20px; height: 2px; border-radius: 1px; background: currentColor; content: ''; position: relative;
+}
+.ae-menu-button .ae-menu-lines::before { position: absolute; top: -6px; }
+.ae-menu-button .ae-menu-lines::after { position: absolute; top: 6px; }
+.ae-modal-backdrop.ae-modal-backdrop--side { display: flex; justify-content: flex-end; align-items: stretch; padding: 0; }
+.ae-modal.ae-side-menu {
+  width: 70vw; max-width: 420px; height: 100%; max-height: none; border-radius: 0; border-width: 0 0 0 1px;
+  padding: calc(12px + var(--ae-safe-top)) 16px calc(16px + var(--ae-safe-bottom)); gap: 16px;
+  animation: ae-side-in var(--ae-duration-dialog) var(--ae-ease-decelerate);
+}
+@keyframes ae-side-in { from { transform: translateX(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ae-modal.ae-side-menu { animation: none; }
+}
+.ae-side-stats { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; font: 500 15px/20px var(--ae-font-ui); }
+.ae-side-stats dt { color: var(--ae-text-muted); }
+.ae-side-stats dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.ae-side-exit { margin-top: auto; }
+/* Menu: scelta dello sfondo (menu a tendina con l'etichetta sopra) */
+.ae-side-field { display: flex; flex-direction: column; gap: 6px; }
+.ae-side-field-label { color: var(--ae-text-muted); font: 500 15px/20px var(--ae-font-ui); }
+.ae-side-field .ae-select { margin-bottom: 0; }
+/* Menu: dorso delle carte scelto (miniatura e nome), si tocca per la griglia dei dorsi */
+.ae-back-choice {
+  min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 6px 12px 6px 6px; text-align: left;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised); color: var(--ae-text);
+  font: 500 15px/20px var(--ae-font-ui);
+}
+.ae-back-choice-thumb { width: 36px; height: 50px; object-fit: cover; border-radius: 3px; flex: 0 0 auto; }
+.ae-back-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ae-back-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: var(--ae-text-muted);
+  font: 600 12px/16px var(--ae-font-ui); text-align: center;
+}
+.ae-back-item img {
+  display: block; width: 100%; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 5% / 3.58%;
+  border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+.ae-back-item[aria-pressed='true'] { color: var(--ae-gold); }
+.ae-back-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px rgba(223, 174, 89, .6); }
+
+/* Turno giocatori con modifiche: "Annulla modifiche" e "Salva modifiche" sulla stessa riga */
+.ae-main-row { display: flex; gap: 8px; }
+.ae-main-row[hidden] { display: none; }
+/* Menu laterale: si trascina verso destra per chiuderlo (menu-laterale.ts, swipeToClose) */
+.ae-modal.ae-side-menu { touch-action: pan-y; }
+/* "Crea mazzo" da tenere premuto: il pulsante si riempie d'oro da sinistra in 800ms (HOLD_BUILD_MS in menu-laterale.ts) */
+.ae-button.is-hold-action {
+  position: relative; overflow: hidden; isolation: isolate; touch-action: manipulation;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.ae-button.is-hold-action::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; background: var(--ae-gold);
+  transform: scaleX(0); transform-origin: left center; transition: transform .15s ease-out;
+}
+.ae-button.is-hold-action.is-holding::after { transform: scaleX(1); transition: transform .8s linear; }
+.ae-button.is-hold-action.is-holding { color: #20160B; text-shadow: none; }
+
+/* Menu: le tre linee diventano una X (la linea centrale sparisce, le altre ruotano di 45°) */
+.ae-menu-button .ae-menu-lines { transition: background-color .15s ease-out; }
+.ae-menu-button .ae-menu-lines::before, .ae-menu-button .ae-menu-lines::after {
+  transition: top .18s ease-out .12s, transform .18s ease-out 0s;
+}
+.ae-menu-button.is-open .ae-menu-lines { background-color: transparent; }
+.ae-menu-button.is-open .ae-menu-lines::before, .ae-menu-button.is-open .ae-menu-lines::after {
+  top: 0; transition: top .18s ease-out 0s, transform .18s ease-out .12s;
+}
+.ae-menu-button.is-open .ae-menu-lines::before { transform: rotate(45deg); }
+.ae-menu-button.is-open .ae-menu-lines::after { transform: rotate(-45deg); }
+@media (prefers-reduced-motion: reduce) {
+  .ae-menu-button .ae-menu-lines, .ae-menu-button .ae-menu-lines::before, .ae-menu-button .ae-menu-lines::after { transition: none; }
+}
+.ae-menu-toggle { position: fixed; z-index: 3; color: var(--ae-text); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .9)); }
+/* Nei menu laterali la X dell'intestazione non serve: c'è quella animata al posto del pulsante Menu */
+.ae-side-menu > .ae-modal-header > .ae-icon-button { visibility: hidden; }
+
+/* Esci dalla partita: rosso, da tenere premuto (si riempie di rosso da sinistra) */
+.ae-button.ae-hold-exit { background: rgba(217, 94, 92, .14); border-color: var(--ae-danger); color: #F08A88; font-weight: 700; }
+.ae-button.is-hold-action.is-holding::after { transition-duration: var(--ae-hold-ms, .8s); }
+.ae-button.ae-hold-exit.is-hold-action::after { background: var(--ae-danger); }
+.ae-button.ae-hold-exit.is-holding { color: #fff; }
+.ae-back-choice.ae-back-choice--compact { min-height: 0; padding: 4px; gap: 0; }
+.ae-back-choice--compact .ae-back-choice-name { display: none; }
+.ae-bg-choice.ae-bg-choice--compact { min-height: 0; padding: 4px; gap: 0; }
+.ae-bg-choice--compact .ae-bg-choice-name { display: none; }
+/* Menu della partita: Sfondo e Dorso delle carte in una riga, scritta a sinistra e anteprima piccola a destra */
+.ae-side-field.ae-side-field--row { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+/* Sfondo: anteprima dello sfondo scelto (Menu della partita e Opzioni) e scelta con le anteprime di tutti */
+.ae-bg-choice {
+  min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 6px 12px 6px 6px; text-align: left;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised); color: var(--ae-text);
+  font: 500 15px/20px var(--ae-font-ui);
+}
+.ae-bg-choice-thumb { width: 89px; height: 50px; object-fit: cover; border-radius: 4px; flex: 0 0 auto; }
+.ae-bg-grid { display: flex; flex-direction: column; gap: 14px; }
+.ae-bg-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 0; border: 0; background: none;
+  color: var(--ae-text-muted); font: 600 13px/18px var(--ae-font-ui); text-align: left;
+}
+.ae-bg-item img {
+  display: block; width: 100%; aspect-ratio: 1672 / 941; object-fit: cover; border-radius: var(--ae-radius-md);
+  border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+}
+.ae-bg-item[aria-pressed='true'] { color: var(--ae-gold); }
+.ae-bg-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px rgba(223, 174, 89, .6); }

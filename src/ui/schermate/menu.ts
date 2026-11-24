@@ -523,7 +523,7 @@ export function updateHomeCollection(): void {
 }
 
 // Testata della pagina "Nuova partita": titolo e X (torna al menu iniziale). Resta ferma in alto mentre la pagina scorre
-// sotto, e sotto di lei il contenuto sfuma nel nero (style.css .start-setup-head)
+// sotto, e sotto di lei il contenuto sfuma nel nero (menu.css .start-setup-head)
 export function startSetupHead(): HTMLElement {
   const existing = document.getElementById('start-setup-head');
   if (existing) return existing;

@@ -75,7 +75,7 @@ export function buzz(pattern: number | number[]): void {
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (err) { /* niente vibrazione */ }
 }
 
-// Nome della nemesi in testata: il blocco è largo al massimo quanto la sua colonna (style.css .ae-phase max-width) e,
+// Nome della nemesi in testata: il blocco è largo al massimo quanto la sua colonna (testata.css .ae-phase max-width) e,
 // se a 18px il nome non ci sta, il carattere scende in proporzione finché ci sta tutto, senza limite inferiore.
 // L'altezza della riga resta 24px (line-height in px) e il letter-spacing in em segue la dimensione.
 // root: la testata della partita o la sua copia (finestra del mazzo dei turni). Vale anche per il nome toccabile di
@@ -301,7 +301,7 @@ export function renderLives(): void {
 // che scorrono (renderLifeDigits) e il cambio "+x" / "−y" accanto. Parte dopo LIFE_SCRUB_START in verticale (più in
 // verticale che di lato; di lato il gesto si annulla). Al rilascio la vita si applica una volta sola (azione cambiaVita:
 // un passo di undo, si salva); a 0 → Vittoria o Sconfitta. Un tocco senza trascinare apre ancora la finestra; il click
-// che segue uno scrubbing no (data-scrubbed). Sul box la pagina non scorre (style.css, touch-action: none)
+// che segue uno scrubbing no (data-scrubbed). Sul box la pagina non scorre (vite.css, touch-action: none)
 export function lifeScrub(b: HTMLElement, kind: TipoVita): void {
   // Trascinamento in corso: punto di partenza, vita all'inizio, vita mostrata, partito o no, tetto
   let s: { x: number; y: number; id: number; start: number; value: number; on: boolean; cap: number } | null = null;
@@ -783,7 +783,7 @@ export let focusScrollFrame: ReturnType<typeof setTimeout> | 0 = 0;
 // Larghezza della carta grande: UNA sola regola per turno giocatori e turno nemesi, così sono sempre uguali.
 // Sopra la carta il box vita/token (STATUS_H + 8 di spazio); i comandi del turno giocatori (52px) stanno sotto, quindi
 // si riserva lo spazio anche nel turno nemesi; il blocco è centrato in verticale.
-// Altezza della riga vita/token sopra la carta: deve restare uguale a style.css .ae-focus-status e .queue-slot
+// Altezza della riga vita/token sopra la carta: deve restare uguale a turno-nemesi.css .ae-focus-status e turno-giocatori.css .queue-slot
 export const STATUS_H = 37;
 
 export function sharedCardWidth(boxW: number, boxH: number, padY: number, peekRoom: number): number {
@@ -793,7 +793,7 @@ export function sharedCardWidth(boxW: number, boxH: number, padY: number, peekRo
   return Math.floor(Math.min(byWidth, byHeight, byControls));
 }
 
-// Tablet e desktop (da 768px): la partita sta in una colonna al centro (--ae-col su .ae-shell, style.css). La colonna
+// Tablet e desktop (da 768px): la partita sta in una colonna al centro (--ae-col su .ae-shell, base.css). La colonna
 // è larga quanto la carta grande (misurata solo dall'altezza: in larghezza c'è spazio) più un pezzo delle vicine
 // (COLUMN_PEEK per lato), mai meno di COLUMN_MIN né più dello schermo. Sotto i 768px la colonna è lo schermo intero.
 export const COLUMN_MIN = 440;
@@ -830,7 +830,7 @@ export function sizeFocus(recentre = true): void {
   track.style.paddingInline = Math.max(0, (focusEl.clientWidth - width) / 2) + 'px';
   // Carta da pescare e carta pescata: più grandi (fino al 30%), stessa misura per dorso e fronte. Cresce solo la carta:
   // la riga vita/token resta grande come nelle altre carte. Il blocco (riga + carta) è centrato in verticale tra la
-  // fascia piccola e il pulsante (style.css .ae-focus-slide.is-big), con 4px di margine sopra e sotto.
+  // fascia piccola e il pulsante (turno-nemesi.css .ae-focus-slide.is-big), con 4px di margine sopra e sotto.
   const byHeight = (focusEl.clientHeight - 8 - STATUS_H - 8) / CARD_RATIO;
   // ... ridotta al 90% (BIG_CARD_SCALE) della misura massima: a tutta grandezza è troppo grande
   const bigW = Math.floor(Math.max(width, Math.min(width * 1.3, byHeight, focusEl.clientWidth - 16)) * BIG_CARD_SCALE);
@@ -914,7 +914,7 @@ export function showDrawnCard(drawn: CartaPescata | null): void {
 }
 
 // Animazione "mazzo mischiato" della barra della fase, a fine giro. Le scritte sotto la barra svaniscono e le caselle
-// diventano grigie e tutte uguali (render con ui.trackShuffle, transizioni di style.css); poi, veloci, le caselle si
+// diventano grigie e tutte uguali (render con ui.trackShuffle, transizioni di eventi.css); poi, veloci, le caselle si
 // uniscono in una sola al centro, si fermano un attimo e tornano al loro posto. fadeMs: attesa della dissolvenza (0 se
 // è già avvenuta, per esempio durante il passaggio dal turno nemesi)
 export const SHUFFLE_FADE_MS = 320;
@@ -1083,7 +1083,7 @@ export function onNemesisClick(): void {
 export function enterNemesisTurnView(): void {
   // Urgenza: una breve scossa dello schermo e una vibrazione
   shakeApp();
-  // Lo sfondo scorre verso il lato della nemesi (0,8 s, style.css .ae-shell): il token della prima carta aspetta
+  // Lo sfondo scorre verso il lato della nemesi (0,8 s, base.css .ae-shell): il token della prima carta aspetta
   ui.bgSlideUntil = reducedMotion.matches ? 0 : performance.now() + BG_SLIDE_MS;
   ui.viewedUid = null;
   // Le carte non spariscono e non ricompaiono: niente dissolvenza della vista, la fascia piccola resta dove era

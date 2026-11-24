@@ -125,7 +125,7 @@ export function tokenIcons(n: number): HTMLSpanElement {
   }
   for (let i = 0; i < Math.max(0, n); i++) row.appendChild(el('span', 'ae-token'));
   // 4 o 5 token: i token si rimpiccioliscono di 3/n, così la fila (e il box) resta larga come con 3; lo spazio libero
-  // si divide in parti uguali tra token e tra token e bordo (style.css .has-many-tokens)
+  // si divide in parti uguali tra token e tra token e bordo (componenti.css .has-many-tokens)
   if (n > 3) {
     row.classList.add('is-many');
     row.style.setProperty('--ae-token-zoom', String(3 / n));

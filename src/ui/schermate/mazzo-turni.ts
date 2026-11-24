@@ -46,7 +46,7 @@ export interface FinestraTurni {
 // agiscono sul mazzo dei turni (Hissing Acid, Sunder, Thunderous Tempest, Flare, Quartz Shard, Xaxos...) le applicano i
 // giocatori.
 // Carta del mazzo dei turni disegnata come una piccola carta: la faccia è l'immagine della carta vera
-// (Assets/ui/turn-cards/<carta>.webp, style.css [data-card]); sulle carte 1/2, 3/4 e Wild con il giocatore già deciso,
+// (Assets/ui/turn-cards/<carta>.webp, mazzo-turni.css [data-card]); sulle carte 1/2, 3/4 e Wild con il giocatore già deciso,
 // un tondino con il suo numero nel suo colore (.ae-turn-card-who). i: posizione negli scarti (drawn), -1 = nel mazzo.
 // order: turnOrder o la bozza della finestra
 export function turnCardFace(kind: CartaTurno, i: number | undefined, tag: 'span' | 'button' = 'span',

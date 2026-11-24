@@ -1,0 +1,6 @@
+/* scarti.css: finestra degli scarti
+   Elementi creati da: ui/componenti/scarti.ts, index.html.
+   Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
+
+/* Scarti: icona dello stato vuoto */
+.discard-empty-icon { width: 40px; height: 40px; color: var(--ae-text-muted); }

@@ -1,0 +1,9 @@
+/* comuni.css: regole comuni a più schermate (menu a tendina .ae-select)
+   Elementi creati da: index.html.
+   Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
+
+.ae-select {
+  width: 100%; height: 48px; margin-bottom: 12px; padding: 0 12px;
+  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised);
+  font: 500 16px/20px var(--ae-font-ui);
+}

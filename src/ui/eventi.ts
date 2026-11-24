@@ -56,7 +56,7 @@ export function unsetHpClick(e: MouseEvent): void {
 // Barra della fase sotto la testata: una casella per turno del giro, nell'ordine (prima la storia, poi le carte del
 // mazzo dei turni). La casella del turno in corso è accesa (8px, colore pieno e bagliore), quelle dei turni già giocati
 // in questo giro sono linee sottili colorate e velate, quelle ancora da estrarre linee grigie.
-// Colori: giocatori 1-4 verde, giallo, blu, viola; wild grigio chiaro; nemesi rosso scuro (style.css).
+// Colori: giocatori 1-4 verde, giallo, blu, viola; wild grigio chiaro; nemesi rosso scuro (eventi.css).
 // Nel turno nemesi sotto la casella accesa c'è la scritta "Nemesi · Risolvi" o "Nemesi · Pesca"; nel turno di un
 // giocatore il nome del giocatore (il turno è detto anche nell'aria-label). Elementi creati in avvio()
 export let turnTrack: HTMLDivElement;
@@ -69,7 +69,7 @@ export function renderTurnTrack(): void {
   if (ui.deckBuilding) return;
   // Barra dei TURNI del giro, non delle carte: prima la storia (turni giocati e turno in corso, history), poi le carte
   // del mazzo dei turni (turni futuri, dalla cima). Una carta rimessa nel mazzo resta come turno passato e compare anche
-  // come turno futuro, quindi le caselle possono essere più di 6 (si stringono: style.css --ae-seg-n)
+  // come turno futuro, quindi le caselle possono essere più di 6 (si stringono: eventi.css --ae-seg-n)
   const history = partita.turnOrder.history || [];
   const left = partita.turnOrder.left || [];
   const total = Math.max(1, history.length + left.length);
@@ -110,7 +110,7 @@ export function renderTurnTrack(): void {
     const owner = kind === 'wild' ? info.player : null;
     if (owner) seg.dataset.owner = owner;
     else delete seg.dataset.owner;
-    // Carta 1/2 o 3/4: sfumatura dai due colori (style.css ::after), che svanisce quando si sceglie il giocatore
+    // Carta 1/2 o 3/4: sfumatura dai due colori (eventi.css ::after), che svanisce quando si sceglie il giocatore
     if (kind && isPairCard(kind)) seg.dataset.pair = kind;
     else delete seg.dataset.pair;
     seg.classList.toggle('is-current', !!info.current);
@@ -181,7 +181,7 @@ export function renderTurnTrack(): void {
   }
   // Sempre centrata sotto la sua casella, anche alle due estremità
   turnTrackLabel.classList.remove('is-start', 'is-end');
-  // Centro della casella accesa (style.css .ae-turn-seg.is-current): accesa = 122px
+  // Centro della casella accesa (eventi.css .ae-turn-seg.is-current): accesa = 122px
   turnTrackLabel.style.left = cur >= 0 ? `calc(${cur} * (${narrow} + 6px) + 61px)` : '0%';
   turnTrack.setAttribute('aria-label', [trackName(drawStep), cur >= 0 ? I18N_IT.trackPosition(cur + 1, total) : '', I18N_IT.turnDeckHint]
     .filter(Boolean).join(', '));

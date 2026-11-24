@@ -1,5 +1,5 @@
 // main.ts: avvio dell'app (punto d'ingresso di Vite, caricato da index.html).
-// 1. Il CSS, nello stesso ordine di sempre (la divisione per schermata è la fase E).
+// 1. Il CSS: tutti i file, nell'ordine della cascata, da stili/indice.ts.
 // 2. I moduli: al caricamento non fanno niente (dichiarano solo funzioni e costanti); il codice di avvio è nella
 //    avvio() di ogni modulo, chiamata qui nell'ordine giusto (l'ordine conta: per esempio ui/pagina.ts, che legge gli
 //    elementi della pagina, prima di tutto il resto, avvio.ts per ultimo). Così l'ordine di esecuzione non dipende da
@@ -8,9 +8,7 @@
 // 3. window.app: l'unico oggetto globale, per la console, la pagina scheletri/ e le prove (vedi sotto).
 // Dipende da: tutti i moduli di src/. Usato da: index.html.
 
-import './stili/design-tokens.css';
-import './stili/components.css';
-import './stili/style.css';
+import './stili/indice.ts';
 
 import * as compatibilita from './ui/compatibilita.ts';
 import * as testi from './ui/testi.ts';

@@ -235,6 +235,6 @@ export function avvio(): void {
 
   CARD_BACK = currentCardBack().src;
 
-  // Il dorso dietro la carta che si gira (style.css .ae-flip-face--front) segue la stessa scelta
+  // Il dorso dietro la carta che si gira (turno-nemesi.css .ae-flip-face--front) segue la stessa scelta
   document.documentElement.style.setProperty('--ae-card-back', cssUrl(CARD_BACK));
 }

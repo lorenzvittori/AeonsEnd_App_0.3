@@ -4,6 +4,7 @@
 // - nessun modulo scrive variabili globali (window.x = ..., globalThis.x = ...), tranne window.app in main.ts;
 // - src/regole/ è logica pura: importa solo da src/regole/ e (solo tipi) da src/tipi/, non usa nomi del browser né
 //   l'orologio (Date) e non chiama Math.random (il caso arriva come argomento);
+// - i file CSS si importano solo da src/stili/indice.ts (l'ordine della cascata è lì) e ci sono tutti;
 // - nessun "any" nei tipi; ogni @ts-expect-error ha il motivo sulla stessa riga (@ts-ignore e @ts-nocheck no);
 // - la partita in corso (`partita`, stato/partita.ts) si cambia solo in stato/partita.ts: fuori da lì nessuno assegna
 //   un suo campo (partita.turn = ..., partita.stats.endedAt = ..., partita.nextUid++), chiama un metodo che cambia un
@@ -39,12 +40,17 @@ function rootedAtPartita(n) {
   return !!n && n.type === 'Identifier' && n.name === 'partita';
 }
 
+// L'unico modulo che importa i CSS (l'ordine della cascata)
+const CSS_INDEX = 'src/stili/indice.ts';
 const files = [];
+const cssFiles = [];
+const cssImported = new Set();
 (function walk(dir) {
   readdirSync(dir).forEach(f => {
     const p = join(dir, f);
     if (statSync(p).isDirectory()) walk(p);
     else if (/\.(js|ts)$/.test(f)) files.push(p);
+    else if (f.endsWith('.css')) cssFiles.push(resolve(p));
   });
 })(SRC);
 
@@ -110,7 +116,12 @@ for (const { f, code, ast } of parsed) {
       }
       if (!src.startsWith('.')) return;
       const target = resolve(dirname(f), src);
-      if (/\.css$/.test(target)) { if (!existsSync(target)) problems.push(`${rel}: CSS importato che non esiste: ${src}`); return; }
+      if (/\.css$/.test(target)) {
+        if (rel !== CSS_INDEX) problems.push(`${rel}:${line}: CSS importato fuori da ${CSS_INDEX} (l'ordine della cascata è lì): ${src}`);
+        else cssImported.add(target);
+        if (!existsSync(target)) problems.push(`${rel}: CSS importato che non esiste: ${src}`);
+        return;
+      }
       const exps = exportsOf.get(target);
       if (!exps) { problems.push(`${rel}:${line}: modulo inesistente ${src}`); return; }
       if (s.type === 'ImportDeclaration') {
@@ -180,6 +191,8 @@ if (count) {
   console.log(`file .js in src/: ${files.filter(f => f.endsWith('.js')).length}`);
   console.log(`usi di G: ${gCount}`);
 }
+// Ogni file CSS di src/ è importato (da stili/indice.ts): altrimenti le sue regole non arrivano all'app
+cssFiles.filter(f => !cssImported.has(f)).forEach(f => problems.push(`${relative(ROOT, f).split(sep).join('/')}: CSS non importato da ${CSS_INDEX}`));
 if (problems.length) {
   console.error(problems.join('\n'));
   console.error(`\nModuli: ${problems.length} problemi`);

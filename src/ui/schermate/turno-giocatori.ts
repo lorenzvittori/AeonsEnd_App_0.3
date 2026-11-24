@@ -122,7 +122,7 @@ export function centredQueueUid(): number | null {
 }
 
 export function markQueueRail(uid: number | null): void {
-  // Comandi (vita del minion, rimozione del potere) solo sulla carta grande al centro (style.css .queue-slot.is-centred)
+  // Comandi (vita del minion, rimozione del potere) solo sulla carta grande al centro (turno-giocatori.css .queue-slot.is-centred)
   queueList.querySelectorAll('.queue-slot').forEach(slot => {
     const item = query(slot, '.ae-queue-item', HTMLElement);
     slot.classList.toggle('is-centred', !!item && Number(item.dataset.uid) === uid);

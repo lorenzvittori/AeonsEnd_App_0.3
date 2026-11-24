@@ -1,0 +1,7 @@
+/* test.css: Modalità test: schermata degli scenari
+   Elementi creati da: ui/schermate/test.ts.
+   Ordine: deve venire dopo opzioni.css (ritoccano gli stessi elementi con la stessa specificità: qui vince questo file). Si importa da src/stili/indice.ts. */
+
+.test-scenario { gap: 2px; text-align: left; }
+.test-scenario-error { color: #F08A88; font: 600 13px/18px var(--ae-font-ui); }
+.test-scenario-error[hidden] { display: none; }

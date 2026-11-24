@@ -1,0 +1,66 @@
+/* base.css: pagina e struttura dell'app: html e body, shell (#app: testata, contenuto, pulsante in basso) con lo sfondo unico, colonna su tablet e desktop, avviso del telefono in orizzontale
+   Elementi creati da: index.html, avvio.ts (avviso del telefono in orizzontale), ui/componenti/menu-laterale.ts (sfondo).
+   Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
+
+/* Layout dell'app (new design 0.2). Token in css/design-tokens.css, componenti in css/components.css. */
+html, body { height: 100%; }
+body { overflow: hidden; }
+
+/* Shell: testata, contenuto, dock */
+.ae-shell {
+  height: 100vh; height: 100dvh;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+.ae-main { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Tablet e desktop: la partita resta la stessa del telefono (fascia piccola, carte grandi, pulsante), in una colonna al
+   centro larga quanto serve alla carta più un pezzo delle vicine (--ae-col, calcolata da sizeColumn in JS);
+   lo sfondo riempie tutto lo schermo. La pagina iniziale ha la sua colonna (560px). La vecchia vista a due colonne
+   (coda a sinistra, carta a destra), mai aggiornata al design attuale, è stata tolta: tag v152-prima-layout-tablet-desktop */
+@media (min-width: 768px) {
+  .ae-shell { grid-template-columns: minmax(0, var(--ae-col, 560px)); justify-content: center; }
+}
+.ae-shell > .ae-main { position: relative; z-index: 1; }
+
+/* --- Sfondo unico: la maga a sinistra, la nemesi a destra ---
+   Immagine scelta nel Menu (--ae-battle-bg, impostata da JS; BACKGROUNDS), predefinita battle-bg.webp.
+   Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro.
+   Velo scuro al 50%. Stato precedente (due sfondi): tag git v123-prima-sfondo-unico */
+.ae-shell, .ae-shell.is-nemesis-turn, .ae-shell.is-nemesis-turn.is-draw-phase {
+  background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('/Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
+  transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
+}
+.ae-shell.is-nemesis-turn, .ae-shell.is-nemesis-turn.is-draw-phase { background-position: 0 0, 100% center, 0 0; }
+@media (prefers-reduced-motion: reduce) {
+  .ae-shell { transition: none; }
+}
+/* Telefono in orizzontale: le carte non ci stanno, si chiede di girarlo */
+.ae-rotate { display: none; }
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .ae-rotate {
+    position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; padding: 24px; background: var(--ae-bg); color: var(--ae-gold); text-align: center;
+    font: 600 20px/26px var(--ae-font-display); letter-spacing: .04em;
+  }
+  .ae-rotate::before {
+    content: ''; width: 40px; height: 64px; border: 3px solid var(--ae-text-muted); border-radius: 8px;
+    animation: ae-rotate-hint 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes ae-rotate-hint { 0%, 30% { transform: rotate(-90deg); } 60%, 100% { transform: rotate(0deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .ae-rotate::before { animation: none; }
+}
+
+/* "Crea mazzo": sfondo nero (come il menu iniziale); finito il banner "Partita iniziata" sfuma nello sfondo del turno
+   giocatori (velo .ae-shell::before, tolto da JS con la classe is-deck-dark) */
+.ae-shell { position: relative; }
+.ae-shell::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--ae-bg); opacity: 0; transition: opacity .9s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ae-shell::before { transition: none; }
+}
