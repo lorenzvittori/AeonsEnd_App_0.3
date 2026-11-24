@@ -47,6 +47,12 @@
 /* Le vite stanno sopra le carte grandi (i box scendono accanto alla riga vita/token della carta, e si toccano) */
 .ae-main > [data-zona="vite"] { position: relative; z-index: 4; }
 .ae-main > [data-zona="interattivi"][hidden] { display: none; }
+/* Zona 6: una fascia fissa sotto le carte grandi con i comandi della carta al centro (larghi quanto la carta, al
+   centro); vuota se la carta non ne ha, ma sempre alta uguale (le carte grandi non cambiano misura scorrendo) */
+.ae-main > [data-zona="interattivi"] {
+  margin-top: var(--interattivi-distanza); min-height: var(--interattivi-altezza); align-items: center;
+}
+#interattivi > .queue-controls { width: var(--ae-queue-card, 100%); max-width: 100%; }
 /* Zona 5: la coda o il carosello, uno visibile per momento */
 .ae-main .ae-queue-viewport[hidden], .ae-main .ae-focus[hidden] { display: none; }
 /* Zona 3: la fascia senza carte (turno giocatori, coda vuota) non c'è */

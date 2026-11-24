@@ -16,14 +16,14 @@ import { announce, button } from '../componenti/dialoghi.ts';
 import { flyToDiscard } from '../componenti/testata.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
 import { annullaModificheBtn, mainEl, pulsantePrincipale, queueEmpty, queueList, queueViewport, rail, reducedMotion,
-  ui } from '../pagina.ts';
+  ui, zonaInterattivi } from '../pagina.ts';
 import type { AncoraCoda } from '../pagina.ts';
 import { ENTER_MS, fastScrollTo, MORPH_MS, scrollItemInto, trackDrag } from '../componenti/animazioni.ts';
 import { el, query, queryAll } from '../dom.ts';
 import { passaAlTurnoNemesi, richiediRidisegno } from '../ridisegno.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { playTurnShuffle, SHUFFLE_FADE_MS, turnTrack } from '../componenti/barra-turni.ts';
-import { sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
+import { sharedCardWidth, sizeColumn, spazioInterattivi, spazioVicine } from '../componenti/misure.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
 
 // Turno giocatori: in alto la fascia piccola con tutta la coda (#rail, la stessa del turno nemesi), sotto le carte
@@ -51,8 +51,9 @@ export function centredQueueUid(): number | null {
   return best;
 }
 
+// La carta al centro: i suoi comandi nella zona 6 e la carta evidenziata nella fascia piccola
 export function markQueueRail(uid: number | null): void {
-  // Comandi (vita del minion, rimozione del potere) solo sulla carta grande al centro (turno-giocatori.css .queue-slot.is-centred)
+  disegnaInterattivi(uid);
   queueList.querySelectorAll('.queue-slot').forEach(slot => {
     const item = query(slot, '.ae-queue-item', HTMLElement);
     slot.classList.toggle('is-centred', !!item && Number(item.dataset.uid) === uid);
@@ -64,10 +65,26 @@ export function markQueueRail(uid: number | null): void {
   });
 }
 
-// Comandi sotto la carta grande della VistaCoda, legati a quella carta:
+// Zona 6 (#interattivi, una fascia fissa sotto le carte grandi): i comandi della carta al centro. Si ridisegnano quando
+// cambia la carta al centro (anche mentre si scorre) e a ogni disegno della coda (forza: le bozze possono essere
+// cambiate). Senza carta o senza comandi la fascia resta vuota, alta uguale (partita.css)
+let interattiviUid: number | null | undefined;
+
+export function disegnaInterattivi(uid: number | null, forza = false): void {
+  if (!forza && uid === interattiviUid) return;
+  interattiviUid = uid;
+  const entry = uid === null ? null : entryByUid(uid);
+  if (!entry) { zonaInterattivi.replaceChildren(); return; }
+  const box = cardControls(entry);
+  // Per i lettori di schermo: di quale carta sono i comandi
+  box.setAttribute('role', 'group');
+  box.setAttribute('aria-label', I18N_IT.comandiCarta(entry.data.name, hasHp(entry)));
+  zonaInterattivi.replaceChildren(box);
+}
+
+// Comandi della carta al centro della coda (zona 6), legati a quella carta:
 //   minion: −5 −1 +1 (ogni tocco cambia la vita in bozza); a 0 il minion è ucciso con "Salva modifiche"
 //   potere rimovibile (TO DISCARD): "Rimuovi · costo pagato"; gli altri poteri non hanno comandi
-// La riga c'è sempre (anche vuota), così tutte le carte hanno la stessa dimensione.
 export function cardControls(entry: VoceInGioco): HTMLDivElement {
   const box = el('div', 'queue-controls');
   const uid = entry.uid;
@@ -84,8 +101,8 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
     return b;
   };
   const refocus = (key: string) => {
-    const target = query(queueList, `.queue-controls [data-uid="${uid}"][data-ctl="${key}"]`, HTMLElement)
-      || query(queueList, `.queue-controls [data-uid="${uid}"]`, HTMLElement);
+    const target = query(zonaInterattivi, `.queue-controls [data-uid="${uid}"][data-ctl="${key}"]`, HTMLElement)
+      || query(zonaInterattivi, `.queue-controls [data-uid="${uid}"]`, HTMLElement);
     if (target) target.focus({ preventScroll: true });
   };
   // (Number: vita e tetto come nei confronti di JavaScript, null vale 0)
@@ -134,17 +151,19 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
 // Carte grandi: alte quanto lo spazio disponibile, ma mai così larghe da nascondere del tutto la carta successiva
 export function sizeQueue(): void {
   if (queueViewport.hidden) return;
-  sizeColumn(queueViewport);
+  // I comandi sono nella zona 6, sotto: qui si lascia libero lo stesso spazio sopra la carta, come il turno nemesi
+  // (sizeFocus) fa sopra e sotto, così la carta ha la stessa posizione e dimensione nei due turni
+  const riserva = spazioInterattivi();
+  sizeColumn(queueViewport, riserva);
   const style = getComputedStyle(queueViewport);
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
   // Stessa regola del carosello del turno nemesi (sizeFocus): la carta riempie l'altezza, ai lati si vede un pezzo delle
   // vicine (stessa larghezza della carta)
   const peekRoom = partita.queue.length > 1 ? spazioVicine() : 0;
-  // Come sizeFocus: sopra la carta la riga vita/token con il suo spazio. I comandi stanno fuori dal flusso, sotto la
-  // carta, così la carta ha la stessa posizione e dimensione del turno nemesi; solo su schermi bassi la si rimpicciolisce
-  // quanto basta perché i comandi (zona 6) restino dentro l'area (il blocco è centrato in verticale).
-  const width = Math.max(100, sharedCardWidth(queueViewport.clientWidth, queueViewport.clientHeight, padY, peekRoom));
+  const width = Math.max(100, sharedCardWidth(queueViewport.clientWidth, queueViewport.clientHeight, padY, peekRoom, riserva));
   queueViewport.style.setProperty('--ae-queue-card', width + 'px');
+  // I comandi della zona 6 sono larghi quanto la carta
+  zonaInterattivi.style.setProperty('--ae-queue-card', width + 'px');
   // Margini ai lati: la prima e l'ultima carta si centrano come le altre
   const side = Math.max(0, (queueViewport.clientWidth - width) / 2) + 'px';
   queueViewport.style.paddingLeft = side;
@@ -175,7 +194,7 @@ export function renderQueue(): void {
   railEl.scrollLeft = railScroll;
   railEl.hidden = partita.queue.length === 0;
   queueList.replaceChildren(...partita.queue.map((entry, i) => {
-    // Ogni carta grande con i suoi comandi subito sotto (vita del minion, rimozione del potere)
+    // Ogni carta grande (i comandi di quella al centro sono nella zona 6)
     const slot = el('div', 'queue-slot');
     slot.setAttribute('role', 'listitem');
     const card = queueItem(displayEntry(entry), { full: true, index: i, total: partita.queue.length, lazy: i > 3 });
@@ -183,7 +202,7 @@ export function renderQueue(): void {
     const d = draftOf(entry);
     // Danno in bozza (non ancora salvato), in alto a destra sulla carta: sparisce con "Salva"
     if (d && d.hp !== undefined) addHpTag(card, 'queue-hp-tag', d.hp - Number(entry.hp));
-    slot.append(card, cardControls(entry));
+    slot.append(card);
     // Le modifiche si salvano tutte insieme con "Salva modifiche" (il pulsante principale)
     return slot;
   }));
@@ -207,6 +226,8 @@ export function renderQueue(): void {
     queueViewport.scrollLeft = previous;
     queueViewport.scrollTop = previousTop;
   }
+  // Comandi della zona 6 sempre ridisegnati (bozze, vita, costo pagato possono essere cambiati)
+  disegnaInterattivi(centredQueueUid(), true);
   markQueueRail(centredQueueUid());
 }
 
@@ -302,9 +323,12 @@ export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | 
   // A metà della trasformazione: le altre carte della coda entrano da sinistra; comandi, NUOVA (e il box, se non
   // scivola) della carta che si trasforma compaiono con una breve dissolvenza
   const delay = art ? MORPH_MS / 2 : 0;
+  // I comandi della zona 6 compaiono con la stessa breve dissolvenza
+  zonaInterattivi.querySelectorAll('.queue-controls').forEach(node => node.animate([{ opacity: 0 }, { opacity: 1 }],
+    { duration: 220, delay, easing: 'ease-out', fill: 'backwards' }));
   queueAll(queueList, '.queue-slot').forEach(slot => {
     if (art && slot.contains(art)) {
-      const parts = [...slot.querySelectorAll('.queue-controls, .ae-new-tag')]
+      const parts = [...slot.querySelectorAll('.ae-new-tag')]
         .concat(badge && fromStatus ? [] : [...slot.querySelectorAll('.ae-status-badge')]);
       parts.forEach(node => node.animate([{ opacity: 0 }, { opacity: 1 }],
         { duration: 220, delay, easing: 'ease-out', fill: 'backwards' }));

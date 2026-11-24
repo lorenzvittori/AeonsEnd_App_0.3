@@ -12,7 +12,7 @@ import { cancelFastScroll, FAST_SCROLL_MS, fastScrollTo, lockFor, scrollItemInto
 import { cardArt, hasHp, nextCardItem, nextSlotItem, placeholderArt, queueItem, statusText,
   tokenIcons } from '../componenti/componenti.ts';
 import { button, loadImage } from '../componenti/dialoghi.ts';
-import { misura, rapportoCarta, sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
+import { misura, rapportoCarta, sharedCardWidth, sizeColumn, spazioInterattivi, spazioVicine } from '../componenti/misure.ts';
 import { disegnaPulsantePrincipale } from '../componenti/pulsante-principale.ts';
 import { dockDeck } from '../componenti/testata.ts';
 import { el, icon, query } from '../dom.ts';
@@ -268,11 +268,14 @@ export function sizeFocus(recentre = true): void {
   if (focusEl.hidden || !track) return;
   const slide = track.querySelector('.ae-focus-slide');
   if (!slide) return;
-  sizeColumn(focusEl);
+  // Il turno nemesi non ha la zona 6: il carosello è più alto e lascia libero lo spazio dei comandi sotto la carta e,
+  // per centrarla, sopra; nel turno giocatori uno dei due è la zona 6 (sizeQueue): le carte hanno la stessa misura
+  const riserva = 2 * spazioInterattivi();
+  sizeColumn(focusEl, riserva);
   const style = getComputedStyle(focusEl);
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
   const peekRoom = partita.queue.length > 1 ? spazioVicine() : 0;
-  const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom));
+  const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom, riserva));
   focusEl.style.setProperty('--ae-focus-w', width + 'px');
   focusEl.style.setProperty('--cw', width + 'px');
   track.style.paddingInline = Math.max(0, (focusEl.clientWidth - width) / 2) + 'px';

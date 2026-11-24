@@ -23,29 +23,34 @@ export function spazioVicine(): number {
   return 2 * (misura('--carte-grandi-vicine-visibili') + misura('--carte-grandi-spazio-nemesi'));
 }
 
+// Spazio della zona 6 (comandi della carta al centro, solo nel turno giocatori): distanza dalle carte grandi + altezza
+export function spazioInterattivi(): number {
+  return misura('--interattivi-distanza') + misura('--interattivi-altezza');
+}
+
 // Larghezza della carta grande: UNA sola regola per turno giocatori e turno nemesi, così sono sempre uguali.
-// Sopra la carta la riga vita/token (con il suo spazio); i comandi del turno giocatori (zona 6) stanno sotto, quindi si
-// riserva lo spazio anche nel turno nemesi; il blocco è centrato in verticale.
-export function sharedCardWidth(boxW: number, boxH: number, padY: number, peekRoom: number): number {
+// Sopra la carta la riga vita/token (con il suo spazio); il blocco è centrato in verticale. riserva: spazio da lasciare
+// libero nell'area misurata (turno nemesi: lo spazio dei comandi sopra e sotto la carta; turno giocatori: solo sopra,
+// sotto c'è la zona 6), così le carte hanno la stessa misura nei due turni
+export function sharedCardWidth(boxW: number, boxH: number, padY: number, peekRoom: number, riserva = 0): number {
   const ratio = rapportoCarta();
   const statusH = misura('--carte-grandi-riga-stato-altezza');
   const statusGap = misura('--carte-grandi-riga-stato-distanza');
-  const controls = misura('--interattivi-altezza') + misura('--interattivi-distanza');
   const byWidth = boxW - 2 * misura('--carte-grandi-margine-lato') - peekRoom;
   const byHeight = (boxH - padY - statusH - statusGap) / ratio;
-  const byControls = (boxH - 2 * controls - statusH - statusGap) / ratio;
-  return Math.floor(Math.min(byWidth, byHeight, byControls));
+  const byReserve = (boxH - riserva - statusH - statusGap) / ratio;
+  return Math.floor(Math.min(byWidth, byHeight, byReserve));
 }
 
 // Tablet e desktop (da 768px): la partita sta in una colonna al centro (--ae-col su .ae-shell, base.css). La colonna
 // è larga quanto la carta grande (misurata solo dall'altezza: in larghezza c'è spazio) più un pezzo delle vicine
 // (--colonna-vicine-visibili per lato), mai meno di --colonna-larghezza-minima né più dello schermo. Sotto i 768px la
 // colonna è lo schermo intero.
-export function sizeColumn(box: HTMLElement): void {
+export function sizeColumn(box: HTMLElement, riserva = 0): void {
   if (window.innerWidth < 768) { app.style.removeProperty('--ae-col'); return; }
   const style = getComputedStyle(box);
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-  const card = sharedCardWidth(Infinity, box.clientHeight, padY, 0);
+  const card = sharedCardWidth(Infinity, box.clientHeight, padY, 0, riserva);
   if (!isFinite(card) || card <= 0) return;
   const peek = misura('--colonna-vicine-visibili') + misura('--carte-grandi-spazio-nemesi');
   const col = Math.min(window.innerWidth, Math.max(misura('--colonna-larghezza-minima'),

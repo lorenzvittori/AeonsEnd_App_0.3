@@ -1866,7 +1866,8 @@ async function misuraApp() {
   const mi = arts.indexOf(item.querySelector('.ae-card-art'));
   if (R(arts[mi - 1])) g['Carta laterale sinistra'] = R(arts[mi - 1]);
   if (R(arts[mi + 1])) g['Carta laterale destra'] = R(arts[mi + 1]);
-  g['Comandi'] = R(slot.querySelector('.queue-controls'));
+  // fase G: i comandi della carta al centro stanno nella zona 6 (#interattivi), sotto le carte grandi
+  g['Comandi'] = R(document.querySelector('#interattivi .queue-controls') || slot.querySelector('.queue-controls'));
   g['Pulsante'] = R(app.pulsantePrincipale);
   Object.keys(g).forEach(k => { if (!g[k]) delete g[k]; });
   return g;

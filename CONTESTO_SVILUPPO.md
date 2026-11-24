@@ -198,7 +198,7 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   | 3 | `carte-piccole` | `#rail` | le carte in gioco in piccolo: **una sola fascia** per i due turni |
   | 4 | `vite` | `#vite` | box di Gravehold e della nemesi (sempre in questa zona, mai spostati) |
   | 5 | `carte-grandi` | `#carte-grandi` con `#queue` e `#focus` | un contenitore, stessa posizione: dentro la coda del turno giocatori (`#queue`) o il carosello del turno nemesi (`#focus`), uno visibile per momento |
-  | 6 | `interattivi` | `#interattivi` | i comandi della carta al centro (−5 −1 +1, Rimuovi, Imposta la vita); solo nel turno giocatori |
+  | 6 | `interattivi` | `#interattivi` | fascia fissa sotto le carte grandi con i comandi della carta al centro (−5 −1 +1, Rimuovi, Imposta la vita); solo nel turno giocatori |
   | 7 | `principale` | `#dock` | **un solo pulsante** (`#pulsante-principale`), con "Annulla modifiche" accanto, il cursore di "Crea mazzo" al suo posto e la scelta 1/2 o 3/4 ridotta |
 
 - **Disposizione:** `src/ui/schermate/partita.css`, una griglia con `grid-template-areas` scritta come disegno (una riga
@@ -221,12 +221,20 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   dura fino alla fine del banner "Partita iniziata" (oltre "Crea mazzo").
 - **Per cambiare una misura:** `src/ui/schermate/partita-misure.css`, variabili con un nome parlante e un commento di una
   riga, per zona nello stesso ordine della mappa: carte riga 9, testata riga 13, fascia turno riga 24, carte piccole
-  riga 33, vite riga 44, carte grandi riga 57, interattivi riga 74, pulsante principale riga 79. Il CSS delle zone usa
+  riga 33, vite riga 44, carte grandi riga 57, interattivi riga 76, pulsante principale riga 81. Il CSS delle zone usa
   le variabili; il codice le legge da lì (`misura()` in `ui/componenti/misure.ts`: proporzioni della carta, riga
   vita/token, comandi, spazi, carta da pescare, colonna del desktop). Dove i due turni hanno oggi valori diversi ci sono
   due variabili (`-giocatori` / `-nemesi`): altezza della fascia piccola (106 / 104 + 1px sopra e sotto), margini della
   fascia piccola (16 / 10 + 6), spazio tra le carte grandi (18 / 12), margine interno del pulsante principale
-  (12 / 18).
+  (12 / 18), spostamento in verticale del blocco vita/token + carta (giocatori = nemesi + metà della zona 6: la
+  carta resta nello stesso punto nei due turni).
+- **Zona 6** (dalla fase G, passo 2): una riga propria della griglia, alta `--interattivi-altezza` (44px) a
+  `--interattivi-distanza` (8px) dalle carte grandi. Contiene i comandi della carta al **centro** della zona 5
+  (`disegnaInterattivi` in `turno-giocatori.ts`): si aggiornano quando cambia la carta al centro (anche mentre si scorre,
+  da `markQueueRail`) e a ogni disegno della coda; il gruppo ha l'etichetta "Vita di <nome>" (minion) o "Comandi di
+  <nome>". Se la carta non ha comandi la fascia resta vuota ma alta uguale. Le carte grandi hanno la stessa misura e
+  posizione di prima e dei due turni: il turno giocatori lascia libero sopra la carta lo spazio della zona 6, il turno
+  nemesi (senza zona 6) lo lascia sopra e sotto (`sharedCardWidth`, argomento `riserva`).
 
 **Testata (uguale nei due turni)**
 - A sinistra il **mazzo** (dorso con il numero di carte) e gli **scarti** (ultima carta con il numero).
@@ -554,7 +562,7 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
 
 **Turno dei giocatori**
 - In alto la fascia piccola con tutte le carte in gioco; sotto le stesse carte, grandi, che si scorrono in orizzontale.
-- Sotto ogni carta grande i suoi comandi:
+- Sotto le carte grandi, in una fascia fissa (zona 6), i comandi della carta al centro:
   - **minion:** −5 / −1 / +1 alla vita (+1 solo fino alla vita di inizio turno). Mentre si fa danno il box mostra
     "x/X", con X = la vita che aveva prima del danno (non la vita massima della carta), e sulla carta "HP: −n"; senza
     danno in corso si vede solo la vita. Lo stesso nella finestra della vita ("HP x / X") e, nel turno nemesi, la riga
@@ -587,8 +595,8 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
     (v169, `.ae-ban-badge`).
 - Le modifiche sono una bozza: il pulsante principale diventa **Salva modifiche**, con accanto **Annulla modifiche**.
   Salvando (un solo passo di undo) i minion a 0 e i poteri pagati volano negli scarti.
-- I **comandi** sotto le carte si vedono solo sulla carta grande **al centro** (`.queue-slot.is-centred`, aggiornata
-  da `markQueueRail` mentre si scorre).
+- I **comandi** sono quelli della carta grande **al centro** (`.queue-slot.is-centred`): nella zona 6, aggiornati da
+  `markQueueRail` mentre si scorre (fino alla fase G stavano sotto ogni carta e si vedevano solo su quella al centro).
 - Toccando la carta grande al centro si apre la sua finestra (vita del minion, token del potere, rimozione del
   potere); toccando una carta di lato la si porta al centro, senza aprirla. Lo stesso nel turno nemesi.
 - Gli scorrimenti animati verso una carta (tocco sulla fascia piccola o su una carta di lato, Turno Nemesi) sono

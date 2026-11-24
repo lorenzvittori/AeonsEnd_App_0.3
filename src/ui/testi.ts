@@ -134,6 +134,7 @@ export const I18N_IT = {
   hideNemesisCard: 'Chiudi la carta della nemesi',
   queueRail: 'Coda in gioco, tocca una carta per mostrarla',
   railNemesi: 'Coda della nemesi',
+  comandiCarta: (name: string, minion: boolean) => (minion ? 'Vita di ' : 'Comandi di ') + name,
   zonaCarteGrandiGiocatori: 'Coda in gioco',
   zonaCarteGrandiNemesi: 'Risoluzione del turno nemesi',
   nemesisCardBack: (name: string) => `Retro della carta della nemesi ${name} (setup)`,

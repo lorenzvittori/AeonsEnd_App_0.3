@@ -16,7 +16,7 @@
 /* Carte grandi, alte quanto lo spazio (--ae-queue-card calcolata da sizeQueue in turno-giocatori.ts) */
 .ae-queue-list > .queue-slot { width: var(--ae-queue-card, 132px); flex: 0 0 var(--ae-queue-card, 132px); display: flex; flex-direction: column; gap: 8px; scroll-snap-align: center; }
 .queue-slot > .ae-queue-item { width: 100%; flex-basis: auto; }
-/* --- Zona 6, comandi sotto la carta grande: vita del minion (−5 −1 +1, Elimina a 0) o rimozione del potere --- */
+/* --- Zona 6, comandi della carta al centro (la fascia è in partita.css): vita del minion (−5 −1 +1, Elimina a 0) o rimozione del potere --- */
 .queue-controls { min-height: var(--interattivi-altezza); display: flex; gap: 6px; }
 /* Potere non rimovibile: nota piccola con il punto esclamativo rosso */
 .queue-note { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--ae-text-muted); font: 600 12px/16px var(--ae-font-ui); }
@@ -64,10 +64,9 @@
 /* +1 oscurato e non cliccabile se non c'è vita tolta in questo turno */
 .ae-button.is-dimmed, .ae-button.is-dimmed:disabled { opacity: .35; cursor: not-allowed; }
 
-/* Turno giocatori: stessa posizione e dimensione della carta del turno nemesi. I comandi sono sotto la carta, fuori dal flusso */
+/* Turno giocatori: stessa posizione e dimensione della carta del turno nemesi. I comandi sono nella zona 6 (partita.css) */
 .queue-slot { gap: 0; }
 .queue-slot > .ae-queue-item { gap: var(--carte-grandi-riga-stato-distanza); }
-.queue-slot > .queue-controls { position: absolute; left: 0; right: 0; top: 100%; margin-top: var(--interattivi-distanza); }
 
 /* --- Zona 3 nel turno giocatori: la fascia piccola senza riga intorno, un po' più alta (turno nemesi: turno-nemesi.css) --- */
 :is([data-turno="giocatori"], [data-turno="crea-mazzo"]) .ae-compact-rail {
@@ -83,7 +82,7 @@
 /* Carte grandi: spazio sopra e sotto; il blocco vita/token + carta + comandi (questi fuori dal flusso, sotto la carta)
    è centrato tra la fascia in alto e il pulsante principale, poi sale (--carte-grandi-spostamento) */
 [data-zona="carte-grandi"] .ae-queue-viewport { padding-top: var(--carte-grandi-spazio-sopra-sotto); padding-bottom: var(--carte-grandi-spazio-sopra-sotto); }
-[data-zona="carte-grandi"] .ae-queue-list { transform: translateY(var(--carte-grandi-spostamento)); }
+[data-zona="carte-grandi"] .ae-queue-list { transform: translateY(var(--carte-grandi-spostamento-giocatori)); }
 
 /* Turno giocatori: barra di scorrimento delle carte grandi nascosta (come nel turno nemesi); si scorre col dito */
 .ae-queue-viewport { scrollbar-width: none; }
@@ -99,7 +98,4 @@
 .queue-controls { gap: var(--interattivi-spazio); }
 /* Con la scelta in sospeso le carte non si cambiano e il mazzo non si pesca: comandi sotto le carte e mazzo velati */
 .ae-shell.is-pair-pending .queue-controls { opacity: .35; pointer-events: none; }
-/* Carte grandi del turno giocatori: i comandi si vedono solo sulla carta al centro */
-.queue-slot > .queue-controls { transition: opacity .15s ease-out; }
-.queue-slot:not(.is-centred) > .queue-controls { opacity: 0; visibility: hidden; pointer-events: none; }
 .queue-slot .ae-status-badge.has-many-tokens { --ae-badge-px: 0px; }

@@ -56,7 +56,9 @@
 
   /* --- 5 fascia carte grandi --- */
   --carte-grandi-spazio-sopra-sotto: 6px;         /* spazio sopra e sotto dentro la fascia (tutti e due i turni) */
-  --carte-grandi-spostamento: -24px;              /* il blocco vita/token + carta sale di tanto (tutti e due i turni) */
+  --carte-grandi-spostamento: -24px;              /* turno nemesi: il blocco vita/token + carta sale di tanto */
+  /* turno giocatori: il blocco si sposta di tanto (la zona 6 sotto toglie spazio: così la carta è dov'è nel turno nemesi) */
+  --carte-grandi-spostamento-giocatori: calc(var(--carte-grandi-spostamento) + (var(--interattivi-distanza) + var(--interattivi-altezza)) / 2);
   --carte-grandi-spazio-giocatori: 18px;          /* spazio tra le carte grandi, turno giocatori */
   --carte-grandi-spazio-nemesi: 12px;             /* spazio tra le carte grandi, turno nemesi (usato anche nel calcolo della misura) */
   --carte-grandi-margine-lato: 8px;               /* margine minimo a destra e a sinistra della carta, nel calcolo della misura */
@@ -72,8 +74,8 @@
   --colonna-vicine-visibili: 42px;                /* tablet e desktop: quanto si vede delle carte vicine ai lati */
 
   /* --- 6 pulsanti interattivi --- */
-  --interattivi-altezza: 44px;                    /* altezza dei comandi della carta (−5 −1 +1, Rimuovi, Imposta la vita) */
-  --interattivi-distanza: 8px;                    /* spazio tra la carta grande e i comandi */
+  --interattivi-altezza: 44px;                    /* altezza della fascia dei comandi (−5 −1 +1, Rimuovi, Imposta la vita) */
+  --interattivi-distanza: 8px;                    /* spazio tra la fascia delle carte grandi e quella dei comandi */
   --interattivi-spazio: 10px;                     /* spazio tra un comando e l'altro */
 
   /* --- 7 pulsante principale --- */
