@@ -1,8 +1,11 @@
 // tipi/salvataggio.ts: il formato del salvataggio nel browser e dell'undo (fotografia della partita), quello scritto
-// oggi e quello che si legge, cioè anche i formati vecchi con i campi mancanti.
-// Dipende da: tipi/partita.ts. Usato da: regole/salvataggio.ts, regole/mazzo-turni.ts, stato/salvataggio.ts, ui/.
+// oggi e quello che si legge, cioè anche i formati vecchi con i campi mancanti; lo stato completo della partita in
+// corso con uid, undo (fotografie) e Modalità test (StatoPartita).
+// Livello 0 (tipi/). Dipende da: tipi/partita.ts. Usato da: regole/salvataggio.ts, regole/mazzo-turni.ts, stato/
+// (partita, salvataggio), ui/.
 
-import type { CartaTurno, Impostazioni, MemoriaCoppie, SceltaCoppia, Statistiche, TurnoStoria } from './partita.ts';
+import type { CartaTurno, Impostazioni, MemoriaCoppie, Partita, ProvaInCorso, SceltaCoppia, Statistiche,
+  TurnoStoria } from './partita.ts';
 
 // --- Formato scritto oggi ---
 
@@ -117,4 +120,11 @@ export interface SalvataggioValido {
   settings: Impostazioni;        // scelte della partita
   state: FotografiaLetta;        // partita
   undo?: FotografiaLetta[];      // passi di undo
+}
+
+// Lo stato della partita in corso (stato/partita.ts): i campi di gioco più quello che serve a salvarli e annullarli
+export interface StatoPartita extends Partita {
+  nextUid: number;               // prossimo uid per una carta in gioco (continua tra le partite: un uid non torna mai)
+  undoStack: FotografiaLetta[];  // passi di undo (fotografie prima di ogni azione, dal più vecchio)
+  testRun: ProvaInCorso | null;  // Modalità test in corso
 }

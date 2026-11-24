@@ -33,8 +33,8 @@ import { preferenze, turnPairsSaved } from './preferenze.ts';
 import { scriviPartita } from './salvataggio.ts';
 import type { Carta, DatiRegole, RigaDeckSetup } from '../tipi/dati.ts';
 import type { BozzaCarta, BozzaTurni, CartaTurno, Giocatore, GruppoStatistiche, MazzoTurni, Partita, PianoMazzo,
-  ProvaInCorso, SceltePerMazzo, Statistiche, StatoPartita, TipoVita, TurnoStoria, VoceInGioco } from '../tipi/partita.ts';
-import type { Fotografia, FotografiaLetta } from '../tipi/salvataggio.ts';
+  ProvaInCorso, SceltePerMazzo, Statistiche, TipoVita, TurnoStoria, VoceInGioco } from '../tipi/partita.ts';
+import type { Fotografia, FotografiaLetta, StatoPartita } from '../tipi/salvataggio.ts';
 
 // Regole senza stato, usate così come sono
 export { isPairCard, pairOptions, emptyPairNext, pickOf, otherOfPair, historyFromPile, predictedPairPlayers, takeFromTurnPile } from '../regole/mazzo-turni.ts';

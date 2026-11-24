@@ -4,8 +4,8 @@
 // iniziale ↔ Nuova partita, apertura e chiusura), inizio e ripresa della partita, passaggi tra le schermate, tasto
 // Indietro ed Esc, Vittoria a mazzo vuoto, i pulsanti fissi della pagina e la registrazione degli agganci
 // (ui/ridisegno.ts) con cui i livelli sotto chiedono queste cose.
-// Lo stato della navigazione è solo quello che la partita non sa già: la pagina iniziale aperta e in quale modo
-// (inizio). "Crea mazzo" (ui.deckBuilding) e il turno (partita.resolving) si leggono da dove stanno.
+// Lo stato della navigazione (la pagina iniziale aperta e in quale modo) e la decisione del tasto Indietro sono in
+// navigazione-stato.ts (supporto, senza DOM).
 // Livello 6. Dipende da: stato/, dati/, ui/ base (pagina, testi, dom, ridisegno), ui/componenti/, ui/finestre/,
 // ui/schermate/. Usato da: avvio.ts (init: render, setStartMode), main.ts (avvio, window.app), test.
 
@@ -47,23 +47,13 @@ import { centredQueueUid, disegnaAnnullaModifiche, disegnaPulsantePrincipale, di
 import { backToActive, disegnaTurnoNemesi, enterNemesisTurnView, onResolveClick } from './schermate/turno-nemesi.ts';
 import { fasciaTurnoNemesi, sizeFocus } from './schermate/turno-nemesi-carosello.ts';
 import { createDeckSlider, disegnaCursore } from './schermate/crea-mazzo-cursore.ts';
+import { cosaChiudeIndietro, impostaInizio, paginaIniziale } from './navigazione-stato.ts';
 
 // --- Dove si è ---
 
-// Le schermate dell'app
-export type Schermata = 'menu' | 'nuova-partita' | 'crea-mazzo' | 'turno-giocatori' | 'turno-nemesi';
-
-// Pagina iniziale (#start): aperta nel menu iniziale o nella pagina Nuova partita, oppure chiusa (null: si è nella
-// partita). All'apertura dell'app è aperta (index.html la mostra) nel menu iniziale
-let inizio: 'menu' | 'nuova-partita' | null = 'menu';
-
-// La schermata in primo piano: la pagina iniziale se è aperta, altrimenti "Crea mazzo" (prima del primo turno
-// giocatori) o il turno in corso della partita
-export function schermataAttuale(): Schermata {
-  if (inizio !== null) return inizio;
-  if (ui.deckBuilding) return 'crea-mazzo';
-  return partita.resolving ? 'turno-nemesi' : 'turno-giocatori';
-}
+// Lo stato della navigazione e la schermata attuale sono in navigazione-stato.ts (senza DOM, provati nei test)
+export { schermataAttuale } from './navigazione-stato.ts';
+export type { Schermata } from './navigazione-stato.ts';
 
 // --- Blocchi fissi ---
 
@@ -139,8 +129,8 @@ export function checkVictory(): void {
 // focus: il fuoco va al pulsante principale della schermata
 export function setStartMode(mode: string, focus?: boolean): void {
   const saved = readSave();
-  inizio = mode === 'setup' ? 'nuova-partita' : 'menu';
-  const isHome = inizio === 'menu';
+  impostaInizio(mode === 'setup' ? 'nuova-partita' : 'menu');
+  const isHome = paginaIniziale() === 'menu';
   // Pagina Nuova partita: le opzioni del mazzo ripartono dalla preferenza del browser
   if (!isHome) Object.assign(preferenze.settings, loadDeckOptions());
   const homeTarget = disegnaMenu(saved, isHome);
@@ -160,14 +150,14 @@ export function openStart(): void {
   closeAllModals();
   closeDiscard();
   renderStartChoices();
-  inizio = 'menu';
+  impostaInizio('menu');
   mostraInizio(true);
   setStartMode('home', true);
 }
 
 // Pagina iniziale chiusa: si è nella partita
 export function closeStart(): void {
-  inizio = null;
+  impostaInizio(null);
   mostraInizio(false);
 }
 
@@ -295,21 +285,21 @@ export function resumeSavedGame(saved: SalvataggioValido): void {
 // Se non c'è niente da chiudere, il primo Indietro mostra "Premi di nuovo Indietro per uscire" e il secondo esce.
 // Restituisce true se ha chiuso qualcosa (finestre, scarti, pagina Nuova partita)
 export function closeTopForBack(): boolean {
-  if (modals.length) { modals[modals.length - 1].onCancel(); return true; }
-  if (undoFloat) { closeUndoFloat(); return true; }
-  if (deckPopover) { closeDeckPopover(); return true; }
-  // La mia collezione sopra le Opzioni: si chiude prima quella in cima
   const screens = document.querySelectorAll('.collection-screen');
-  if (screens.length) {
+  const what = cosaChiudeIndietro({ finestre: modals.length, annullaSospeso: !!undoFloat, pescaCarta: !!deckPopover,
+    schermiCollezione: screens.length, scarti: !discardLayer.hidden });
+  if (what === 'finestra') modals[modals.length - 1].onCancel();
+  else if (what === 'annulla-sospeso') closeUndoFloat();
+  else if (what === 'pesca-carta') closeDeckPopover();
+  else if (what === 'collezione') {
+    // La mia collezione sopra le Opzioni: si chiude prima quella in cima
     const close = screens[screens.length - 1].querySelector('.collection-head .ae-icon-button');
     if (close instanceof HTMLElement) close.click();
     else throw new TypeError('pulsante di chiusura della collezione mancante');
-    return true;
-  }
-  if (!discardLayer.hidden) { closeDiscard(); return true; }
+  } else if (what === 'scarti') closeDiscard();
   // Pagina "Nuova partita": Indietro torna al menu iniziale
-  if (schermataAttuale() === 'nuova-partita') { setStartMode('home', true); return true; }
-  return false;
+  else if (what === 'menu') setStartMode('home', true);
+  return what !== null;
 }
 
 export function armBackGuard(): void { history.pushState({ aeBackGuard: true }, ''); }

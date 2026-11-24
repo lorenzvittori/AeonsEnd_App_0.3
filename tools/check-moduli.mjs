@@ -11,6 +11,17 @@
 //   suo elenco (partita.deck.pop(), Object.assign(partita.x, ...)) o le passa a una regola che la modifica
 //   (Nemesi.resolveCurrent(partita)). TypeScript lo vede già per i campi diretti (partita è Readonly); qui anche per
 //   quelli annidati. Non si vede un elenco della partita preso in una variabile e poi cambiato: lì vale la revisione.
+// - nessun ciclo di import in src/ (anche con gli import di soli tipi);
+// - i livelli (CONTESTO_SVILUPPO.md, sezione 6): un file importa solo da livelli più bassi. Livelli: 0 tipi/, regole/,
+//   stili/; 1 stato/, dati/; 2 ui/ base (i file in ui/ tranne navigazione.ts); 3 ui/componenti/; 4 ui/finestre/;
+//   5 ui/schermate/; 6 ui/navigazione.ts; 7 avvio.ts; 8 main.ts. Nei livelli 0-3 (librerie) un file può importare dallo
+//   stesso livello (senza cicli); nei livelli 4 e 5 (finestre e schermate) no, salvo i file di supporto della stessa
+//   finestra o schermata: nella stessa cartella, <nome>.ts e i suoi <nome>-*.ts si importano tra loro (senza cicli);
+// - nessun file di src/ sopra MAX_LINES righe, salvo un commento in testa al file che comincia con "Oltre 500 righe:"
+//   e dice perché (elencati qui sotto in uscita);
+// - i blocchi fissi della pagina (#start, #queue-view, #resolve-view) si mostrano e si nascondono solo in
+//   ui/navigazione.ts (hidden assegnato, toggleAttribute / setAttribute / removeAttribute di 'hidden').
+// In uscita anche: numero di file, righe del file più grande, import tra moduli di ui/.
 // --conta stampa quanti "any", @ts-expect-error / @ts-ignore, file .js e usi di G (lo stato condiviso di prima) ci sono
 // in src/. Esce con 1 se trova problemi.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
@@ -42,6 +53,26 @@ function rootedAtPartita(n) {
 
 // L'unico modulo che importa i CSS (l'ordine della cascata)
 const CSS_INDEX = 'src/stili/indice.ts';
+// Righe massime di un file di src/
+const MAX_LINES = 500;
+// Il coordinatore, l'unico che mostra e nasconde i blocchi fissi
+const NAV = 'src/ui/navigazione.ts';
+// I blocchi fissi (nomi degli elementi in ui/pagina.ts e id in index.html)
+const FIXED_NAMES = new Set(['startLayer', 'queueView', 'resolveView']);
+const FIXED_IDS = new Set(['start', 'queue-view', 'resolve-view']);
+// Livello di un file (percorso relativo alla cartella del repo)
+function levelOf(rel) {
+  if (/^src\/(tipi|regole|stili)\//.test(rel)) return 0;
+  if (/^src\/(stato|dati)\//.test(rel)) return 1;
+  if (rel.startsWith('src/ui/componenti/')) return 3;
+  if (rel.startsWith('src/ui/finestre/')) return 4;
+  if (rel.startsWith('src/ui/schermate/')) return 5;
+  if (rel === NAV) return 6;
+  if (/^src\/ui\/[^/]+$/.test(rel)) return 2;
+  if (rel === 'src/avvio.ts') return 7;
+  if (rel === 'src/main.ts') return 8;
+  return -1;
+}
 const files = [];
 const cssFiles = [];
 const cssImported = new Set();
@@ -99,10 +130,25 @@ const parsed = files.map(f => {
 let anyCount = 0;
 let gCount = 0;
 const expectList = [];
+// Import tra moduli di src/ (anche di soli tipi): file -> [{ to, line }]
+const edges = new Map();
+// Righe di ogni file e file con l'eccezione dichiarata per le righe
+const linesOf = new Map();
+const longOk = [];
 for (const { f, code, ast } of parsed) {
   const rel = relative(ROOT, f).split(sep).join('/');
   const pure = rel.startsWith('src/regole/');
   const store = rel === STORE;
+  edges.set(rel, []);
+  const lines = code.split(/\r?\n/).length;
+  linesOf.set(rel, lines);
+  // Eccezione per le righe: un commento "Oltre 500 righe: <motivo>" nel blocco di commento in testa
+  const head = (code.match(/^(\s*\/\/[^\n]*\n)+/) || [''])[0];
+  if (lines > MAX_LINES) {
+    const m = head.match(/Oltre 500 righe:\s*(\S.*)/);
+    if (m) longOk.push(`${rel} (${lines} righe): ${m[1].trim()}`);
+    else problems.push(`${rel}: ${lines} righe, più di ${MAX_LINES} (dividere per compito, o "Oltre 500 righe: <motivo>" in testa)`);
+  }
   // Import: il modulo esiste e il nome è esportato
   ast.body.filter(s => s.type === 'ImportDeclaration' || ((s.type === 'ExportNamedDeclaration' || s.type === 'ExportAllDeclaration') && s.source))
     .forEach(s => {
@@ -124,6 +170,7 @@ for (const { f, code, ast } of parsed) {
       }
       const exps = exportsOf.get(target);
       if (!exps) { problems.push(`${rel}:${line}: modulo inesistente ${src}`); return; }
+      edges.get(rel).push({ to: relative(ROOT, target).split(sep).join('/'), line });
       if (s.type === 'ImportDeclaration') {
         s.specifiers.forEach(sp => {
           if (sp.type === 'ImportSpecifier' && !exps.has(sp.imported.name)) problems.push(`${rel}:${line}: ${sp.imported.name} non è esportato da ${src}`);
@@ -146,6 +193,17 @@ for (const { f, code, ast } of parsed) {
       && ['window', 'globalThis', 'self'].includes(n.left.object.name)
       && !(/^src\/main\.(js|ts)$/.test(rel) && n.left.property.name === 'app')) {
       problems.push(`${rel}:${lineOf(code, n.start)}: variabile globale ${n.left.object.name}.${n.left.property.name || '?'}`);
+    }
+    // Blocchi fissi mostrati o nascosti fuori dal coordinatore
+    if (rel !== NAV) {
+      const fixedObj = o => !!o && ((o.type === 'Identifier' && FIXED_NAMES.has(o.name))
+        || (o.type === 'CallExpression' && o.arguments.length && o.arguments[0].type === 'Literal' && FIXED_IDS.has(o.arguments[0].value)));
+      const where = `${rel}:${lineOf(code, n.start)}: i blocchi fissi (#start, #queue-view, #resolve-view) si mostrano e si nascondono solo in ${NAV}`;
+      if (n.type === 'AssignmentExpression' && n.left.type === 'MemberExpression' && !n.left.computed
+        && n.left.property.name === 'hidden' && fixedObj(n.left.object)) problems.push(where);
+      if (n.type === 'CallExpression' && n.callee.type === 'MemberExpression' && !n.callee.computed
+        && ['toggleAttribute', 'setAttribute', 'removeAttribute'].includes(n.callee.property.name)
+        && n.arguments[0] && n.arguments[0].type === 'Literal' && n.arguments[0].value === 'hidden' && fixedObj(n.callee.object)) problems.push(where);
     }
     // G, lo stato condiviso di prima (non esiste più)
     if (n.type === 'Identifier' && n.name === 'G' && !(parent && parent.type === 'MemberExpression' && parent.property === n && !parent.computed)) gCount++;
@@ -183,6 +241,59 @@ for (const { f, code, ast } of parsed) {
     else if (m[2].replace(/[\s:–-]/g, '').length < 10) problems.push(`${rel}:${i + 1}: @ts-expect-error senza motivo`);
   });
 }
+
+// Livelli: un import va solo verso un livello più basso (stesso livello: librerie 0-3, o file di supporto della stessa
+// finestra o schermata nei livelli 4-5)
+const allRel = [...edges.keys()];
+// Famiglia di un file di finestre/ o schermate/: il file principale (<nome>.ts) di cui è supporto (<nome>-*.ts)
+function familyOf(rel) {
+  const dir = rel.slice(0, rel.lastIndexOf('/') + 1);
+  const base = rel.slice(dir.length).replace(/\.ts$/, '');
+  const mains = allRel.filter(r => r.startsWith(dir) && !r.slice(dir.length).includes('/'))
+    .map(r => r.slice(dir.length).replace(/\.ts$/, ''))
+    .filter(m => base === m || base.startsWith(m + '-'))
+    .sort((a, b) => a.length - b.length);
+  return dir + (mains[0] || base);
+}
+for (const [from, list] of edges) {
+  const lf = levelOf(from);
+  if (lf < 0) { problems.push(`${from}: file fuori dai livelli (aggiungerlo in levelOf, tools/check-moduli.mjs)`); continue; }
+  for (const { to, line } of list) {
+    const lt = levelOf(to);
+    if (lt > lf) problems.push(`${from}:${line}: livelli: import verso l'alto (${lf} -> ${lt}): ${to} (usare un aggancio di ui/ridisegno.ts o una funzione passata come argomento)`);
+    else if (lt === lf && lf >= 4 && lf <= 5 && familyOf(from) !== familyOf(to)) {
+      problems.push(`${from}:${line}: livelli: import dallo stesso livello (${lf}): ${to} (solo i file di supporto della stessa finestra o schermata)`);
+    } else if (lt === lf && lf >= 6) problems.push(`${from}:${line}: livelli: import dallo stesso livello (${lf}): ${to}`);
+  }
+}
+// Cicli (Tarjan sulle componenti fortemente connesse)
+{
+  let index = 0;
+  const stack = [], onStack = new Set(), idx = new Map(), low = new Map();
+  const strong = v => {
+    idx.set(v, index); low.set(v, index); index++;
+    stack.push(v); onStack.add(v);
+    for (const { to } of edges.get(v) || []) {
+      if (!edges.has(to)) continue;
+      if (!idx.has(to)) { strong(to); low.set(v, Math.min(low.get(v), low.get(to))); }
+      else if (onStack.has(to)) low.set(v, Math.min(low.get(v), idx.get(to)));
+    }
+    if (low.get(v) === idx.get(v)) {
+      const comp = [];
+      let w;
+      do { w = stack.pop(); onStack.delete(w); comp.push(w); } while (w !== v);
+      const self = (edges.get(v) || []).some(e => e.to === v);
+      if (comp.length > 1 || self) problems.push(`ciclo di import tra ${comp.length} file: ${comp.sort().join(', ')}`);
+    }
+  };
+  allRel.forEach(v => { if (!idx.has(v)) strong(v); });
+}
+// Numeri: file, righe del file più grande, import tra moduli di ui/
+const largest = [...linesOf].sort((a, b) => b[1] - a[1])[0];
+let uiImports = 0;
+for (const [from, list] of edges) if (from.startsWith('src/ui/')) uiImports += list.filter(e => e.to.startsWith('src/ui/')).length;
+console.log(`File di src/: ${files.length}; file più grande: ${largest[0]} (${largest[1]} righe); import tra moduli di ui/: ${uiImports}`);
+if (longOk.length) { console.log(`File oltre ${MAX_LINES} righe (con il motivo):`); longOk.forEach(l => console.log('  ' + l)); }
 
 if (count) {
   console.log(`any: ${anyCount}`);

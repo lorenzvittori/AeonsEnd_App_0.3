@@ -7,8 +7,7 @@
 import * as Salv from '../regole/salvataggio.ts';
 import { parseJson } from '../regole/json.ts';
 import { preferenze } from './preferenze.ts';
-import type { StatoPartita } from '../tipi/partita.ts';
-import type { SalvataggioValido } from '../tipi/salvataggio.ts';
+import type { SalvataggioValido, StatoPartita } from '../tipi/salvataggio.ts';
 
 // Partita salvata nel browser (localStorage).
 // lorenzvittori.github.io è lo stesso dominio per tutti i siti: la chiave è diversa da quella di AeonsEnd_APP
