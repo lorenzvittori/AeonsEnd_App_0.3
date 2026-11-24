@@ -1,5 +1,5 @@
 /* statistiche.css: Vittoria, Sconfitta e finestra Statistiche
-   Elementi creati da: ui/schermate/statistiche.ts.
+   Elementi creati da: ui/finestre/statistiche.ts.
    Ordine: deve venire dopo menu-laterale.css, turno-nemesi.css, componenti.css, crea-mazzo.css (ritoccano gli stessi elementi con la stessa specificità: qui vince questo file). Si importa da src/stili/indice.ts. */
 
 /* Schermata Vittoria: stesso fondo e stessa scritta del banner dei Tier (che qui resta ferma), sotto i pulsanti */

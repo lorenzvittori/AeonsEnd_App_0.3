@@ -1,5 +1,5 @@
 /* turno-nemesi.css: turno nemesi (VistaRisoluzione): carosello, fascia piccola, carta che si gira, pulsante principale, banner al centro, scossa dello schermo
-   Elementi creati da: ui/schermate/turno-nemesi.ts, index.html.
+   Elementi creati da: ui/schermate/turno-nemesi.ts e turno-nemesi-carosello.ts, index.html.
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
 /* --- VistaRisoluzione --- */

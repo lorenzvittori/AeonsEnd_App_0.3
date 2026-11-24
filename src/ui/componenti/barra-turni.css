@@ -1,8 +1,8 @@
-/* eventi.css: barra dei turni sotto la testata (caselle, sigle, scritte) e i colori dei giocatori (--ae-turn-*)
-   Elementi creati da: ui/eventi.ts.
+/* barra-turni.css: barra dei turni sotto la testata (caselle, sigle, scritte) e i colori dei giocatori (--ae-turn-*)
+   Elementi creati da: ui/componenti/barra-turni.ts.
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
-/* Barra della fase sotto la testata (eventi.ts renderTurnTrack): 6 caselle, una per carta del mazzo dei turni,
+/* Barra della fase sotto la testata (barra-turni.ts renderTurnTrack): 6 caselle, una per carta del mazzo dei turni,
    nell'ordine di estrazione. Accesa (8px, colore e bagliore) la casella del turno in corso; velate le caselle dei turni
    già giocati nel giro; grigie quelle da estrarre. Colori: giocatori 1-4 verde, giallo, blu, viola; jolly grigio
    chiaro; nemesi rosso scuro. Sotto la casella accesa, solo nel turno nemesi, "Nemesi · Risolvi" / "Nemesi · Pesca" */
@@ -21,7 +21,7 @@
   /* Larghezza esplicita (non flex: 1 1 0), così il passaggio a casella accesa si anima da 42px a 104px e non
      da 0. 5 caselle normali + 1 accesa (doppia) + 5 spazi da 6px = 100% */
   /* Le 5 caselle normali si dividono lo spazio lasciato dalla casella accesa (122px) e dai 5 spazi da 6px */
-  /* Le caselle sono i turni del giro, anche più di 6 (--ae-seg-n, eventi.ts renderTurnTrack): le altre n-1 si
+  /* Le caselle sono i turni del giro, anche più di 6 (--ae-seg-n, barra-turni.ts renderTurnTrack): le altre n-1 si
      dividono lo spazio lasciato dalla casella accesa (122px) e dagli n-1 spazi da 6px */
   flex: 0 0 calc((100% - 122px - (var(--ae-seg-n, 6) - 1) * 6px) / (var(--ae-seg-n, 6) - 1));
   min-width: 0; height: 3px; border-radius: 2px; background: var(--ae-turn-off);

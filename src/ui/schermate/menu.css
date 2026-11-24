@@ -1,5 +1,5 @@
 /* menu.css: menu iniziale e pagina Nuova partita (giocatori, opzioni del mazzo, wave, nemesi con la sua carta)
-   Elementi creati da: ui/schermate/menu.ts, index.html.
+   Elementi creati da: ui/schermate/menu.ts, ui/schermate/nuova-partita.ts e nuova-partita-anteprima.ts, index.html.
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
 /* --- Pagina iniziale --- */

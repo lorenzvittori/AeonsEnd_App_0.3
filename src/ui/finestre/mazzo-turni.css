@@ -1,5 +1,5 @@
 /* mazzo-turni.css: finestra del mazzo dei turni (scarti e mazzo in una riga, carte da spostare, Rivela, Mescola) e scelta "Chi gioca questo turno?"
-   Elementi creati da: ui/schermate/mazzo-turni.ts.
+   Elementi creati da: ui/finestre/mazzo-turni.ts e i suoi file di supporto, ui/componenti/barra-turni.ts (scelta 1/2 e 3/4).
    Ordine: deve venire dopo base.css (ritoccano gli stessi elementi con la stessa specificità: qui vince questo file). Si importa da src/stili/indice.ts. */
 
 /* Finestra "Chi gioca questo turno?": oscura tutto tranne la testata (z-index 10), dove resta attivo solo il Menu */

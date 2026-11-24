@@ -356,7 +356,7 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
         carte del mazzo (opacità 0.28 invece di 0.75; il turno in corso resta dorato). (v234-v240: riquadri grandi come una carta con la scritta, in verticale e poi in orizzontale.)
         **Oggi (branch `ts`):** il segnaposto è **grigio scuro a righe oblique** (due grigi) con un contorno
         tratteggiato dorato spento. La riga è **compatta e centrata** (`spaceItems` in
-        `ui/schermate/mazzo-turni-riga.ts`): lo spazio tra due oggetti è al massimo 12px (`TURN_GAP_MAX`), minimo 10px;
+        `ui/finestre/mazzo-turni-riga.ts`): lo spazio tra due oggetti è al massimo 12px (`TURN_GAP_MAX`), minimo 10px;
         tra due carte vicine (scarti-scarti, mazzo-mazzo) è la **metà** (`CARD_GAP_K`); w resta unica per tutti gli
         stati (a 375px 44px). Trascinando la **prima** carta del mazzo il cerchio **Cima** sta sopra il suo segnaposto (è
         già in cima, e lasciarla lì vale Cima), trascinando l'**ultima** il cerchio **Fondo**; senza scarti il **cerchio
@@ -491,7 +491,7 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   (`--ae-seg-n`; la casella accesa resta 122px). La storia riparte vuota a ogni giro. (Fino alla v221: 6 caselle, una
   per carta del mazzo dei turni, nell'ordine di estrazione.)
   - **Colori dei giocatori** (v222, dalle carte turno vere): 1 `#86811D`, 2 `#CF892B`, 3 `#007591`, 4 `#773067`
-    (`--ae-turn-p1..p4`, ui/eventi.css).
+    (`--ae-turn-p1..p4`, ui/componenti/barra-turni.css).
   - La casella del turno in corso è **accesa** (8px, colore pieno e un bagliore leggero: dalla v203 4px al 25%, prima 12px al 60%) e più lunga delle altre: dalla v184
     **122px fissi**, abbastanza per la scritta più lunga ("Nemesi · Risolvi", circa 114px); le altre 5 si dividono lo
     spazio che resta (circa 38px su un telefono da 375px). (v170: il doppio di una casella normale.) Quelle dei turni già giocati nel giro
@@ -602,7 +602,7 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   o Torre, `GRAVEHOLD_BGS`, stessa finestra a anteprime dello Sfondo: `backgroundChoiceButton` / `openBackgroundPicker`
   con `choice`); nemesi = il ritratto della nemesi della partita (`nemesisArt[...].portrait`). Le carte grandi prendono lo spazio che resta (a 360×780 da 249 a 222px).
   Non c'è durante "Crea mazzo" né nella copia della testata della finestra del mazzo dei turni.
-  - **Number scrubbing** (`lifeScrub` in `ui/schermate/turno-nemesi.ts`, conti in `ui/schermate/vite-scrub.ts`):
+  - **Number scrubbing** (`lifeScrub` in `ui/componenti/vite.ts`, conti in `ui/componenti/vite-scrub.ts`):
     tenendo premuto un box e trascinando in **verticale** la vita cambia di 1 ogni 30px (`LIFE_SCRUB_PX`; in su sale,
     in giù scende, tra 0 e il massimo come nella finestra), con le cifre che scorrono nel box (`renderLifeDigits`,
     maschera sul bordo della riga del numero). Parte dopo 6px in verticale (`LIFE_SCRUB_START`, più in verticale che
@@ -673,7 +673,7 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   chiude. Vale anche per il Menu della pagina Nuova partita.
 
 **Salvataggio:** la partita si salva da sola nel browser, insieme alla cronologia dell'undo, **solo dal primo turno
-nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già stata salvata: `ui.gameSaved`). Durante
+nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già stata salvata: `statoSalvataggio.gameSaved`, in `stato/salvataggio.ts`). Durante
 "Crea mazzo" non si salva niente e resta l'eventuale partita salvata prima.
 
 **Telefono**
@@ -824,7 +824,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
     `aeonsend-app-0.2-deck-options` (opzioni del mazzo della pagina Nuova partita), dalla v258
     `aeonsend-app-0.2-gravehold-bg` (sfondo del box della vita di Gravehold: `city` o `tower`), diverse da quelle della v1 perché il dominio github.io è condiviso. Il formato del salvataggio è quello della v48 con in più
     `version` (v210, `SAVE_VERSION`): `readSave` cancella i salvataggi di un'altra versione.
-- **Rendering:** `render()` disegna tutto.
+- **Rendering:** `render()` disegna tutto (sul branch `ts` sta in `ui/navigazione.ts`, vedi "Interfaccia" più sotto).
   - Turno nemesi: `renderResolve()`, con la fascia e `renderFocus` (carosello). Il carosello si ricostruisce solo quando
     cambia la "firma" (`focusStateSignature`); altrimenti scorre e basta.
   - `scrollFocusTo(uid, smooth, jump)`: mentre è in corso uno scorrimento animato avviato dallo script, le chiamate
@@ -876,7 +876,7 @@ Lo stato è diviso in tre pezzi, ognuno con un solo compito; lo stato dell'inter
 | Catalogo | `stato/catalogo.ts` (`catalogo`, sola lettura) | `allCards`, `cardsById`, `deckSetup`, `nemeses`, `products`, `nemesisArt`, `startOptions` | `caricaCatalogo` (avvio), `impostaSceltePagina` (pagina Nuova partita) | no |
 | Preferenze | `stato/preferenze.ts` (`preferenze`) | `collection`, `settings` (+ opzioni del mazzo e carte 1/2 e 3/4 nel browser) | pagina Nuova partita, Opzioni, collezione, ripresa, Modalità test | collezione e opzioni nel browser; `settings` anche nel salvataggio |
 | Partita | `stato/partita.ts` (`partita`, sola lettura) | `queue`, `deck`, `discard`, `turn`, `resolving`, `currentIndex`, `newIndex`, `maxTierDrawn`, `graveLife`, `nemesisLife`, `stats`, `turnOrder`, `nextUid`, `undoStack`, `testRun` | solo le funzioni di `stato/partita.ts` | dopo ogni azione (`save`, `stato/salvataggio.ts`) |
-| Interfaccia | `ui/pagina.ts` (`ui`: carta mostrata, animazioni, bozze...), più variabili dei moduli: `cancelDraftsBtn`, `focusSignature` (turno-nemesi), `deckSlider` (crea-mazzo), `victoryKey` (testata), `selectedWaves` (menu) | | la schermata che la usa | no (`ui.gameSaved` dice se la partita è già scritta nel browser) |
+| Interfaccia | `ui/pagina.ts` (`ui`: carta mostrata, animazioni, bozze, firma del carosello `focusSignature`, `victoryKey`...), più variabili dei moduli: `cancelDraftsBtn` (turno-giocatori), `deckSlider` (crea-mazzo-cursore), `selectedWaves` (nuova-partita); la navigazione (pagina iniziale aperta e in quale modo) in `ui/navigazione-stato.ts` | | la schermata che la usa | no (`statoSalvataggio.gameSaved`, in `stato/salvataggio.ts`, dice se la partita è già scritta nel browser) |
 
 **Il giro di un'azione** (`act`, in `stato/partita.ts`): fotografia per l'undo → modifica (le regole) → salvataggio →
 ridisegno. Il ridisegno lo fa la schermata che ha chiamato l'azione, subito dopo, perché prima prepara le animazioni.
@@ -890,7 +890,7 @@ Ricomincia, cambio dei giocatori in "Crea mazzo", avvio) = da zero + vite + mazz
 undo, scenari) = da zero + fotografia (prima `preparaRipristino()` legge le carte senza cambiare niente);
 `esciDalTest()` = scelte di prima + da zero. `nextUid` non riparte mai (le carte della partita di prima ancora nella
 pagina non si confondono con le nuove). Il ripristino nell'interfaccia (animazioni ferme, finestre chiuse, carta da
-mostrare) è `ui/ripristino.ts` (`restore`, `undo`).
+mostrare) è `ui/componenti/ripristino.ts` (`restore`, `undo`).
 
 `npm run check` controlla che fuori da `stato/partita.ts` nessuno assegni un campo della partita (anche annidato), ne
 cambi un elenco o la passi a una regola che la modifica; TypeScript lo impedisce già per i campi diretti (`Readonly`).
@@ -912,13 +912,83 @@ un pezzo legge lì cosa riceve e cosa restituisce. Ogni campo ha un commento di 
 
 Altri tipi stanno vicino a chi li usa: `Catalogo` (`stato/catalogo.ts`), `Preferenze` (`stato/preferenze.ts`), gli
 elementi della pagina e lo stato dell'interfaccia (`ui/pagina.ts`), le opzioni delle funzioni delle regole. Per gli
-elementi del DOM: `byId(id, HTMLButtonElement)` (`ui/pagina.ts`) e `query()` / `queryAll()` (`ui/componenti/componenti.ts`) controllano
+elementi del DOM: `byId(id, HTMLButtonElement)` (`ui/pagina.ts`) e `query()` / `queryAll()` (`ui/dom.ts`) controllano
 il tipo con `instanceof`; `need(valore, cosa)` per un elemento che c'è sempre (errore chiaro se manca).
 
 **Controllo dei JSON all'avvio** (`dati/controllo.ts`, chiamato da `avvio.ts`): campi obbligatori, tipi e valori
 ammessi. Una carta o una nemesi sbagliata si scarta con `console.error("Dati non validi: ...")` che dice l'id e il campo;
 un file con la forma sbagliata (o un `deck-setup.json` sbagliato) ferma l'avvio. `tests/dati-json.test.ts` passa lo
 stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati sbagliati, il test lo dice.
+
+### Interfaccia: livelli e navigazione (branch `ts`, dalla fase E2)
+
+Ogni schermata e ogni finestra si capisce leggendo il suo file più i livelli sotto. **Un file importa solo da livelli
+più bassi**; `npm run check` (`tools/check-moduli.mjs`) lo controlla, insieme a: nessun ciclo di import in `src/`
+(anche di soli tipi), nessun file sopra 500 righe (eccezione solo con un commento in testa "Oltre 500 righe: <motivo>";
+oggi nessuna), blocchi fissi mostrati e nascosti solo dal coordinatore. Stampa anche numero di file, righe del file più
+grande e import tra moduli di `ui/`.
+
+| Livello | Cartella | Cosa c'è |
+|---|---|---|
+| 0 | `tipi/`, `regole/` (e `stili/`) | contratti dei dati, regole di gioco pure (sezione "Regole di gioco nel codice") |
+| 1 | `stato/`, `dati/` | catalogo, preferenze, partita e salvataggio; caricamento, collezione, rete. Mai import da `ui/` |
+| 2 | `ui/` base: `pagina.ts`, `testi.ts`, `compatibilita.ts`, `dom.ts`, `ridisegno.ts` | elementi di index.html e stato `ui`, testi, `el`/`query`/`need`, gli agganci |
+| 3 | `ui/componenti/` | pezzi riusabili: carte (`componenti.ts`), pila delle finestre (`dialoghi.ts`), animazioni, banner, misure, testata, barra dei turni (con la scelta 1/2 e 3/4), vite (box e scrubbing), scarti, pesca-undo, sfondi e dorso, ripristino e undo |
+| 4 | `ui/finestre/` | ciò che si apre sopra una schermata: Opzioni e collezione, statistiche e Vittoria, Modalità test, mazzo dei turni, finestra della vita, menu laterale, scheda della carta |
+| 5 | `ui/schermate/` | menu iniziale, Nuova partita, Crea mazzo, turno giocatori, turno nemesi: ognuna esporta il suo disegno |
+| 6 | `ui/navigazione.ts` (+ `navigazione-stato.ts`) | il coordinatore |
+| 7, 8 | `avvio.ts`, `main.ts` | lettura dei dati e primo disegno; ordine degli `avvio()` e `window.app` |
+
+- **Stesso livello:** nei livelli 0-3 (librerie) un file può importare dallo stesso livello, senza cicli. Nei livelli
+  4-5 no, salvo i **file di supporto** della stessa finestra o schermata: nella stessa cartella, `<nome>.ts` e i suoi
+  `<nome>-*.ts` (per esempio `mazzo-turni.ts` con `mazzo-turni-bozza.ts`, `-disegno.ts`, `-trascina.ts`, `-riga.ts`;
+  `turno-nemesi-carosello.ts`, `crea-mazzo-cursore.ts`, `nuova-partita-anteprima.ts`).
+- **Finestra o componente:** è componente un pezzo usato da più schermate o finestre o sempre presente nella partita
+  (testata, barra dei turni, vite, pila degli scarti `#discard`); è finestra ciò che si apre al volo sopra una
+  schermata ed è usato da una sola parte (o dal coordinatore).
+- **Il coordinatore** (`ui/navigazione.ts`) è l'unico che mostra e nasconde `#start`, `#queue-view`, `#resolve-view`.
+  Sa dove si è con `schermataAttuale()` ('menu', 'nuova-partita', 'crea-mazzo', 'turno-giocatori', 'turno-nemesi'):
+  lo stato è solo la pagina iniziale aperta e in quale modo (`navigazione-stato.ts`, senza DOM, provato in
+  `tests/navigazione.test.ts`); "Crea mazzo" e il turno si leggono da `ui.deckBuilding` e `partita.resolving`.
+  `render()` disegna la testata, mostra i blocchi del turno, i comandi in basso, i pezzi comuni (pile, barra dei
+  turni, Undo, banner Tier, vite), poi `disegnaTurnoNemesi()` o `disegnaTurnoGiocatori()`; l'ordine conta (il nome
+  della nemesi si misura dopo le classi dell'app). Fa anche: pagina iniziale (`setStartMode`, `openStart`,
+  `closeStart`), inizio e ripresa della partita, passaggio dalla pagina iniziale alla partita, Vittoria a mazzo vuoto,
+  tasto Indietro (`closeTopForBack` con `cosaChiudeIndietro`, `popstate`), Esc e Tab, i pulsanti fissi.
+- **Agganci** (`ui/ridisegno.ts`): un livello basso che deve far succedere qualcosa deciso più in alto non importa
+  quel modulo ma chiama un aggancio; i gestori li registra `navigazione.avvio()`. Sono chiamate dirette (sincrone).
+  | Aggancio | Chi lo chiama | Perché serve |
+  |---|---|---|
+  | `richiediRidisegno()` | componenti, finestre, schermate | il ridisegno (`render`) è del coordinatore |
+  | `vaiAlMenuIniziale()` | menu laterale (Esci), Vittoria (Menu iniziale) | la pagina iniziale la mostra il coordinatore |
+  | `mostraFinePartita(esito)` | box e finestra della vita, menu laterale (Nemesi uccisa) | statistiche sta allo stesso livello del menu laterale e sopra le vite |
+  | `chiudiCreaMazzo()` | ripristino (ripresa, undo, scenari) | la schermata sta sopra il componente |
+  | `apriMenuLaterale(leave)` | mazzo dei turni (Menu nella copia della testata) | due finestre allo stesso livello |
+  | `ricominciaMazzo()`, `ricominciaScenario()` | menu laterale | Crea mazzo sta sopra; la Modalità test è allo stesso livello |
+  | `vaiAllaPartitaDaScenario()` | Modalità test | la pagina iniziale la chiude il coordinatore |
+  | `passaAlTurnoGiocatori(uid, nodo)` | turno nemesi (fine del turno) | una schermata non accende l'altra |
+  | `passaAlTurnoNemesi()` | turno giocatori (Fine turno) | idem; il coordinatore passa la carta al centro del turno giocatori |
+  | `vaiA('menu' / 'nuova-partita')` | menu iniziale, Nuova partita | le due schermate della pagina iniziale non si accendono a vicenda |
+  | `riprendiPartita()` | menu iniziale (Riprendi partita) | la ripresa porta dalla pagina iniziale alla partita |
+  | `aggiornaInizio()` | Opzioni (collezione salvata) | ridisegna Nuova partita e menu iniziale, che stanno sopra |
+  | `apriFinestraVita(kind)` | box della vita | la finestra sta sopra il componente |
+
+  Si usa invece una **funzione passata come argomento** quando chi crea il pezzo sa già cosa deve succedere: la barra
+  dei turni (`creaBarraTurni(apri)`), il nome della nemesi in testata durante "Crea mazzo" (`disegnaTestata(onNameClick)`),
+  la fascia sotto cui sta la riga delle vite (`renderLives(anchor)`), le carte grandi da cui parte il turno nemesi
+  (`enterNemesisTurnView`).
+- **Una schermata nuova:** un file in `ui/schermate/` che esporta il suo `disegna...()` (e, se serve, `avvio()` per i
+  suoi ascoltatori); un nome nuovo in `Schermata` e in `schermataAttuale()` (`navigazione-stato.ts`, con un test in
+  `tests/navigazione.test.ts`); il coordinatore la mostra e la disegna (in `render()` o nella pagina iniziale), e se si
+  apre da un livello più basso un aggancio in `ui/ridisegno.ts`. Il CSS accanto al `.ts`, importato da
+  `stili/indice.ts` (sezione 9). Il modulo va in `main.ts` (`MODULI` se ha `avvio()`, altrimenti `SENZA_AVVIO`).
+- **Una finestra nuova:** un file in `ui/finestre/` che esporta la funzione che la apre (con `openModal` della pila
+  delle finestre, così Esc, Indietro e il resto inerte valgono da soli); la apre la schermata o il componente che la
+  usa (dal basso con un aggancio o una funzione passata come argomento). Niente import da altre finestre: se serve,
+  un aggancio.
+- Un file che cresce oltre 500 righe si divide per compito in file di supporto `<nome>-*.ts` nella stessa cartella (il
+  supporto non importa il file principale). Se si sposta un `.css`, in `stili/indice.ts` cambia solo il percorso, mai
+  la posizione; dividendo un `.ts` il suo `.css` resta intero (o si divide in pezzi consecutivi nello stesso punto).
 
 ### Bug noti (annotati, non corretti)
 
@@ -1023,7 +1093,9 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
     `tests/tsconfig.json`) e `tools/check-moduli.mjs` (legge i `.ts` con il parser di rolldown: gli import esistono;
     nessuna variabile globale tranne `window.app`; `src/regole/` pura: import solo da `src/regole/` o tipi da
     `src/tipi/`, nessun nome del browser, niente `Date` né `Math.random`; nessun `any`; `@ts-ignore` vietato,
-    `@ts-expect-error` solo con il motivo; la partita si cambia solo in `src/stato/partita.ts`, sezione 6).
+    `@ts-expect-error` solo con il motivo; la partita si cambia solo in `src/stato/partita.ts`; nessun ciclo di import,
+    livelli, file al massimo di 500 righe, blocchi fissi solo nel coordinatore: sezione 6, "Interfaccia"). Stampa anche
+    numero di file, righe del file più grande e import tra moduli di `ui/`.
     `node tools/check-moduli.mjs --conta` stampa quanti `any`, eccezioni ai tipi, file `.js` e usi di `G` ci sono in
     `src/` (attesi 0).
   - **`npm test`**: i test con Vitest in `tests/*.test.ts`. Si aggiunge un test con un file nuovo o un blocco
@@ -1041,18 +1113,20 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
     - `partita.test.ts`: il modulo della partita: `nuovaPartita()` dà sempre lo stesso stato, due partite di fila con
       lo stesso caso danno lo stesso risultato, un'azione = un passo di undo, salvataggio → ripresa = stesso stato,
       uscita dalla Modalità test (caso e orologio fissati, `localStorage` finto);
+    - `navigazione.test.ts`: `schermataAttuale()` (avvio, Nuova partita, Crea mazzo, turni, ripresa di un salvataggio,
+      Modalità test) e cosa chiude il tasto Indietro con e senza finestre aperte, senza la pagina;
     - `moduli.test.ts`: i moduli si importano senza effetti, le regole sono pure, niente `.js` in `src/`, niente `G`,
       ogni file ha l'intestazione.
   - **Struttura:** `src/main.ts` (avvio: CSS, `avvio()` dei moduli nell'ordine di prima, `window.app`, con le regole
     pure in `app.regole`), `src/tipi/` (tipi dei dati e dello stato, sezione 6), `src/regole/` (logica di gioco pura,
     sezione 6), `src/stato/` (solo lo stato, sezione 6: `catalogo.ts`, `preferenze.ts`, `partita.ts` con le azioni,
-    `salvataggio.ts` per il browser), `src/dati/` (caricamento, `controllo.ts` per i JSON), `src/ui/` (`pagina.ts`:
-    elementi, costanti e stato dell'interfaccia; `ripristino.ts`: restore e undo; `componenti/`, `schermate/`),
+    `salvataggio.ts` per il browser), `src/dati/` (caricamento, `controllo.ts` per i JSON), `src/ui/` (a livelli, sezione
+    6 "Interfaccia": `pagina.ts`, `dom.ts`, `ridisegno.ts`, `componenti/`, `finestre/`, `schermate/`, `navigazione.ts`),
     il CSS (vedi sotto). In `public/`:
     `Data/`, `thumbs/`, `Assets/`, i JSON, `manifest.webmanifest`, `sw.js`, `scheletri/` (si copiano così come sono).
     Gli strumenti Python di `tools/` scrivono in `public/`.
-  - **CSS:** un file per pezzo dell'interfaccia, accanto al `.ts` che crea quegli elementi (`ui/schermate/mazzo-turni.css`,
-    `ui/componenti/testata.css`, `ui/eventi.css` per la barra dei turni, `ui/schermate/vite.css` per le vite...); in
+  - **CSS:** un file per pezzo dell'interfaccia, accanto al `.ts` che crea quegli elementi (`ui/finestre/mazzo-turni.css`,
+    `ui/componenti/testata.css`, `ui/componenti/barra-turni.css` per la barra dei turni, `ui/componenti/vite.css` per le vite...); in
     `src/stili/` restano `design-tokens.css`, `components.css` (componenti di base), `base.css` (pagina, shell, sfondo,
     colonna su tablet e desktop) e `comuni.css`. Ogni file ha l'intestazione: cosa disegna, chi crea gli elementi, dopo
     quali file deve venire.
@@ -1072,7 +1146,7 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
     `app.noSave = true` spegne il salvataggio, `app.regole` le regole pure. `app.G` non c'è più; `app.newGame()` ora è
     `app.nuovaPartita()` (che riparte anche da coda e undo vuoti).
   - **Prove con una nemesi scelta da console:** la pagina Nuova partita mostra solo le nemesi delle wave spuntate nel
-    suo menu (`selectedWaves` in `ui/schermate/menu.ts`, ricordate finché la pagina resta aperta); `renderStartChoices()`
+    suo menu (`selectedWaves` in `ui/schermate/nuova-partita.ts`, ricordate finché la pagina resta aperta); `renderStartChoices()`
     sostituisce una nemesi non visibile con la prima visibile. Per giocare davvero la nemesi voluta si spunta prima la
     sua wave (casella in `#wave-menu`), come farebbe un utente; altrimenti il risultato dipende dalle partite fatte prima
     nella stessa scheda (fase D: era la causa degli hash diversi della "prima partita Maggoth").
@@ -1122,6 +1196,7 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
 | `ts-prima-fase-D` | Branch `ts`: fine della fase C (TypeScript strict), prima dello stato unico al posto di G. |
 | `ts-prima-porting-273` | Branch `ts`: fine della fase D, prima del porting di main v269–v273. |
 | `ts-prima-fase-E` | Branch `ts`: dopo il porting di main v273, prima della divisione del CSS per schermata. |
+| `ts-prima-fase-E2` | Branch `ts`: fine della fase E (CSS per schermata), prima dei livelli dell'interfaccia e del coordinatore. |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 

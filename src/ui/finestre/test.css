@@ -1,5 +1,5 @@
 /* test.css: Modalità test: schermata degli scenari
-   Elementi creati da: ui/schermate/test.ts.
+   Elementi creati da: ui/finestre/test.ts.
    Ordine: deve venire dopo opzioni.css (ritoccano gli stessi elementi con la stessa specificità: qui vince questo file). Si importa da src/stili/indice.ts. */
 
 .test-scenario { gap: 2px; text-align: left; }

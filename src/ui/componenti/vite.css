@@ -1,5 +1,5 @@
 /* vite.css: vite di Gravehold e della nemesi: box con il number scrubbing, cifre che scorrono, finestra della vita
-   Elementi creati da: ui/schermate/turno-nemesi.ts.
+   Elementi creati da: ui/componenti/vite.ts (box), ui/finestre/vita.ts (finestra).
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
 /* Vite di Gravehold (sinistra) e della nemesi (destra) sotto la fascia delle carte piccole, ai margini della fascia */

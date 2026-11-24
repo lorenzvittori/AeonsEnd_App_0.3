@@ -1,5 +1,5 @@
 /* base.css: pagina e struttura dell'app: html e body, shell (#app: testata, contenuto, pulsante in basso) con lo sfondo unico, colonna su tablet e desktop, avviso del telefono in orizzontale
-   Elementi creati da: index.html, avvio.ts (avviso del telefono in orizzontale), ui/componenti/menu-laterale.ts (sfondo).
+   Elementi creati da: index.html, avvio.ts (avviso del telefono in orizzontale), ui/componenti/sfondi.ts (sfondo).
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
 /* Layout dell'app (new design 0.2). Token in css/design-tokens.css, componenti in css/components.css. */

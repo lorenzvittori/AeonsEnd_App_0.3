@@ -1,5 +1,5 @@
 /* menu-laterale.css: menu laterale della partita, pulsante Menu (tre linee / X), scelta dello sfondo e del dorso, pulsanti da tenere premuti (Esci dalla partita), pulsanti Annulla / Salva modifiche
-   Elementi creati da: ui/componenti/menu-laterale.ts.
+   Elementi creati da: ui/finestre/menu-laterale.ts, ui/componenti/testata.ts (pulsante Menu), ui/componenti/sfondi.ts (sfondo e dorso), ui/schermate/turno-giocatori.ts (Annulla modifiche).
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
 /* Pulsante Menu in alto a destra (tre linee) e pannello laterale: 70% della larghezza a destra, il resto oscurato */

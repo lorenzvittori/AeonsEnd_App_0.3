@@ -1,5 +1,5 @@
 /* testata.css: testata: nome della nemesi con battaglia, giocatori e turno, mazzo nemesi e pila degli scarti in alto, carte che volano verso gli scarti
-   Elementi creati da: ui/componenti/testata.ts, ui/schermate/turno-nemesi.ts (nome della nemesi), index.html.
+   Elementi creati da: ui/componenti/testata.ts, ui/navigazione.ts (render), index.html.
    Ordine: deve venire dopo turno-nemesi.css (ritoccano gli stessi elementi con la stessa specificità: qui vince questo file). Si importa da src/stili/indice.ts. */
 
 @media (max-width: 359px) {

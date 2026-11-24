@@ -1,5 +1,5 @@
 /* crea-mazzo.css: Crea mazzo: i 9 mazzi, il cursore da trascinare, le carte Specifiche in grande, la finestra della nemesi
-   Elementi creati da: ui/schermate/crea-mazzo.ts.
+   Elementi creati da: ui/schermate/crea-mazzo.ts e crea-mazzo-cursore.ts.
    Ordine: deve venire dopo menu.css, turno-nemesi.css, testata.css (ritoccano gli stessi elementi con la stessa specificità: qui vince questo file). Si importa da src/stili/indice.ts. */
 
 .choices { display: flex; gap: 8px; }
