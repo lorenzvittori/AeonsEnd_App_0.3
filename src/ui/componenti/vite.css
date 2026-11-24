@@ -10,11 +10,8 @@
   border: 1px solid var(--ae-border); border-radius: 8px; background: rgba(16, 17, 22, .85); color: inherit; cursor: pointer;
   font: 700 20px/24px var(--ae-font-ui); font-variant-numeric: tabular-nums;
 }
-.ae-life-box .ae-life-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; line-height: 16px; font-weight: 600; opacity: .8; }
-.ae-life-box .ae-life-heart { flex: 0 0 auto; width: 16px; height: 16px; }
 .ae-life-box .ae-life-value { flex: 0 0 auto; }
 .ae-life-box.is-zero .ae-life-value { color: #e06c5a; }
-.ae-modal--life .ae-life-panel { padding-top: 4px; }
 /* Box delle vite = solo il numero, a pillola (angoli tondi quanto metà altezza: i lati sono mezzi cerchi) */
 .ae-life-box { justify-content: center; min-width: 56px; padding: 0 16px; border-radius: 17px; }
 /* Sfondo dei box (Gravehold: immagine scelta nel Menu; nemesi: il suo ritratto), velato per leggere il numero */

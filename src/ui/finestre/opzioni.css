@@ -44,5 +44,3 @@
 .collection-bulk .ae-button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14px; }
 /* Opzioni: voce in una riga, scritta a sinistra e miniatura piccola a destra (Dorso delle carte) */
 .options-item.options-item--row { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; cursor: default; }
-/* Opzioni: voce con dentro il pulsante dello sfondo */
-.options-item--field { cursor: default; gap: 8px; align-items: stretch; }

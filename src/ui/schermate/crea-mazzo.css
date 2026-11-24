@@ -46,7 +46,6 @@
 .ae-spec-track::-webkit-scrollbar { display: none; }
 .ae-spec-slide { flex: 0 0 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .ae-spec-slide .ae-card-art { width: min(100%, calc(62vh * 63 / 88)); border: 0; }
-.ae-spec-caption { color: var(--ae-text-muted); font: 600 13px/18px var(--ae-font-ui); letter-spacing: .06em; text-transform: uppercase; }
 .deck-build-fan-card { transform: translateX(calc(-50% + var(--fan) * 12px)) rotate(calc(var(--fan) * 8deg)); }
 .deck-build-pile.is-fan { width: calc(min(13vh, 100px) * 63 / 88 + 30px); }
 
@@ -154,6 +153,5 @@
   width: 6px; height: 6px; border-radius: 50%; background: var(--ae-border); transition: background-color .2s ease-out, transform .2s ease-out;
 }
 .ae-spec-dots span.is-on { background: var(--ae-text); transform: scale(1.3); }
-.ae-spec-caption { display: none; }
 /* Ordine: regola di menu.css; sta qui perché deve venire dopo ".ae-game-setup .start-label" (stesso elemento, stessa specificità) */
 .start-label-row .start-label { margin-bottom: 0; }

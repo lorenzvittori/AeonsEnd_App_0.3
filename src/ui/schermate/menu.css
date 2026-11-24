@@ -110,8 +110,6 @@
 .start-screen.is-sliding-out { animation: ae-slide-out-left .38s ease-in-out forwards; }
 @keyframes ae-slide-out-left { from { transform: none; } to { transform: translateX(-100%); } }
 
-/* --- La mia collezione: schermata a parte con le wave e le loro mini espansioni --- */
-.start-collection { gap: 6px; }
 /* Freccia della carta nemesi: il disegno resta 44×26, l'area che si tocca è alta 44px */
 .nemesis-toggle { position: relative; }
 .nemesis-toggle::before { content: ''; position: absolute; inset: -9px 0; }
@@ -132,18 +130,9 @@
 /* --- Menu iniziale: Partita in corso (solo Riprendi), sotto Nuova partita e Opzioni --- */
 .start-home { display: flex; flex-direction: column; gap: 10px; }
 .start-home[hidden], .start-choice[hidden] { display: none; }
-/* Nuova partita: Menu in alto a destra */
-.start-menu-button { position: fixed; top: calc(var(--ae-safe-top) + 8px); right: 8px; z-index: 6; color: var(--ae-text-muted); }
-.start-menu-button[hidden] { display: none; }
 .start-screen.is-setup .start-title { padding-inline: 44px; }
-/* Wave e Nemesi separate: le wave sono pillole tonde, la nemesi ha una linea sopra */
+/* Wave e Nemesi separate: la nemesi ha una linea sopra */
 .wave-pills { display: flex; flex-wrap: wrap; gap: 8px; }
-.wave-pill {
-  min-height: 44px; padding: 0 18px; border: 1px solid var(--ae-border); border-radius: 999px; background: transparent;
-  color: var(--ae-text-muted); font: 600 14px/18px var(--ae-font-ui); letter-spacing: .02em;
-  transition: background-color .15s ease-out, color .15s ease-out, border-color .15s ease-out;
-}
-.wave-pill[aria-pressed='true'] { border-color: var(--ae-gold); background: rgba(223, 174, 89, .14); color: var(--ae-gold); }
 .start-nemesis { padding-top: 20px; border-top: 1px solid var(--ae-border); }
 
 /* ---. pagina Nuova partita --- */

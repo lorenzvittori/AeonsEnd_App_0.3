@@ -1058,11 +1058,9 @@ grande e import tra moduli di `ui/`.
 ### Script in `tools/` (Python + Pillow, da lanciare dalla cartella del repo)
 
 - `import-db.py`: il ponte DataBase → app (vedi sopra); serve anche openpyxl.
-- `convert-webp.py`, `build-thumbs.py`: del formato di prima della v210 (immagini in `Data/<Nemesi>/` e
-  `thumbs/<id>.webp`); per le carte nemesi ora si usa `import-db.py`.
-- `convert-webp.py`: converte JPG/PNG di `Data/` in WebP 90 e aggiorna `cards.json`.
-- `build-thumbs.py`: rifà tutte le miniature. Attenzione: rigenerandole dai WebP cambiano anche quelle esistenti, quindi
-  si fa commit solo delle nuove.
+- `build-app-icons.py`: le icone dell'app installabile (sezione 4).
+- `convert-webp.py` e `build-thumbs.py` (formato di prima della v210: `Data/<Nemesi>/`, `thumbs/<id>.webp`) sono stati
+  tolti: scansioni WebP e miniature le genera `import-db.py`.
 - Le immagini delle nemesi del menu (`Assets/nemesis/`: carta, retro, ritaglio e `nemesis-art.json`) le genera
   `import-db.py` dal DataBase (commit fa171d5); il vecchio `build-nemesis-art.py` è stato tolto nella v214.
 
