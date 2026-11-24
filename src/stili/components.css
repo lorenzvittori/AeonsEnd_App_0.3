@@ -68,22 +68,18 @@ button:disabled { cursor: not-allowed; }
 /* --- Testata e dock --- */
 .ae-header {
   position: relative; z-index: 10;
-  min-height: calc(56px + var(--ae-safe-top)); padding: var(--ae-safe-top) 12px 0;
+  min-height: calc(56px + var(--ae-safe-top)); padding: var(--ae-safe-top) var(--testata-margine-destro) 0;
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   background: var(--ae-surface); border-bottom: 1px solid var(--ae-border);
 }
 .ae-phase { flex: 1; font: 700 14px/20px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; text-align: center; }
-.ae-header-spacer { width: 44px; height: 44px; flex: 0 0 44px; }
 
 .ae-dock {
   position: relative; z-index: 10; flex: 0 0 auto;
-  padding: 8px 16px calc(12px + var(--ae-safe-bottom));
+  padding: 8px var(--principale-margine-lati) calc(var(--principale-spazio-sotto) + var(--ae-safe-bottom));
   border-top: 1px solid var(--ae-border); background: var(--ae-surface);
-  display: flex; flex-direction: column; gap: 8px;
+  display: flex; flex-direction: column; gap: var(--principale-spazio);
 }
-.ae-dock-row { display: flex; min-height: 40px; align-items: center; justify-content: space-between; gap: 8px; }
-.ae-meta { color: var(--ae-text-muted); font: 500 14px/20px var(--ae-font-ui); font-variant-numeric: tabular-nums; }
-.ae-dock-links { display: flex; align-items: center; gap: 8px; }
 .ae-hint { text-align: center; font: 500 13px/18px var(--ae-font-ui); color: var(--ae-text-muted); }
 
 /* --- Badge di stato: fuori dalla scansione, sopra la miniatura --- */

@@ -1,5 +1,6 @@
-/* barra-turni.css: barra dei turni sotto la testata (caselle, sigle, scritte) e i colori dei giocatori (--ae-turn-*)
-   Elementi creati da: ui/componenti/barra-turni.ts.
+/* barra-turni.css: barra dei turni sotto la testata (zona 2 della schermata "partita", partita.css: caselle, sigle, scritte) e i colori dei giocatori (--ae-turn-*)
+   Elementi creati da: index.html (#fascia-turno), ui/componenti/barra-turni.ts (contenuto).
+   Misure: partita-misure.css (gruppo "2 fascia turno").
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
 /* Barra della fase sotto la testata (barra-turni.ts renderTurnTrack): 6 caselle, una per carta del mazzo dei turni,
@@ -13,9 +14,9 @@
   --ae-turn-p4: #773067; --ae-turn-wild: hsl(40 14% 84%); --ae-turn-red: hsl(356 58% 42%);
   --ae-turn-red-text: hsl(356 62% 70%); --ae-turn-off: rgba(236, 232, 222, .14);
 }
-.ae-turn-track { flex: 0 0 auto; padding: 10px 16px 0; }
+.ae-turn-track { flex: 0 0 auto; padding: var(--turno-spazio-sopra) var(--turno-margine-lati) 0; }
 .ae-turn-track[hidden] { display: none; }
-.ae-turn-track-bar { display: flex; gap: 6px; align-items: center; height: 8px; }
+.ae-turn-track-bar { display: flex; gap: var(--turno-caselle-spazio); align-items: center; height: var(--turno-barra-altezza); }
 .ae-turn-seg {
   --ae-seg: var(--ae-turn-off);
   /* Larghezza esplicita (non flex: 1 1 0), così il passaggio a casella accesa si anima da 42px a 104px e non
@@ -23,7 +24,7 @@
   /* Le 5 caselle normali si dividono lo spazio lasciato dalla casella accesa (122px) e dai 5 spazi da 6px */
   /* Le caselle sono i turni del giro, anche più di 6 (--ae-seg-n, barra-turni.ts renderTurnTrack): le altre n-1 si
      dividono lo spazio lasciato dalla casella accesa (122px) e dagli n-1 spazi da 6px */
-  flex: 0 0 calc((100% - 122px - (var(--ae-seg-n, 6) - 1) * 6px) / (var(--ae-seg-n, 6) - 1));
+  flex: 0 0 calc((100% - var(--turno-casella-accesa) - (var(--ae-seg-n, 6) - 1) * var(--turno-caselle-spazio)) / (var(--ae-seg-n, 6) - 1));
   min-width: 0; height: 3px; border-radius: 2px; background: var(--ae-turn-off);
   transition: height .3s ease-out, flex-basis .3s ease-out, background-color .3s ease-out, box-shadow .3s ease-out, opacity .3s ease-out;
 }
@@ -58,7 +59,7 @@
 }
 .ae-turn-seg[data-pair][data-kind="p12"]::after, .ae-turn-seg[data-pair][data-kind="p34"]::after { opacity: 1; }
 /* Nessun turno in corso (attesa della carta turno, mazzo appena mischiato): 6 caselle uguali */
-.ae-turn-track-bar.is-idle .ae-turn-seg { flex-basis: calc((100% - (var(--ae-seg-n, 6) - 1) * 6px) / var(--ae-seg-n, 6)); }
+.ae-turn-track-bar.is-idle .ae-turn-seg { flex-basis: calc((100% - (var(--ae-seg-n, 6) - 1) * var(--turno-caselle-spazio)) / var(--ae-seg-n, 6)); }
 /* Mazzo dei turni mischiato: scritte e sigle sotto la barra svaniscono */
 .ae-turn-labels > * { transition: opacity .3s ease-out; }
 .ae-turn-track.is-shuffling .ae-turn-labels > * { opacity: 0 !important; }
@@ -66,7 +67,7 @@
    (100% - 30px) / 6 × 2); le altre 5 si stringono nello spazio che resta */
 .ae-turn-seg.is-current {
   /* Misura fissa 122px, abbastanza per la scritta più lunga ("Nemesi · Risolvi", circa 114px) */
-  flex: 0 0 122px; height: 8px; border-radius: 4px; background: var(--ae-seg);
+  flex: 0 0 var(--turno-casella-accesa); height: var(--turno-barra-altezza); border-radius: 4px; background: var(--ae-seg);
   /* Bagliore molto più leggero */
   box-shadow: 0 0 4px color-mix(in srgb, var(--ae-seg) 25%, transparent);
 }
@@ -74,7 +75,7 @@
 .ae-turn-track.is-changed .ae-turn-seg.is-current { animation: ae-turn-pulse .5s ease-out; }
 @keyframes ae-turn-pulse { 0% { transform: scaleY(.4); } 60% { transform: scaleY(1.35); } 100% { transform: none; } }
 /* Altezza fissa: la riga c'è anche quando è vuota (turno giocatori), così le carte sotto non si spostano */
-.ae-turn-labels { position: relative; height: 14px; margin-top: 6px; font: 700 11px/14px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; }
+.ae-turn-labels { position: relative; height: var(--turno-scritte-altezza); margin-top: var(--turno-scritte-distanza); font: 700 11px/14px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; }
 .ae-turn-label {
   position: absolute; top: 0; transform: translateX(-50%); display: flex; align-items: center; gap: 7px;
   white-space: nowrap; color: var(--ae-turn-red-text);

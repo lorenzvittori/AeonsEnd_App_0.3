@@ -1,15 +1,15 @@
-// ui/componenti/scarti.ts: la pila degli scarti (finestra fissa #discard con le carte dalla più recente, aperta dal
-// pulsante degli scarti e dalla pila in testata) e la carta degli scarti ingrandita.
+// ui/componenti/scarti.ts: la pila degli scarti (finestra fissa #discard con le carte dalla più recente, aperta dalla
+// pila in testata) e la carta degli scarti ingrandita.
 // Livello 3 (ui/componenti/). Dipende da: stato/partita.ts (lettura), ui/ base (testi, pagina, dom), ui/componenti
 // (componenti, dialoghi). Usato da: testata, ripristino, finestre (menu laterale, statistiche, Modalità test),
 // navigazione (Indietro, Esc).
 
 import { I18N_IT } from '../testi.ts';
 import { cardArt, typeName } from './componenti.ts';
-import { button, dialogShell, openModal, restoreFocus, updateInert } from './dialoghi.ts';
+import { button, dialogShell, openModal, updateInert } from './dialoghi.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import { partita } from '../../stato/partita.ts';
-import { discardBtn, discardClose, discardEmpty, discardGrid, discardLayer, discardTitle } from '../pagina.ts';
+import { discardClose, discardEmpty, discardGrid, discardLayer, discardTitle } from '../pagina.ts';
 import { el } from '../dom.ts';
 
 // Elemento che aveva il focus all'apertura degli scarti
@@ -43,7 +43,7 @@ export function closeDiscard(): void {
   discardLayer.hidden = true;
   discardGrid.replaceChildren();
   updateInert();
-  restoreFocus(discardBtn);
+  // Il focus non torna a chi ha aperto gli scarti (discardTrigger): bug annotato in CONTESTO_SVILUPPO.md
 }
 
 // Carta degli scarti ingrandita: sola lettura, solo "Chiudi immagine"
@@ -62,6 +62,5 @@ export function openDiscardZoom(data: Carta): void {
 // Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
 export function avvio(): void {
   discardLayer.addEventListener('click', e => { if (e.target === discardLayer) closeDiscard(); });
-  discardBtn.addEventListener('click', openDiscard);
   discardClose.addEventListener('click', closeDiscard);
 }

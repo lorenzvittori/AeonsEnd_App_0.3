@@ -18,7 +18,7 @@ import type { CartaTurno, Giocatore, MemoriaCoppie, SceltaCoppia, StatisticheMag
 import type { FotografiaLetta, VoceLetta } from '../../tipi/salvataggio.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { preferenze } from '../../stato/preferenze.ts';
-import { nemesisBtn, resolveBtn, startLayer, ui } from '../pagina.ts';
+import { pulsantePrincipale, startLayer, ui } from '../pagina.ts';
 import { clearTransition } from '../componenti/animazioni.ts';
 import { el, icon, query } from '../dom.ts';
 import { richiediRidisegno, vaiAllaPartitaDaScenario } from '../ridisegno.ts';
@@ -282,7 +282,7 @@ export function startScenario(sc: Scenario | null | undefined): string | null {
   vaiAllaPartitaDaScenario();
   richiediRidisegno();
   prefetchDeckImages();
-  (partita.resolving ? resolveBtn : nemesisBtn).focus({ preventScroll: true });
+  pulsantePrincipale.focus({ preventScroll: true });
   return null;
 }
 

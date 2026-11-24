@@ -15,6 +15,7 @@ import * as testi from './ui/testi.ts';
 import * as pagina from './ui/pagina.ts';
 import * as dom from './ui/dom.ts';
 import * as ridisegno from './ui/ridisegno.ts';
+import * as partitaVariante from './ui/partita-variante.ts';
 import * as dati from './dati/dati.ts';
 import * as collezione from './dati/collezione.ts';
 import * as rete from './dati/rete.ts';
@@ -39,6 +40,7 @@ import * as testata from './ui/componenti/testata.ts';
 import * as barraTurni from './ui/componenti/barra-turni.ts';
 import * as vite from './ui/componenti/vite.ts';
 import * as pescaUndo from './ui/componenti/pesca-undo.ts';
+import * as pulsantePrincipale from './ui/componenti/pulsante-principale.ts';
 import * as sfondi from './ui/componenti/sfondi.ts';
 import * as opzioni from './ui/finestre/opzioni.ts';
 import * as statistiche from './ui/finestre/statistiche.ts';
@@ -80,7 +82,7 @@ const MODULI: ModuloAvviato[] = [compatibilita, testi, pagina, dati, collezione,
 // Moduli senza avvio() le cui funzioni stanno comunque in window.app (stato e ripristino)
 const SENZA_AVVIO: object[] = [statoCatalogo, statoPreferenze, statoPartita, statoSalvataggio, ripristino, dom, ridisegno,
   animazioni, banner, misure, vite, vita, nuovaPartita, mazzoTurniFinestra, mazzoTurniBozza, mazzoTurniDisegno,
-  mazzoTurniTrascina, nuovaPartitaAnteprima, creaMazzoCursore, turnoNemesiCarosello];
+  mazzoTurniTrascina, nuovaPartitaAnteprima, creaMazzoCursore, turnoNemesiCarosello, partitaVariante, pulsantePrincipale];
 
 // window.app: tutto quello che i moduli esportano (app.render(), app.makeEntry, app.act(), app.SCENARI, app.ui...) più
 // i campi dello stato, leggibili e (solo per il debug) assegnabili per nome: del catalogo (app.allCards, app.nemeses...),

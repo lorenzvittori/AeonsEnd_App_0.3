@@ -1,4 +1,4 @@
-/* base.css: pagina e struttura dell'app: html e body, shell (#app: testata, contenuto, pulsante in basso) con lo sfondo unico, colonna su tablet e desktop, avviso del telefono in orizzontale
+/* base.css: pagina e struttura dell'app: html e body, shell (#app, la schermata "partita": le sue 7 zone sono in ui/schermate/partita.css) con lo sfondo unico, colonna su tablet e desktop, avviso del telefono in orizzontale
    Elementi creati da: index.html, avvio.ts (avviso del telefono in orizzontale), ui/componenti/sfondi.ts (sfondo).
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
@@ -6,13 +6,13 @@
 html, body { height: 100%; }
 body { overflow: hidden; }
 
-/* Shell: testata, contenuto, dock */
+/* Shell: la schermata "partita" (#app), una griglia con le 7 zone (righe e nomi in ui/schermate/partita.css) */
 .ae-shell {
   height: 100vh; height: 100dvh;
-  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
+  display: grid;
   overflow: hidden;
 }
-.ae-main { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ae-main { min-height: 0; overflow: hidden; }
 
 /* Tablet e desktop: la partita resta la stessa del telefono (fascia piccola, carte grandi, pulsante), in una colonna al
    centro larga quanto serve alla carta più un pezzo delle vicine (--ae-col, calcolata da sizeColumn in JS);
@@ -25,13 +25,12 @@ body { overflow: hidden; }
 
 /* --- Sfondo unico: la maga a sinistra, la nemesi a destra ---
    Immagine scelta nel Menu (--ae-battle-bg, impostata da JS; BACKGROUNDS), predefinita battle-bg.webp.
-   Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro.
-   Velo scuro al 50%. Stato precedente (due sfondi): tag git v123-prima-sfondo-unico */
-.ae-shell, .ae-shell.is-nemesis-turn, .ae-shell.is-nemesis-turn.is-draw-phase {
+   Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro
+   (partita.css, in base a data-turno). Velo scuro al 50%. Stato precedente (due sfondi): tag git v123-prima-sfondo-unico */
+.ae-shell {
   background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('/Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
   transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
 }
-.ae-shell.is-nemesis-turn, .ae-shell.is-nemesis-turn.is-draw-phase { background-position: 0 0, 100% center, 0 0; }
 @media (prefers-reduced-motion: reduce) {
   .ae-shell { transition: none; }
 }

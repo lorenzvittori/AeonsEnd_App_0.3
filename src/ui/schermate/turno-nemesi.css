@@ -1,20 +1,18 @@
-/* turno-nemesi.css: turno nemesi (VistaRisoluzione): carosello, fascia piccola, carta che si gira, pulsante principale, banner al centro, scossa dello schermo
+/* turno-nemesi.css: turno nemesi, dentro la schermata "partita" (partita.css): fascia piccola (zona 3, comune ai due
+   turni), carosello delle carte grandi (zona 5), carta che si gira, pulsante principale (zona 7, anche le regole del
+   turno giocatori che devono venire dopo), banner al centro, scossa dello schermo
    Elementi creati da: ui/schermate/turno-nemesi.ts e turno-nemesi-carosello.ts, index.html.
+   Misure: partita-misure.css. Il turno nemesi è data-turno="nemesi" o "pesca" (passo Pesca).
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
-/* --- VistaRisoluzione --- */
-.ae-resolve-layout {
-  flex: 1; display: flex; flex-direction: column; min-height: 0;
-}
-.ae-resolve-layout.is-entering { animation: ae-fade var(--ae-duration-phase) var(--ae-ease-standard); }
-
+/* --- Zona 3, fascia piccola (uguale nei due turni; misure del turno giocatori in turno-giocatori.css) --- */
 .ae-compact-rail {
-  flex: 0 0 104px; height: 104px; display: flex; align-items: center; gap: 10px;
+  flex: 0 0 var(--carte-piccole-altezza-nemesi); height: var(--carte-piccole-altezza-nemesi); display: flex; align-items: center; gap: var(--carte-piccole-spazio);
   /* carte a metà tra la testata e la linea di separazione */
-  overflow-x: auto; overflow-y: hidden; padding: 0 16px;
+  overflow-x: auto; overflow-y: hidden; padding: 0 var(--carte-piccole-margine-giocatori);
   border-bottom: 1px solid var(--ae-border); overscroll-behavior-x: contain; scroll-snap-type: x proximity;
 }
-.ae-compact-rail .ae-queue-item { --cw: 52px; width: 52px; flex-basis: 52px; gap: 4px; opacity: .7; }
+.ae-compact-rail .ae-queue-item { --cw: var(--carta-piccola-larghezza); width: var(--carta-piccola-larghezza); flex-basis: var(--carta-piccola-larghezza); gap: 4px; opacity: .7; }
 .ae-compact-rail .ae-queue-item[aria-current='true'],
 .ae-compact-rail .ae-queue-item[data-viewed='true'] { opacity: 1; }
 /* Box vita / token sopra la carta, centrato in alto (sovrapposto all'immagine) */
@@ -28,19 +26,19 @@
 /* Prossima carta da pescare (retro) in fondo alla fascia: NUOVA in alto a destra */
 .ae-compact-rail .ae-next-card .ae-new-tag { display: block; top: 20px; right: -4px; padding: 1px 3px; font-size: 10px; line-height: 12px; border-radius: 4px; }
 
-/* Carosello del turno nemesi: scorre in orizzontale e si ferma su ogni carta (scroll-snap); la barra non si vede */
+/* --- Zona 5, carosello del turno nemesi: scorre in orizzontale e si ferma su ogni carta (scroll-snap); la barra non si vede --- */
 .ae-focus {
-  flex: 1; min-height: 0; display: block; padding: 12px 0;
+  flex: 1; min-height: 0; display: block; padding: var(--carte-grandi-spazio-sopra-sotto) 0;
   overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
   scrollbar-width: none; touch-action: pan-x;
 }
 .ae-focus::-webkit-scrollbar { display: none; }
-.ae-focus-track { display: flex; gap: 12px; height: 100%; width: max-content; }
+.ae-focus-track { display: flex; gap: var(--carte-grandi-spazio-nemesi); height: 100%; width: max-content; }
 .ae-focus-slide {
-  flex: 0 0 var(--ae-focus-w, 280px); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px;
+  flex: 0 0 var(--ae-focus-w, 280px); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: var(--carte-grandi-riga-stato-distanza);
   scroll-snap-align: center; scroll-snap-stop: always; --ae-slide: 24px;
 }
-.ae-focus-slide .ae-focus-stage { width: var(--ae-focus-w, 280px); height: calc(var(--ae-focus-w, 280px) * 88 / 63); }
+.ae-focus-slide .ae-focus-stage { width: var(--ae-focus-w, 280px); height: calc(var(--ae-focus-w, 280px) * var(--carta-altezza) / var(--carta-larghezza)); }
 .ae-focus-stage { position: relative; flex: 0 0 auto; border-radius: 5% / 3.58%; }
 /* Carta appena pescata: glow dorato come nella versione 1 (10% / 2% della larghezza della carta, al massimo 28px) */
 .ae-focus-stage.is-new { box-shadow: 0 0 min(calc(var(--cw, 300px) * .1), 28px) min(calc(var(--cw, 300px) * .02), 6px) rgba(255, 196, 60, .85); }
@@ -93,12 +91,11 @@
 }
 @keyframes ae-tier-banner { 0% { opacity: 0; } 8%, 75% { opacity: 1; } 100% { opacity: 0; } }
 
-/* Dock in risoluzione: una CTA principale, eventuale microtesto sopra */
+/* --- Zona 7 nel turno nemesi: il pulsante principale va a capo se la scritta è lunga --- */
 .ae-dock .ae-button { white-space: normal; }
-#resolve-btn { min-height: 52px; }
-
-@media (max-width: 359px) {
-  .ae-dock-row { flex-wrap: wrap; }
+:is([data-turno="nemesi"], [data-turno="pesca"]) #pulsante-principale.ae-button--primary { min-height: var(--principale-altezza); }
+:is([data-turno="nemesi"], [data-turno="pesca"]) #pulsante-principale {
+  padding-left: var(--principale-margine-interno-nemesi); padding-right: var(--principale-margine-interno-nemesi);
 }
 
 @media (max-height: 480px) and (orientation: landscape) {
@@ -107,7 +104,6 @@
   .ae-compact-rail .ae-status-badge { display: none; }
   .ae-focus { padding: 4px 0; }
   .ae-dock { padding-top: 4px; gap: 4px; }
-  .ae-dock-row { min-height: 36px; }
   .ae-dock .ae-button { min-height: 44px; }
 }
 
@@ -120,7 +116,7 @@
 }
 .ae-button.has-nemesis-art:disabled { opacity: .55; }
 /* Fase di pesca: fascia con la linea dorata, pulsante "Pesca" dorato */
-.ae-resolve-layout.is-draw-phase .ae-compact-rail { border-bottom-color: rgba(223, 174, 89, .6); }
+[data-turno="pesca"] .ae-compact-rail { border-bottom-color: rgba(223, 174, 89, .6); }
 .ae-button.is-draw { background: var(--ae-gold); color: #20160B; letter-spacing: .08em; text-transform: uppercase; }
 
 /* Potere da risolvere: dopo 1 secondo un token sfuma fino a sparire (0,9 s) */
@@ -161,10 +157,14 @@
   .ae-focus-status.is-auto-token .ae-token:last-child { animation-duration: .01s; }
   .ae-tier-banner-text { animation: none; }
 }
-/* Turno nemesi: riga che contiene la fascia piccola */
-.ae-rail-row { flex: 0 0 auto; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-bottom: 1px solid var(--ae-border); }
-.ae-rail-row > .ae-compact-rail { flex: 1 1 auto; min-width: 0; border-bottom: 0; padding: 0 6px; }
-.ae-resolve-layout.is-draw-phase .ae-rail-row { border-bottom-color: rgba(223, 174, 89, .6); }
+/* Turno nemesi: la zona 3 è una riga che contiene la fascia piccola */
+:is([data-turno="nemesi"], [data-turno="pesca"]) [data-zona="carte-piccole"] {
+  flex: 0 0 auto; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 0 var(--carte-piccole-margine-riga-nemesi);
+  min-width: auto; min-height: auto;
+  border-bottom: 1px solid var(--ae-border);
+}
+:is([data-turno="nemesi"], [data-turno="pesca"]) .ae-compact-rail { flex: 1 1 auto; min-width: 0; border-bottom: 0; padding: 0 var(--carte-piccole-margine-fascia-nemesi); }
+[data-turno="pesca"] [data-zona="carte-piccole"] { border-bottom-color: rgba(223, 174, 89, .6); }
 
 /* Carta pescata: token e vita compaiono dopo il banner Tier (--ae-tier-wait lo imposta turno-nemesi.ts) */
 .ae-focus-slide.is-drawing .ae-focus-status.is-hp > * { animation-delay: calc(var(--ae-tier-wait, 0ms) + .4s); }
@@ -177,19 +177,15 @@
 /* Carta da pescare: si tocca per pescare */
 .ae-focus-slide--draw .ae-focus-stage { cursor: pointer; }
 
-/* Vita/token, carta e pulsanti alzati di 14px in entrambi i turni */
-.ae-focus-track, .queue-view .ae-queue-list { transform: translateY(-14px); }
-
 /* Nessuna linea di separazione tra fascia piccola e carte grandi, in entrambi i turni */
-.ae-compact-rail, .ae-rail-row, .ae-resolve-layout.is-draw-phase .ae-compact-rail, .ae-resolve-layout.is-draw-phase .ae-rail-row { border-bottom: 0; }
+.ae-compact-rail, :is([data-turno="nemesi"], [data-turno="pesca"]) [data-zona="carte-piccole"], [data-turno="pesca"] .ae-compact-rail,
+[data-turno="pesca"] [data-zona="carte-piccole"] { border-bottom: 0; }
 /* Pulsante principale senza il box del dock */
 .ae-dock { background: none; border-top: 0; }
 /* Fascia piccola: senza box, a tutta larghezza; stessa posizione nei due turni (16px ai lati) */
-.ae-rail-row { padding: 0 10px; }
-.ae-rail-row > .ae-compact-rail { padding: 0 6px; }
-.ae-rail-row > .ae-compact-rail { border: 0; }
-.ae-resolve-layout.is-draw-phase .ae-rail-row { border-color: rgba(223, 174, 89, .6); }
-.ae-rail-row { padding: 1px 10px; }
+:is([data-turno="nemesi"], [data-turno="pesca"]) .ae-compact-rail { border: 0; }
+[data-turno="pesca"] [data-zona="carte-piccole"] { border-color: rgba(223, 174, 89, .6); }
+:is([data-turno="nemesi"], [data-turno="pesca"]) [data-zona="carte-piccole"] { padding: var(--carte-piccole-bordo-nemesi) var(--carte-piccole-margine-riga-nemesi); }
 
 /* Pulsante principale "Salva modifiche": dorato */
 .ae-button.is-save { background: var(--ae-gold); color: #20160B; border-color: var(--ae-gold); text-shadow: none; letter-spacing: .04em; }
@@ -228,16 +224,16 @@
 
 /* Fascia piccola: NUOVA sulla carta da pescare (dorso) in alto a destra, dentro la carta */
 .ae-compact-rail .ae-next-card .ae-new-tag { top: 3px; right: 3px; }
-.ae-dock { padding-top: 4px; }
-.ae-focus { padding-top: 6px; padding-bottom: 6px; }
+.ae-dock { padding-top: var(--principale-spazio-sopra); }
+.ae-focus { padding-top: var(--carte-grandi-spazio-sopra-sotto); padding-bottom: var(--carte-grandi-spazio-sopra-sotto); }
 /* Carta da pescare e carta pescata: scala calcolata da sizeFocus (fino a 1,15) */
 .ae-focus-slide.is-big .ae-focus-stage { scale: var(--ae-big-scale, 1.08); }
 
 /* Retro della faccia anteriore della carta che si gira: se l'immagine non fosse ancora disegnata si vede il dorso, non lo sfondo */
 .ae-flip-face--front { background: var(--ae-card-back, url('/Assets/ui/decor/card-back-logo.webp')) center / cover no-repeat; }
-/* Anche nel turno nemesi -24px, così box vita/token e carta sono alla stessa altezza del turno
-   giocatori. La carta da pescare / pescata (.is-big) annulla lo spostamento con translate 24px */
-.ae-focus-track { transform: translateY(-24px); }
+/* Anche nel turno nemesi il blocco sale (--carte-grandi-spostamento), così box vita/token e carta sono alla stessa
+   altezza del turno giocatori. La carta da pescare / pescata (.is-big) annulla lo spostamento */
+.ae-focus-track { transform: translateY(var(--carte-grandi-spostamento)); }
 /* Fascia piccola: il box della vita con due numeri lunghi (13/17) può essere più largo della carta, senza tagli */
 .ae-compact-rail .ae-queue-item > .ae-status-badge { max-width: none; overflow: visible; }
 .ae-compact-rail .ae-status-badge.is-long { gap: 1px; padding: 1px 3px; font-size: 10px; letter-spacing: -.02em; }
@@ -248,18 +244,17 @@
 .ae-focus-slide.is-big .ae-focus-stage { scale: none; }
 .ae-focus-slide.is-big { scale: var(--ae-big-scale, 1.08); transform-origin: 50% var(--ae-big-origin, 50%); }
 
-/* Riga vita/token sopra le carte grandi al 90%; lo spazio va alla carta
-   (turno-nemesi.ts STATUS_H) */
-.ae-focus-status { min-height: 37px; gap: 7px; font-size: 21.6px; line-height: 27px; }
-.ae-focus-status .ae-icon { width: 18px; height: 18px; }
-.ae-focus-status .ae-token { width: 35px; height: 35px; }
+/* Riga vita/token sopra le carte grandi al 90%; lo spazio va alla carta (misura letta anche da ui/componenti/misure.ts) */
+.ae-focus-status { min-height: var(--carte-grandi-riga-stato-altezza); gap: 7px; font-size: 21.6px; line-height: 27px; }
+.ae-focus-status .ae-icon { width: var(--carte-grandi-icona); height: var(--carte-grandi-icona); }
+.ae-focus-status .ae-token { width: var(--carte-grandi-token); height: var(--carte-grandi-token); }
 
 /* Carta da pescare e carta pescata: cresce solo la carta (larghezza --ae-big-w da sizeFocus), la riga vita/token resta
    come nelle altre carte. Il blocco è centrato in verticale (annulla lo spostamento in su di 14px del carosello) */
 /* Carta da pescare / pescata, annulla lo spostamento in su del carosello (24px, vedi .ae-focus-track sotto) */
-.ae-focus-slide.is-big { scale: none; translate: 0 24px; flex-basis: var(--ae-big-w, var(--ae-focus-w, 280px)); --cw: var(--ae-big-w, 300px); }
+.ae-focus-slide.is-big { scale: none; translate: 0 calc(-1 * var(--carte-grandi-spostamento)); flex-basis: var(--ae-big-w, var(--ae-focus-w, 280px)); --cw: var(--ae-big-w, 300px); }
 .ae-focus-slide.is-big .ae-focus-stage {
-  scale: none; width: var(--ae-big-w, var(--ae-focus-w, 280px)); height: calc(var(--ae-big-w, var(--ae-focus-w, 280px)) * 88 / 63);
+  scale: none; width: var(--ae-big-w, var(--ae-focus-w, 280px)); height: calc(var(--ae-big-w, var(--ae-focus-w, 280px)) * var(--carta-altezza) / var(--carta-larghezza));
 }
 
 /* Fascia piccola: "HP: −x" del minion in modifica, al centro della carta */
@@ -268,14 +263,20 @@
   top: 50%; left: 50%; right: auto; transform: translate(-50%, -50%); z-index: 4; padding: 1px 4px; border-radius: 5px;
   font-size: 11px; line-height: 14px; white-space: nowrap;
 }
-/* Testo sempre su una riga: così i due pulsanti restano alti come il pulsante principale anche sui telefoni stretti */
+/* Zona 7 nel turno giocatori: testo sempre su una riga, così "Salva modifiche" e "Annulla modifiche" restano alti come
+   il pulsante principale anche sui telefoni stretti */
 /* Ordine: regola di menu-laterale.css; sta qui perché deve venire dopo ".ae-dock .ae-button" (stesso elemento, stessa specificità) */
-.ae-main-row > .ae-button { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; padding-left: 12px; padding-right: 12px; }
+:is([data-turno="giocatori"], [data-turno="crea-mazzo"]) .ae-main-row > .ae-button {
+  flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden;
+  padding-left: var(--principale-margine-interno-giocatori); padding-right: var(--principale-margine-interno-giocatori);
+}
 /* Ordine: regola di menu-laterale.css; sta qui perché deve venire dopo ".ae-main-row>.ae-button" (stesso elemento, stessa specificità) */
-.ae-main-row > .ae-cancel-drafts { flex: 0 0 auto; }
+:is([data-turno="giocatori"], [data-turno="crea-mazzo"]) .ae-main-row > .ae-cancel-drafts { flex: 0 0 auto; }
 @media (max-width: 345px) {
   /* Ordine: regola di menu-laterale.css; sta qui perché deve venire dopo ".ae-main-row>.ae-button" (stesso elemento, stessa specificità) */
-  .ae-main-row > .ae-button { font-size: 14px; padding-left: 8px; padding-right: 8px; }
+  :is([data-turno="giocatori"], [data-turno="crea-mazzo"]) .ae-main-row > .ae-button {
+    font-size: 14px; padding-left: var(--principale-margine-interno-stretto); padding-right: var(--principale-margine-interno-stretto);
+  }
 }
 /* Scritte Tier / Partita iniziata: ferme e invisibili finché non sono pronte (showBanner); poi l'animazione muove solo
    trasformazione e opacità (niente letter-spacing animato, che ridisegnava il testo con le ombre a ogni fotogramma) */

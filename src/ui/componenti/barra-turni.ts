@@ -13,7 +13,7 @@ import { lockFor } from './animazioni.ts';
 import { announce } from './dialoghi.ts';
 import { headerPiles } from './testata.ts';
 import { el, query } from '../dom.ts';
-import { app, mainEl, nemesisBtn, reducedMotion, ui } from '../pagina.ts';
+import { app, byId, mainEl, pulsantePrincipale, reducedMotion, ui } from '../pagina.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
 import { I18N_IT } from '../testi.ts';
 import { needsPairChoice } from './componenti.ts';
@@ -35,7 +35,7 @@ export function playTurnShuffle(fadeMs: number): void {
   lockFor(fade + merge + 40, () => {
     ui.trackShuffle = false;
     turnTrack.classList.remove('is-shuffling');
-    nemesisBtn.focus({ preventScroll: true });
+    pulsantePrincipale.focus({ preventScroll: true });
     announce(I18N_IT.drawFirstTurnCard);
   });
   richiediRidisegno();
@@ -213,7 +213,7 @@ export function chooseTurnPlayer(player: Giocatore): void {
   scegliGiocatoreCoppia(player);
   richiediRidisegno();
   announce(turnTrack.getAttribute('aria-label'));
-  nemesisBtn.focus({ preventScroll: true });
+  pulsantePrincipale.focus({ preventScroll: true });
   turnTrack.classList.remove('is-changed');
   void turnTrack.offsetWidth;
   turnTrack.classList.add('is-changed');
@@ -310,8 +310,8 @@ export function renderPairChoice(): void {
   headerPiles.inert = show;
   // Pulsante grande: sparisce con la finestra aperta; con la finestra ridotta lo sostituiscono i due giocatori
   // (con la finestra aperta resta il suo spazio, invisibile, così le carte sotto non cambiano misura)
-  nemesisBtn.style.visibility = show ? 'hidden' : '';
-  if (minimized) nemesisBtn.hidden = true;
+  pulsantePrincipale.style.visibility = show ? 'hidden' : '';
+  if (minimized) pulsantePrincipale.hidden = true;
   pairDock.hidden = !minimized;
   // (con la scelta in sospeso la carta in corso è una carta 1/2 o 3/4: String la scrive come prima nel dataset)
   const curCard = currentTurnCard();
@@ -339,13 +339,12 @@ export function renderPairChoice(): void {
   }
 }
 
-// Crea la barra dei turni sotto la testata; toccandola si apre la finestra del mazzo dei turni (apri: la funzione che
-// la apre, passata dal coordinatore, perché la finestra sta sopra la barra)
+// Prepara la barra dei turni sotto la testata (zona 2 della schermata "partita", #fascia-turno in index.html);
+// toccandola si apre la finestra del mazzo dei turni (apri: la funzione che la apre, passata dal coordinatore, perché la
+// finestra sta sopra la barra)
 export function creaBarraTurni(apri: () => void): void {
   // Toccando la barra si apre il mazzo dei turni (rivela, rimescola dagli scarti, ordina)
-  turnTrack = el('div', 'ae-turn-track');
-  turnTrack.setAttribute('role', 'button');
-  turnTrack.tabIndex = 0;
+  turnTrack = byId('fascia-turno', HTMLDivElement);
   turnTrack.addEventListener('click', () => apri());
   turnTrack.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); apri(); } });
   turnTrackBar = el('div', 'ae-turn-track-bar');
@@ -353,7 +352,6 @@ export function creaBarraTurni(apri: () => void): void {
   turnTrackLabel = el('span', 'ae-turn-label');
   turnTrackLabels.appendChild(turnTrackLabel);
   turnTrack.append(turnTrackBar, turnTrackLabels);
-  mainEl.prepend(turnTrack);
 }
 
 // Codice eseguito all'avvio, nell'ordine di sempre
@@ -382,9 +380,7 @@ export function avvio(): void {
     if (first) first.focus({ preventScroll: true });
   });
 
-  pairDock = el('div', 'ae-pair-dock');
-  pairDock.setAttribute('role', 'group');
+  // Nella zona 7, sotto la riga del pulsante principale (index.html)
+  pairDock = byId('scelta-coppia', HTMLDivElement);
   pairDock.setAttribute('aria-label', I18N_IT.pairChoiceTitle);
-  pairDock.hidden = true;
-  nemesisBtn.after(pairDock);
 }

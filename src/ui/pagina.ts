@@ -15,26 +15,23 @@ export function byId<T extends HTMLElement>(id: string, type: new () => T): T {
   return node;
 }
 
-// Elementi della pagina (assegnati in avvio)
+// Elementi della pagina (assegnati in avvio). La schermata "partita" (#app) ha 7 zone, dall'alto: testata (#topbar),
+// fascia turno, fascia carte piccole (#rail), vite, fascia carte grandi (#queue o #focus), pulsanti interattivi,
+// pulsante principale (#dock); disposizione e nomi in ui/schermate/partita.css
 export let app: HTMLDivElement;
 export let mainEl: HTMLElement;
 export let phaseLabel: HTMLSpanElement;
 export let undoBtn: HTMLButtonElement;
-export let queueView: HTMLElement;
 export let queueViewport: HTMLDivElement;
 export let queueList: HTMLDivElement;
 export let queueEmpty: HTMLDivElement;
-export let resolveView: HTMLElement;
 export let rail: HTMLDivElement;
 export let focusEl: HTMLDivElement;
-export let infoRow: HTMLDivElement;
-export let turnInfo: HTMLSpanElement;
-export let discardBtn: HTMLButtonElement;
+export let zonaCarteGrandi: HTMLElement;
+export let zonaInterattivi: HTMLDivElement;
 export let menuBtn: HTMLButtonElement;
-export let resolveHint: HTMLParagraphElement;
-export let nemesisBtn: HTMLButtonElement;
-export let resolveBtn: HTMLButtonElement;
-export let backBtn: HTMLButtonElement;
+export let pulsantePrincipale: HTMLButtonElement;
+export let annullaModificheBtn: HTMLButtonElement;
 export let startLayer: HTMLDivElement;
 export let startBtn: HTMLButtonElement;
 export let resumeBtn: HTMLButtonElement;
@@ -49,9 +46,6 @@ export let discardClose: HTMLButtonElement;
 export let dialogRoot: HTMLDivElement;
 export let toastRoot: HTMLDivElement;
 export let liveRegion: HTMLDivElement;
-
-// Rapporto carta standard: 63 x 88 mm
-export const CARD_RATIO = 88 / 63;
 
 // Distanza minima (px) di uno slide per cambiare carta in VistaRisoluzione
 export const SWIPE_MIN_DISTANCE = 50;
@@ -196,27 +190,22 @@ export interface Sfondo {
 export function avvio(): void {
   app = byId('app', HTMLDivElement);
 
-  // Testata trasparente (sopra lo sfondo della vista): Undo, nome della nemesi, Menu. Uguale nei due turni.
+  // Testata trasparente (sopra lo sfondo della schermata): mazzo e scarti, nome della nemesi, Menu. Uguale nei due turni.
   app.classList.add('clear-header');
 
   mainEl = byId('main', HTMLElement);
   phaseLabel = byId('phase-label', HTMLSpanElement);
   undoBtn = byId('undo-btn', HTMLButtonElement);
-  queueView = byId('queue-view', HTMLElement);
   queueViewport = byId('queue', HTMLDivElement);
   queueList = byId('queue-list', HTMLDivElement);
   queueEmpty = byId('queue-empty', HTMLDivElement);
-  resolveView = byId('resolve-view', HTMLElement);
   rail = byId('rail', HTMLDivElement);
   focusEl = byId('focus', HTMLDivElement);
-  infoRow = byId('info-row', HTMLDivElement);
-  turnInfo = byId('turn-info', HTMLSpanElement);
-  discardBtn = byId('discard-btn', HTMLButtonElement);
+  zonaCarteGrandi = byId('carte-grandi', HTMLElement);
+  zonaInterattivi = byId('interattivi', HTMLDivElement);
   menuBtn = byId('menu-btn', HTMLButtonElement);
-  resolveHint = byId('resolve-hint', HTMLParagraphElement);
-  nemesisBtn = byId('nemesis-btn', HTMLButtonElement);
-  resolveBtn = byId('resolve-btn', HTMLButtonElement);
-  backBtn = byId('back-btn', HTMLButtonElement);
+  pulsantePrincipale = byId('pulsante-principale', HTMLButtonElement);
+  annullaModificheBtn = byId('annulla-modifiche', HTMLButtonElement);
   startLayer = byId('start', HTMLDivElement);
   startBtn = byId('start-btn', HTMLButtonElement);
   resumeBtn = byId('resume-btn', HTMLButtonElement);

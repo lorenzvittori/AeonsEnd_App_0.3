@@ -1,4 +1,4 @@
-// ui/componenti/vite.ts: la riga delle vite di Gravehold e della nemesi sotto la fascia del turno attivo: box con il
+// ui/componenti/vite.ts: la riga delle vite di Gravehold e della nemesi (zona 4 della schermata "partita"): box con il
 // number scrubbing (trascinando in verticale la vita cambia), cifre che scorrono (renderLifeDigits, usate anche dalla
 // finestra della vita) e sfondo del box di Gravehold scelto nel Menu. Un tocco sul box apre la finestra della vita
 // (aggancio apriFinestraVita); a 0 la Vittoria o la Sconfitta (aggancio mostraFinePartita).
@@ -14,16 +14,17 @@ import { animDone } from './animazioni.ts';
 import { modals } from './dialoghi.ts';
 import { scrubDelta, scrubStart, scrubValue } from './vite-scrub.ts';
 import { el, need, query, queryAll } from '../dom.ts';
-import { cssUrl, reducedMotion, ui } from '../pagina.ts';
+import { byId, cssUrl, reducedMotion, ui } from '../pagina.ts';
 import type { Sfondo } from '../pagina.ts';
 import { apriFinestraVita, mostraFinePartita, richiediRidisegno } from '../ridisegno.ts';
 import { I18N_IT } from '../testi.ts';
 
+// La riga delle vite (#vite in index.html, zona 4 della schermata "partita"): i due box si creano al primo disegno
 export let livesRow: HTMLDivElement | null = null;
 
 export function ensureLivesRow(): HTMLDivElement {
   if (livesRow) return livesRow;
-  const row = el('div', 'ae-lives');
+  const row = byId('vite', HTMLDivElement);
   livesRow = row;
   const box = (kind: TipoVita) => {
     const b = el('button', 'ae-life-box ae-life-box--' + kind);
@@ -53,11 +54,9 @@ export function ensureLivesRow(): HTMLDivElement {
   return row;
 }
 
-// anchor: la fascia del turno attivo, dopo la quale sta la riga (la sceglie il coordinatore); senza, la riga resta dov'è
-// (nuovo sfondo di Gravehold scelto nel Menu)
-export function renderLives(anchor?: Element): void {
+// La riga sta sempre nella sua zona; non c'è durante "Crea mazzo"
+export function renderLives(): void {
   const row = ensureLivesRow();
-  if (anchor && row.previousElementSibling !== anchor) anchor.after(row);
   row.hidden = !!ui.deckBuilding;
   // Sfondi dei box: Gravehold = immagine scelta nel Menu; nemesi = ritratto della nemesi della partita
   const setBg = (b: HTMLElement, src: string | null | undefined) => {

@@ -186,6 +186,48 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
 - Poi compare il banner **Partita iniziata**, con la stessa animazione del banner Tier; finito il banner lo sfondo passa
   dal nero a quello del turno giocatori e si è nel turno giocatori.
 
+**Schermata "partita": 7 zone (branch `ts`, dalla fase G)**
+- Turno giocatori, turno nemesi, passo Pesca e "Crea mazzo" sono **la stessa schermata** (`#app`,
+  `data-schermata="partita"`), divisa in 7 zone fisse, dall'alto in basso. Ogni zona è un blocco di `index.html` con
+  `data-zona` e ha lo stesso nome nel CSS, nel codice e qui:
+
+  | Zona | `data-zona` | Elemento | Cosa c'è |
+  |---|---|---|---|
+  | 1 | `testata` | `#topbar` | mazzo e scarti, nome della nemesi con battaglia, giocatori e turno, Menu (già nell'HTML) |
+  | 2 | `turno` | `#fascia-turno` | barra del mazzo dei turni |
+  | 3 | `carte-piccole` | `#rail` | le carte in gioco in piccolo: **una sola fascia** per i due turni |
+  | 4 | `vite` | `#vite` | box di Gravehold e della nemesi (sempre in questa zona, mai spostati) |
+  | 5 | `carte-grandi` | `#carte-grandi` con `#queue` e `#focus` | un contenitore, stessa posizione: dentro la coda del turno giocatori (`#queue`) o il carosello del turno nemesi (`#focus`), uno visibile per momento |
+  | 6 | `interattivi` | `#interattivi` | i comandi della carta al centro (−5 −1 +1, Rimuovi, Imposta la vita); solo nel turno giocatori |
+  | 7 | `principale` | `#dock` | **un solo pulsante** (`#pulsante-principale`), con "Annulla modifiche" accanto, il cursore di "Crea mazzo" al suo posto e la scelta 1/2 o 3/4 ridotta |
+
+- **Disposizione:** `src/ui/schermate/partita.css`, una griglia con `grid-template-areas` scritta come disegno (una riga
+  per zona). Le zone 2-6 stanno in `.ae-main`, che usa le righe della schermata (sottogriglia). Per spostare una zona
+  si cambia il disegno lì.
+- **Momento della partita:** `data-turno` su `#app` = `giocatori` | `nemesi` | `pesca` | `crea-mazzo`, deciso da
+  `variantePartita(partita, ui)` (`src/ui/partita-variante.ts`, funzione pura provata in
+  `tests/partita-variante.test.ts`) e scritto dal coordinatore a ogni `render`. Decide solo:
+  - zona 6: c'è nel turno giocatori (e in "Crea mazzo", nascosta), non nel turno nemesi né in Pesca;
+  - zona 7: testo e azione dell'unico pulsante (`data-azione`): `pesca-carta-turno`, `fine-turno`, `salva-modifiche`
+    (con "Annulla modifiche" accanto), `risolvi`, `pesca`, `torna` ("Torna alla carta da risolvere / da pescare",
+    secondario), `cursore` ("Crea mazzo"). Il colore sfuma solo dentro lo stesso gruppo (giocatori / risolvi-pesca /
+    torna), come quando erano tre pulsanti;
+  - zona 5: `coda` (scorrimento libero, il tocco sulla carta al centro apre la sua scheda), `carosello` (si ferma su
+    ogni carta, il pulsante risolve la carta di turno), `carta-coperta` (Pesca);
+  - lo sfondo (`partita.css`: nemesi e Pesca mostrano il lato destro).
+- **"Crea mazzo"** è un momento della stessa schermata: testata, zone e cursore al posto del pulsante restano dove
+  sono; le zone 3-6 ci sono con le misure del turno giocatori ma non si vedono, sopra c'è la schermata dei 9 mazzi
+  (dentro `.ae-main`). Così finito il mazzo non si sposta niente. Lo sfondo nero resta la classe `is-deck-dark`, che
+  dura fino alla fine del banner "Partita iniziata" (oltre "Crea mazzo").
+- **Per cambiare una misura:** `src/ui/schermate/partita-misure.css`, variabili con un nome parlante e un commento di una
+  riga, per zona nello stesso ordine della mappa: carte riga 9, testata riga 13, fascia turno riga 24, carte piccole
+  riga 33, vite riga 44, carte grandi riga 57, interattivi riga 74, pulsante principale riga 79. Il CSS delle zone usa
+  le variabili; il codice le legge da lì (`misura()` in `ui/componenti/misure.ts`: proporzioni della carta, riga
+  vita/token, comandi, spazi, carta da pescare, colonna del desktop). Dove i due turni hanno oggi valori diversi ci sono
+  due variabili (`-giocatori` / `-nemesi`): altezza della fascia piccola (106 / 104 + 1px sopra e sotto), margini della
+  fascia piccola (16 / 10 + 6), spazio tra le carte grandi (18 / 12), margine interno del pulsante principale
+  (12 / 18).
+
 **Testata (uguale nei due turni)**
 - A sinistra il **mazzo** (dorso con il numero di carte) e gli **scarti** (ultima carta con il numero).
   - Tocco sugli scarti: si apre la pila degli scarti, dalla più recente, e ogni carta si ingrandisce.
@@ -707,7 +749,7 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   (`preparaApp`, `misuraApp` eseguite nell'iframe). Nell'iframe `save()` è spento (la partita salvata non cambia) e le
   barre di scorrimento sono nascoste come su un telefono. Una riga in alto dice da quale versione sono le misure; se la
   misura fallisce (per esempio se cambiano i nomi interni usati: `centredQueueUid`, `scrollToCard`, `makeEntry`,
-  `turnTrackBar`, `turnTrackLabels`, `nemesisBtn`, `.ae-compact-rail`, `.queue-slot`, `.queue-controls`...) mostra
+  `turnTrackBar`, `turnTrackLabels`, `pulsantePrincipale` (fino alla fase G `nemesisBtn`), `#rail`, `.ae-compact-rail`, `.queue-slot`, `.queue-controls`...) mostra
   le misure salvate in `misure.json` e lo dice. Con un cambio di posizionamento lo scheletro si aggiorna da solo.
   Dalla v255 misura anche i box **Vita Gravehold** e **Vita nemesi** (`.ae-lives`); `misure.json` rifatto il 23/11/2026.
 - **App installabile:** `manifest.webmanifest` (a tutto schermo, verticale) e icone in `Assets/ui/app-icons/`
@@ -737,8 +779,8 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
 
 | Termine | Significato |
 |---|---|
-| **Turno giocatori** (nel codice *VistaCoda*, `#queue-view`) | Vista delle carte in gioco tra un turno nemesi e l'altro. |
-| **Turno nemesi** (nel codice *VistaRisoluzione*, `#resolve-view`) | Risoluzione delle carte in gioco, poi pesca della nuova carta. |
+| **Turno giocatori** (nel codice *VistaCoda*, `data-turno="giocatori"`, coda `#queue`) | Vista delle carte in gioco tra un turno nemesi e l'altro. |
+| **Turno nemesi** (nel codice *VistaRisoluzione*, `data-turno="nemesi"` / `pesca`, carosello `#focus`) | Risoluzione delle carte in gioco, poi pesca della nuova carta. |
 | **Coda** (`queue`) | Le carte nemesi in gioco, in ordine di arrivo. |
 | **Vista piccola / fascia** (`.ae-compact-rail`) | Striscia in alto con tutte le carte in piccolo: `#queue-rail` nel turno giocatori, `#rail` (dentro `.ae-rail-row`) nel turno nemesi. |
 | **Vista grande** | Le carte grandi: lista scorrevole nel turno giocatori, carosello nel turno nemesi. |
@@ -832,7 +874,8 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   - Un `render()` ricostruisce le carte del turno giocatori e interrompe le loro animazioni: per questo `lockFor`, che
     ridisegna alla fine, deve durare almeno quanto le animazioni avviate (vedi `toPlayersTurn`, `ENTER_MS`).
   - Turno giocatori: `renderQueue()`, con la fascia, `.queue-slot` (carta + comandi) e `sizeQueue()`.
-  - La misura delle carte grandi è una sola regola per i due turni (`sharedCardWidth`); `STATUS_H` deve restare uguale
+  - La misura delle carte grandi è una sola regola per i due turni (`sharedCardWidth`); sul branch `ts` le misure che usa
+    (riga vita/token, comandi, spazi, proporzioni) le legge da `partita-misure.css` (sezione 4). Su `main`: `STATUS_H` deve restare uguale
     all'altezza della riga vita/token in `style.css`.
 
 ### Regole di gioco nel codice
@@ -946,7 +989,10 @@ grande e import tra moduli di `ui/`.
 - **Finestra o componente:** è componente un pezzo usato da più schermate o finestre o sempre presente nella partita
   (testata, barra dei turni, vite, pila degli scarti `#discard`); è finestra ciò che si apre al volo sopra una
   schermata ed è usato da una sola parte (o dal coordinatore).
-- **Il coordinatore** (`ui/navigazione.ts`) è l'unico che mostra e nasconde `#start`, `#queue-view`, `#resolve-view`.
+- **Il coordinatore** (`ui/navigazione.ts`) è l'unico che mostra e nasconde i blocchi fissi: `#start` e, nella
+  schermata "partita" (sezione 4, 7 zone), il momento `data-turno`, `#queue` / `#focus` della zona 5 e la zona 6
+  `#interattivi` (da `variantePartita`, `ui/partita-variante.ts`, livello 2). Il pulsante della zona 7 lo disegna
+  `ui/componenti/pulsante-principale.ts` (dal coordinatore e, quando cambia la carta guardata, dal carosello).
   Sa dove si è con `schermataAttuale()` ('menu', 'nuova-partita', 'crea-mazzo', 'turno-giocatori', 'turno-nemesi'):
   lo stato è solo la pagina iniziale aperta e in quale modo (`navigazione-stato.ts`, senza DOM, provato in
   `tests/navigazione.test.ts`); "Crea mazzo" e il turno si leggono da `ui.deckBuilding` e `partita.resolving`.
@@ -975,7 +1021,7 @@ grande e import tra moduli di `ui/`.
 
   Si usa invece una **funzione passata come argomento** quando chi crea il pezzo sa già cosa deve succedere: la barra
   dei turni (`creaBarraTurni(apri)`), il nome della nemesi in testata durante "Crea mazzo" (`disegnaTestata(onNameClick)`),
-  la fascia sotto cui sta la riga delle vite (`renderLives(anchor)`), le carte grandi da cui parte il turno nemesi
+  le carte grandi da cui parte il turno nemesi
   (`enterNemesisTurnView`).
 - **Una schermata nuova:** un file in `ui/schermate/` che esporta il suo `disegna...()` (e, se serve, `avvio()` per i
   suoi ascoltatori); un nome nuovo in `Schermata` e in `schermataAttuale()` (`navigazione-stato.ts`, con un test in
@@ -996,6 +1042,15 @@ grande e import tra moduli di `ui/`.
   della coda), il ripristino limita `currentIndex` all'ultima carta. Così l'ultima carta va risolta di nuovo invece di
   pescare. Il codice è in `restoreGame` di `src/regole/salvataggio.ts` (prima in `restore`). Il test
   `tests/salvataggio.test.ts` (`afterRestore`) lo descrive.
+- **Scarti, focus:** chiudendo la pila degli scarti il focus non torna a chi l'ha aperta (la pila in testata): il codice
+  lo rimetteva sul vecchio pulsante "Scarti" del dock, tolto dalla pagina all'avvio (fase G: tolto anche il codice; il
+  comportamento è lo stesso). `discardTrigger` in `ui/componenti/scarti.ts` c'è ma non si usa.
+- **Rotella sulla fascia piccola:** sul desktop la rotella del mouse scorre la fascia delle carte piccole solo nel turno
+  nemesi; nel turno giocatori no (quando le fasce erano due, solo quella del turno nemesi aveva l'ascoltatore). La
+  fascia ora è una sola e il limite è tenuto apposta (`navigazione.ts`, ascoltatore `wheel`).
+- **Misura delle carte grandi nel turno giocatori:** `sharedCardWidth` calcola quanto si vede delle vicine con lo spazio
+  tra le carte del carosello (12px, `--carte-grandi-spazio-nemesi`) anche per la coda, dove lo spazio è 18px
+  (`--carte-grandi-spazio-giocatori`).
 
 ## 7. Dati
 
@@ -1111,6 +1166,9 @@ grande e import tra moduli di `ui/`.
     - `partita.test.ts`: il modulo della partita: `nuovaPartita()` dà sempre lo stesso stato, due partite di fila con
       lo stesso caso danno lo stesso risultato, un'azione = un passo di undo, salvataggio → ripresa = stesso stato,
       uscita dalla Modalità test (caso e orologio fissati, `localStorage` finto);
+    - `partita-variante.test.ts`: `variantePartita()` (momento e varianti della schermata "partita") nel turno
+      giocatori, turno nemesi, passo Pesca, carta pescata, "Crea mazzo", con e senza modifiche non salvate, con
+      un'altra carta guardata; la funzione non cambia niente;
     - `navigazione.test.ts`: `schermataAttuale()` (avvio, Nuova partita, Crea mazzo, turni, ripresa di un salvataggio,
       Modalità test) e cosa chiude il tasto Indietro con e senza finestre aperte, senza la pagina;
     - `moduli.test.ts`: i moduli si importano senza effetti, le regole sono pure, niente `.js` in `src/`, niente `G`,
@@ -1195,6 +1253,7 @@ grande e import tra moduli di `ui/`.
 | `ts-prima-porting-273` | Branch `ts`: fine della fase D, prima del porting di main v269–v273. |
 | `ts-prima-fase-E` | Branch `ts`: dopo il porting di main v273, prima della divisione del CSS per schermata. |
 | `ts-prima-fase-E2` | Branch `ts`: fine della fase E (CSS per schermata), prima dei livelli dell'interfaccia e del coordinatore. |
+| `ts-prima-fase-G` | Branch `ts`: fine della fase E2, prima della schermata "partita" unica con le 7 zone. |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 

@@ -10,7 +10,7 @@ import { cardArt, draftHp, draftOf, hasHp, needsPairChoice, setDraft, tokenIcons
 import { button, modals, openModal, showToast } from '../componenti/dialoghi.ts';
 import { flyToDiscard } from '../componenti/testata.ts';
 import { el, icon, query } from '../dom.ts';
-import { focusEl, nemesisBtn, queueList, resolveBtn, ui } from '../pagina.ts';
+import { focusEl, pulsantePrincipale, queueList, ui } from '../pagina.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
 import { I18N_IT } from '../testi.ts';
 
@@ -26,10 +26,10 @@ export function unsetHpClick(e: MouseEvent): void {
   openCardDialog(entry);
 }
 
-// Dopo un dialogo la coda è ridisegnata: il focus va sulla carta indicata (o su Turno Nemesi se la coda è vuota)
+// Dopo un dialogo la coda è ridisegnata: il focus va sulla carta indicata (o sul pulsante principale se la coda è vuota)
 export function focusQueueItem(uid: number | null): void {
   const item = uid !== null ? query(queueList, `[data-uid="${uid}"]`, HTMLElement) : null;
-  (item || nemesisBtn).focus({ preventScroll: true });
+  (item || pulsantePrincipale).focus({ preventScroll: true });
 }
 
 // VistaCartaCoda: dialogo della carta toccata. Minion = punti vita in bozza; potere = rimozione esplicita.
@@ -164,7 +164,7 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
       ui.viewedUid = null;
       if (killedArt) flyToDiscard([killedArt]);
       richiediRidisegno();
-      if (partita.resolving) resolveBtn.focus(); else nemesisBtn.focus();
+      pulsantePrincipale.focus();
       showToast(value <= 0 ? I18N_IT.minionDeleted(name) : I18N_IT.hpLeftToast(name, value));
       return;
     }

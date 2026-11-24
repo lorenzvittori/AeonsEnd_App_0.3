@@ -19,7 +19,8 @@
 //   finestra o schermata: nella stessa cartella, <nome>.ts e i suoi <nome>-*.ts si importano tra loro (senza cicli);
 // - nessun file di src/ sopra MAX_LINES righe, salvo un commento in testa al file che comincia con "Oltre 500 righe:"
 //   e dice perché (elencati qui sotto in uscita);
-// - i blocchi fissi della pagina (#start, #queue-view, #resolve-view) si mostrano e si nascondono solo in
+// - i blocchi fissi della pagina (#start; nella schermata "partita" #queue e #focus della zona 5, la zona 6 #interattivi)
+//   si mostrano e si nascondono solo in
 //   ui/navigazione.ts (hidden assegnato, toggleAttribute / setAttribute / removeAttribute di 'hidden').
 // In uscita anche: numero di file, righe del file più grande, import tra moduli di ui/.
 // --conta stampa quanti "any", @ts-expect-error / @ts-ignore, file .js e usi di G (lo stato condiviso di prima) ci sono
@@ -58,8 +59,8 @@ const MAX_LINES = 500;
 // Il coordinatore, l'unico che mostra e nasconde i blocchi fissi
 const NAV = 'src/ui/navigazione.ts';
 // I blocchi fissi (nomi degli elementi in ui/pagina.ts e id in index.html)
-const FIXED_NAMES = new Set(['startLayer', 'queueView', 'resolveView']);
-const FIXED_IDS = new Set(['start', 'queue-view', 'resolve-view']);
+const FIXED_NAMES = new Set(['startLayer', 'queueViewport', 'focusEl', 'zonaInterattivi']);
+const FIXED_IDS = new Set(['start', 'queue', 'focus', 'interattivi']);
 // Livello di un file (percorso relativo alla cartella del repo)
 function levelOf(rel) {
   if (/^src\/(tipi|regole|stili)\//.test(rel)) return 0;
@@ -198,7 +199,7 @@ for (const { f, code, ast } of parsed) {
     if (rel !== NAV) {
       const fixedObj = o => !!o && ((o.type === 'Identifier' && FIXED_NAMES.has(o.name))
         || (o.type === 'CallExpression' && o.arguments.length && o.arguments[0].type === 'Literal' && FIXED_IDS.has(o.arguments[0].value)));
-      const where = `${rel}:${lineOf(code, n.start)}: i blocchi fissi (#start, #queue-view, #resolve-view) si mostrano e si nascondono solo in ${NAV}`;
+      const where = `${rel}:${lineOf(code, n.start)}: i blocchi fissi (#start, #queue, #focus, #interattivi) si mostrano e si nascondono solo in ${NAV}`;
       if (n.type === 'AssignmentExpression' && n.left.type === 'MemberExpression' && !n.left.computed
         && n.left.property.name === 'hidden' && fixedObj(n.left.object)) problems.push(where);
       if (n.type === 'CallExpression' && n.callee.type === 'MemberExpression' && !n.callee.computed

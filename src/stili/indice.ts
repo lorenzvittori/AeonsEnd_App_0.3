@@ -4,6 +4,8 @@
 // L'ordine:
 // - token (design-tokens.css), componenti di base (components.css), struttura della pagina (base.css) e regole comuni
 //   (comuni.css): prima di tutto, le schermate li ritoccano;
+// - le misure e la mappa delle 7 zone della schermata "partita" (partita-misure.css, partita.css): subito dopo la
+//   struttura della pagina, prima dei pezzi che stanno nelle zone;
 // - poi i pezzi dell'interfaccia: dove due file ritoccano lo stesso elemento a pari specificità, quello che deve vincere
 //   viene dopo (ogni file lo dice nell'intestazione, "Ordine: deve venire dopo ..."). Le poche regole che stanno nel
 //   file di un altro pezzo per l'ordine lo dicono nel loro commento ("Ordine: regola di ...").
@@ -13,6 +15,8 @@ import './design-tokens.css';
 import './components.css';
 import './base.css';
 import './comuni.css';
+import '../ui/schermate/partita-misure.css';
+import '../ui/schermate/partita.css';
 import '../ui/componenti/dialoghi.css';
 import '../ui/componenti/scarti.css';
 import '../ui/componenti/pesca-undo.css';

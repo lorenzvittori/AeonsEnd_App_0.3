@@ -1,23 +1,24 @@
-// ui/schermate/turno-nemesi-carosello.ts: il disegno del turno nemesi: fascia piccola con la carta da risolvere e la
-// prossima da pescare, carosello delle carte grandi (scroll-snap, firma per non ridisegnarlo, misure), carta pescata
-// che si gira, carta da pescare che arriva dal mazzo, testo del pulsante principale. File di supporto di
-// turno-nemesi.ts.
+// ui/schermate/turno-nemesi-carosello.ts: il disegno del turno nemesi: fascia piccola (zona 3) con la carta da
+// risolvere e la prossima da pescare, carosello delle carte grandi (zona 5: scroll-snap, firma per non ridisegnarlo,
+// misure), carta pescata che si gira, carta da pescare che arriva dal mazzo, pulsante principale quando cambia la carta
+// mostrata. File di supporto di turno-nemesi.ts.
 // Livello 5 (ui/schermate/). Dipende da: regole/turno-nemesi.ts, stato/partita.ts (lettura), ui/ base (testi, pagina,
-// dom), ui/componenti (animazioni, componenti, dialoghi, misure, testata). Usato da: turno-nemesi.ts, navigazione
-// (fascia per le vite, misure al ridimensionamento), main.ts (app.isDrawStep, app.centredFocusUid...).
-import { entryByUid, hpUnset, partita, turnRoundOver } from '../../stato/partita.ts';
+// dom, partita-variante), ui/componenti (animazioni, componenti, dialoghi, misure, pulsante-principale, testata).
+// Usato da: turno-nemesi.ts, navigazione (misure al ridimensionamento), main.ts (app.isDrawStep, app.centredFocusUid...).
+import { entryByUid, hpUnset, partita } from '../../stato/partita.ts';
 import * as Nemesi from '../../regole/turno-nemesi.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
 import { cancelFastScroll, FAST_SCROLL_MS, fastScrollTo, lockFor, scrollItemInto } from '../componenti/animazioni.ts';
 import { cardArt, hasHp, nextCardItem, nextSlotItem, placeholderArt, queueItem, statusText,
   tokenIcons } from '../componenti/componenti.ts';
 import { button, loadImage } from '../componenti/dialoghi.ts';
-import { PEEK_GAP, PEEK_VISIBLE, sharedCardWidth, sizeColumn, STATUS_H } from '../componenti/misure.ts';
+import { misura, rapportoCarta, sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
+import { disegnaPulsantePrincipale } from '../componenti/pulsante-principale.ts';
 import { dockDeck } from '../componenti/testata.ts';
-import { el, icon, need, query } from '../dom.ts';
-import { app, backBtn, CARD_BACK, CARD_RATIO, DRAW_MS, DRAW_UID, focusEl, rail, reducedMotion, resolveBtn, resolveHint,
-  resolveView, ui } from '../pagina.ts';
+import { el, icon, query } from '../dom.ts';
+import { CARD_BACK, DRAW_MS, DRAW_UID, focusEl, rail, reducedMotion, ui } from '../pagina.ts';
 import type { CartaDaGirare } from '../pagina.ts';
+import { variantePartita } from '../partita-variante.ts';
 import { I18N_IT } from '../testi.ts';
 
 export function activeEntry(): VoceInGioco | null {
@@ -32,46 +33,18 @@ export function canDraw(): boolean {
   return Nemesi.canDraw(partita);
 }
 
-// Testo del pulsante per la carta da risolvere. Anche sull'ultima carta si va solo avanti: la pesca è un passo a parte,
-// con il pulsante "Pesca".
-export function actionText(entry: VoceInGioco, isNew: boolean): string {
-  const { data, tokens } = entry;
-  // Minion con vita "?": non si mette in gioco finché non si imposta la vita; il pulsante apre la sua scheda
-  if (hpUnset(entry)) return I18N_IT.ctaSetHp;
-  // Ultima carta del giro dei turni: "Metti in gioco · Mischia mazzo"
-  if (isNew) return data.type === 'Attack' ? I18N_IT.ctaResolved
-    : turnRoundOver() ? I18N_IT.ctaPutInPlayShuffle : I18N_IT.ctaPutInPlayEnd;
-  // Potere: il token se ne va da solo; il pulsante dice solo cosa succede dopo (Number: null vale 0)
-  if (data.type === 'Power') return Number(tokens) > 1 ? I18N_IT.ctaPowerNext : I18N_IT.ctaPowerLast;
-  // Minion (resta in gioco) e attacco (va negli scarti)
-  return I18N_IT.ctaResolved;
-}
-
-// Fascia del turno nemesi dentro .ae-rail-row (creata qui una volta sola) e classi della fase di pesca
-export function renderResolveInfo(drawStep: boolean): void {
-  if (!need(rail.parentElement, 'contenitore della fascia').classList.contains('ae-rail-row')) {
-    const row = el('div', 'ae-rail-row');
-    rail.before(row);
-    row.appendChild(rail);
-  }
-  resolveView.classList.toggle('is-draw-phase', drawStep);
-  // Lo sfondo della vista è sull'app intera (anche dietro al pulsante principale)
-  app.classList.toggle('is-draw-phase', drawStep);
-}
-
+// Disegno del turno nemesi: fascia piccola, carosello e pulsante principale (la carta mostrata decide se è "Torna alla
+// carta da risolvere"). Il passo Pesca (fascia dorata, sfondo) lo dice il momento della partita (data-turno, partita.css)
 export function renderResolve(): void {
   const drawStep = isDrawStep();
-  renderResolveInfo(drawStep);
   const active = activeEntry();
   if (!active && !drawStep) return;
-  const isNewStep = partita.newIndex >= 0;
   const viewedUid = ui.holdUid || ui.viewedUid;
   // Nel passo da pescare la carta "da risolvere" è la carta coperta (DRAW_UID)
   const viewed = (viewedUid === DRAW_UID && drawStep) ? null : (entryByUid(viewedUid) || active);
   // (fuori dal passo Pesca c'è sempre una carta mostrata: la carta da risolvere esiste, vedi sopra)
   const viewingDraw = drawStep && !viewed;
   if (!ui.holdUid) ui.viewedUid = viewed && !viewingDraw ? viewed.uid : DRAW_UID;
-  const previewing = !ui.holdUid && (drawStep ? !viewingDraw : viewed !== active);
 
   // Fascia compatta: rosso = da risolvere, avorio = mostrata
   const railScroll = rail.scrollLeft;
@@ -96,6 +69,8 @@ export function renderResolve(): void {
   // Fase di risoluzione: al posto della carta da pescare solo una cornice tratteggiata grigia (come mazzo e scarti vuoti)
   else if (!drawStep && partita.newIndex < 0 && canDraw()) railItems.push(nextSlotItem());
   rail.replaceChildren(...railItems);
+  // (la fascia è la stessa del turno giocatori, che la nasconde quando la coda è vuota)
+  rail.hidden = false;
   rail.scrollLeft = railScroll;
   rail.scrollTop = railScrollTop;
   const viewedItem = query(rail, `[data-uid="${ui.viewedUid}"]`, HTMLElement);
@@ -103,18 +78,8 @@ export function renderResolve(): void {
 
   renderFocus(viewed && !viewingDraw ? viewed : { uid: DRAW_UID });
 
-  // Dock: in anteprima al posto dell'azione c'è "Torna alla carta da risolvere"
-  const text = drawStep || !active ? I18N_IT.ctaDraw : actionText(active, isNewStep);
-  backBtn.textContent = drawStep ? I18N_IT.backToDraw : I18N_IT.backToActive;
-  resolveBtn.hidden = previewing;
-  backBtn.hidden = !previewing;
-  resolveBtn.textContent = text;
-  // Fase di pesca: pulsante dorato, diverso da quelli della risoluzione
-  resolveBtn.classList.toggle('is-draw', drawStep);
-  // Durante l'animazione il pulsante resta focalizzabile ma non accetta tocchi (aria-disabled, controllato in onResolveClick)
-  resolveBtn.setAttribute('aria-disabled', String(ui.isTransitioning));
-  // Niente suggerimento sopra il pulsante: lo spazio resta alla carta
-  resolveHint.hidden = true;
+  // Zona 7: in anteprima al posto dell'azione c'è "Torna alla carta da risolvere" (variantePartita)
+  disegnaPulsantePrincipale(variantePartita(partita, ui));
   // Ridimensiona di nuovo ora che il pulsante in basso è visibile: alla prima carta del turno nemesi il pulsante compare
   // solo dopo il primo calcolo, e la carta sarebbe misurata su uno spazio più alto (uscirebbe in basso)
   sizeFocus(!ui.fromScroll);
@@ -298,27 +263,28 @@ export function centredFocusUid(): number | null {
 
 // Dimensiona le carte del carosello: alte quanto lo spazio, ma più strette dell'area quanto basta per vedere un pezzo
 // delle vicine. Il margine ai lati permette di centrare anche la prima e l'ultima carta.
-export const BIG_CARD_SCALE = 0.9;
-
 export function sizeFocus(recentre = true): void {
   const track = focusTrack;
-  if (resolveView.hidden || !track) return;
+  if (focusEl.hidden || !track) return;
   const slide = track.querySelector('.ae-focus-slide');
   if (!slide) return;
   sizeColumn(focusEl);
   const style = getComputedStyle(focusEl);
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-  const peekRoom = partita.queue.length > 1 ? 2 * (PEEK_VISIBLE + PEEK_GAP) : 0;
+  const peekRoom = partita.queue.length > 1 ? spazioVicine() : 0;
   const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom));
   focusEl.style.setProperty('--ae-focus-w', width + 'px');
   focusEl.style.setProperty('--cw', width + 'px');
   track.style.paddingInline = Math.max(0, (focusEl.clientWidth - width) / 2) + 'px';
-  // Carta da pescare e carta pescata: più grandi (fino al 30%), stessa misura per dorso e fronte. Cresce solo la carta:
-  // la riga vita/token resta grande come nelle altre carte. Il blocco (riga + carta) è centrato in verticale tra la
-  // fascia piccola e il pulsante (turno-nemesi.css .ae-focus-slide.is-big), con 4px di margine sopra e sotto.
-  const byHeight = (focusEl.clientHeight - 8 - STATUS_H - 8) / CARD_RATIO;
-  // ... ridotta al 90% (BIG_CARD_SCALE) della misura massima: a tutta grandezza è troppo grande
-  const bigW = Math.floor(Math.max(width, Math.min(width * 1.3, byHeight, focusEl.clientWidth - 16)) * BIG_CARD_SCALE);
+  // Carta da pescare e carta pescata: più grandi (fino a --carta-pescata-crescita), stessa misura per dorso e fronte.
+  // Cresce solo la carta: la riga vita/token resta grande come nelle altre carte. Il blocco (riga + carta) è centrato in
+  // verticale tra la fascia piccola e il pulsante (turno-nemesi.css .ae-focus-slide.is-big), con --carta-pescata-margine
+  // in tutto sopra e sotto.
+  const byHeight = (focusEl.clientHeight - misura('--carta-pescata-margine') - misura('--carte-grandi-riga-stato-altezza')
+    - misura('--carte-grandi-riga-stato-distanza')) / rapportoCarta();
+  // ... ridotta a --carta-pescata-scala (90%) della misura massima: a tutta grandezza è troppo grande
+  const bigW = Math.floor(Math.max(width, Math.min(width * misura('--carta-pescata-crescita'), byHeight,
+    focusEl.clientWidth - 2 * misura('--carte-grandi-margine-lato'))) * misura('--carta-pescata-scala'));
   focusEl.style.setProperty('--ae-big-w', bigW + 'px');
   if (recentre && focusEl.dataset.uid) scrollFocusTo(focusEl.dataset.uid, false);
 }
@@ -431,10 +397,4 @@ export function animateDrawIn(delay = 0): void {
   anim.onfinish = finish;
   setTimeout(finish, delay + DRAW_IN_MS + 200);
   lockFor(delay + DRAW_IN_MS);
-}
-
-// Fascia del turno nemesi, dopo la quale sta la riga delle vite (dentro .ae-rail-row, quando c'è)
-export function fasciaTurnoNemesi(): HTMLElement {
-  const railParent = need(rail.parentElement, 'contenitore della fascia');
-  return railParent.classList.contains('ae-rail-row') ? railParent : rail;
 }

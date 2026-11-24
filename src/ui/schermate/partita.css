@@ -1,0 +1,70 @@
+/* partita.css: la schermata "partita" (turno giocatori, turno nemesi, passo Pesca, "Crea mazzo"): la mappa delle 7
+   zone (griglia), i blocchi delle zone e le varianti decise dal momento della partita (data-turno su #app).
+   Per spostare una zona: la mappa qui sotto. Per cambiarne una misura: partita-misure.css.
+   Elementi creati da: index.html (le zone); il momento (data-turno) lo scrive ui/navigazione.ts da variantePartita()
+   (ui/partita-variante.ts).
+   Ordine: deve venire dopo base.css (ridefinisce griglia della shell, .ae-main e sfondo per il momento). Si importa da
+   src/stili/indice.ts. */
+
+/* --- Mappa: una riga per zona, dall'alto in basso ---
+   1 testata        (#topbar)         nome della nemesi, mazzo e scarti, Menu
+   2 turno          (#fascia-turno)   barra del mazzo dei turni
+   3 carte-piccole  (#rail)           le carte in gioco in piccolo
+   4 vite           (#vite)           Gravehold e nemesi
+   5 carte-grandi   (#queue / #focus) coda (turno giocatori) o carosello (turno nemesi, Pesca)
+   6 interattivi    (#interattivi)    comandi della carta al centro (solo turno giocatori)
+   7 principale     (#dock)           il pulsante principale (o il cursore di "Crea mazzo")
+   Le zone 2-6 stanno in .ae-main, che usa le righe della schermata (sottogriglia). */
+.ae-shell[data-schermata="partita"] {
+  grid-template-areas:
+    "testata"
+    "turno"
+    "carte-piccole"
+    "vite"
+    "carte-grandi"
+    "interattivi"
+    "principale";
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
+}
+.ae-shell[data-schermata="partita"] > [data-zona="testata"] { grid-area: testata; }
+.ae-shell[data-schermata="partita"] > .ae-main {
+  grid-row: turno / interattivi; display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr);
+}
+/* (.ae-main usa solo le righe della schermata: le zone 2-6 prendono la riga con il loro nome) */
+.ae-main > [data-zona="turno"] { grid-row: turno; }
+.ae-main > [data-zona="carte-piccole"] { grid-row: carte-piccole; }
+.ae-main > [data-zona="vite"] { grid-row: vite; }
+.ae-main > [data-zona="carte-grandi"] { grid-row: carte-grandi; }
+.ae-main > [data-zona="interattivi"] { grid-row: interattivi; }
+.ae-shell[data-schermata="partita"] > [data-zona="principale"] { grid-area: principale; }
+
+/* --- Blocchi delle zone 3-6: il contenuto in colonna --- */
+.ae-main > :is([data-zona="carte-piccole"], [data-zona="vite"], [data-zona="carte-grandi"], [data-zona="interattivi"]) {
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  /* Entrando nel turno giocatori le zone compaiono in dissolvenza (non dal turno nemesi: vedi sotto) */
+  animation: ae-fade var(--ae-duration-phase) var(--ae-ease-standard);
+}
+/* Le vite stanno sopra le carte grandi (i box scendono accanto alla riga vita/token della carta, e si toccano) */
+.ae-main > [data-zona="vite"] { position: relative; z-index: 4; }
+.ae-main > [data-zona="interattivi"][hidden] { display: none; }
+/* Zona 5: la coda o il carosello, uno visibile per momento */
+.ae-main .ae-queue-viewport[hidden], .ae-main .ae-focus[hidden] { display: none; }
+/* Zona 3: la fascia senza carte (turno giocatori, coda vuota) non c'è */
+.ae-compact-rail[hidden] { display: none; }
+
+/* --- Varianti del momento (data-turno) --- */
+/* Sfondo (la maga a sinistra, la nemesi a destra, base.css .ae-shell): turno nemesi e passo Pesca mostrano il lato
+   destro; lo sfondo scorre (transizione di base.css) */
+.ae-shell:is([data-turno="nemesi"], [data-turno="pesca"]) { background-position: 0 0, 100% center, 0 0; }
+/* Niente dissolvenza nel turno nemesi e dal turno nemesi al turno giocatori (le carte non spariscono: toPlayersTurn
+   in turno-giocatori.ts aggiunge is-from-nemesis) */
+:is([data-turno="nemesi"], [data-turno="pesca"]) > .ae-main > [data-zona], .ae-main.is-from-nemesis > [data-zona] { animation: none; }
+/* "Crea mazzo": le zone 3-6 ci sono (stesse misure del turno giocatori) ma non si vedono; sopra c'è la schermata dei
+   9 mazzi (crea-mazzo.css), al posto del pulsante principale il cursore */
+[data-turno="crea-mazzo"] > .ae-main > :is([data-zona="carte-piccole"], [data-zona="vite"], [data-zona="carte-grandi"], [data-zona="interattivi"]) {
+  visibility: hidden;
+}
+/* Zona 7: la riga del pulsante principale (con "Annulla modifiche" accanto e il cursore di "Crea mazzo" al suo posto) e
+   la sua altezza minima (nel turno nemesi la fissa turno-nemesi.css; testo, spazi e a capo: turno-nemesi.css) */
+.ae-main-row { display: flex; gap: var(--principale-spazio); }
+[data-zona="principale"] .ae-button { min-height: var(--principale-altezza); }

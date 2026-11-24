@@ -1,67 +1,34 @@
-// ui/schermate/turno-giocatori.ts: la schermata del turno giocatori (VistaCoda): carte grandi in fila con i comandi sotto,
-// fascia piccola, pulsante principale ("Fine turno", "Pesca carta turno", "Salva modifiche") e "Annulla modifiche",
-// passaggio animato dal turno nemesi (toPlayersTurn). L'inizio del turno nemesi a schermo lo chiede con l'aggancio
-// passaAlTurnoNemesi.
-// Livello 5 (ui/schermate/). Dipende da: stato/ (partita, catalogo, preferenze), ui/ base (testi, pagina, dom,
-// ridisegno), ui/componenti (animazioni, barra-turni, componenti, dialoghi, misure, testata), ui/finestre/scheda-carta.ts.
+// ui/schermate/turno-giocatori.ts: il turno giocatori nella schermata "partita": carte grandi della coda in fila (zona 5)
+// con i comandi sotto la carta al centro (zona 6), fascia piccola nel turno giocatori (zona 3), "Annulla modifiche" e
+// l'azione del pulsante principale (onNemesisClick: "Fine turno", "Pesca carta turno", "Salva modifiche"), passaggio
+// animato dal turno nemesi (toPlayersTurn). Il pulsante lo disegna ui/componenti/pulsante-principale.ts. L'inizio del
+// turno nemesi a schermo lo chiede con l'aggancio passaAlTurnoNemesi.
+// Livello 5 (ui/schermate/). Dipende da: stato/ (partita, catalogo), ui/ base (testi, pagina, dom, ridisegno),
+// ui/componenti (animazioni, barra-turni, componenti, dialoghi, misure, testata), ui/finestre/scheda-carta.ts.
 // Usato da: navigazione (render, agganci, avvio).
 
 import { I18N_IT } from '../testi.ts';
-import { awaitingTurnCard, currentTurnCard, entryByUid, fineTurnoGiocatore, hpCap, hpUnset, isPairCard, partita,
-  pescaCartaTurno, salvaModifiche, turnCardPlayer, turnRoundOver } from '../../stato/partita.ts';
+import { awaitingTurnCard, entryByUid, fineTurnoGiocatore, hpCap, hpUnset, partita, pescaCartaTurno, salvaModifiche,
+  turnRoundOver } from '../../stato/partita.ts';
 import { displayEntry, draftHp, draftOf, hasHp, needsPairChoice, queueItem,
   setDraft } from '../componenti/componenti.ts';
 import { announce, button } from '../componenti/dialoghi.ts';
 import { flyToDiscard } from '../componenti/testata.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
-import { cssUrl, discardBtn, nemesisBtn, queueEmpty, queueList, queueView, queueViewport, rail, reducedMotion, turnInfo,
+import { annullaModificheBtn, mainEl, pulsantePrincipale, queueEmpty, queueList, queueViewport, rail, reducedMotion,
   ui } from '../pagina.ts';
 import type { AncoraCoda } from '../pagina.ts';
 import { ENTER_MS, fastScrollTo, MORPH_MS, scrollItemInto, trackDrag } from '../componenti/animazioni.ts';
-import { el, need, query, queryAll } from '../dom.ts';
+import { el, query, queryAll } from '../dom.ts';
 import { passaAlTurnoNemesi, richiediRidisegno } from '../ridisegno.ts';
 import { catalogo } from '../../stato/catalogo.ts';
-import { preferenze } from '../../stato/preferenze.ts';
 import { playTurnShuffle, SHUFFLE_FADE_MS, turnTrack } from '../componenti/barra-turni.ts';
-import { PEEK_GAP, PEEK_VISIBLE, sharedCardWidth, sizeColumn } from '../componenti/misure.ts';
+import { sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
 
-export function updateInfo(): void {
-  turnInfo.textContent = I18N_IT.turnInfo(partita.turn, partita.deck.length);
-  discardBtn.textContent = I18N_IT.discardButton(partita.discard.length);
-  discardBtn.setAttribute('aria-label', I18N_IT.discardButtonLabel(partita.discard.length));
-}
-
-// VistaCoda: in alto la fascia compatta con tutta la coda (come nel turno nemesi), sotto le carte grandi, una e mezza
-// alla volta. Toccare una carta della fascia porta lì le carte grandi; la carta più al centro è quella evidenziata.
-export let queueRail: HTMLDivElement | null = null;
-
-export function ensureQueueRail(): HTMLDivElement {
-  if (queueRail) return queueRail;
-  const rail = el('div', 'ae-compact-rail queue-rail');
-  queueRail = rail;
-  rail.id = 'queue-rail';
-  rail.setAttribute('role', 'list');
-  rail.setAttribute('aria-label', I18N_IT.queueRail);
-  const column = queueView.querySelector('.queue-col');
-  if (!column) throw new TypeError('colonna della coda mancante in index.html');
-  column.prepend(rail);
-  trackDrag(rail);
-  rail.addEventListener('click', e => {
-    const target = e.target;
-    const item = target instanceof Element ? target.closest('.ae-queue-item') : null;
-    if (!(item instanceof HTMLElement) || rail.dataset.dragged === '1') return;
-    const big = query(queueList, `[data-uid="${item.dataset.uid}"]`, HTMLElement);
-    if (big) scrollQueueTo(big);
-    markQueueRail(Number(item.dataset.uid));
-  });
-  queueViewport.addEventListener('scroll', () => {
-    if (queueRailFrame) return;
-    queueRailFrame = requestAnimationFrame(() => { queueRailFrame = 0; markQueueRail(centredQueueUid()); });
-  }, { passive: true });
-  return rail;
-}
-
+// Turno giocatori: in alto la fascia piccola con tutta la coda (#rail, la stessa del turno nemesi), sotto le carte
+// grandi, una e mezza alla volta. Toccare una carta della fascia porta lì le carte grandi; la carta più al centro è
+// quella evidenziata.
 export let queueRailFrame = 0;
 
 export function scrollQueueTo(item: HTMLElement): void {
@@ -90,8 +57,6 @@ export function markQueueRail(uid: number | null): void {
     const item = query(slot, '.ae-queue-item', HTMLElement);
     slot.classList.toggle('is-centred', !!item && Number(item.dataset.uid) === uid);
   });
-  const rail = queueRail;
-  if (!rail) return;
   queryAll(rail, '.ae-queue-item', HTMLElement).forEach(item => {
     const on = Number(item.dataset.uid) === uid;
     if (on) item.dataset.viewed = 'true'; else delete item.dataset.viewed;
@@ -168,16 +133,16 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
 
 // Carte grandi: alte quanto lo spazio disponibile, ma mai così larghe da nascondere del tutto la carta successiva
 export function sizeQueue(): void {
-  if (queueView.hidden) return;
+  if (queueViewport.hidden) return;
   sizeColumn(queueViewport);
   const style = getComputedStyle(queueViewport);
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
   // Stessa regola del carosello del turno nemesi (sizeFocus): la carta riempie l'altezza, ai lati si vede un pezzo delle
   // vicine (stessa larghezza della carta)
-  const peekRoom = partita.queue.length > 1 ? 2 * (PEEK_VISIBLE + PEEK_GAP) : 0;
-  // Come sizeFocus: sopra la carta il box vita/token (41px) e 8px di spazio. I comandi stanno fuori dal flusso, sotto la
+  const peekRoom = partita.queue.length > 1 ? spazioVicine() : 0;
+  // Come sizeFocus: sopra la carta la riga vita/token con il suo spazio. I comandi stanno fuori dal flusso, sotto la
   // carta, così la carta ha la stessa posizione e dimensione del turno nemesi; solo su schermi bassi la si rimpicciolisce
-  // quanto basta perché i comandi (52px) restino dentro l'area (il blocco è centrato in verticale).
+  // quanto basta perché i comandi (zona 6) restino dentro l'area (il blocco è centrato in verticale).
   const width = Math.max(100, sharedCardWidth(queueViewport.clientWidth, queueViewport.clientHeight, padY, peekRoom));
   queueViewport.style.setProperty('--ae-queue-card', width + 'px');
   // Margini ai lati: la prima e l'ultima carta si centrano come le altre
@@ -198,7 +163,7 @@ function addHpTag(card: HTMLElement, className: string, change: number): void {
 export function renderQueue(): void {
   const previous = queueViewport.scrollLeft;
   const previousTop = queueViewport.scrollTop;
-  const railEl = ensureQueueRail();
+  const railEl = rail;
   const railScroll = railEl.scrollLeft;
   railEl.replaceChildren(...partita.queue.map((entry, i) => {
     const item = queueItem(displayEntry(entry), { compact: true, index: i, total: partita.queue.length });
@@ -264,16 +229,10 @@ export function saveAllDrafts(): void {
   // Le carte sono ancora nella pagina (non ridisegnata): partono da lì
   flyToDiscard(gone.map(e => queueList.querySelector(`.ae-queue-item[data-uid="${e.uid}"] .ae-card-art`)));
   richiediRidisegno();
-  nemesisBtn.focus({ preventScroll: true });
+  pulsantePrincipale.focus({ preventScroll: true });
 }
 
-// "Annulla modifiche" del turno giocatori, accanto al pulsante principale (lo crea il menu laterale all'avvio)
-let cancelDraftsBtn: HTMLButtonElement | null = null;
-
-export function setCancelDraftsBtn(b: HTMLButtonElement): void {
-  cancelDraftsBtn = b;
-}
-
+// Tocco sul pulsante principale nel turno giocatori ("Fine turno", "Pesca carta turno", "Salva modifiche")
 export function onNemesisClick(): void {
   if (partita.resolving || ui.isTransitioning || !catalogo.deckSetup) return;
   // Durante "Crea mazzo" al posto del pulsante c'è il cursore (deckSlider)
@@ -304,6 +263,8 @@ export function onNemesisClick(): void {
   passaAlTurnoNemesi();
 }
 
+// Dal turno nemesi al turno giocatori: la carta grande del turno nemesi si trasforma in quella della coda, le altre
+// entrano da sinistra; la fascia piccola resta dov'era
 export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | null): void {
   const railScroll = rail.scrollLeft;
   const fromRect = fromNode && fromNode.getBoundingClientRect().width ? fromNode.getBoundingClientRect() : null;
@@ -312,10 +273,11 @@ export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | 
   const fromStatusEl = fromSlide && fromSlide.querySelector('.ae-focus-status > *');
   const fromStatus = fromStatusEl && fromStatusEl.parentElement ? fromStatusEl.parentElement.getBoundingClientRect() : null;
   const motion = !reducedMotion.matches && !!document.body.animate;
-  // Lo sfondo non sfuma: è un'immagine sola che scorre da destra a sinistra (base.css .ae-shell)
-  queueView.classList.add('is-from-nemesis');
+  // Lo sfondo non sfuma: è un'immagine sola che scorre da destra a sinistra (base.css .ae-shell); le zone non fanno la
+  // dissolvenza (partita.css, is-from-nemesis: la toglie il coordinatore entrando nel turno nemesi)
+  mainEl.classList.add('is-from-nemesis');
   richiediRidisegno();
-  if (queueRail) queueRail.scrollLeft = railScroll;
+  rail.scrollLeft = railScroll;
   if (!motion) return;
   const art = morphUid !== null ? query(queueList, `.queue-slot .ae-queue-item[data-uid="${morphUid}"] .ae-card-art`, HTMLElement) : null;
   const toRect = art && art.getBoundingClientRect();
@@ -358,79 +320,43 @@ function queueAll(root: ParentNode, selector: string): HTMLElement[] {
   return queryAll(root, selector, HTMLElement);
 }
 
-// Pulsante principale del turno giocatori ("Fine turno", "Pesca carta turno", "Salva modifiche"...): nascosto nel turno
-// nemesi e durante "Crea mazzo" (al suo posto il cursore)
-export function disegnaPulsantePrincipale(): void {
-  nemesisBtn.hidden = partita.resolving;
-  nemesisBtn.disabled = !catalogo.deckSetup;
-  // "Turno Nemesi" con l'illustrazione della nemesi della partita (come nel menu iniziale), velata per leggere la
-  // scritta. Turno di un giocatore: niente illustrazione, fondo tenue del colore del giocatore (wild: il colore del
-  // giocatore che è wild nel giro; carta 1/2 o 3/4 non ancora scelta: metà e metà dei due colori; attesa di "Pesca carta
-  // turno": fondo grigio chiaro tenue, come il wild)
-  const turnCard = currentTurnCard();
-  const playerKind = turnCardPlayer(turnCard) || (turnCard === 'wild' || isPairCard(turnCard) ? turnCard : null)
-    || (awaitingTurnCard() ? 'wild' : null);
-  nemesisBtn.classList.toggle('has-player-color', !!playerKind);
-  if (playerKind) nemesisBtn.dataset.kind = playerKind;
-  else delete nemesisBtn.dataset.kind;
-  const nemesisArtNow = !playerKind && preferenze.settings.nemesis ? catalogo.nemesisArt[preferenze.settings.nemesis] : undefined;
-  nemesisBtn.classList.toggle('has-nemesis-art', !!nemesisArtNow);
-  if (nemesisArtNow) nemesisBtn.style.setProperty('--ae-nemesis-art', cssUrl(encodeURI(String(nemesisArtNow.portrait))));
-  else nemesisBtn.style.removeProperty('--ae-nemesis-art');
-  nemesisBtn.setAttribute('aria-disabled', String(ui.isTransitioning));
-  // Turno giocatori con modifiche non salvate: il pulsante principale le salva
-  const saving = savingDrafts();
-  // A inizio giro (dopo il primo) "Pesca la prima carta turno"; all'ultimo turno del giro "Fine turno · Mischia mazzo"
-  // (anche durante l'animazione del mazzo mischiato)
-  nemesisBtn.textContent = saving ? I18N_IT.saveChanges
-    : ui.trackShuffle ? I18N_IT.endTurnShuffle
-    : awaitingTurnCard() ? (partita.turnOrder.round >= 1 && !(partita.turnOrder.history || []).length ? I18N_IT.drawFirstTurnCard : I18N_IT.drawTurnCard)
-    : turnRoundOver() ? I18N_IT.endTurnShuffle : I18N_IT.endTurn;
-  nemesisBtn.classList.toggle('is-save', saving);
-  // "Crea mazzo": al posto del pulsante il cursore
-  if (ui.deckBuilding) nemesisBtn.hidden = true;
-}
-
-// Turno giocatori con modifiche non salvate (il pulsante principale diventa "Salva modifiche")
-function savingDrafts(): boolean {
-  return !partita.resolving && ui.drafts.size > 0;
-}
-
-// "Annulla modifiche" accanto al pulsante principale (solo con modifiche non salvate, non durante "Crea mazzo"; la riga
-// non c'è nel turno nemesi) e la riga del turno in basso (updateInfo)
-export function disegnaAnnullaModifiche(): void {
-  if (cancelDraftsBtn) {
-    cancelDraftsBtn.hidden = !savingDrafts() || ui.deckBuilding;
-    need(cancelDraftsBtn.parentElement, 'riga del pulsante principale').hidden = partita.resolving;
-  }
-  updateInfo();
-}
-
-// Turno giocatori con modifiche non salvate: "Annulla modifiche" accanto a "Salva modifiche" (stessa riga) toglie tutte
-// le bozze (vita dei minion, costi pagati); non è un passo di undo, perché le bozze non sono ancora nella partita.
-// Creato all'avvio dal coordinatore, che lo mette nella riga del pulsante principale
-export function impostaAnnullaModifiche(): HTMLButtonElement {
-  const cancelDrafts = el('button', 'ae-button ae-button--secondary ae-cancel-drafts', I18N_IT.cancelChanges);
-  setCancelDraftsBtn(cancelDrafts);
-  cancelDrafts.type = 'button';
-  cancelDrafts.hidden = true;
-  cancelDrafts.addEventListener('click', () => {
-    if (partita.resolving || ui.isTransitioning || !ui.drafts.size) return;
-    ui.drafts.clear();
-    richiediRidisegno();
-    nemesisBtn.focus({ preventScroll: true });
-  });
-  return cancelDrafts;
-}
-
 // Disegno del turno giocatori (la coda delle carte in gioco)
 export function disegnaTurnoGiocatori(): void {
   renderQueue();
 }
 
-// Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
+// Codice eseguito all'avvio, nell'ordine di sempre
 export function avvio(): void {
   trackDrag(queueViewport);
+
+  // Fascia piccola (zona 3, la stessa del turno nemesi): nel turno giocatori un tocco porta lì le carte grandi
+  rail.addEventListener('click', e => {
+    if (partita.resolving) return;
+    const target = e.target;
+    const item = target instanceof Element ? target.closest('.ae-queue-item') : null;
+    if (!(item instanceof HTMLElement) || rail.dataset.dragged === '1') return;
+    const big = query(queueList, `[data-uid="${item.dataset.uid}"]`, HTMLElement);
+    if (big) scrollQueueTo(big);
+    markQueueRail(Number(item.dataset.uid));
+  });
+  queueViewport.addEventListener('scroll', () => {
+    if (queueRailFrame) return;
+    queueRailFrame = requestAnimationFrame(() => {
+      queueRailFrame = 0;
+      if (!partita.resolving) markQueueRail(centredQueueUid());
+    });
+  }, { passive: true });
+
+  // Turno giocatori con modifiche non salvate: "Annulla modifiche" accanto a "Salva modifiche" (stessa riga, zona 7)
+  // toglie tutte le bozze (vita dei minion, costi pagati); non è un passo di undo, perché le bozze non sono ancora nella
+  // partita
+  annullaModificheBtn.textContent = I18N_IT.cancelChanges;
+  annullaModificheBtn.addEventListener('click', () => {
+    if (partita.resolving || ui.isTransitioning || !ui.drafts.size) return;
+    ui.drafts.clear();
+    richiediRidisegno();
+    pulsantePrincipale.focus({ preventScroll: true });
+  });
 
   // Carte grandi del turno giocatori: una carta non al centro si porta al centro; si apre solo quella al centro
   queueList.addEventListener('click', e => {

@@ -1,5 +1,5 @@
-/* menu-laterale.css: menu laterale della partita, pulsante Menu (tre linee / X), scelta dello sfondo e del dorso, pulsanti da tenere premuti (Esci dalla partita), pulsanti Annulla / Salva modifiche
-   Elementi creati da: ui/finestre/menu-laterale.ts, ui/componenti/testata.ts (pulsante Menu), ui/componenti/sfondi.ts (sfondo e dorso), ui/schermate/turno-giocatori.ts (Annulla modifiche).
+/* menu-laterale.css: menu laterale della partita, pulsante Menu (tre linee / X), scelta dello sfondo e del dorso, pulsanti da tenere premuti (Esci dalla partita); la riga di Annulla / Salva modifiche è in ui/schermate/partita.css (zona 7)
+   Elementi creati da: ui/finestre/menu-laterale.ts, index.html (pulsante Menu), ui/componenti/sfondi.ts (sfondo e dorso).
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
 /* Pulsante Menu in alto a destra (tre linee) e pannello laterale: 70% della larghezza a destra, il resto oscurato */
@@ -45,9 +45,6 @@
 .ae-back-item[aria-pressed='true'] { color: var(--ae-gold); }
 .ae-back-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px rgba(223, 174, 89, .6); }
 
-/* Turno giocatori con modifiche: "Annulla modifiche" e "Salva modifiche" sulla stessa riga */
-.ae-main-row { display: flex; gap: 8px; }
-.ae-main-row[hidden] { display: none; }
 /* Menu laterale: si trascina verso destra per chiuderlo (menu-laterale.ts, swipeToClose) */
 .ae-modal.ae-side-menu { touch-action: pan-y; }
 /* "Crea mazzo" da tenere premuto: il pulsante si riempie d'oro da sinistra in 800ms (HOLD_BUILD_MS in menu-laterale.ts) */

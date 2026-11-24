@@ -1,6 +1,6 @@
-// ui/componenti/testata.ts: la testata della partita: nome della nemesi con battaglia, giocatori e turno (disegnaTestata,
-// fitPhaseName), il mazzo nemesi e la pila degli scarti in alto (renderDockPiles), il pulsante Menu e il volo delle
-// carte verso gli scarti (flyToDiscard).
+// ui/componenti/testata.ts: la testata della partita (zona 1 della schermata "partita"): nome della nemesi con
+// battaglia, giocatori e turno (disegnaTestata, fitPhaseName), il mazzo nemesi e la pila degli scarti in alto
+// (renderDockPiles), il pulsante Menu e il volo delle carte verso gli scarti (flyToDiscard).
 // Livello 3 (ui/componenti/). Dipende da: stato/ (partita, preferenze: lettura), dati/dati.ts, ui/ base (testi, pagina,
 // dom), ui/componenti/scarti.ts. Usato da: barra dei turni, pesca-undo, finestre (mazzo dei turni, scheda della carta),
 // schermate (crea mazzo, turni), navigazione (render).
@@ -8,13 +8,13 @@
 import { I18N_IT } from '../testi.ts';
 import { partita } from '../../stato/partita.ts';
 import { openDiscard } from './scarti.ts';
-import { byId, CARD_BACK, cssUrl, infoRow, menuBtn, phaseLabel, reducedMotion, ui, undoBtn } from '../pagina.ts';
+import { byId, CARD_BACK, cssUrl, menuBtn, phaseLabel, reducedMotion, ui } from '../pagina.ts';
 import { el, query } from '../dom.ts';
 import { battleOf } from '../../dati/dati.ts';
 import { preferenze } from '../../stato/preferenze.ts';
 
-// In alto a sinistra, uno accanto all'altro e uguali nei due turni: il mazzo nemesi (dorso con il numero di carte
-// rimaste) e la pila degli scarti (ultima carta scartata con il numero; toccandola si apre). Creati qui (avvio).
+// In testata, uno accanto all'altro e uguali nei due turni: il mazzo nemesi (dorso con il numero di carte rimaste) e la
+// pila degli scarti (ultima carta scartata con il numero; toccandola si apre). In index.html, letti in avvio.
 export let headerPiles: HTMLDivElement;
 export let dockDeck: HTMLDivElement;
 export let dockDiscard: HTMLButtonElement;
@@ -166,34 +166,18 @@ export function disegnaTestata(onNameClick: () => void): void {
 
 // Codice eseguito all'avvio, nell'ordine di sempre
 export function avvio(): void {
-  headerPiles = el('div', 'ae-header-piles');
-  dockDeck = el('div', 'ae-pile ae-pile--deck');
-  dockDiscard = el('button', 'ae-pile ae-pile--discard');
-  dockDiscard.type = 'button';
+  // Pile e Menu sono nella testata già in index.html (zona 1 della schermata "partita"); Undo resta nascosto (è nel Menu)
+  headerPiles = byId('pile-testata', HTMLDivElement);
+  dockDeck = byId('pila-mazzo', HTMLDivElement);
+  dockDiscard = byId('pila-scarti', HTMLButtonElement);
   dockDiscard.addEventListener('click', () => { if (!ui.isTransitioning && !ui.deckBuilding) openDiscard(); });
 
   // Tocco sul mazzo: compare il pulsante "Pesca carta" (ui/componenti/pesca-undo.ts, che registra il tocco)
-  dockDeck.setAttribute('role', 'button');
-  dockDeck.tabIndex = 0;
   dockDeck.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dockDeck.click(); } });
 
-  headerPiles.append(dockDeck, dockDiscard);
-  undoBtn.before(headerPiles);
-  undoBtn.hidden = true;
-
-  // Menu in alto a destra (opposto all'undo): apre un pannello laterale largo il 70% dello schermo, il resto dell'app
-  // resta visibile ma oscurato. La riga Turno/Mazzo/Scarti/Menu in basso non c'è: tutto è creato qui, così vale anche
-  // con un index.html vecchio.
-  (function setupMenuButton() {
-    const spacer = document.querySelector('.ae-header .ae-header-spacer');
-    menuBtn.className = 'ae-icon-button ae-menu-button';
-    menuBtn.textContent = '';
-    menuBtn.setAttribute('aria-label', I18N_IT.menu);
-    menuBtn.setAttribute('aria-haspopup', 'dialog');
-    menuBtn.append(el('span', 'ae-menu-lines'));
-    if (spacer) spacer.replaceWith(menuBtn);
-    infoRow.remove();
-  })();
+  // Menu in alto a destra: apre un pannello laterale largo il 70% dello schermo, il resto dell'app resta visibile ma
+  // oscurato
+  menuBtn.setAttribute('aria-label', I18N_IT.menu);
 
   // Nome della nemesi: si adatta di nuovo quando cambia la larghezza della testata
   window.addEventListener('resize', () => fitPhaseName());

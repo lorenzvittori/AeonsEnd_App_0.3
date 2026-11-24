@@ -93,7 +93,6 @@ export function showDeckBuild(): void {
   });
   layer.append(el('h2', 'deck-build-title', I18N_IT.deckBuildTitle), grid);
   mainEl.appendChild(layer);
-  mainEl.classList.add('is-deck-building');
 }
 
 // Carte Specifiche in grande: tutte quelle della nemesi (Tier 1, 2, 3), si scorrono a destra e sinistra; si parte dalla
@@ -161,7 +160,6 @@ export function openSpecificViewer(tier: number): void {
 }
 
 export function closeDeckBuild(): void {
-  mainEl.classList.remove('is-deck-building');
   const old = document.getElementById('deck-build');
   if (old) old.remove();
   azzeraVolo();

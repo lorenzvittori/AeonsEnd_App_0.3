@@ -1853,7 +1853,7 @@ async function misuraApp() {
     'Mazzo': R(document.querySelector('.ae-pile--deck')), 'Scarti': R(document.querySelector('.ae-pile--discard')),
     'Menu': R(document.getElementById('menu-btn')), 'Barra della fase': R(app.turnTrackBar), 'Fascia della scritta': R(app.turnTrackLabels) };
   let n = 0;
-  document.querySelectorAll('.queue-view .ae-compact-rail .ae-queue-item').forEach(it => { const r = R(it); if (r) { n++; g['Fascia piccola ' + n] = r; } });
+  document.querySelectorAll('#rail .ae-queue-item').forEach(it => { const r = R(it); if (r) { n++; g['Fascia piccola ' + n] = r; } });
   // v254: vite di Gravehold (sinistra) e della nemesi (destra), sotto la fascia piccola
   g['Vita Gravehold'] = R(document.querySelector('.ae-lives .ae-life-box--grave'));
   g['Vita nemesi'] = R(document.querySelector('.ae-lives .ae-life-box--nemesis'));
@@ -1867,7 +1867,7 @@ async function misuraApp() {
   if (R(arts[mi - 1])) g['Carta laterale sinistra'] = R(arts[mi - 1]);
   if (R(arts[mi + 1])) g['Carta laterale destra'] = R(arts[mi + 1]);
   g['Comandi'] = R(slot.querySelector('.queue-controls'));
-  g['Pulsante'] = R(app.nemesisBtn);
+  g['Pulsante'] = R(app.pulsantePrincipale);
   Object.keys(g).forEach(k => { if (!g[k]) delete g[k]; });
   return g;
 }

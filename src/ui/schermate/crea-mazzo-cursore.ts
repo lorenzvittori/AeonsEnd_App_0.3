@@ -10,7 +10,7 @@ import { buzz, lockFor, tween } from '../componenti/animazioni.ts';
 import { showBanner, TIER_BANNER_MS } from '../componenti/banner.ts';
 import { dockDeck, renderDockPiles } from '../componenti/testata.ts';
 import { el, query, queryAll } from '../dom.ts';
-import { app, CARD_BACK, mainEl, nemesisBtn, reducedMotion, ui } from '../pagina.ts';
+import { app, CARD_BACK, pulsantePrincipale, reducedMotion, ui } from '../pagina.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
 import { I18N_IT } from '../testi.ts';
 
@@ -149,7 +149,6 @@ export function finishDeckBuild(): void {
   ui.deckBuilding = false;
   ui.deckShown = null;
   if (deckSlider) { deckSlider.lock(false); deckSlider.setProgress(0, true); }
-  mainEl.classList.remove('is-deck-building');
   if (layer && layer.animate && !reducedMotion.matches) {
     const fade = layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: 'forwards' });
     fade.onfinish = () => layer.remove();
@@ -159,7 +158,7 @@ export function finishDeckBuild(): void {
   }
   // Niente carta turno pescata da sola: il pulsante è "Pesca carta turno"
   richiediRidisegno();
-  nemesisBtn.focus({ preventScroll: true });
+  pulsantePrincipale.focus({ preventScroll: true });
   // Banner "Partita iniziata", uguale a quello dei Tier; finito il banner lo sfondo si accende
   showBanner(I18N_IT.gameStarted);
   setTimeout(() => {
@@ -277,7 +276,6 @@ export function buildDeckSlider(): CursoreMazzo {
 export function disegnaCursore(): void {
   if (deckSlider) deckSlider.box.hidden = !ui.deckBuilding;
   app.classList.toggle('is-deck-dark', ui.deckDark);
-  app.classList.toggle('is-deck-building', ui.deckBuilding);
 }
 
 export const KINDS = ['basic', 'upgraded', 'specific'] as const;

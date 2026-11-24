@@ -1,13 +1,14 @@
 // ui/navigazione.ts: il coordinatore dell'interfaccia. Sa dove si è (schermataAttuale), è l'unico modulo che mostra e
-// nasconde i blocchi fissi della pagina (#start, #queue-view, #resolve-view) e decide quale schermata disegnare
-// (render: la testata, i pezzi comuni, poi il disegno della schermata attuale). Qui anche: pagina iniziale (menu
-// iniziale ↔ Nuova partita, apertura e chiusura), inizio e ripresa della partita, passaggi tra le schermate, tasto
-// Indietro ed Esc, Vittoria a mazzo vuoto, i pulsanti fissi della pagina e la registrazione degli agganci
-// (ui/ridisegno.ts) con cui i livelli sotto chiedono queste cose.
+// nasconde i blocchi fissi della pagina (#start; nella schermata "partita" il momento data-turno, la coda #queue o il
+// carosello #focus della zona 5 e la zona 6) e decide quale schermata disegnare (render: la testata, il momento della
+// partita da variantePartita, i pezzi comuni, poi il disegno del turno). Qui anche: pagina iniziale (menu iniziale ↔
+// Nuova partita, apertura e chiusura), inizio e ripresa della partita, passaggi tra le schermate, tasto Indietro ed Esc,
+// Vittoria a mazzo vuoto, i pulsanti fissi della pagina (con l'azione del pulsante principale) e la registrazione degli
+// agganci (ui/ridisegno.ts) con cui i livelli sotto chiedono queste cose.
 // Lo stato della navigazione (la pagina iniziale aperta e in quale modo) e la decisione del tasto Indietro sono in
 // navigazione-stato.ts (supporto, senza DOM).
-// Livello 6. Dipende da: stato/, dati/, ui/ base (pagina, testi, dom, ridisegno), ui/componenti/, ui/finestre/,
-// ui/schermate/. Usato da: avvio.ts (init: render, setStartMode), main.ts (avvio, window.app), test.
+// Livello 6. Dipende da: stato/, dati/, ui/ base (pagina, testi, dom, ridisegno, partita-variante), ui/componenti/,
+// ui/finestre/, ui/schermate/. Usato da: avvio.ts (init: render, setStartMode), main.ts (avvio, window.app), test.
 
 import { I18N_IT } from './testi.ts';
 import { battleOf } from '../dati/dati.ts';
@@ -18,16 +19,19 @@ import { readSave, statoSalvataggio } from '../stato/salvataggio.ts';
 import { catalogo } from '../stato/catalogo.ts';
 import { loadDeckOptions, preferenze } from '../stato/preferenze.ts';
 import type { SalvataggioValido } from '../tipi/salvataggio.ts';
-import { app, backBtn, CARD_BACK, discardLayer, focusEl, nemesisBtn, queueView, queueViewport, rail, reducedMotion,
-  resolveBtn, resolveHint, resolveView, resumeBtn, startBtn, startError, startLayer, ui, undoBtn } from './pagina.ts';
-import { el } from './dom.ts';
+import { app, CARD_BACK, discardLayer, focusEl, mainEl, pulsantePrincipale, queueViewport, rail, reducedMotion,
+  resumeBtn, startBtn, startError, startLayer, ui, undoBtn, zonaCarteGrandi, zonaInterattivi } from './pagina.ts';
+import { need } from './dom.ts';
 import { registraAgganci } from './ridisegno.ts';
+import { variantePartita } from './partita-variante.ts';
+import type { VariantePartita } from './partita-variante.ts';
 import { clearTransition, MORPH_MS } from './componenti/animazioni.ts';
 import { showBanner, TIER_BANNER_MS } from './componenti/banner.ts';
 import { creaBarraTurni, renderTurnTrack } from './componenti/barra-turni.ts';
 import { closeAllModals, focusables, loadImage, modals, showToast, topLayer,
   updateInert } from './componenti/dialoghi.ts';
 import { closeDeckPopover, closeUndoFloat, deckPopover, undoFloat } from './componenti/pesca-undo.ts';
+import { disegnaPulsantePrincipale } from './componenti/pulsante-principale.ts';
 import { restore, undo, updateUndoBtn } from './componenti/ripristino.ts';
 import { closeDiscard } from './componenti/scarti.ts';
 import { currentBackground } from './componenti/sfondi.ts';
@@ -42,10 +46,10 @@ import { openLifeDialog } from './finestre/vita.ts';
 import { closeDeckBuild, openGameSetup, rebuildDeck, showDeckBuild, specificCardsOf } from './schermate/crea-mazzo.ts';
 import { disegnaMenu, showStartError, updateHomeCollection } from './schermate/menu.ts';
 import { disegnaNuovaPartita, renderStartChoices } from './schermate/nuova-partita.ts';
-import { centredQueueUid, disegnaAnnullaModifiche, disegnaPulsantePrincipale, disegnaTurnoGiocatori, ensureQueueRail,
-  impostaAnnullaModifiche, onNemesisClick, queueRail, sizeQueue, toPlayersTurn } from './schermate/turno-giocatori.ts';
+import { centredQueueUid, disegnaTurnoGiocatori, onNemesisClick, sizeQueue,
+  toPlayersTurn } from './schermate/turno-giocatori.ts';
 import { backToActive, disegnaTurnoNemesi, enterNemesisTurnView, onResolveClick } from './schermate/turno-nemesi.ts';
-import { fasciaTurnoNemesi, sizeFocus } from './schermate/turno-nemesi-carosello.ts';
+import { sizeFocus } from './schermate/turno-nemesi-carosello.ts';
 import { createDeckSlider, disegnaCursore } from './schermate/crea-mazzo-cursore.ts';
 import { cosaChiudeIndietro, impostaInizio, paginaIniziale } from './navigazione-stato.ts';
 
@@ -63,28 +67,36 @@ function mostraInizio(aperta: boolean): void {
   updateInert();
 }
 
-// Turno giocatori (#queue-view) o turno nemesi (#resolve-view), con le classi dell'app che dipendono dal turno
-function mostraTurno(): void {
-  queueView.hidden = partita.resolving;
-  // la classe si toglie solo a vista nascosta (toglierla a vista visibile farebbe ripartire la dissolvenza)
-  if (partita.resolving) queueView.classList.remove('is-from-nemesis');
-  resolveView.hidden = !partita.resolving;
-  app.classList.toggle('is-nemesis-turn', partita.resolving);
-  if (!partita.resolving) app.classList.remove('is-draw-phase');
+// Il momento della schermata "partita" (data-turno su #app: le varianti di sfondo e zone stanno in partita.css) e i
+// blocchi che cambiano con lui: nella zona 5 la coda (#queue, turno giocatori) o il carosello (#focus, turno nemesi e
+// Pesca), la zona 6 solo nel turno giocatori
+function mostraTurno(v: VariantePartita): void {
+  app.dataset.turno = v.momento;
+  queueViewport.hidden = v.carteGrandi !== 'coda';
+  focusEl.hidden = v.carteGrandi === 'coda';
+  zonaInterattivi.hidden = !v.interattivi;
+  // Per i lettori di schermo: di quali carte si tratta
+  const nemesi = v.momento === 'nemesi' || v.momento === 'pesca';
+  zonaCarteGrandi.setAttribute('aria-label', nemesi ? I18N_IT.zonaCarteGrandiNemesi : I18N_IT.zonaCarteGrandiGiocatori);
+  rail.setAttribute('aria-label', nemesi ? I18N_IT.railNemesi : I18N_IT.queueRail);
+  // Dissolvenza delle zone entrando nel turno giocatori: dal turno nemesi no (la classe la mette toPlayersTurn e si
+  // toglie nel turno nemesi, quando le zone non hanno dissolvenza: toglierla prima la farebbe ripartire)
+  if (nemesi) mainEl.classList.remove('is-from-nemesis');
 }
 
 // --- Disegno ---
 
-// Disegna tutto in base allo stato: la testata, i blocchi fissi, i comandi in basso, i pezzi comuni ai due turni (pile,
-// barra dei turni, Undo, banner Tier, vite), poi la schermata attuale della partita. L'ordine conta: il nome della
-// nemesi si misura dopo le classi dell'app, la scelta 1/2 e 3/4 (barra dei turni) dopo il pulsante principale.
+// Disegna tutto in base allo stato: la testata, il momento della partita e le sue varianti (variantePartita), il
+// pulsante principale, i pezzi comuni ai due turni (pile, barra dei turni, Undo, banner Tier, vite), poi il turno
+// attuale. L'ordine conta: il nome della nemesi si misura dopo il momento, la scelta 1/2 e 3/4 (barra dei turni) dopo
+// il pulsante principale.
 export function render(): void {
   disegnaTestata(openGameSetup);
-  mostraTurno();
-  disegnaPulsantePrincipale();
+  const v = variantePartita(partita, ui);
+  mostraTurno(v);
+  disegnaPulsantePrincipale(v);
   disegnaCursore();
   fitPhaseName();
-  disegnaAnnullaModifiche();
   renderDockPiles();
   renderTurnTrack();
   updateUndoBtn();
@@ -93,16 +105,10 @@ export function render(): void {
     showBanner(I18N_IT.tierN(ui.tierBanner));
     ui.tierBanner = null;
   }
-  // La riga delle vite sta sotto la fascia del turno attivo
-  renderLives(partita.resolving ? fasciaTurnoNemesi() : ensureQueueRail());
+  // Vite (zona 4)
+  renderLives();
   if (partita.resolving) disegnaTurnoNemesi();
-  else {
-    // I comandi del turno nemesi non ci sono nel turno giocatori
-    resolveBtn.hidden = true;
-    backBtn.hidden = true;
-    resolveHint.hidden = true;
-    disegnaTurnoGiocatori();
-  }
+  else disegnaTurnoGiocatori();
   checkVictory();
 }
 
@@ -227,7 +233,7 @@ export function startGame(): void {
   ui.deckDark = true;
   showDeckBuild();
   render();
-  slideToGame(() => nemesisBtn.focus());
+  slideToGame(() => pulsantePrincipale.focus());
   prefetchDeckImages();
 }
 
@@ -271,7 +277,7 @@ export function resumeSavedGame(saved: SalvataggioValido): void {
     closeStart();
     render();
     prefetchDeckImages();
-    (partita.resolving ? resolveBtn : nemesisBtn).focus();
+    pulsantePrincipale.focus();
   } catch (err) {
     console.error(err);
     showStartError(I18N_IT.resumeError, false);
@@ -323,7 +329,7 @@ export function avvio(): void {
     partitaDaScenario: closeStart,
     turnoGiocatoriDaNemesi: toPlayersTurn,
     // le carte grandi del turno nemesi partono da quella al centro del turno giocatori (letta quando serve)
-    turnoNemesi: () => enterNemesisTurnView(() => queueRail ? queueRail.scrollLeft : 0, centredQueueUid),
+    turnoNemesi: () => enterNemesisTurnView(() => rail.scrollLeft, centredQueueUid),
     vaiA: schermata => setStartMode(schermata === 'nuova-partita' ? 'setup' : 'home', true),
     riprendiPartita: resumeGame,
     aggiornaInizio,
@@ -336,20 +342,16 @@ export function avvio(): void {
   startBtn.addEventListener('click', onStartClick);
   resumeBtn.addEventListener('click', resumeGame);
   undoBtn.addEventListener('click', undo);
-  nemesisBtn.addEventListener('click', onNemesisClick);
 
-  // Riga del pulsante principale: "Annulla modifiche" (turno giocatori), il pulsante principale e, durante "Crea mazzo",
-  // il cursore al suo posto
-  {
-    const cancelDrafts = impostaAnnullaModifiche();
-    const row = el('div', 'ae-main-row');
-    nemesisBtn.before(row);
-    const slider = createDeckSlider();
-    row.append(cancelDrafts, nemesisBtn, slider.box);
-  }
-
-  resolveBtn.addEventListener('click', onResolveClick);
-  backBtn.addEventListener('click', backToActive);
+  // Zona 7: un solo pulsante principale; l'azione è quella scritta dall'ultimo disegno (data-azione, da variantePartita)
+  pulsantePrincipale.addEventListener('click', () => {
+    const azione = pulsantePrincipale.dataset.azione;
+    if (azione === 'torna') backToActive();
+    else if (azione === 'risolvi' || azione === 'pesca') onResolveClick();
+    else onNemesisClick();
+  });
+  // Nella riga del pulsante principale, durante "Crea mazzo", il cursore al suo posto
+  need(pulsantePrincipale.parentElement, 'riga del pulsante principale').append(createDeckSlider().box);
 
   // Interruttore "Includi carte base potenziate" tolto: si toglie anche da un index.html vecchio in cache
   {
@@ -360,8 +362,10 @@ export function avvio(): void {
 
   window.addEventListener('resize', () => { sizeFocus(); sizeQueue(); });
 
-  // Desktop: la rotella del mouse (verticale) scorre le carte grandi e le fasce piccole, che vanno in orizzontale
+  // Desktop: la rotella del mouse (verticale) scorre le carte grandi e la fascia piccola, che vanno in orizzontale (la
+  // fascia piccola solo nel turno nemesi, come quando le fasce erano due: bug annotato in CONTESTO_SVILUPPO.md)
   [focusEl, queueViewport, rail].forEach(c => c.addEventListener('wheel', e => {
+    if (c === rail && !partita.resolving) return;
     if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || c.scrollWidth <= c.clientWidth + 1) return;
     e.preventDefault();
     c.scrollBy({ left: e.deltaY, behavior: 'auto' });

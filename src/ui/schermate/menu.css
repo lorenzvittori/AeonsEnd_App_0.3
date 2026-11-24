@@ -132,7 +132,6 @@
 .start-home[hidden], .start-choice[hidden] { display: none; }
 .start-screen.is-setup .start-title { padding-inline: 44px; }
 /* Wave e Nemesi separate: la nemesi ha una linea sopra */
-.wave-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .start-nemesis { padding-top: 20px; border-top: 1px solid var(--ae-border); }
 
 /* ---. pagina Nuova partita --- */

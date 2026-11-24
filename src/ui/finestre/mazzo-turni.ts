@@ -63,7 +63,7 @@ export function openTurnScreen(): void {
   // In cima una copia, solo da guardare, della testata (nome nemesi, Turno N, Mazzo, Scarti, Menu) e della barra della
   // fase. La testata è copiata all'apertura; la barra mostra la bozza e si rifà a ogni modifica (trackHolder)
   // (classi di #app da cui dipende lo stile della testata; non quelle di passaggio: scelta 1/2 o 3/4, scossa, scorrimento)
-  const copyShell = el('div', ['ae-shell', ...['clear-header', 'is-nemesis-turn'].filter(c => app.classList.contains(c)), 'ae-turn-copy'].join(' '));
+  const copyShell = el('div', ['ae-shell', ...['clear-header'].filter(c => app.classList.contains(c)), 'ae-turn-copy'].join(' '));
   copyShell.appendChild(viewOnlyCopy(byId('topbar', HTMLElement)));
   const trackHolder = el('div', 'ae-turn-copy-track');
   copyShell.appendChild(trackHolder);

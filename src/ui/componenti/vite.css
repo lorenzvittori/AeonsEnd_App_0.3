@@ -1,38 +1,42 @@
-/* vite.css: vite di Gravehold e della nemesi: box con il number scrubbing, cifre che scorrono, finestra della vita
-   Elementi creati da: ui/componenti/vite.ts (box), ui/finestre/vita.ts (finestra).
+/* vite.css: vite di Gravehold e della nemesi (zona 4 della schermata "partita", partita.css): box con il number scrubbing, cifre che scorrono, finestra della vita
+   Elementi creati da: index.html (#vite), ui/componenti/vite.ts (box), ui/finestre/vita.ts (finestra).
+   Misure: partita-misure.css (gruppo "4 vite").
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
 /* Vite di Gravehold (sinistra) e della nemesi (destra) sotto la fascia delle carte piccole, ai margini della fascia */
-.ae-lives { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 16px 0; position: relative; z-index: 1; }
+.ae-lives {
+  flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: var(--vite-spazio);
+  padding: var(--vite-spazio-sopra) var(--vite-margine-lati) 0; position: relative; z-index: 1;
+}
 .ae-lives[hidden] { display: none; }
 .ae-life-box {
-  display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: calc(50% - 6px); height: 34px; padding: 0 10px;
+  display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: calc(50% - var(--vite-spazio) / 2); height: var(--vite-box-altezza); padding: 0 10px;
   border: 1px solid var(--ae-border); border-radius: 8px; background: rgba(16, 17, 22, .85); color: inherit; cursor: pointer;
   font: 700 20px/24px var(--ae-font-ui); font-variant-numeric: tabular-nums;
 }
 .ae-life-box .ae-life-value { flex: 0 0 auto; }
 .ae-life-box.is-zero .ae-life-value { color: #e06c5a; }
 /* Box delle vite = solo il numero, a pillola (angoli tondi quanto metà altezza: i lati sono mezzi cerchi) */
-.ae-life-box { justify-content: center; min-width: 56px; padding: 0 16px; border-radius: 17px; }
+.ae-life-box { justify-content: center; min-width: var(--vite-box-larghezza-minima); padding: 0 var(--vite-box-margine-interno); border-radius: var(--vite-box-raggio); }
 /* Sfondo dei box (Gravehold: immagine scelta nel Menu; nemesi: il suo ritratto), velato per leggere il numero */
 .ae-life-box.has-bg {
-  min-width: 72px; background: linear-gradient(rgba(10, 11, 14, .42), rgba(10, 11, 14, .42)), var(--ae-life-bg) center / cover no-repeat;
+  min-width: var(--vite-box-larghezza-minima-sfondo); background: linear-gradient(rgba(10, 11, 14, .42), rgba(10, 11, 14, .42)), var(--ae-life-bg) center / cover no-repeat;
 }
 .ae-life-box.has-bg .ae-life-value { text-shadow: 0 1px 3px rgba(0, 0, 0, .9), 0 0 2px rgba(0, 0, 0, .9); }
 /* Sopra ogni box "GRAVEHOLD" / "NEMESIS" alto 7px. I box scendono di 3.8px (padding sopra) e la riga resta alta
    uguale (margine sotto negativo, le carte grandi non cambiano): così fascia piccola → box e box → riga vita/token
    sono lo stesso spazio (scheletro: spazi 5 e 6, 24.5px) */
-.ae-lives { padding-top: 7.8px; margin-bottom: -3.8px; }
+.ae-lives { padding-top: var(--vite-spazio-sopra); margin-bottom: var(--vite-margine-sotto); }
 .ae-life-box { position: relative; }
 .ae-life-tag {
-  position: absolute; left: 50%; bottom: calc(100% + 3px); transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: calc(100% + var(--vite-scritta-distanza)); transform: translateX(-50%);
   font: 600 8px/7px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
   color: var(--ae-text); opacity: .75; pointer-events: none;
 }
 /* Box delle vite 16px più in basso (spostati e basta: la riga e le carte grandi non cambiano). Stanno ai lati e
    la riga vita/token della carta è sempre al centro, quindi possono scendere accanto a lei; sopra a tutto per il tocco */
 .ae-lives { z-index: 4; }
-.ae-life-box { top: 16px; }
+.ae-life-box { top: var(--vite-box-discesa); }
 /* Finestra della vita = una pillola al centro come il box (stesso sfondo): numero grande sopra, −5 −1 · +1 +5 sotto */
 .ae-life-modal {
   width: min(340px, 100%); min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;

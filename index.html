@@ -21,58 +21,64 @@
 </style>
 </head>
 <body>
-  <!-- Partita: testata con la fase, contenuto (VistaCoda o VistaRisoluzione), dock con le azioni -->
-  <div class="ae-shell" id="app">
-    <header class="ae-header" id="topbar">
-      <button id="undo-btn" class="ae-icon-button" type="button" aria-label="Annulla l'ultima azione" title="Annulla" disabled>
+  <!-- Schermata "partita": una sola schermata per turno giocatori, turno nemesi, passo Pesca e "Crea mazzo", divisa in
+       7 zone dall'alto in basso (data-zona). Disposizione: src/ui/schermate/partita.css (griglia, una riga per zona);
+       misure: src/ui/schermate/partita-misure.css. data-turno (giocatori | nemesi | pesca | crea-mazzo) è il momento della
+       partita: lo imposta il coordinatore (src/ui/navigazione.ts) da variantePartita() (src/ui/partita-variante.ts). -->
+  <div class="ae-shell" id="app" data-schermata="partita" data-turno="giocatori">
+    <!-- 1 testata: mazzo e scarti, nome della nemesi con battaglia, giocatori e turno, Menu -->
+    <header class="ae-header" id="topbar" data-zona="testata">
+      <div class="ae-header-piles" id="pile-testata">
+        <div class="ae-pile ae-pile--deck" id="pila-mazzo" role="button" tabindex="0"></div>
+        <button class="ae-pile ae-pile--discard" id="pila-scarti" type="button"></button>
+      </div>
+      <button id="undo-btn" class="ae-icon-button" type="button" aria-label="Annulla l'ultima azione" title="Annulla" disabled hidden>
         <span class="ae-icon ae-icon--undo" aria-hidden="true"></span>
       </button>
       <span id="phase-label" class="ae-phase">Turno dei giocatori</span>
-      <span class="ae-header-spacer" aria-hidden="true"></span>
+      <button id="menu-btn" class="ae-icon-button ae-menu-button" type="button" aria-label="Menu" aria-haspopup="dialog"><span class="ae-menu-lines"></span></button>
     </header>
 
+    <!-- Zone 2-6 (sottogriglia della schermata) -->
     <main class="ae-main" id="main">
-      <!-- VistaCoda (turno dei giocatori) -->
-      <section id="queue-view" class="queue-view" aria-labelledby="queue-title">
-        <div class="queue-col">
-          <h2 id="queue-title" class="queue-title">Coda in gioco</h2>
-          <div id="queue" class="ae-queue-viewport">
-            <div id="queue-list" class="ae-queue-list" role="list"></div>
-            <div id="queue-empty" class="ae-empty" hidden>
-              <img class="ae-empty-icon" src="Assets/ui/icons/empty-deck.svg" alt="" width="56" height="56">
-              <strong>Nessuna carta nemesi in gioco</strong>
-              <p>Premi «Pesca carta turno» per iniziare</p>
-            </div>
+      <!-- 2 fascia turno: la barra del mazzo dei turni (src/ui/componenti/barra-turni.ts) -->
+      <div class="ae-turn-track" id="fascia-turno" data-zona="turno" role="button" tabindex="0"></div>
+
+      <!-- 3 fascia carte piccole: le carte in gioco in piccolo, uguale nei due turni -->
+      <div data-zona="carte-piccole">
+        <div id="rail" class="ae-compact-rail" role="list" aria-label="Coda in gioco, tocca una carta per mostrarla"></div>
+      </div>
+
+      <!-- 4 vite di Gravehold e della nemesi (box creati da src/ui/componenti/vite.ts) -->
+      <div data-zona="vite">
+        <div class="ae-lives" id="vite"></div>
+      </div>
+
+      <!-- 5 fascia carte grandi: la coda del turno giocatori (#queue) o il carosello del turno nemesi (#focus) -->
+      <section data-zona="carte-grandi" id="carte-grandi" aria-label="Coda in gioco">
+        <div id="queue" class="ae-queue-viewport">
+          <div id="queue-list" class="ae-queue-list" role="list"></div>
+          <div id="queue-empty" class="ae-empty" hidden>
+            <img class="ae-empty-icon" src="Assets/ui/icons/empty-deck.svg" alt="" width="56" height="56">
+            <strong>Nessuna carta nemesi in gioco</strong>
+            <p>Premi «Pesca carta turno» per iniziare</p>
           </div>
         </div>
-        <div id="queue-side" class="queue-side">
-          <div class="ae-empty">
-            <span class="ae-icon ae-icon--eye queue-side-icon" aria-hidden="true"></span>
-            <strong>Nessuna carta selezionata</strong>
-            <p>Tocca una carta della coda per leggerla o modificarla</p>
-          </div>
-        </div>
+        <div id="focus" class="ae-focus" hidden></div>
       </section>
 
-      <!-- VistaRisoluzione (turno nemesi): fascia compatta e carta in primo piano -->
-      <section id="resolve-view" class="ae-resolve-layout" aria-label="Risoluzione del turno nemesi" hidden>
-        <div id="rail" class="ae-compact-rail" role="list" aria-label="Coda della nemesi"></div>
-        <div id="focus" class="ae-focus"></div>
-      </section>
+      <!-- 6 pulsanti interattivi: solo nel turno giocatori (per ora i comandi stanno sotto la carta al centro) -->
+      <div data-zona="interattivi" id="interattivi"></div>
     </main>
 
-    <footer class="ae-dock" id="dock">
-      <div class="ae-dock-row" id="info-row">
-        <span id="turn-info" class="ae-meta"></span>
-        <span class="ae-dock-links">
-          <button id="discard-btn" class="ae-text-button" type="button">Scarti 0</button>
-          <button id="menu-btn" class="ae-text-button" type="button">Menu</button>
-        </span>
+    <!-- 7 pulsante principale: uno solo (testo e azione da variantePartita), con "Annulla modifiche" accanto, il cursore di
+         "Crea mazzo" al suo posto e la scelta del giocatore 1/2 o 3/4 ridotta -->
+    <footer class="ae-dock" id="dock" data-zona="principale">
+      <div class="ae-main-row">
+        <button id="annulla-modifiche" class="ae-button ae-button--secondary ae-cancel-drafts" type="button" hidden>Annulla modifiche</button>
+        <button id="pulsante-principale" class="ae-button ae-button--primary ae-button--full" type="button">Pesca carta turno</button>
       </div>
-      <p id="resolve-hint" class="ae-hint" hidden></p>
-      <button id="nemesis-btn" class="ae-button ae-button--primary ae-button--full" type="button">Turno Nemesi</button>
-      <button id="resolve-btn" class="ae-button ae-button--primary ae-button--full" type="button" hidden></button>
-      <button id="back-btn" class="ae-button ae-button--secondary ae-button--full" type="button" hidden>Torna alla carta da risolvere</button>
+      <div class="ae-pair-dock" id="scelta-coppia" role="group" hidden></div>
     </footer>
   </div>
 

@@ -1,7 +1,8 @@
-// ui/schermate/turno-nemesi.ts: la schermata del turno nemesi (VistaRisoluzione): il pulsante principale (risolvi,
-// pesca) con le animazioni dopo l'azione, la carta mostrata (anteprima di un'altra carta, ritorno alla carta da
-// risolvere), l'inizio del turno nemesi a schermo; all'avvio i tocchi su fascia e carosello. Il disegno (fascia,
-// carosello, carta pescata) è in turno-nemesi-carosello.ts. La fine del turno nemesi a schermo la chiede con l'aggancio
+// ui/schermate/turno-nemesi.ts: il turno nemesi (e il passo Pesca) nella schermata "partita": l'azione del pulsante
+// principale (risolvi, pesca: onResolveClick) con le animazioni dopo l'azione, la carta mostrata (anteprima di un'altra
+// carta, ritorno alla carta da risolvere), l'inizio del turno nemesi a schermo; all'avvio i tocchi su fascia (zona 3) e
+// carosello (zona 5). Il disegno (fascia, carosello, carta pescata) è in turno-nemesi-carosello.ts, il pulsante in
+// ui/componenti/pulsante-principale.ts. La fine del turno nemesi a schermo la chiede con l'aggancio
 // passaAlTurnoGiocatori.
 // Livello 5 (ui/schermate/). Dipende da: stato/partita.ts (lettura, pescaCarta, risolviCarta), ui/ base (testi, pagina,
 // dom, ridisegno), ui/componenti (animazioni, barra-turni, dialoghi, testata), ui/finestre/scheda-carta.ts,
@@ -14,8 +15,7 @@ import { announce } from '../componenti/dialoghi.ts';
 import { FLY_MS, flyToDiscard } from '../componenti/testata.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
 import type { CartaPescata } from '../../regole/turno-nemesi.ts';
-import { DRAW_UID, duration, focusEl, nemesisBtn, rail, reducedMotion, resolveBtn, resolveView,
-  ui } from '../pagina.ts';
+import { DRAW_UID, duration, focusEl, pulsantePrincipale, rail, reducedMotion, ui } from '../pagina.ts';
 import { BG_SLIDE_MS, buzz, ENTER_MS, lockFor, MORPH_MS, scrollItemInto, shakeApp,
   trackDrag } from '../componenti/animazioni.ts';
 import { query } from '../dom.ts';
@@ -106,14 +106,14 @@ export function onResolveClick(): void {
       // interromperebbe l'animazione
       const flyMs = reducedMotion.matches ? 150 : FLY_MS + 80;
       lockFor(flyMs + (reducedMotion.matches ? 0 : ENTER_MS + 40), shuffleAfter);
-      setTimeout(() => { passaAlTurnoGiocatori(null); nemesisBtn.focus(); }, flyMs);
+      setTimeout(() => { passaAlTurnoGiocatori(null); pulsantePrincipale.focus(); }, flyMs);
       return;
     }
     // Carta messa in gioco: passaggio morbido, la carta grande si trasforma nella carta del turno giocatori e le altre
     // entrano da sinistra (vedi toPlayersTurn)
     lockFor(reducedMotion.matches ? duration('phase') : Math.max(MORPH_MS, MORPH_MS / 2 + ENTER_MS) + 40, shuffleAfter);
     passaAlTurnoGiocatori(kept && ghostSource ? kept.uid : null, ghostSource);
-    if (wasNewStep) nemesisBtn.focus();
+    if (wasNewStep) pulsantePrincipale.focus();
     return;
   }
 
@@ -158,7 +158,6 @@ export function enterNemesisTurnView(railScrollOf: () => number, centred: () => 
   else delete focusEl.dataset.uid;
   if (partita.resolving) {
     showActive(activeEntry());
-    resolveView.classList.remove('is-entering');
     lockFor(duration('phase'));
   }
   richiediRidisegno();
@@ -167,7 +166,7 @@ export function enterNemesisTurnView(railScrollOf: () => number, centred: () => 
     const current = query(rail, '[aria-current="true"]', HTMLElement);
     if (current) scrollItemInto(rail, current, 'nearest');
   }
-  if (partita.resolving) resolveBtn.focus();
+  if (partita.resolving) pulsantePrincipale.focus();
   // Coda vuota: si va subito alla carta da pescare, che arriva dal mazzo
   if (isDrawStep()) animateDrawIn();
 }
@@ -190,7 +189,7 @@ export function backToActive(): void {
   const active = activeEntry();
   if (active) viewCard(active.uid);
   else if (isDrawStep()) viewCard(DRAW_UID);
-  resolveBtn.focus();
+  pulsantePrincipale.focus();
 }
 
 // Disegno del turno nemesi (fascia, carosello, pulsante principale)
@@ -257,6 +256,7 @@ export function avvio(): void {
 
   // Frecce sinistra/destra sulla fascia: cambiano solo la carta mostrata
   rail.addEventListener('keydown', e => {
+    if (!partita.resolving) return;
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
     e.preventDefault();
     moveView(e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1);
