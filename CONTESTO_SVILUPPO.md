@@ -249,8 +249,8 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
       - **"Mazzo turno" su due righe** (v251): se su una riga non ci sta va su due ("Mazzo" sopra, "Turno" sotto,
         `.is-two-lines`, allineate a destra, blocco centrato sulla linea dei titoli), poi se serve il carattere scende
         (min 8px); mai oltre il bordo destro della riga delle carte. La scritta non allarga più la corsia del mazzo
-        (v247-v250 `deckHeadMinLane`): un posto per carta. **"Mazzo vuoto"** sta in un posto largo come una carta,
-        anche su due righe, con il carattere che scende finché ci sta (`fitEmpty`).
+        (v247-v250 `deckHeadMinLane`): un posto per carta. Il **mazzo vuoto** è un posto tratteggiato largo e alto come
+        una carta con il simbolo ∅ (`placeEmpty` lo mette al suo posto nella corsia).
       - Verifica (v247): scarti/mazzo 0/6, 1/5, 2/4, 3/3, 4/2, 5/1, 6/0, 0/4, 2/2, 4/0, a 360x780, 375x812 e
         1280x800, a riposo e con una carta degli scarti o del mazzo in mano, animazioni spente e accese: cuspide sul
         segmento (differenza 0px), nessuna sovrapposizione tra scritte, cuspide, linee e Mescola, carattere mai sotto
@@ -354,6 +354,20 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
         carta è stata presa (scarti o mazzo) non resta più una copia al 100% ma un **segnaposto grigio chiaro** senza
         immagine, piccolo come le altre (`.ae-turn-card.is-dragging`). Gli **scarti** hanno il contorno più scuro delle
         carte del mazzo (opacità 0.28 invece di 0.75; il turno in corso resta dorato). (v234-v240: riquadri grandi come una carta con la scritta, in verticale e poi in orizzontale.)
+        **Oggi (branch `ts`):** il segnaposto è **grigio scuro a righe oblique** (due grigi) con un contorno
+        tratteggiato dorato spento. La riga è **compatta e centrata** (`spaceItems` in
+        `ui/schermate/mazzo-turni-riga.ts`): lo spazio tra due oggetti è al massimo 12px (`TURN_GAP_MAX`), minimo 10px;
+        tra due carte vicine (scarti-scarti, mazzo-mazzo) è la **metà** (`CARD_GAP_K`); w resta unica per tutti gli
+        stati (a 375px 44px). Trascinando la **prima** carta del mazzo il cerchio **Cima** sta sopra il suo segnaposto (è
+        già in cima, e lasciarla lì vale Cima), trascinando l'**ultima** il cerchio **Fondo**; senza scarti il **cerchio
+        degli scarti** sta al centro del posto tratteggiato (oggetti con `it.on` in `rowItems`: fuori dalla fila,
+        centrati su un altro). Con la guida tra due carte del mazzo quelle due si **scostano** di 3px ciascuna
+        (`TURN_SPREAD`; solo da vedere, i centri per `pileSlotAt` restano quelli senza scosto) e la guida sta a metà
+        tra le due. Posti vuoti (scarti e mazzo) tratteggiati, grandi come una carta, con il simbolo **∅**
+        (`emptySetIcon`; "Mazzo vuoto" resta come nome per i lettori di schermo); il simbolo sparisce quando al centro
+        c'è il cerchio o la guida. Le zone di rilascio valgono nell'altezza delle carte più **24px sopra e 32px sotto**
+        (`inCardBand`). Mescola non ha lo sfondo grigio al passaggio (sul telefono il `:hover` restava acceso dopo il
+        tocco): lo sfondo c'è solo mentre è premuto.
         Niente riquadro attorno alle carte del mazzo (v240) (`.ae-turn-zone`, `.ae-turn-lane.is-squeezed`). Trascinandola, il **segmento verticale dorato**
         (`.ae-turn-insert`) dice dove cadrà: tra Cima e la prima carta, tra due carte (`pileSlotAt`: prima della prima
         carta il cui centro è a destra della carta trascinata) o tra l'ultima carta e Fondo. Col tocco: la carta degli
@@ -588,6 +602,17 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   o Torre, `GRAVEHOLD_BGS`, stessa finestra a anteprime dello Sfondo: `backgroundChoiceButton` / `openBackgroundPicker`
   con `choice`); nemesi = il ritratto della nemesi della partita (`nemesisArt[...].portrait`). Le carte grandi prendono lo spazio che resta (a 360×780 da 249 a 222px).
   Non c'è durante "Crea mazzo" né nella copia della testata della finestra del mazzo dei turni.
+  - **Number scrubbing** (`lifeScrub` in `ui/schermate/turno-nemesi.ts`, conti in `ui/schermate/vite-scrub.ts`):
+    tenendo premuto un box e trascinando in **verticale** la vita cambia di 1 ogni 30px (`LIFE_SCRUB_PX`; in su sale,
+    in giù scende, tra 0 e il massimo come nella finestra), con le cifre che scorrono nel box (`renderLifeDigits`,
+    maschera sul bordo della riga del numero). Parte dopo 6px in verticale (`LIFE_SCRUB_START`, più in verticale che
+    di lato; di lato oltre 6px il gesto si annulla); sul box la pagina non scorre (`touch-action: none`). Mentre si
+    trascina il box è al 108% con il bordo dorato, rosso se la vita è scesa, verde se è salita; a destra del numero,
+    in alto (cime delle cifre alla stessa altezza, `top: 2.75px`), il cambio "+x" verde / "−y" rosso, 11px, come
+    nella finestra (`.ae-life-box-delta` dentro `.ae-life-num`), che sparisce al rilascio. Al rilascio una sola
+    azione `cambiaVita` (un passo di undo, si salva); a 0 Vittoria o Sconfitta; il click che segue non apre la
+    finestra (`data-scrubbed`); un tocco senza trascinare la apre. `renderLives` riscrive il numero solo se è cambiato
+    (`data-shown`), così le cifre finiscono di scorrere.
   - Toccando un box si apre la finestra della vita (`openLifeDialog`). Dalla v259 è una **pillola al centro** con la
     stessa forma e lo stesso sfondo del box (`.ae-life-modal`, larga fino a 340px): sopra il numero grande (64px,
     sempre bianco con un contorno grigio scuro attorno alle cifre, v263; il velo nero della v261 è tolto; a destra
@@ -1010,6 +1035,9 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
     - `mazzo-turni.test.ts`, `turno-nemesi.test.ts`, `vite.test.ts`;
     - `salvataggio.test.ts`: con un salvataggio vero di main v228 in `tests/dati/`;
     - `dati-json.test.ts`: i veri `public/*.json` rispettano i tipi;
+    - `mazzo-turni-riga.test.ts`: la riga della finestra del mazzo dei turni (spazi, metà tra carte, centratura,
+      oggetti `it.on`, fascia delle zone di rilascio); `vite-scrub.test.ts`: lo scrubbing delle vite (partenza, passi
+      da 30px, limiti 0 e massimo, cambio mostrato);
     - `partita.test.ts`: il modulo della partita: `nuovaPartita()` dà sempre lo stesso stato, due partite di fila con
       lo stesso caso danno lo stesso risultato, un'azione = un passo di undo, salvataggio → ripresa = stesso stato,
       uscita dalla Modalità test (caso e orologio fissati, `localStorage` finto);
