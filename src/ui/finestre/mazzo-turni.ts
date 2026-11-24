@@ -1,25 +1,24 @@
-// ui/schermate/mazzo-turni.ts: finestra del mazzo dei turni (scarti e mazzo dei turni in una riga, carte da spostare
-// con il dito o con due tocchi, Rivela / Copri, Mescola) e scelta "Chi gioca questo turno?" delle carte 1/2 e 3/4.
-// Il mazzo dei turni si cambia con stato/partita.ts: applicaBozzaTurni a ogni modifica della finestra (senza undo),
-// aggiungiPassoUndo alla chiusura (un passo per visita), conMazzoTurni per disegnare l'anteprima della barra.
-// Dipende da: regole/mazzo-turni.ts (bozza), stato/partita.ts, ui/ (testi, pagina, eventi), ui/componenti (componenti,
-// dialoghi, testata, menu-laterale), ui/schermate (turno-nemesi, mazzo-turni-riga: conti della riga). Usato da: eventi
-// (barra dei turni), turno nemesi,
-// turno giocatori, componenti, testata, menu laterale (animDone).
+// ui/finestre/mazzo-turni.ts: la finestra del mazzo dei turni (dalla barra dei turni): scarti e mazzo dei turni in una
+// riga, carte da rivelare, spostare (tocco o trascinamento), Mescola; la bozza si scrive subito e alla chiusura diventa
+// un solo passo di undo.
+// Livello 4 (ui/finestre/). Dipende da: regole/mazzo-turni.ts, stato/partita.ts, ui/ base (testi, pagina, dom,
+// ridisegno: apriMenuLaterale dalla copia della testata), ui/componenti (animazioni, barra-turni, dialoghi, testata),
+// mazzo-turni-riga.ts (supporto). Usato da: navigazione (tocco sulla barra dei turni).
 
 import * as Turni from '../../regole/mazzo-turni.ts';
 import { I18N_IT } from '../testi.ts';
-import { aggiungiPassoUndo, applicaBozzaTurni, conMazzoTurni, currentTurnCard, isPairCard, pairOptions, turnCardPlayer, partita, snapshot } from '../../stato/partita.ts';
-import { el, icon, need, query } from '../componenti/componenti.ts';
-import { announce, button, dialogShell, modals, openModal } from '../componenti/dialoghi.ts';
-import { fitPhaseName, render } from './turno-nemesi.ts';
-import { renderTurnTrack, turnTrack, chooseTurnPlayer } from '../eventi.ts';
-import { headerPiles } from '../componenti/testata.ts';
-import { openSideMenu } from '../componenti/menu-laterale.ts';
-import type { BozzaTurni, CartaTurno, Giocatore, MazzoTurni } from '../../tipi/partita.ts';
-import { TURN_SPREAD, inCardBand, spaceItems } from './mazzo-turni-riga.ts';
+import { aggiungiPassoUndo, applicaBozzaTurni, conMazzoTurni, isPairCard, pairOptions, partita, snapshot,
+  turnCardPlayer } from '../../stato/partita.ts';
+import { button, dialogShell, modals, openModal } from '../componenti/dialoghi.ts';
+import { fitPhaseName } from '../componenti/testata.ts';
+import type { BozzaTurni, CartaTurno, MazzoTurni } from '../../tipi/partita.ts';
+import { inCardBand, spaceItems, TURN_SPREAD } from './mazzo-turni-riga.ts';
 import type { OggettoRiga } from './mazzo-turni-riga.ts';
-import { app, byId, mainEl, nemesisBtn, reducedMotion, ui } from '../pagina.ts';
+import { app, byId, reducedMotion, ui } from '../pagina.ts';
+import { animDone } from '../componenti/animazioni.ts';
+import { el, icon, need, query } from '../dom.ts';
+import { apriMenuLaterale, richiediRidisegno } from '../ridisegno.ts';
+import { renderTurnTrack, turnTrack } from '../componenti/barra-turni.ts';
 
 // Carta toccata o presa nella finestra: del mazzo (posizione dalla cima) o degli scarti (posizione negli scarti)
 interface Selezione {
@@ -116,7 +115,7 @@ export function turnDeckMovable(d: BozzaTurni, i: number): boolean {
 // solo per tutta la visita della finestra, aggiunto alla chiusura (openTurnScreen, shut)
 export function saveTurnDraft(d: BozzaTurni): void {
   applicaBozzaTurni(d);
-  render();
+  richiediRidisegno();
 }
 
 // Copia solo da guardare di un pezzo dell'app (testata, barra della fase): niente id, ruoli, tabindex, etichette
@@ -156,11 +155,6 @@ export let turnScreen: FinestraTurni | null = null;
 
 // Durata della discesa del foglio della finestra
 export const TURN_SHEET_MS = 320;
-
-// Fine di un gruppo di animazioni, con un tempo massimo (se il browser non le fa girare, si va avanti lo stesso)
-export function animDone(anims: readonly Animation[], ms: number): Promise<unknown> {
-  return Promise.race([Promise.all(anims.map(a => a.finished.catch(() => {}))), new Promise(r => setTimeout(r, ms + 150))]);
-}
 
 // Simbolo dell'insieme vuoto (∅: cerchio con una barra obliqua che esce dal cerchio), nei posti vuoti di scarti e
 // mazzo dei turni; disegnato in SVG, colore del testo
@@ -226,7 +220,7 @@ export function openTurnScreen(): void {
       draw();
       // Le voci che portano altrove (undo, scarti, vittoria, esci, ricomincia) chiudono prima la finestra; chiudendo
       // il menu si torna qui
-      openSideMenu(() => shut());
+      apriMenuLaterale(() => shut());
     });
   }
   dialog.appendChild(copyShell);
@@ -1041,144 +1035,4 @@ export function openTurnScreen(): void {
   }
   turnScreen = { dialog, get draft() { return d; }, dirty, tryClose, onCancel, shuffle: runShuffle,
     get shuffling() { return shuffling; } };
-}
-
-// Finestra "Chi gioca questo turno?": esce una carta 1/2 o 3/4 senza giocatore. Al centro due carte grandi come quelle
-// della fascia piccola (bordo nero, colore del giocatore scurito, numero nero al centro). Finché non si sceglie è tutto
-// disattivato (inert) tranne la scelta e il pulsante Menu; la testata resta sopra l'oscuramento. Elementi creati in
-// avvio()
-export let pairChoice: HTMLDivElement;
-export let pairChoicePanel: HTMLDivElement;
-export let pairChoiceTitle: HTMLHeadingElement;
-export let pairChoiceCards: HTMLDivElement;
-
-// La finestra scende e si trasforma nel pulsante diviso in due. Una copia della finestra parte dalla sua posizione e si
-// stringe/allunga fino al pulsante, sfumando; il pulsante compare mentre lei arriva
-export const PAIR_DOCK_MS = 420;
-
-export function animatePairToDock(from: DOMRect): void {
-  const to = pairDock.getBoundingClientRect();
-  if (reducedMotion.matches || !document.body.animate || !from.width || !to.width) return;
-  const ghost = pairChoicePanel.cloneNode(true);
-  if (!(ghost instanceof HTMLElement)) return;
-  ghost.removeAttribute('id');
-  ghost.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
-  ghost.setAttribute('aria-hidden', 'true');
-  ghost.classList.add('ae-pair-ghost');
-  Object.assign(ghost.style, { left: from.left + 'px', top: from.top + 'px', width: from.width + 'px', height: from.height + 'px' });
-  document.body.appendChild(ghost);
-  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
-  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
-  const sx = to.width / from.width;
-  const sy = to.height / from.height;
-  const anim = ghost.animate([
-    { transform: 'none', opacity: 1 },
-    { transform: `translate(${dx * .7}px, ${dy * .7}px) scale(${1 + (sx - 1) * .7}, ${1 + (sy - 1) * .7})`, opacity: .9, offset: .7 },
-    { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0 }
-  ], { duration: PAIR_DOCK_MS, easing: 'cubic-bezier(.4, 0, .2, 1)' });
-  anim.onfinish = () => ghost.remove();
-  setTimeout(() => ghost.remove(), PAIR_DOCK_MS + 200);
-  pairDock.animate([{ opacity: 0, transform: 'scale(.96)' }, { opacity: 0, transform: 'scale(.96)', offset: .55 },
-    { opacity: 1, transform: 'none' }], { duration: PAIR_DOCK_MS, easing: 'ease-out' });
-}
-
-// Pulsante diviso in due ("Giocatore x | Giocatore y") con la scelta ridotta, creato in avvio()
-export let pairDock: HTMLDivElement;
-
-export function needsPairChoice(): boolean {
-  const cur = currentTurnCard();
-  return !partita.resolving && !ui.deckBuilding && isPairCard(cur) && !turnCardPlayer(cur);
-}
-
-// Carta 1/2 o 3/4 in attesa di scelta (giro e posizione): la finestra ridotta vale solo per questa carta
-export function pairChoiceKey(): string {
-  return partita.turnOrder.round + ':' + ((partita.turnOrder.history || []).length - 1);
-}
-
-export function pairButtons(kind: CartaTurno | null, cls: string, label: (p: Giocatore) => string): HTMLButtonElement[] {
-  return pairOptions(kind).map(p => {
-    const b = el('button', cls, label(p));
-    b.type = 'button';
-    b.dataset.kind = p;
-    b.setAttribute('aria-label', I18N_IT.pairChoiceLabel(Number(p.slice(1))));
-    b.addEventListener('click', () => chooseTurnPlayer(p));
-    return b;
-  });
-}
-
-export function renderPairChoice(): void {
-  const pending = needsPairChoice();
-  const minimized = pending && ui.pairMinimized === pairChoiceKey();
-  const show = pending && !minimized;
-  const wasShown = !pairChoice.hidden;
-  pairChoice.hidden = !show;
-  app.classList.toggle('is-pair-choice', show);
-  // Scelta ridotta nel pulsante in basso: niente carte e niente pesca dal mazzo (cardControls, openCardDialog, mazzo)
-  app.classList.toggle('is-pair-pending', minimized);
-  mainEl.inert = show;
-  const dock = query(document, '.ae-dock', HTMLElement);
-  if (dock) dock.inert = show;
-  headerPiles.inert = show;
-  // Pulsante grande: sparisce con la finestra aperta; con la finestra ridotta lo sostituiscono i due giocatori
-  // (con la finestra aperta resta il suo spazio, invisibile, così le carte sotto non cambiano misura)
-  nemesisBtn.style.visibility = show ? 'hidden' : '';
-  if (minimized) nemesisBtn.hidden = true;
-  pairDock.hidden = !minimized;
-  // (con la scelta in sospeso la carta in corso è una carta 1/2 o 3/4: String la scrive come prima nel dataset)
-  const curCard = currentTurnCard();
-  if (minimized && pairDock.dataset.kind !== curCard) {
-    pairDock.dataset.kind = String(curCard);
-    pairDock.replaceChildren(...pairButtons(curCard, 'ae-button ae-pair-half',
-      p => I18N_IT.trackPlayerName(Number(p.slice(1)))));
-  }
-  if (!minimized) delete pairDock.dataset.kind;
-  if (!show) return;
-  // Misura delle carte della fascia piccola (52px sul telefono)
-  const small = document.querySelector('.ae-compact-rail .ae-queue-item');
-  const w = small && small.getBoundingClientRect().width ? small.getBoundingClientRect().width : 52;
-  pairChoice.style.setProperty('--ae-pick-w', w + 'px');
-  const kind = currentTurnCard();
-  if (pairChoiceCards.dataset.kind !== kind) {
-    pairChoiceCards.dataset.kind = String(kind);
-    pairChoiceCards.replaceChildren(...pairButtons(kind, 'ae-pair-pick', p => p.slice(1)));
-  }
-  if (!wasShown) {
-    announce(I18N_IT.pairChoiceTitle);
-    const first = pairChoiceCards.firstChild;
-    if (first instanceof HTMLElement) first.focus({ preventScroll: true });
-    else throw new TypeError('scelta del giocatore senza pulsanti');
-  }
-}
-
-// Codice eseguito all'avvio, nell'ordine di sempre
-export function avvio(): void {
-  pairChoice = el('div', 'ae-pair-choice');
-  pairChoice.hidden = true;
-  pairChoicePanel = el('div', 'ae-pair-choice-panel');
-  pairChoicePanel.setAttribute('role', 'dialog');
-  pairChoicePanel.setAttribute('aria-labelledby', 'ae-pair-choice-title');
-  pairChoiceTitle = el('h2', 'ae-pair-choice-title', I18N_IT.pairChoiceTitle);
-  pairChoiceTitle.id = 'ae-pair-choice-title';
-  pairChoiceCards = el('div', 'ae-pair-choice-cards');
-  pairChoicePanel.append(pairChoiceTitle, pairChoiceCards);
-  pairChoice.appendChild(pairChoicePanel);
-  app.appendChild(pairChoice);
-
-  // Toccando fuori dalla finestra la scelta scende nel pulsante grande in basso, diviso in due
-  // ("Giocatore x | Giocatore y"); l'app si può usare, ma non si toccano le carte e non si pesca dal mazzo
-  pairChoice.addEventListener('click', e => {
-    if (e.target !== pairChoice || !needsPairChoice() || ui.isTransitioning) return;
-    const from = pairChoicePanel.getBoundingClientRect();
-    ui.pairMinimized = pairChoiceKey();
-    render();
-    animatePairToDock(from);
-    const first = pairDock.querySelector('button');
-    if (first) first.focus({ preventScroll: true });
-  });
-
-  pairDock = el('div', 'ae-pair-dock');
-  pairDock.setAttribute('role', 'group');
-  pairDock.setAttribute('aria-label', I18N_IT.pairChoiceTitle);
-  pairDock.hidden = true;
-  nemesisBtn.after(pairDock);
 }

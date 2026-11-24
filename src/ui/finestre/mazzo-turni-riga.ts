@@ -1,6 +1,6 @@
-// ui/schermate/mazzo-turni-riga.ts: i conti della riga della finestra del mazzo dei turni, senza pagina: oggetti in
-// fila con spazi uguali e centrati (spaceItems) e fascia verticale delle zone di rilascio (inCardBand).
-// Non dipende da niente. Usato da: ui/schermate/mazzo-turni.ts, test in tests/mazzo-turni-riga.test.ts.
+// ui/finestre/mazzo-turni-riga.ts: i conti della riga della finestra del mazzo dei turni (spazi tra gli oggetti,
+// centratura, fascia delle zone di rilascio), senza DOM, così si provano nei test. File di supporto di mazzo-turni.ts.
+// Livello 4 (ui/finestre/). Non dipende da niente. Usato da: ui/finestre/mazzo-turni.ts, tests/mazzo-turni-riga.test.ts.
 
 // Un oggetto della riga (carte, cerchi, segmento verticale) con la sua larghezza visibile e la posizione
 export interface OggettoRiga {

@@ -1,28 +1,30 @@
-// ui/schermate/turno-giocatori.ts: turno giocatori (VistaCoda): fascia piccola, carte grandi con i comandi, "Salva
-// modifiche", finestra della carta con la vita in bozza (anche per i minion nel turno nemesi).
-// La partita si cambia con le azioni di stato/partita.ts (salvaModifiche, cambiaVitaMinion); le bozze (ui.drafts) sono
-// dell'interfaccia finché non si salvano.
-// Dipende da: stato/partita.ts, ui/ (testi, pagina, eventi), ui/componenti (componenti, dialoghi, testata),
-// ui/schermate (turno-nemesi, mazzo-turni, crea-mazzo). Usato da: turno nemesi (render), eventi, testata, menu laterale.
+// ui/schermate/turno-giocatori.ts: la schermata del turno giocatori (VistaCoda): carte grandi in fila con i comandi sotto,
+// fascia piccola, pulsante principale ("Fine turno", "Pesca carta turno", "Salva modifiche") e "Annulla modifiche",
+// passaggio animato dal turno nemesi (toPlayersTurn). L'inizio del turno nemesi a schermo lo chiede con l'aggancio
+// passaAlTurnoNemesi.
+// Livello 5 (ui/schermate/). Dipende da: stato/ (partita, catalogo, preferenze), ui/ base (testi, pagina, dom,
+// ridisegno), ui/componenti (animazioni, barra-turni, componenti, dialoghi, misure, testata), ui/finestre/scheda-carta.ts.
+// Usato da: navigazione (render, agganci, avvio).
 
 import { I18N_IT } from '../testi.ts';
-import { awaitingTurnCard, cambiaVitaMinion, hpCap, hpUnset, partita, salvaModifiche } from '../../stato/partita.ts';
-import { cardArt, displayEntry, draftHp, draftOf, el, hasHp, icon, query, queryAll, queueItem, setDraft, tokenIcons, typeName } from '../componenti/componenti.ts';
-import { button, openModal, showToast } from '../componenti/dialoghi.ts';
-import { PEEK_GAP, PEEK_VISIBLE, render, sharedCardWidth, sizeColumn } from './turno-nemesi.ts';
-import { trackDrag } from '../eventi.ts';
-import { needsPairChoice } from './mazzo-turni.ts';
+import { awaitingTurnCard, currentTurnCard, entryByUid, fineTurnoGiocatore, hpCap, hpUnset, isPairCard, partita,
+  pescaCartaTurno, salvaModifiche, turnCardPlayer, turnRoundOver } from '../../stato/partita.ts';
+import { displayEntry, draftHp, draftOf, hasHp, needsPairChoice, queueItem,
+  setDraft } from '../componenti/componenti.ts';
+import { announce, button } from '../componenti/dialoghi.ts';
 import { flyToDiscard } from '../componenti/testata.ts';
-import { tween } from './crea-mazzo.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
-import { ANCHOR_RATIO, discardBtn, focusEl, nemesisBtn, queueEmpty, queueList, queueView, queueViewport, reducedMotion, resolveBtn, turnInfo, ui } from '../pagina.ts';
+import { cssUrl, discardBtn, nemesisBtn, queueEmpty, queueList, queueView, queueViewport, rail, reducedMotion, turnInfo,
+  ui } from '../pagina.ts';
 import type { AncoraCoda } from '../pagina.ts';
-
-// Un'animazione di scorrimento in corso
-interface Scorrimento {
-  cancelled: boolean;            // interrotta (dito sul contenitore, altra meta)
-  to: number;                    // posizione di arrivo
-}
+import { ENTER_MS, fastScrollTo, MORPH_MS, scrollItemInto, trackDrag } from '../componenti/animazioni.ts';
+import { el, need, query, queryAll } from '../dom.ts';
+import { passaAlTurnoNemesi, richiediRidisegno } from '../ridisegno.ts';
+import { catalogo } from '../../stato/catalogo.ts';
+import { preferenze } from '../../stato/preferenze.ts';
+import { playTurnShuffle, SHUFFLE_FADE_MS, turnTrack } from '../componenti/barra-turni.ts';
+import { PEEK_GAP, PEEK_VISIBLE, sharedCardWidth, sizeColumn } from '../componenti/misure.ts';
+import { openCardDialog } from '../finestre/scheda-carta.ts';
 
 export function updateInfo(): void {
   turnInfo.textContent = I18N_IT.turnInfo(partita.turn, partita.deck.length);
@@ -67,45 +69,6 @@ export function scrollQueueTo(item: HTMLElement): void {
   const iRect = item.getBoundingClientRect();
   const left = iRect.left - cRect.left + queueViewport.scrollLeft + iRect.width / 2 - queueViewport.clientWidth / 2;
   fastScrollTo(queueViewport, left);
-}
-
-// Scorrimento orizzontale animato più veloce di quello del browser (circa il 50% in più: FAST_SCROLL_MS). Durante
-// l'animazione lo scroll-snap è spento, altrimenti il browser riaggancerebbe la carta a ogni passo; un dito sul
-// contenitore la interrompe. Con "riduci movimento" salta subito.
-export const FAST_SCROLL_MS = 260;
-
-export const scrollJobs = new WeakMap<HTMLElement, Scorrimento>();
-
-export const scrollJobWatched = new WeakSet<HTMLElement>();
-
-export function cancelFastScroll(container: HTMLElement): void {
-  const job = scrollJobs.get(container);
-  if (!job) return;
-  job.cancelled = true;
-  scrollJobs.delete(container);
-  container.style.scrollSnapType = '';
-}
-
-export function fastScrollTo(container: HTMLElement, left: number, ms = FAST_SCROLL_MS): void {
-  const to = Math.max(0, Math.min(container.scrollWidth - container.clientWidth, left));
-  // Stessa meta di un'animazione già in corso (ridisegni, ridimensionamenti): la si lascia finire
-  const running = scrollJobs.get(container);
-  if (running && Math.abs(running.to - to) < 1) return;
-  cancelFastScroll(container);
-  const from = container.scrollLeft;
-  if (Math.abs(to - from) < 1 || reducedMotion.matches) { container.scrollLeft = to; return; }
-  if (!scrollJobWatched.has(container)) {
-    scrollJobWatched.add(container);
-    container.addEventListener('pointerdown', () => cancelFastScroll(container), { passive: true });
-  }
-  const job: Scorrimento = { cancelled: false, to };
-  scrollJobs.set(container, job);
-  container.style.scrollSnapType = 'none';
-  tween(from, to, ms, v => { if (!job.cancelled) container.scrollLeft = v; }, () => {
-    if (job.cancelled) return;
-    container.scrollLeft = to;
-    cancelFastScroll(container);
-  });
 }
 
 export function centredQueueUid(): number | null {
@@ -180,7 +143,7 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
           const value = Math.min(cap, Math.max(0, Number(draftHp(entry)) + step));
           if (value === draftHp(entry)) return;
           setDraft(entry, { hp: value });
-          render();
+          richiediRidisegno();
           refocus(key);
         });
       if ((step > 0 && shown >= cap) || (step < 0 && shown <= 0)) { b.disabled = true; b.classList.add('is-dimmed'); }
@@ -191,10 +154,10 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
   } else if (entry.data.type === 'Power' && entry.data.removable !== false) {
     const d = draftOf(entry);
     if (d && d.paid) {
-      box.appendChild(ctl(I18N_IT.cancelPay, 'secondary', 'cancel', null, () => { setDraft(entry, { paid: false }); render(); refocus('remove'); }));
+      box.appendChild(ctl(I18N_IT.cancelPay, 'secondary', 'cancel', null, () => { setDraft(entry, { paid: false }); richiediRidisegno(); refocus('remove'); }));
     } else {
       box.appendChild(ctl(I18N_IT.removePowerShort, 'danger', 'remove', I18N_IT.removePower + ': ' + entry.data.name,
-        () => { setDraft(entry, { paid: true }); render(); refocus('cancel'); }));
+        () => { setDraft(entry, { paid: true }); richiediRidisegno(); refocus('cancel'); }));
     }
   } else if (entry.data.type === 'Power') {
     // Potere senza "TO DISCARD": nota piccola (con il simbolo di divieto) al posto del pulsante
@@ -289,36 +252,6 @@ export function scrollToCard(uid: number, align: AncoraCoda['align'] = 'nearest'
   scrollItemInto(queueViewport, item, align);
 }
 
-export function scrollItemInto(container: HTMLElement, item: HTMLElement, align: AncoraCoda['align']): void {
-  const vertical = container.scrollHeight > container.clientHeight + 1 && container.scrollWidth <= container.clientWidth + 1;
-  const cRect = container.getBoundingClientRect();
-  const iRect = item.getBoundingClientRect();
-  if (vertical) {
-    const top = iRect.top - cRect.top + container.scrollTop;
-    if (align === 'nearest') {
-      if (iRect.top < cRect.top) container.scrollTop = top - 16;
-      else if (iRect.bottom > cRect.bottom) container.scrollTop = top + iRect.height - container.clientHeight + 16;
-    } else {
-      container.scrollTop = top + iRect.height / 2 - container.clientHeight / 2;
-    }
-    return;
-  }
-  const left = iRect.left - cRect.left + container.scrollLeft;
-  if (align === 'nearest') {
-    if (iRect.left < cRect.left + 16) container.scrollLeft = left - 16;
-    else if (iRect.right > cRect.right - 16) container.scrollLeft = left + iRect.width - container.clientWidth + 16;
-    return;
-  }
-  const ratio = align === 'anchor' ? ANCHOR_RATIO : 0.5;
-  container.scrollLeft = left + iRect.width / 2 - container.clientWidth * ratio;
-}
-
-// Dopo un dialogo la coda è ridisegnata: il focus va sulla carta indicata (o su Turno Nemesi se la coda è vuota)
-export function focusQueueItem(uid: number | null): void {
-  const item = uid !== null ? query(queueList, `[data-uid="${uid}"]`, HTMLElement) : null;
-  (item || nemesisBtn).focus({ preventScroll: true });
-}
-
 // "Salva modifiche" (pulsante principale del turno giocatori): tutte le bozze diventano definitive in un solo passo di
 // undo; le carte grigie (potere con costo pagato, minion a 0) vanno negli scarti volando verso la pila in alto
 export function saveAllDrafts(): void {
@@ -330,155 +263,188 @@ export function saveAllDrafts(): void {
   const gone = salvaModifiche(drafts);
   // Le carte sono ancora nella pagina (non ridisegnata): partono da lì
   flyToDiscard(gone.map(e => queueList.querySelector(`.ae-queue-item[data-uid="${e.uid}"] .ae-card-art`)));
-  render();
+  richiediRidisegno();
   nemesisBtn.focus({ preventScroll: true });
 }
 
-// VistaCartaCoda: dialogo della carta toccata. Minion = punti vita in bozza; potere = rimozione esplicita.
-// Niente intestazione (nome, tipo, X): si chiude con Chiudi/Annulla, Esc o tocco fuori; lo spazio va alla carta.
-// Sotto la carta c'è sempre un pannello alto uguale per ogni tipo, così la carta ha la stessa dimensione per minion,
-// poteri e attacchi.
-export function openCardDialog(entry: VoceInGioco): void {
-  // Nel turno nemesi si apre solo per i minion (−1 / +1 alla vita)
-  if (ui.isTransitioning || (partita.resolving && entry.data.type !== 'Minion')) return;
-  const { data } = entry;
-  let close = () => {};
-  const cancel = () => close();
-  const dialog = el('div', 'ae-modal ae-modal--card');
-  dialog.setAttribute('role', 'dialog');
-  dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-label', [data.name || I18N_IT.cardInPlay, typeName(data)].join(', '));
-  const art = cardArt(data);
-  art.classList.add('ae-modal-art');
-  const panel = el('div', 'ae-card-panel');
-  dialog.append(art, panel);
-  // Scelta del giocatore 1/2 o 3/4 in sospeso: la carta si guarda ma non si cambia (niente vita, niente rimuovi)
-  const locked = needsPairChoice();
+// "Annulla modifiche" del turno giocatori, accanto al pulsante principale (lo crea il menu laterale all'avvio)
+let cancelDraftsBtn: HTMLButtonElement | null = null;
 
-  if (hasHp(entry) && !locked) {
-    buildHpPanel(dialog, panel, entry, () => close());
-  } else if (data.type === 'Power' && !locked) {
-    // Token rimasti come icone, un token per ogni token
-    const tokens = el('p', 'ae-card-panel-tokens');
-    tokens.setAttribute('aria-label', I18N_IT.tokensLeft(entry.tokens));
-    tokens.appendChild(tokenIcons(Number(entry.tokens)));
-    panel.appendChild(tokens);
-    // Costo pagato: la carta diventa grigia (modifica non salvata); con "Salva modifiche" va negli scarti
-    const remove = button(I18N_IT.removePower, 'danger', () => {
-      close();
-      setDraft(entry, { paid: true });
-      render();
-      focusQueueItem(entry.uid);
-    });
-    const footer = el('div', 'ae-modal-footer');
-    footer.append(button(I18N_IT.close, 'secondary', cancel));
-    // Solo i poteri con "TO DISCARD" si possono rimuovere pagando il costo (cards.json: removable)
-    const d = draftOf(entry);
-    if (data.removable !== false && !entry.paid && !(d && d.paid)) footer.appendChild(remove);
-    dialog.appendChild(footer);
-  } else {
-    const footer = el('div', 'ae-modal-footer');
-    footer.append(button(I18N_IT.close, 'secondary', cancel));
-    dialog.appendChild(footer);
-  }
-  close = openModal(dialog, { onCancel: cancel });
+export function setCancelDraftsBtn(b: HTMLButtonElement): void {
+  cancelDraftsBtn = b;
 }
 
-// Punti vita in bozza: i pulsanti cambiano solo la bozza; Conferma applica una volta sola (un passo di undo);
-// Annulla, X, Esc o tocco fuori lasciano la vita com'era.
-// Riga: "HP x / y" a sinistra, danno o cura della bozza a destra; sotto i pulsanti −5 −1 +1.
-export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: VoceInGioco, close: () => void): void {
-  // Minion a vita variabile non ancora impostata: si parte da 0, niente "/X", a 0 non muore
-  const unset = hpUnset(entry);
-  // Turno giocatori: si parte dalla vita in bozza e la conferma scrive una bozza (si salva con "Salva modifiche").
-  // (Number: la vita di un minion c'è sempre; null varrebbe 0, come nei conti di JavaScript)
-  const original = Number(partita.resolving ? entry.hp : draftHp(entry));
-  let draft = original;
-  let committing = false;
+export function onNemesisClick(): void {
+  if (partita.resolving || ui.isTransitioning || !catalogo.deckSetup) return;
+  // Durante "Crea mazzo" al posto del pulsante c'è il cursore (deckSlider)
+  if (ui.deckBuilding) return;
+  // Con modifiche non salvate il pulsante è "Salva modifiche"
+  if (ui.drafts.size) {
+    saveAllDrafts();
+    return;
+  }
+  // Carta 1/2 o 3/4 senza giocatore: si sceglie nella finestra
+  if (needsPairChoice()) return;
+  // Fine dell'ultimo turno del giro: mazzo dei turni mischiato, animazione, poi "Pesca la prima carta turno"
+  const roundEnding = !awaitingTurnCard() && turnRoundOver();
+  if (awaitingTurnCard()) pescaCartaTurno(); else fineTurnoGiocatore();
+  if (roundEnding) {
+    playTurnShuffle(SHUFFLE_FADE_MS);
+    return;
+  }
+  if (!partita.resolving) {
+    // Dal mazzo dei turni è uscito un giocatore (o il wild): si resta nel turno giocatori, cambia il colore della barra
+    richiediRidisegno();
+    announce(turnTrack.getAttribute('aria-label'));
+    turnTrack.classList.remove('is-changed');
+    void turnTrack.offsetWidth;
+    turnTrack.classList.add('is-changed');
+    return;
+  }
+  passaAlTurnoNemesi();
+}
 
-  const row = el('div', 'ae-hp-row');
-  const number = el('p', 'ae-hp-number');
-  number.setAttribute('aria-live', 'polite');
-  const delta = el('p', 'ae-hp-delta');
-  row.append(number, delta);
-  const controls = el('div', 'ae-hp-controls');
-  // Turno giocatori: −5, −1 e +1 (solo fino alla vita di inizio turno); turno nemesi: −1 e +1; vita "?" da impostare:
-  // −5, −1, +1 e +5 nei due turni
-  const cap = Number(hpCap(entry, partita.resolving));
-  const stepButtons: [number, HTMLButtonElement][] = [];
-  (unset ? [-5, -1, 1, 5] : partita.resolving ? [-1, 1] : [-5, -1, 1]).forEach(step => {
-    const b = button(step > 0 ? '+' + step : '−' + Math.abs(step), 'secondary', () => {
-      draft = Math.min(cap, Math.max(0, draft + step));
-      update();
-    });
-    stepButtons.push([step, b]);
-    b.setAttribute('aria-label', (step > 0 ? 'Aggiungi ' : 'Togli ') + Math.abs(step) + ' punti vita');
-    controls.appendChild(b);
+export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | null): void {
+  const railScroll = rail.scrollLeft;
+  const fromRect = fromNode && fromNode.getBoundingClientRect().width ? fromNode.getBoundingClientRect() : null;
+  // Riga vita/token sopra la carta grande del turno nemesi: anche lei si sposta nel box del turno giocatori
+  const fromSlide = fromNode && fromNode.closest('.ae-focus-slide');
+  const fromStatusEl = fromSlide && fromSlide.querySelector('.ae-focus-status > *');
+  const fromStatus = fromStatusEl && fromStatusEl.parentElement ? fromStatusEl.parentElement.getBoundingClientRect() : null;
+  const motion = !reducedMotion.matches && !!document.body.animate;
+  // Lo sfondo non sfuma: è un'immagine sola che scorre da destra a sinistra (base.css .ae-shell)
+  queueView.classList.add('is-from-nemesis');
+  richiediRidisegno();
+  if (queueRail) queueRail.scrollLeft = railScroll;
+  if (!motion) return;
+  const art = morphUid !== null ? query(queueList, `.queue-slot .ae-queue-item[data-uid="${morphUid}"] .ae-card-art`, HTMLElement) : null;
+  const toRect = art && art.getBoundingClientRect();
+  if (art && fromRect && toRect && toRect.width) {
+    const dx = fromRect.left + fromRect.width / 2 - (toRect.left + toRect.width / 2);
+    const dy = fromRect.top + fromRect.height / 2 - (toRect.top + toRect.height / 2);
+    const s = fromRect.width / toRect.width;
+    art.animate([
+      { transform: `translate(${dx}px, ${dy}px) scale(${s})` },
+      { transform: 'none' }
+    ], { duration: MORPH_MS, easing: 'cubic-bezier(.3, 0, .2, 1)' });
+  }
+  // Box vita/token della stessa carta: scivola dalla posizione del turno nemesi a quella nuova (stessa misura)
+  const badge = art && art.parentElement ? art.parentElement.querySelector('.ae-status-badge:not(.ae-status-badge--empty)') : null;
+  const badgeRect = badge && badge.getBoundingClientRect();
+  if (badge && fromStatus && badgeRect && badgeRect.width) {
+    const bx = fromStatus.left + fromStatus.width / 2 - (badgeRect.left + badgeRect.width / 2);
+    const by = fromStatus.top + fromStatus.height / 2 - (badgeRect.top + badgeRect.height / 2);
+    badge.animate([{ transform: `translate(${bx}px, ${by}px)` }, { transform: 'none' }],
+      { duration: MORPH_MS, easing: 'cubic-bezier(.3, 0, .2, 1)' });
+  }
+  // A metà della trasformazione: le altre carte della coda entrano da sinistra; comandi, NUOVA (e il box, se non
+  // scivola) della carta che si trasforma compaiono con una breve dissolvenza
+  const delay = art ? MORPH_MS / 2 : 0;
+  queueAll(queueList, '.queue-slot').forEach(slot => {
+    if (art && slot.contains(art)) {
+      const parts = [...slot.querySelectorAll('.queue-controls, .ae-new-tag')]
+        .concat(badge && fromStatus ? [] : [...slot.querySelectorAll('.ae-status-badge')]);
+      parts.forEach(node => node.animate([{ opacity: 0 }, { opacity: 1 }],
+        { duration: 220, delay, easing: 'ease-out', fill: 'backwards' }));
+      return;
+    }
+    slot.animate([{ opacity: 0, transform: `translateX(${-slot.offsetWidth}px)` }, { opacity: 1, transform: 'none' }],
+      { duration: ENTER_MS, delay, easing: 'cubic-bezier(.2, 0, .2, 1)', fill: 'backwards' });
   });
-  const footer = el('div', 'ae-modal-footer');
-  const confirm = button(I18N_IT.confirmHp, 'primary', commit);
-  footer.append(button(I18N_IT.cancel, 'secondary', close), confirm);
-  panel.append(row, controls);
-  dialog.appendChild(footer);
+}
 
-  // "HP x / X": X è la vita prima del danno (la vita salvata), non la vita massima della carta
-  const before = entry.hp;
-  function update() {
-    // Vita di riferimento non ancora impostata: solo "HP x"
-    number.textContent = unset ? `HP ${draft}` : `HP ${draft} / ${before}`;
-    const change = draft - original;
-    const dies = draft === 0 && !unset;
-    delta.className = 'ae-hp-delta' + (change < 0 ? ' is-loss' : change > 0 ? ' is-gain' : '');
-    delta.replaceChildren();
-    if (dies) delta.append(icon('heart'), el('span', '', I18N_IT.willBeDeleted));
-    else if (change !== 0 && !unset) delta.append(icon('heart'), el('span', '', I18N_IT.hpDelta(change)));
-    stepButtons.forEach(([step, b]) => {
-      if (step > 0 && !partita.resolving) { b.disabled = draft >= cap; b.classList.toggle('is-dimmed', draft >= cap); }
-    });
-    confirm.textContent = dies ? I18N_IT.deleteMinion : I18N_IT.confirmHp;
-    confirm.className = 'ae-button ' + (dies ? 'ae-button--danger' : 'ae-button--primary');
+// Elementi HTML di un selettore (le carte della coda sono tutte elementi HTML)
+function queueAll(root: ParentNode, selector: string): HTMLElement[] {
+  return queryAll(root, selector, HTMLElement);
+}
+
+// Pulsante principale del turno giocatori ("Fine turno", "Pesca carta turno", "Salva modifiche"...): nascosto nel turno
+// nemesi e durante "Crea mazzo" (al suo posto il cursore)
+export function disegnaPulsantePrincipale(): void {
+  nemesisBtn.hidden = partita.resolving;
+  nemesisBtn.disabled = !catalogo.deckSetup;
+  // "Turno Nemesi" con l'illustrazione della nemesi della partita (come nel menu iniziale), velata per leggere la
+  // scritta. Turno di un giocatore: niente illustrazione, fondo tenue del colore del giocatore (wild: il colore del
+  // giocatore che è wild nel giro; carta 1/2 o 3/4 non ancora scelta: metà e metà dei due colori; attesa di "Pesca carta
+  // turno": fondo grigio chiaro tenue, come il wild)
+  const turnCard = currentTurnCard();
+  const playerKind = turnCardPlayer(turnCard) || (turnCard === 'wild' || isPairCard(turnCard) ? turnCard : null)
+    || (awaitingTurnCard() ? 'wild' : null);
+  nemesisBtn.classList.toggle('has-player-color', !!playerKind);
+  if (playerKind) nemesisBtn.dataset.kind = playerKind;
+  else delete nemesisBtn.dataset.kind;
+  const nemesisArtNow = !playerKind && preferenze.settings.nemesis ? catalogo.nemesisArt[preferenze.settings.nemesis] : undefined;
+  nemesisBtn.classList.toggle('has-nemesis-art', !!nemesisArtNow);
+  if (nemesisArtNow) nemesisBtn.style.setProperty('--ae-nemesis-art', cssUrl(encodeURI(String(nemesisArtNow.portrait))));
+  else nemesisBtn.style.removeProperty('--ae-nemesis-art');
+  nemesisBtn.setAttribute('aria-disabled', String(ui.isTransitioning));
+  // Turno giocatori con modifiche non salvate: il pulsante principale le salva
+  const saving = savingDrafts();
+  // A inizio giro (dopo il primo) "Pesca la prima carta turno"; all'ultimo turno del giro "Fine turno · Mischia mazzo"
+  // (anche durante l'animazione del mazzo mischiato)
+  nemesisBtn.textContent = saving ? I18N_IT.saveChanges
+    : ui.trackShuffle ? I18N_IT.endTurnShuffle
+    : awaitingTurnCard() ? (partita.turnOrder.round >= 1 && !(partita.turnOrder.history || []).length ? I18N_IT.drawFirstTurnCard : I18N_IT.drawTurnCard)
+    : turnRoundOver() ? I18N_IT.endTurnShuffle : I18N_IT.endTurn;
+  nemesisBtn.classList.toggle('is-save', saving);
+  // "Crea mazzo": al posto del pulsante il cursore
+  if (ui.deckBuilding) nemesisBtn.hidden = true;
+}
+
+// Turno giocatori con modifiche non salvate (il pulsante principale diventa "Salva modifiche")
+function savingDrafts(): boolean {
+  return !partita.resolving && ui.drafts.size > 0;
+}
+
+// "Annulla modifiche" accanto al pulsante principale (solo con modifiche non salvate, non durante "Crea mazzo"; la riga
+// non c'è nel turno nemesi) e la riga del turno in basso (updateInfo)
+export function disegnaAnnullaModifiche(): void {
+  if (cancelDraftsBtn) {
+    cancelDraftsBtn.hidden = !savingDrafts() || ui.deckBuilding;
+    need(cancelDraftsBtn.parentElement, 'riga del pulsante principale').hidden = partita.resolving;
   }
+  updateInfo();
+}
 
-  function commit() {
-    if (committing) return;
-    committing = true;
-    const index = partita.queue.indexOf(entry);
-    const name = entry.data.name;
-    const value = draft;
-    close();
-    // Vita invariata: si chiude senza aggiungere un passo di undo
-    if (value === original || index < 0) return;
-    if (!partita.resolving) {
-      setDraft(entry, { hp: value });
-      ui.queueAnchor = { uid: entry.uid, align: 'nearest' };
-      render();
-      focusQueueItem(entry.uid);
-      return;
-    }
-    ui.drafts.delete(entry.uid);
-    // Minion ucciso nel turno nemesi: vola negli scarti
-    const killedArt = value <= 0 ? query(focusEl, `.ae-focus-slide[data-uid="${entry.uid}"] .ae-focus-stage`, HTMLElement) : null;
-    const wasResolving = partita.resolving;
-    // Prima impostazione della vita di un minion a vita variabile: da qui valgono le regole normali (è anche la sua vita
-    // massima); a 0 il minion esce subito (stato/partita.ts, cambiaVitaMinion)
-    cambiaVitaMinion(entry, value, unset);
-    if (wasResolving) {
-      ui.viewedUid = null;
-      if (killedArt) flyToDiscard([killedArt]);
-      render();
-      if (partita.resolving) resolveBtn.focus(); else nemesisBtn.focus();
-      showToast(value <= 0 ? I18N_IT.minionDeleted(name) : I18N_IT.hpLeftToast(name, value));
-      return;
-    }
-    ui.queueAnchor = { uid: entry.uid, align: 'nearest' };
-    render();
-    focusQueueItem(entry.uid);
-    showToast(value <= 0 ? I18N_IT.minionKilled(name) : I18N_IT.hpLeftToast(name, value));
-  }
+// Turno giocatori con modifiche non salvate: "Annulla modifiche" accanto a "Salva modifiche" (stessa riga) toglie tutte
+// le bozze (vita dei minion, costi pagati); non è un passo di undo, perché le bozze non sono ancora nella partita.
+// Creato all'avvio dal coordinatore, che lo mette nella riga del pulsante principale
+export function impostaAnnullaModifiche(): HTMLButtonElement {
+  const cancelDrafts = el('button', 'ae-button ae-button--secondary ae-cancel-drafts', I18N_IT.cancelChanges);
+  setCancelDraftsBtn(cancelDrafts);
+  cancelDrafts.type = 'button';
+  cancelDrafts.hidden = true;
+  cancelDrafts.addEventListener('click', () => {
+    if (partita.resolving || ui.isTransitioning || !ui.drafts.size) return;
+    ui.drafts.clear();
+    richiediRidisegno();
+    nemesisBtn.focus({ preventScroll: true });
+  });
+  return cancelDrafts;
+}
 
-  update();
+// Disegno del turno giocatori (la coda delle carte in gioco)
+export function disegnaTurnoGiocatori(): void {
+  renderQueue();
 }
 
 // Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
 export function avvio(): void {
+  trackDrag(queueViewport);
+
+  // Carte grandi del turno giocatori: una carta non al centro si porta al centro; si apre solo quella al centro
+  queueList.addEventListener('click', e => {
+    const target = e.target;
+    const item = target instanceof Element ? target.closest('.ae-queue-item') : null;
+    if (!(item instanceof HTMLElement) || queueViewport.dataset.dragged === '1') return;
+    const uid = Number(item.dataset.uid);
+    if (uid !== centredQueueUid()) {
+      const slot = item.closest('.queue-slot');
+      scrollQueueTo(slot instanceof HTMLElement ? slot : item);
+      markQueueRail(uid);
+      return;
+    }
+    const entry = entryByUid(uid);
+    if (entry) openCardDialog(entry);
+  });
 }

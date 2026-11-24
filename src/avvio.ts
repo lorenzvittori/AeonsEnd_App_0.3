@@ -1,52 +1,22 @@
-// avvio.ts: telefono in orizzontale, tasto Indietro e avvio dell'app (init: lettura e controllo dei dati, pagina
-// iniziale).
+// avvio.ts: avvio dell'app (init: lettura e controllo dei dati, pagina iniziale), telefono in orizzontale, Riprova.
 // I dati letti vanno nel catalogo (stato/catalogo.ts); poi la prima partita da zero (nuovaPartita, come sempre: il mazzo
-// della nemesi scelta è pronto per la pagina iniziale).
-// Dipende da: stato/ (catalogo, partita), dati/ (dati, controllo), ui/ (pagina, componenti, dialoghi, scarti, menu,
-// opzioni, turno-nemesi, pesca-undo). Usato da: main.ts (avvio, ultimo modulo), ui/schermate/opzioni (Riprova).
+// della nemesi scelta è pronto per la pagina iniziale), il primo disegno e il menu iniziale (ui/navigazione.ts).
+// Livello 7. Dipende da: stato/ (catalogo, partita), dati/ (dati, controllo), ui/ (pagina, testi, dom, dialoghi, banner,
+// schermate/menu e nuova-partita, navigazione). Usato da: main.ts (avvio, ultimo modulo).
 
 import { I18N_IT } from './ui/testi.ts';
 import { loadJson } from './dati/dati.ts';
-import { checkCards, checkDeckSetup, checkNemesisArt, checkNemeses, checkProducts, reportProblems } from './dati/controllo.ts';
+import { checkCards, checkDeckSetup, checkNemeses, checkNemesisArt, checkProducts,
+  reportProblems } from './dati/controllo.ts';
 import { nuovaPartita } from './stato/partita.ts';
-import { el } from './ui/componenti/componenti.ts';
-import { loadImage, modals, showToast, updateInert } from './ui/componenti/dialoghi.ts';
-import { closeDiscard } from './ui/componenti/scarti.ts';
-import { buildStartPage, setStartMode, startMode } from './ui/schermate/menu.ts';
-import { showStartError, showStartSkeleton } from './ui/schermate/opzioni.ts';
-import { preloadBannerFont, render } from './ui/schermate/turno-nemesi.ts';
-import { closeDeckPopover, closeUndoFloat, deckPopover, undoFloat } from './ui/componenti/pesca-undo.ts';
+import { loadImage, updateInert } from './ui/componenti/dialoghi.ts';
+import { showStartError } from './ui/schermate/menu.ts';
 import { caricaCatalogo } from './stato/catalogo.ts';
-import { CARD_BACK, DATA_ROOT, THUMB_DIR, discardLayer, startBtn, startError, startLayer } from './ui/pagina.ts';
-
-// Tasto / gesto Indietro (Android, swipe di iOS): chiude il livello in primo piano invece di uscire dall'app.
-// Nella cronologia c'è sempre una voce in più (stesso indirizzo): Indietro la consuma e qui la si rimette.
-// Se non c'è niente da chiudere, il primo Indietro mostra "Premi di nuovo Indietro per uscire" e il secondo esce.
-export function closeTopForBack(): boolean {
-  if (modals.length) { modals[modals.length - 1].onCancel(); return true; }
-  if (undoFloat) { closeUndoFloat(); return true; }
-  if (deckPopover) { closeDeckPopover(); return true; }
-  // La mia collezione sopra le Opzioni: si chiude prima quella in cima
-  const screens = document.querySelectorAll('.collection-screen');
-  if (screens.length) {
-    const close = screens[screens.length - 1].querySelector('.collection-head .ae-icon-button');
-    if (close instanceof HTMLElement) close.click();
-    else throw new TypeError('pulsante di chiusura della collezione mancante');
-    return true;
-  }
-  if (!discardLayer.hidden) { closeDiscard(); return true; }
-  // Pagina "Nuova partita": Indietro torna al menu iniziale
-  if (!startLayer.hidden && startMode === 'setup') { setStartMode('home', true); return true; }
-  return false;
-}
-
-export function armBackGuard(): void { history.pushState({ aeBackGuard: true }, ''); }
-
-// La voce in più della cronologia è già al suo posto
-function backGuardArmed(): boolean {
-  const state: unknown = history.state;
-  return typeof state === 'object' && state !== null && 'aeBackGuard' in state && !!state.aeBackGuard;
-}
+import { CARD_BACK, DATA_ROOT, retryBtn, startBtn, startError, THUMB_DIR } from './ui/pagina.ts';
+import { preloadBannerFont } from './ui/componenti/banner.ts';
+import { el } from './ui/dom.ts';
+import { render, setStartMode } from './ui/navigazione.ts';
+import { buildStartPage, showStartSkeleton } from './ui/schermate/nuova-partita.ts';
 
 // Avvio: legge cards.json, deck-setup.json, nemesis.json e products.json (e le immagini delle nemesi, facoltative), li
 // controlla (dati/controllo.ts: carte e nemesi sbagliate si scartano con un errore in console) e mostra la pagina
@@ -102,16 +72,8 @@ export function avvio(): void {
   // Telefono in orizzontale: lo spazio in altezza non basta per le carte; si chiede di girarlo (CSS: .ae-rotate)
   document.body.appendChild(el('div', 'ae-rotate', I18N_IT.rotatePhone));
 
-  window.addEventListener('popstate', () => {
-    if (closeTopForBack()) armBackGuard();
-    else {
-      showToast(I18N_IT.backAgainToExit);
-      // Passato il messaggio, Indietro torna a chiudere i livelli (e il prossimo "uscire" chiede di nuovo conferma)
-      setTimeout(() => { if (!backGuardArmed()) armBackGuard(); }, 2500);
-    }
-  });
-
-  if (!backGuardArmed()) armBackGuard();
+  // Errore di caricamento dei dati: "Riprova" rilegge tutto
+  retryBtn.addEventListener('click', init);
 
   init();
 }

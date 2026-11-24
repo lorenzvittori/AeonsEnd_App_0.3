@@ -1,16 +1,17 @@
-// ui/componenti/componenti.ts: componenti dell'interfaccia: creazione degli elementi (el, icon), immagine della carta,
-// box di vita e token, miniatura della coda, bozze del turno giocatori.
-// Dipende da: regole/turno-nemesi.ts, ui/testi.ts, stato/partita.ts, ui/pagina.ts, ui/schermate (turno-nemesi: DRAW_UID,
-// mazzo-turni: needsPairChoice). Usato da: quasi tutti i moduli di ui/.
+// ui/componenti/componenti.ts: le carte disegnate: immagine della carta (con il segnaposto), box di vita e token,
+// miniatura della coda, posti della carta da pescare nella fascia, bozze del turno giocatori (draftOf, setDraft,
+// displayEntry) e la scelta del giocatore 1/2 o 3/4 in sospeso (needsPairChoice), che blocca le modifiche.
+// Livello 3 (ui/componenti/). Dipende da: regole/turno-nemesi.ts, stato/partita.ts (lettura), ui/ base (testi, pagina,
+// dom). Usato da: barra dei turni, scarti, pesca-undo, finestre (scheda della carta, statistiche), schermate (crea mazzo,
+// turni).
 
 import * as Nemesi from '../../regole/turno-nemesi.ts';
 import { I18N_IT } from '../testi.ts';
-import { hpMaxOf, hpUnset } from '../../stato/partita.ts';
-import { DRAW_UID } from '../schermate/turno-nemesi.ts';
-import { needsPairChoice } from '../schermate/mazzo-turni.ts';
+import { currentTurnCard, hpMaxOf, hpUnset, isPairCard, partita, turnCardPlayer } from '../../stato/partita.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import type { BozzaCarta, VoceInGioco } from '../../tipi/partita.ts';
-import { CARD_BACK, ui } from '../pagina.ts';
+import { CARD_BACK, DRAW_UID, ui } from '../pagina.ts';
+import { el, icon } from '../dom.ts';
 
 // Carta in gioco come si disegna: con la vita in bozza (isDraft) e la vita di prima (hpBefore)
 export interface VoceMostrata extends VoceInGioco {
@@ -27,39 +28,6 @@ export interface OpzioniMiniatura {
   viewed?: boolean;              // carta mostrata grande
   lazy?: boolean;                // immagine caricata quando serve
   full?: boolean;                // scansione intera invece della miniatura
-}
-
-// Elemento nuovo con classe e testo; il tipo segue il tag (el('button') è un HTMLButtonElement)
-export function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
-// Valore che c'è sempre (un elemento della pagina creato dall'app, uno stato già pronto): se manca è un errore del
-// programma, con un messaggio chiaro (invece dell'errore di accesso a null che darebbe JavaScript)
-export function need<T>(value: T | null | undefined, what: string): T {
-  if (value === null || value === undefined) throw new TypeError(what + ' mancante');
-  return value;
-}
-
-// Primo elemento dentro root che corrisponde al selettore ed è del tipo indicato; null altrimenti (il tipo si controlla
-// davvero, non si suppone)
-export function query<T extends Element>(root: ParentNode, selector: string, type: abstract new () => T): T | null {
-  const node = root.querySelector(selector);
-  return node instanceof type ? node : null;
-}
-
-// Tutti gli elementi dentro root che corrispondono al selettore e sono del tipo indicato
-export function queryAll<T extends Element>(root: ParentNode, selector: string, type: abstract new () => T): T[] {
-  return Array.from(root.querySelectorAll(selector)).filter((n): n is T => n instanceof type);
-}
-
-export function icon(name: string): HTMLSpanElement {
-  const span = el('span', 'ae-icon ae-icon--' + name);
-  span.setAttribute('aria-hidden', 'true');
-  return span;
 }
 
 // Nome del tipo in italiano (Minion, Potere, Attacco; gli altri tipi restano in inglese)
@@ -283,6 +251,11 @@ export function nextCardItem({ current = false, viewed = false }: { current?: bo
   tag.setAttribute('aria-hidden', 'true');
   item.append(badge, art, tag);
   return item;
+}
+
+export function needsPairChoice(): boolean {
+  const cur = currentTurnCard();
+  return !partita.resolving && !ui.deckBuilding && isPairCard(cur) && !turnCardPlayer(cur);
 }
 
 // Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)

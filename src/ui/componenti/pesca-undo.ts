@@ -1,66 +1,18 @@
-// ui/componenti/pesca-undo.ts: passo Pesca animato, undo sospeso, "Pesca carta" dal mazzo in alto, conferma di uscita,
-// passaggio dalla pagina iniziale alla partita. Provvisorio.
-// Dipende da: stato/partita.ts (lettura, scartaCimaDelMazzo), ui/ (testi, pagina, ripristino), ui/componenti
-// (componenti, dialoghi, testata, menu-laterale), ui/schermate (opzioni, turno-nemesi, crea-mazzo). Usato da: menu
-// laterale, eventi, turno nemesi, menu, avvio (Indietro).
+// ui/componenti/pesca-undo.ts: "Pesca carta" dal mazzo in alto (tocco sul mazzo, carta in cima in grande, Rimetti o
+// Scarta), Annulla sospeso dopo l'undo dal menu, conferma di "Esci dalla partita".
+// Livello 3 (ui/componenti/). Dipende da: stato/partita.ts (lettura, scartaCimaDelMazzo), ui/ base (testi, pagina, dom,
+// ridisegno), ui/componenti (componenti, dialoghi, testata, ripristino). Usato da: menu laterale, navigazione (Indietro,
+// Esc).
 
 import { I18N_IT } from '../testi.ts';
-import { cardArt, el, query } from './componenti.ts';
-import { button, dialogShell, loadImage, openModal, showToast } from './dialoghi.ts';
-import { closeStart } from '../schermate/opzioni.ts';
-import { DRAW_UID, render, scrollFocusTo } from '../schermate/turno-nemesi.ts';
+import { cardArt, needsPairChoice } from './componenti.ts';
+import { button, dialogShell, modals, openModal, showToast } from './dialoghi.ts';
 import { dockDeck, flyToDiscard } from './testata.ts';
-import { specificCardsOf } from '../schermate/crea-mazzo.ts';
-import { currentBackground } from './menu-laterale.ts';
 import { partita, scartaCimaDelMazzo } from '../../stato/partita.ts';
-import { CARD_BACK, app, focusEl, reducedMotion, startLayer, ui } from '../pagina.ts';
-import { lockFor, undo } from '../ripristino.ts';
-
-// Passo Pesca: una carta coperta parte dal mazzo in alto a sinistra e vola al centro, dove diventa la carta da pescare
-// (che resta nascosta finché la copia non arriva). Poi tutto funziona come prima (tocco sul dorso o "Pesca").
-export const DRAW_IN_MS = 650;
-
-// delay: attesa (ms) prima della partenza, per esempio finché la carta appena scartata non è atterrata
-export function animateDrawIn(delay = 0): void {
-  const stage = query(focusEl, '.ae-focus-slide--draw .ae-focus-stage', HTMLElement);
-  const from = dockDeck.getBoundingClientRect();
-  if (!stage || !from.width || reducedMotion.matches || !document.body.animate) return;
-  // La carta da pescare non deve avere l'animazione di entrata (la sposterebbe): si misura dove starà davvero
-  const slide = stage.closest('.ae-focus-slide');
-  if (slide) slide.classList.remove('is-entering');
-  scrollFocusTo(DRAW_UID, false, true);
-  const to = stage.getBoundingClientRect();
-  if (!to.width) return;
-  stage.style.visibility = 'hidden';
-  const ghost = el('div', 'ae-fly-ghost ae-draw-ghost');
-  const img = document.createElement('img');
-  img.alt = '';
-  img.src = CARD_BACK;
-  ghost.appendChild(img);
-  Object.assign(ghost.style, { left: to.left + 'px', top: to.top + 'px', width: to.width + 'px', height: to.height + 'px' });
-  document.body.appendChild(ghost);
-  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
-  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
-  const s = from.width / to.width;
-  let done = false;
-  const finish = () => {
-    if (done) return;
-    done = true;
-    ghost.remove();
-    stage.style.visibility = '';
-  };
-  const anim = ghost.animate([
-    { transform: `translate(${dx}px, ${dy}px) rotate(0deg) scale(${s})`, offset: 0 },
-    { transform: `translate(${dx * 0.45}px, ${dy * 0.55 - 40}px) rotate(10deg) scale(${(1 + s) / 2})`, offset: 0.45 },
-    { transform: 'translate(0, 0) rotate(0deg) scale(1)', offset: 1 }
-  ], { duration: DRAW_IN_MS, delay, easing: 'cubic-bezier(.3, 0, .2, 1)', fill: 'forwards' });
-  // Durante l'attesa la copia resta nascosta (il mazzo in alto è già lì)
-  ghost.style.visibility = 'hidden';
-  setTimeout(() => { if (!done) ghost.style.visibility = ''; }, delay);
-  anim.onfinish = finish;
-  setTimeout(finish, delay + DRAW_IN_MS + 200);
-  lockFor(delay + DRAW_IN_MS);
-}
+import { ui } from '../pagina.ts';
+import { el } from '../dom.ts';
+import { richiediRidisegno } from '../ridisegno.ts';
+import { undo } from './ripristino.ts';
 
 // "Annulla ultima azione" dal Menu: il menu si chiude e resta un pulsante sospeso che si può toccare più volte;
 // un tocco fuori dal pulsante (o Esc) chiude e si torna all'app
@@ -152,7 +104,7 @@ export function openDeckDraw(): void {
     // La carta vola dalla finestra alla pila degli scarti
     if (source) flyToDiscard([source]);
     close();
-    render();
+    richiediRidisegno();
     showToast(I18N_IT.cardDiscarded(data.name));
   });
   footer.append(button(I18N_IT.putBack, 'secondary', putBack), discardBtnEl);
@@ -160,39 +112,11 @@ export function openDeckDraw(): void {
   close = openModal(dialog, { onCancel: putBack });
 }
 
-// Dalla pagina iniziale alla partita: la pagina iniziale esce a sinistra e la partita entra da destra
-export const START_SLIDE_MS = 380;
-
-export function slideToGame(then?: () => void): void {
-  if (reducedMotion.matches) {
-    closeStart();
-    if (then) then();
-    return;
-  }
-  // Perché non vada a scatti: prima si aspettano le immagini della creazione del mazzo (dorsi, Specifiche) e lo sfondo
-  // (al massimo 400 ms), le due pagine diventano livelli separati (will-change), e l'animazione parte un attimo dopo,
-  // a disegno finito; altrimenti i primi fotogrammi vanno persi e la pagina "salta".
-  // (String: una carta senza miniatura dà "undefined", come l'indirizzo dell'immagine assegnato direttamente)
-  const images = [CARD_BACK, currentBackground().src,
-    ...[1, 2, 3].flatMap(t => specificCardsOf(t).map(c => String(c.thumb)))];
-  const ready = Promise.race([Promise.all(images.map(src => loadImage(src))), new Promise(r => setTimeout(r, 400))]);
-  startLayer.style.willChange = 'transform';
-  app.style.willChange = 'transform';
-  ready.then(() => setTimeout(() => {
-    void app.offsetWidth;
-    startLayer.classList.add('is-sliding-out');
-    app.classList.add('is-sliding-in');
-    setTimeout(() => {
-      startLayer.classList.remove('is-sliding-out');
-      app.classList.remove('is-sliding-in');
-      startLayer.style.willChange = '';
-      app.style.willChange = '';
-      closeStart();
-      if (then) then();
-    }, START_SLIDE_MS);
-  }, 30));
-}
-
-// Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
+// Codice eseguito all'avvio, nell'ordine di sempre
 export function avvio(): void {
+  // Tocco sul mazzo in alto (testata): compare il pulsante "Pesca carta" (per gli effetti che fanno pescare o guardare la
+  // carta in cima); non con la scelta del giocatore 1/2 o 3/4 in sospeso
+  dockDeck.addEventListener('click', () => {
+    if (!ui.isTransitioning && !modals.length && !ui.deckBuilding && !needsPairChoice()) openDeckPopover();
+  });
 }

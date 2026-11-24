@@ -13,13 +13,15 @@ import './stili/indice.ts';
 import * as compatibilita from './ui/compatibilita.ts';
 import * as testi from './ui/testi.ts';
 import * as pagina from './ui/pagina.ts';
+import * as dom from './ui/dom.ts';
+import * as ridisegno from './ui/ridisegno.ts';
 import * as dati from './dati/dati.ts';
 import * as collezione from './dati/collezione.ts';
+import * as rete from './dati/rete.ts';
 import * as statoCatalogo from './stato/catalogo.ts';
 import * as statoPreferenze from './stato/preferenze.ts';
 import * as statoPartita from './stato/partita.ts';
 import * as statoSalvataggio from './stato/salvataggio.ts';
-import * as ripristino from './ui/ripristino.ts';
 import * as regoleCaso from './regole/caso.ts';
 import * as regoleMazzoNemesi from './regole/mazzo-nemesi.ts';
 import * as regoleMazzoTurni from './regole/mazzo-turni.ts';
@@ -28,20 +30,29 @@ import * as regoleVite from './regole/vite.ts';
 import * as regoleSalvataggio from './regole/salvataggio.ts';
 import * as componenti from './ui/componenti/componenti.ts';
 import * as dialoghi from './ui/componenti/dialoghi.ts';
-import * as turnoGiocatori from './ui/schermate/turno-giocatori.ts';
+import * as animazioni from './ui/componenti/animazioni.ts';
+import * as banner from './ui/componenti/banner.ts';
+import * as misure from './ui/componenti/misure.ts';
+import * as ripristino from './ui/componenti/ripristino.ts';
 import * as scarti from './ui/componenti/scarti.ts';
-import * as menu from './ui/schermate/menu.ts';
-import * as opzioni from './ui/schermate/opzioni.ts';
-import * as turnoNemesi from './ui/schermate/turno-nemesi.ts';
-import * as eventi from './ui/eventi.ts';
-import * as mazzoTurniFinestra from './ui/schermate/mazzo-turni.ts';
 import * as testata from './ui/componenti/testata.ts';
-import * as statistiche from './ui/schermate/statistiche.ts';
-import * as creaMazzo from './ui/schermate/crea-mazzo.ts';
+import * as barraTurni from './ui/componenti/barra-turni.ts';
+import * as vite from './ui/componenti/vite.ts';
 import * as pescaUndo from './ui/componenti/pesca-undo.ts';
-import * as menuLaterale from './ui/componenti/menu-laterale.ts';
-import * as rete from './dati/rete.ts';
-import * as test from './ui/schermate/test.ts';
+import * as sfondi from './ui/componenti/sfondi.ts';
+import * as opzioni from './ui/finestre/opzioni.ts';
+import * as statistiche from './ui/finestre/statistiche.ts';
+import * as mazzoTurniFinestra from './ui/finestre/mazzo-turni.ts';
+import * as vita from './ui/finestre/vita.ts';
+import * as menuLaterale from './ui/finestre/menu-laterale.ts';
+import * as schedaCarta from './ui/finestre/scheda-carta.ts';
+import * as test from './ui/finestre/test.ts';
+import * as menu from './ui/schermate/menu.ts';
+import * as nuovaPartita from './ui/schermate/nuova-partita.ts';
+import * as creaMazzo from './ui/schermate/crea-mazzo.ts';
+import * as turnoGiocatori from './ui/schermate/turno-giocatori.ts';
+import * as turnoNemesi from './ui/schermate/turno-nemesi.ts';
+import * as navigazione from './ui/navigazione.ts';
 import * as avvio from './avvio.ts';
 
 // window.app (oggetto di debug, l'unico globale): i suoi campi sono letti dalla console, dalla pagina scheletri/ e
@@ -57,11 +68,12 @@ type ModuloAvviato = { avvio: () => void };
 
 // Nell'ordine in cui le avvio() devono partire (lo stato e le regole pure non hanno avvio(): non sono nell'elenco)
 const MODULI: ModuloAvviato[] = [compatibilita, testi, pagina, dati, collezione, componenti, dialoghi,
-  turnoGiocatori, scarti, menu, opzioni, turnoNemesi, eventi, mazzoTurniFinestra, testata, statistiche,
-  creaMazzo, pescaUndo, menuLaterale, rete, test, avvio];
+  turnoGiocatori, scarti, menu, opzioni, turnoNemesi, schedaCarta, barraTurni, testata, statistiche,
+  creaMazzo, pescaUndo, sfondi, navigazione, menuLaterale, rete, test, avvio];
 
 // Moduli senza avvio() le cui funzioni stanno comunque in window.app (stato e ripristino)
-const SENZA_AVVIO: object[] = [statoCatalogo, statoPreferenze, statoPartita, statoSalvataggio, ripristino];
+const SENZA_AVVIO: object[] = [statoCatalogo, statoPreferenze, statoPartita, statoSalvataggio, ripristino, dom, ridisegno,
+  animazioni, banner, misure, vite, vita, nuovaPartita, mazzoTurniFinestra];
 
 // window.app: tutto quello che i moduli esportano (app.render(), app.makeEntry, app.act(), app.SCENARI, app.ui...) più
 // i campi dello stato, leggibili e (solo per il debug) assegnabili per nome: del catalogo (app.allCards, app.nemeses...),

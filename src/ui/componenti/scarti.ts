@@ -1,13 +1,16 @@
-// ui/componenti/scarti.ts: pila degli scarti (finestra con le carte dalla più recente) e carta degli scarti ingrandita.
-// Dipende da: stato/partita.ts (lettura), ui/ (testi, pagina), ui/componenti (componenti, dialoghi). Usato da: eventi
-// (pulsante degli scarti), avvio, ui/ripristino.ts (restore), Indietro.
+// ui/componenti/scarti.ts: la pila degli scarti (finestra fissa #discard con le carte dalla più recente, aperta dal
+// pulsante degli scarti e dalla pila in testata) e la carta degli scarti ingrandita.
+// Livello 3 (ui/componenti/). Dipende da: stato/partita.ts (lettura), ui/ base (testi, pagina, dom), ui/componenti
+// (componenti, dialoghi). Usato da: testata, ripristino, finestre (menu laterale, statistiche, Modalità test),
+// navigazione (Indietro, Esc).
 
 import { I18N_IT } from '../testi.ts';
-import { cardArt, el, typeName } from './componenti.ts';
+import { cardArt, typeName } from './componenti.ts';
 import { button, dialogShell, openModal, restoreFocus, updateInert } from './dialoghi.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import { partita } from '../../stato/partita.ts';
 import { discardBtn, discardClose, discardEmpty, discardGrid, discardLayer, discardTitle } from '../pagina.ts';
+import { el } from '../dom.ts';
 
 // Elemento che aveva il focus all'apertura degli scarti
 export let discardTrigger: Element | null = null;
@@ -58,4 +61,7 @@ export function openDiscardZoom(data: Carta): void {
 
 // Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
 export function avvio(): void {
+  discardLayer.addEventListener('click', e => { if (e.target === discardLayer) closeDiscard(); });
+  discardBtn.addEventListener('click', openDiscard);
+  discardClose.addEventListener('click', closeDiscard);
 }

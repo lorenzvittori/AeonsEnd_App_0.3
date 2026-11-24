@@ -1,20 +1,17 @@
-// ui/componenti/testata.ts: testata (mazzo nemesi e pila degli scarti in alto), voli delle carte verso gli scarti,
-// passaggio animato dal turno nemesi al turno giocatori, Vittoria a mazzo vuoto.
-// Dipende da: stato/partita.ts (lettura), ui/ (testi, pagina), ui/componenti (componenti, dialoghi, scarti,
-// pesca-undo), ui/schermate (turno-giocatori, turno-nemesi, mazzo-turni, statistiche). Usato da: turno nemesi, turno
-// giocatori, mazzo dei turni, crea mazzo, pesca-undo, test (resetVictoryKey).
+// ui/componenti/testata.ts: la testata della partita: nome della nemesi con battaglia, giocatori e turno (disegnaTestata,
+// fitPhaseName), il mazzo nemesi e la pila degli scarti in alto (renderDockPiles), il pulsante Menu e il volo delle
+// carte verso gli scarti (flyToDiscard).
+// Livello 3 (ui/componenti/). Dipende da: stato/ (partita, preferenze: lettura), dati/dati.ts, ui/ base (testi, pagina,
+// dom), ui/componenti/scarti.ts. Usato da: barra dei turni, pesca-undo, finestre (mazzo dei turni, scheda della carta),
+// schermate (crea mazzo, turni), navigazione (render).
 
 import { I18N_IT } from '../testi.ts';
-import { isVictory, partita } from '../../stato/partita.ts';
-import { el, query, queryAll } from './componenti.ts';
-import { modals } from './dialoghi.ts';
-import { queueRail } from '../schermate/turno-giocatori.ts';
+import { partita } from '../../stato/partita.ts';
 import { openDiscard } from './scarti.ts';
-import { render } from '../schermate/turno-nemesi.ts';
-import { needsPairChoice } from '../schermate/mazzo-turni.ts';
-import { showVictory } from '../schermate/statistiche.ts';
-import { openDeckPopover } from './pesca-undo.ts';
-import { CARD_BACK, queueList, queueView, rail, reducedMotion, startLayer, ui, undoBtn } from '../pagina.ts';
+import { byId, CARD_BACK, cssUrl, infoRow, menuBtn, phaseLabel, reducedMotion, ui, undoBtn } from '../pagina.ts';
+import { el, query } from '../dom.ts';
+import { battleOf } from '../../dati/dati.ts';
+import { preferenze } from '../../stato/preferenze.ts';
 
 // In alto a sinistra, uno accanto all'altro e uguali nei due turni: il mazzo nemesi (dorso con il numero di carte
 // rimaste) e la pila degli scarti (ultima carta scartata con il numero; toccandola si apre). Creati qui (avvio).
@@ -104,94 +101,67 @@ export function flyToDiscard(nodes: readonly (Element | null)[]): void {
   });
 }
 
-// Dal turno nemesi al turno giocatori senza "sparisci e ricompari":
-//   - la vista del turno giocatori non fa la dissolvenza (classe is-from-nemesis);
-//   - la fascia piccola resta ferma (stesso scorrimento della fascia del turno nemesi);
-//   - lo sfondo scorre di nuovo verso il lato sinistro (maga);
-//   - la carta appena messa in gioco passa dalla sua misura grande a quella del turno giocatori (FLIP);
-//   - le altre carte della coda entrano da sinistra (ENTER_MS); box vita/token e comandi compaiono con una dissolvenza.
-// Va chiamata al posto di render(): misura prima e dopo il disegno.
-export const MORPH_MS = 380;
-
-// Entrata da sinistra delle altre carte della coda nel turno giocatori
-export const ENTER_MS = 320;
-
-// Durata dello scorrimento dello sfondo tra i due turni (uguale alla transizione di .ae-shell in base.css)
-export const BG_SLIDE_MS = 800;
-
-export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | null): void {
-  const railScroll = rail.scrollLeft;
-  const fromRect = fromNode && fromNode.getBoundingClientRect().width ? fromNode.getBoundingClientRect() : null;
-  // Riga vita/token sopra la carta grande del turno nemesi: anche lei si sposta nel box del turno giocatori
-  const fromSlide = fromNode && fromNode.closest('.ae-focus-slide');
-  const fromStatusEl = fromSlide && fromSlide.querySelector('.ae-focus-status > *');
-  const fromStatus = fromStatusEl && fromStatusEl.parentElement ? fromStatusEl.parentElement.getBoundingClientRect() : null;
-  const motion = !reducedMotion.matches && !!document.body.animate;
-  // Lo sfondo non sfuma: è un'immagine sola che scorre da destra a sinistra (base.css .ae-shell)
-  queueView.classList.add('is-from-nemesis');
-  render();
-  if (queueRail) queueRail.scrollLeft = railScroll;
-  if (!motion) return;
-  const art = morphUid !== null ? query(queueList, `.queue-slot .ae-queue-item[data-uid="${morphUid}"] .ae-card-art`, HTMLElement) : null;
-  const toRect = art && art.getBoundingClientRect();
-  if (art && fromRect && toRect && toRect.width) {
-    const dx = fromRect.left + fromRect.width / 2 - (toRect.left + toRect.width / 2);
-    const dy = fromRect.top + fromRect.height / 2 - (toRect.top + toRect.height / 2);
-    const s = fromRect.width / toRect.width;
-    art.animate([
-      { transform: `translate(${dx}px, ${dy}px) scale(${s})` },
-      { transform: 'none' }
-    ], { duration: MORPH_MS, easing: 'cubic-bezier(.3, 0, .2, 1)' });
+// Nome della nemesi in testata: il blocco è largo al massimo quanto la sua colonna (testata.css .ae-phase max-width) e,
+// se a 18px il nome non ci sta, il carattere scende in proporzione finché ci sta tutto, senza limite inferiore.
+// L'altezza della riga resta 24px (line-height in px) e il letter-spacing in em segue la dimensione.
+// root: la testata della partita o la sua copia (finestra del mazzo dei turni). Vale anche per il nome toccabile di
+// "Crea mazzo" (.ae-phase-name--button). Si ricalcola a ogni render, al ridimensionamento e dopo il caricamento dei
+// caratteri (document.fonts.ready), così non si misura con il carattere di riserva.
+export function fitPhaseName(root: ParentNode | null = phaseLabel): void {
+  const name = root && query(root, '.ae-phase-name', HTMLElement);
+  if (!name || !name.isConnected) return;
+  name.style.fontSize = '';
+  const style = getComputedStyle(name);
+  const pad = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+  const room = name.clientWidth - pad;
+  const text = name.scrollWidth - pad;
+  // Nome nascosto (pagina iniziale sopra, testata non disegnata) o che ci sta già: carattere di base
+  if (room <= 0 || text <= room + 0.5) return;
+  const base = parseFloat(style.fontSize) || 18;
+  let size = Math.floor(base * room / text * 100) / 100;
+  name.style.fontSize = size + 'px';
+  // Arrotondamenti del testo: si scende ancora di poco finché non c'è più niente di nascosto
+  for (let i = 0; i < 12 && name.scrollWidth > name.clientWidth; i++) {
+    size = Math.floor(size * 98) / 100;
+    name.style.fontSize = size + 'px';
   }
-  // Box vita/token della stessa carta: scivola dalla posizione del turno nemesi a quella nuova (stessa misura)
-  const badge = art && art.parentElement ? art.parentElement.querySelector('.ae-status-badge:not(.ae-status-badge--empty)') : null;
-  const badgeRect = badge && badge.getBoundingClientRect();
-  if (badge && fromStatus && badgeRect && badgeRect.width) {
-    const bx = fromStatus.left + fromStatus.width / 2 - (badgeRect.left + badgeRect.width / 2);
-    const by = fromStatus.top + fromStatus.height / 2 - (badgeRect.top + badgeRect.height / 2);
-    badge.animate([{ transform: `translate(${bx}px, ${by}px)` }, { transform: 'none' }],
-      { duration: MORPH_MS, easing: 'cubic-bezier(.3, 0, .2, 1)' });
+}
+
+// Testata della partita, tra Undo e Menu, nei due turni: il nome della nemesi della partita e sotto la riga con la
+// battaglia (numero nella fiamma, Assets/ui/icons/flame.png), l'icona del numero di giocatori
+// (Assets/ui/icons/players-1..4.png, usata come maschera) e "Turno N" (giri del mazzo dei turni, nascosto prima del primo
+// turno nemesi); separati da |. Durante "Crea mazzo" il nome si tocca e apre la finestra con nemesi e giocatori
+// (onNameClick, della schermata "Crea mazzo"). La misura del nome (fitPhaseName) la chiede il coordinatore dopo le
+// classi dell'app
+export function disegnaTestata(onNameClick: () => void): void {
+  const turnLine = el('span', 'ae-phase-turn');
+  const players = Math.max(1, Math.min(4, Number(preferenze.settings.players) || 1));
+  const playersIcon = el('span', 'ae-players-icon');
+  playersIcon.style.setProperty('--ae-players-icon', cssUrl(`Assets/ui/icons/players-${players}.png`));
+  playersIcon.setAttribute('role', 'img');
+  playersIcon.setAttribute('aria-label', I18N_IT.players(players));
+  const turnText = el('span', '', I18N_IT.turnN(partita.turnOrder.round));
+  turnText.hidden = !(partita.turnOrder.round >= 1);
+  const battleNo = battleOf(preferenze.settings.nemesis);
+  const battle = el('span', 'ae-battle-flame', battleNo ? String(battleNo) : '?');
+  battle.setAttribute('role', 'img');
+  battle.setAttribute('aria-label', battleNo ? I18N_IT.battle(battleNo) : I18N_IT.battleMissing);
+  const sep = () => { const s = el('span', 'ae-info-sep', '|'); s.setAttribute('aria-hidden', 'true'); return s; };
+  const sep2 = sep();
+  sep2.hidden = partita.turn < 1;
+  turnLine.append(battle, sep(), playersIcon, sep2, turnText);
+  phaseLabel.replaceChildren(el('span', 'ae-phase-name', preferenze.settings.nemesis || ''), turnLine);
+  // Modalità test: "TEST · <scenario>" sempre visibile, sotto il nome della nemesi (non copre i comandi)
+  if (partita.testRun) phaseLabel.appendChild(el('span', 'ae-phase-test', I18N_IT.testLabel(String(partita.testRun.name))));
+  // Nome della nemesi: durante "Crea mazzo" si tocca e apre la finestra con nemesi e giocatori
+  const phaseName = phaseLabel.querySelector('.ae-phase-name');
+  if (ui.deckBuilding && phaseName) {
+    const nameBtn = el('button', 'ae-phase-name ae-phase-name--button', preferenze.settings.nemesis || '');
+    nameBtn.type = 'button';
+    nameBtn.setAttribute('aria-haspopup', 'dialog');
+    nameBtn.addEventListener('click', onNameClick);
+    phaseName.replaceWith(nameBtn);
   }
-  // A metà della trasformazione: le altre carte della coda entrano da sinistra; comandi, NUOVA (e il box, se non
-  // scivola) della carta che si trasforma compaiono con una breve dissolvenza
-  const delay = art ? MORPH_MS / 2 : 0;
-  queueAll(queueList, '.queue-slot').forEach(slot => {
-    if (art && slot.contains(art)) {
-      const parts = [...slot.querySelectorAll('.queue-controls, .ae-new-tag')]
-        .concat(badge && fromStatus ? [] : [...slot.querySelectorAll('.ae-status-badge')]);
-      parts.forEach(node => node.animate([{ opacity: 0 }, { opacity: 1 }],
-        { duration: 220, delay, easing: 'ease-out', fill: 'backwards' }));
-      return;
-    }
-    slot.animate([{ opacity: 0, transform: `translateX(${-slot.offsetWidth}px)` }, { opacity: 1, transform: 'none' }],
-      { duration: ENTER_MS, delay, easing: 'cubic-bezier(.2, 0, .2, 1)', fill: 'backwards' });
-  });
-}
-
-// Elementi HTML di un selettore (le carte della coda sono tutte elementi HTML)
-function queueAll(root: ParentNode, selector: string): HTMLElement[] {
-  return queryAll(root, selector, HTMLElement);
-}
-
-// Finestra "Vittoria" quando la condizione si avvera nel turno giocatori. Chiusa una volta, non si ripropone finché lo
-// stato non cambia (per esempio con Undo si torna indietro e la condizione non vale più): victoryKey è la partita
-// (turno, scarti, coda) per cui è già stata mostrata. Stato dell'interfaccia, non della partita
-let victoryKey = '';
-
-// Una partita nuova (scenario della Modalità test): la Vittoria si può mostrare di nuovo
-export function resetVictoryKey(): void {
-  victoryKey = '';
-}
-
-export function checkVictory(): void {
-  if (partita.resolving || !isVictory()) { victoryKey = ''; return; }
-  const key = partita.turn + ':' + partita.discard.length + ':' + partita.queue.length;
-  if (victoryKey === key || modals.length || !startLayer.hidden) return;
-  victoryKey = key;
-  setTimeout(() => {
-    if (partita.resolving || !isVictory() || modals.length) return;
-    showVictory();
-  }, reducedMotion.matches ? 0 : MORPH_MS + 100);
 }
 
 // Codice eseguito all'avvio, nell'ordine di sempre
@@ -202,16 +172,42 @@ export function avvio(): void {
   dockDiscard.type = 'button';
   dockDiscard.addEventListener('click', () => { if (!ui.isTransitioning && !ui.deckBuilding) openDiscard(); });
 
-  // Tocco sul mazzo: compare il pulsante "Pesca carta" (per gli effetti che fanno pescare o guardare la carta in cima);
-  // non con la scelta del giocatore 1/2 o 3/4 in sospeso
+  // Tocco sul mazzo: compare il pulsante "Pesca carta" (ui/componenti/pesca-undo.ts, che registra il tocco)
   dockDeck.setAttribute('role', 'button');
   dockDeck.tabIndex = 0;
-  dockDeck.addEventListener('click', () => {
-    if (!ui.isTransitioning && !modals.length && !ui.deckBuilding && !needsPairChoice()) openDeckPopover();
-  });
   dockDeck.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dockDeck.click(); } });
 
   headerPiles.append(dockDeck, dockDiscard);
   undoBtn.before(headerPiles);
   undoBtn.hidden = true;
+
+  // Menu in alto a destra (opposto all'undo): apre un pannello laterale largo il 70% dello schermo, il resto dell'app
+  // resta visibile ma oscurato. La riga Turno/Mazzo/Scarti/Menu in basso non c'è: tutto è creato qui, così vale anche
+  // con un index.html vecchio.
+  (function setupMenuButton() {
+    const spacer = document.querySelector('.ae-header .ae-header-spacer');
+    menuBtn.className = 'ae-icon-button ae-menu-button';
+    menuBtn.textContent = '';
+    menuBtn.setAttribute('aria-label', I18N_IT.menu);
+    menuBtn.setAttribute('aria-haspopup', 'dialog');
+    menuBtn.append(el('span', 'ae-menu-lines'));
+    if (spacer) spacer.replaceWith(menuBtn);
+    infoRow.remove();
+  })();
+
+  // Nome della nemesi: si adatta di nuovo quando cambia la larghezza della testata
+  window.addEventListener('resize', () => fitPhaseName());
+
+  // La larghezza della testata cambia anche senza l'evento resize: rotazione, colonna del desktop, barra di scorrimento
+  if ('ResizeObserver' in window) {
+    let lastHeaderWidth = 0;
+    new ResizeObserver(entries => {
+      const width = Math.round(entries[0].contentRect.width);
+      if (width === lastHeaderWidth) return;
+      lastHeaderWidth = width;
+      fitPhaseName();
+    }).observe(byId('topbar', HTMLElement));
+  }
+
+  if ('fonts' in document) document.fonts.ready.then(() => fitPhaseName());
 }

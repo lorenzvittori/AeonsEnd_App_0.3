@@ -1,6 +1,6 @@
-// ui/schermate/vite-scrub.ts: i conti del number scrubbing sui box delle vite, senza pagina: quando parte il
-// trascinamento (scrubStart), il valore per uno spostamento verticale (scrubValue), il cambio da mostrare (scrubDelta).
-// Non dipende da niente. Usato da: ui/schermate/turno-nemesi.ts (lifeScrub), test in tests/vite-scrub.test.ts.
+// ui/componenti/vite-scrub.ts: i conti dello scrubbing delle vite (quando parte, valore dal trascinamento, cambio
+// mostrato), senza DOM, così si provano nei test. File di supporto di vite.ts.
+// Livello 3 (ui/componenti/). Non dipende da niente. Usato da: ui/componenti/vite.ts, tests/vite-scrub.test.ts.
 
 // Pixel di trascinamento verticale per un punto di vita
 export const LIFE_SCRUB_PX = 30;

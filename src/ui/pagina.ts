@@ -1,11 +1,11 @@
 // ui/pagina.ts: la pagina e l'interfaccia: elementi di index.html (con il loro tipo), costanti dell'interfaccia
-// (misure, durate delle animazioni, cartelle delle immagini), dorso delle carte e stato dell'interfaccia (ui: carta
-// mostrata, animazioni in corso, bozze del turno giocatori...). Niente stato della partita: quello è in stato/.
+// (misure, durate delle animazioni, cartelle delle immagini, DRAW_UID), dorso delle carte (impostaDorso) e stato
+// dell'interfaccia (ui: carta mostrata, animazioni in corso, bozze del turno giocatori, firma del carosello...). Niente
+// stato della partita: quello è in stato/.
 // Al caricamento il modulo dichiara solo funzioni e costanti; gli elementi si leggono in avvio(), chiamata da main.ts
-// nell'ordine di sempre (prima di tutti gli altri moduli dell'interfaccia).
-// Dipende da: ui/componenti/dialoghi.ts (loadImage), tipi/. Usato da: quasi tutti i moduli di ui/, avvio.ts.
+// prima di tutti gli altri moduli dell'interfaccia.
+// Livello 2 (ui/ base). Dipende da: tipi/. Usato da: quasi tutti i moduli di ui/, avvio.ts.
 
-import { loadImage } from './componenti/dialoghi.ts';
 import type { BozzaCarta } from '../tipi/partita.ts';
 
 // Elemento di index.html con il suo tipo; errore chiaro se manca o non è del tipo atteso (index.html li ha tutti)
@@ -104,11 +104,11 @@ export function currentCardBack(): Dorso {
 
 export let CARD_BACK: string; // assegnata in avvio()
 
-export function setCardBack(id: string): void {
+// Dorso scelto (ui/componenti/sfondi.ts, setCardBack): salvato nel browser e usato subito (CARD_BACK, --ae-card-back)
+export function impostaDorso(id: string): void {
   try { localStorage.setItem(CARD_BACK_KEY, id); } catch (err) { console.warn(err); }
   CARD_BACK = currentCardBack().src;
   document.documentElement.style.setProperty('--ae-card-back', cssUrl(CARD_BACK));
-  loadImage(CARD_BACK);
 }
 
 // Carta pescata da girare nel turno nemesi
@@ -147,6 +147,11 @@ export interface StatoUi {
   trackPreview?: boolean;        // barra dei turni in anteprima nella finestra del mazzo dei turni
   trackShuffle?: boolean;        // barra dei turni durante la mescolata di un giro nuovo
   pairMinimized?: string | null; // scelta 1/2 o 3/4 ridotta a icona (firma della scelta)
+  focusSignature?: string;       // firma dello stato disegnato nel carosello del turno nemesi (focusStateSignature): se
+                                 // non cambia, il carosello non si ridisegna ('' = da ridisegnare, per esempio dopo il
+                                 // cambio del dorso delle carte)
+  victoryKey: string;            // partita (turno, scarti, coda) per cui la Vittoria a mazzo vuoto è già stata mostrata
+                                 // ('' = si può mostrare di nuovo: per esempio uno scenario nuovo della Modalità test)
 }
 
 export const ui: StatoUi = {
@@ -167,7 +172,8 @@ export const ui: StatoUi = {
   autoTokenAt: 0,
   deckBuilding: false,
   deckShown: null,
-  deckDark: false
+  deckDark: false,
+  victoryKey: ''
 };
 
 // Valore url() con l'indirizzo assoluto, per le variabili CSS impostate da JS (--ae-card-back, --ae-battle-bg,
@@ -175,6 +181,15 @@ export const ui: StatoUi = {
 // al file CSS che la usa, e con Vite il CSS sta in app/; assoluto, punta sempre alla stessa immagine
 export function cssUrl(path: string): string {
   return `url("${new URL(path, document.baseURI).href}")`;
+}
+
+// Passo "da pescare": tutte le carte in gioco sono state risolte; si vede la prossima carta del mazzo coperta e il
+// pulsante "Pesca". Si pesca solo quando il giocatore lo tocca (la carta poi si gira).
+export const DRAW_UID = -1;
+
+export interface Sfondo {
+  id: string;                    // nome salvato nel browser
+  src: string;                   // immagine
 }
 
 // Codice eseguito all'avvio, nell'ordine di sempre

@@ -1,10 +1,12 @@
-// ui/componenti/dialoghi.ts: dialoghi (un livello alla volta in primo piano, il resto inerte; Tab resta nel dialogo,
-// Esc annulla), toast, annunci per i lettori di schermo, caricamento delle immagini.
-// Dipende da: ui/testi.ts, ui/pagina.ts (elementi), ui/componenti/componenti.ts. Usato da: quasi tutti i moduli di ui/.
+// ui/componenti/dialoghi.ts: la pila delle finestre (un livello alla volta in primo piano, il resto inerte; Tab resta
+// nella finestra, Esc annulla), struttura comune di una finestra (titolo, X), pulsanti, toast, annunci per i lettori di
+// schermo, caricamento delle immagini.
+// Livello 3 (ui/componenti/). Dipende da: ui/ base (testi, pagina, dom). Usato da: quasi tutti i moduli di ui/,
+// avvio.ts.
 
 import { I18N_IT } from '../testi.ts';
-import { el, icon } from './componenti.ts';
 import { app, dialogRoot, discardLayer, liveRegion, startLayer, toastRoot } from '../pagina.ts';
+import { el, icon } from '../dom.ts';
 
 // Un dialogo aperto
 export interface Dialogo {

@@ -1,19 +1,20 @@
-// ui/schermate/statistiche.ts: schermate Vittoria e Sconfitta, finestra Statistiche (righe, carte, tempi, minion,
-// maghi).
-// Dipende da: stato/ (catalogo, preferenze, partita: lettura e segnaFinePartita), ui/testi.ts, ui/componenti
-// (componenti, dialoghi, scarti), ui/eventi.ts (trackDrag), ui/schermate/opzioni (menu iniziale). Usato da: testata
-// (Vittoria a mazzo vuoto), menu laterale ("Nemesi uccisa"), finestra della vita (a 0).
+// ui/finestre/statistiche.ts: Vittoria e Sconfitta (con "Menu iniziale", aggancio vaiAlMenuIniziale) e le statistiche
+// della partita (carte, tempi, maghi).
+// Livello 4 (ui/finestre/). Dipende da: stato/ (partita, preferenze, catalogo), ui/ base (testi, dom, ridisegno),
+// ui/componenti (animazioni, componenti, dialoghi, scarti). Usato da: navigazione (Vittoria a mazzo vuoto, aggancio
+// mostraFinePartita).
 
 import { I18N_IT } from '../testi.ts';
-import { isVariableMinion, playerKinds, partita, segnaFinePartita } from '../../stato/partita.ts';
-import { cardArt, el, icon, typeName } from '../componenti/componenti.ts';
+import { isVariableMinion, partita, playerKinds, segnaFinePartita } from '../../stato/partita.ts';
+import { cardArt, typeName } from '../componenti/componenti.ts';
 import { button, dialogShell, openModal } from '../componenti/dialoghi.ts';
 import { openDiscardZoom } from '../componenti/scarti.ts';
-import { openStart } from './opzioni.ts';
-import { trackDrag } from '../eventi.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import { preferenze } from '../../stato/preferenze.ts';
 import { catalogo } from '../../stato/catalogo.ts';
+import { trackDrag } from '../componenti/animazioni.ts';
+import { el, icon } from '../dom.ts';
+import { vaiAlMenuIniziale } from '../ridisegno.ts';
 
 // Schermata Vittoria: scritta "Vittoria" come il banner dei Tier, ma resta ferma sullo schermo; sotto Statistiche e
 // Menu iniziale; un tocco su una parte vuota torna alla partita com'era. Si apre da sola (checkVictory) o dal Menu
@@ -36,7 +37,7 @@ export function showEndScreen(text: string, defeat: boolean): void {
   screen.setAttribute('aria-labelledby', title.id);
   const actions = el('div', 'ae-victory-actions');
   const statsBtn = button(I18N_IT.statsTitle, 'primary', openStats);
-  const home = button(I18N_IT.mainMenu, 'secondary', () => { close(); openStart(); });
+  const home = button(I18N_IT.mainMenu, 'secondary', () => { close(); vaiAlMenuIniziale(); });
   [statsBtn, home].forEach(b => b.classList.add('ae-button--full'));
   actions.append(statsBtn, home);
   screen.append(title, actions);

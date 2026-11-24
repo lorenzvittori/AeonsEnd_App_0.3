@@ -1,10 +1,11 @@
-// dati/collezione.ts: collezione (wave e prodotti posseduti, salvata nel browser) e nemesi giocabili.
+// dati/collezione.ts: collezione (wave e prodotti posseduti, salvata nel browser), nemesi giocabili e nome di una wave
+// ("IV - The New Age", waveLabel).
 // Livello 1 (dati/). Dipende da: regole/ (mazzo-nemesi, json), stato/ (catalogo, preferenze), tipi/. Usato da: ui/ (menu
 // iniziale, Nuova partita, collezione), main.ts (avvio); stato/partita.ts la legge attraverso preferenze.collection.
 
 import * as Mazzo from '../regole/mazzo-nemesi.ts';
 import { parseJson } from '../regole/json.ts';
-import type { Carta, CodiceProdotto, Nemesi } from '../tipi/dati.ts';
+import type { CodiceProdotto, Nemesi } from '../tipi/dati.ts';
 import { preferenze } from '../stato/preferenze.ts';
 import { catalogo } from '../stato/catalogo.ts';
 
@@ -116,6 +117,20 @@ export function cardAllowed(card: { boxCode: CodiceProdotto | null }): boolean {
 // imposta nella finestra della vita (makeEntry / hpUnset)
 export function isPlayable(info: Nemesi): boolean {
   return Mazzo.isPlayable({ cards: catalogo.allCards }, preferenze.collection, info);
+}
+
+// Numero della wave in cifre romane per mostrarla ("4 - The New Age" → "IV - The New Age"); il valore resta quello di
+// nemesis.json
+export function toRoman(n: number): string {
+  const map: [number, string][] = [[1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'], [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
+  let out = '';
+  map.forEach(([v, s]) => { while (n >= v) { out += s; n -= v; } });
+  return out;
+}
+
+// Nome della wave dal suo codice: "4" -> "IV - The New Age" (String: una wave mancante si legge "null", come prima)
+export function waveLabel(wave: string | null): string {
+  return toRoman(Number(wave)) + ' - ' + productName(String(wave));
 }
 
 // Codice eseguito all'avvio, nell'ordine di sempre

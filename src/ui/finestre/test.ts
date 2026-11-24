@@ -1,18 +1,16 @@
-// ui/schermate/test.ts: Modalità test: scenari (partite che partono già in un momento preciso) e schermata Test.
-// La partita dello scenario la mettono stato/partita.ts (iniziaProva, impostaUndo, esciDalTest) e ui/ripristino.ts
-// (restore, come una ripresa).
-// Dipende da: stato/ (catalogo, preferenze, partita), dati/rete.ts, ui/ (testi, pagina, ripristino), ui/componenti
-// (componenti, dialoghi, scarti, testata), ui/schermate (opzioni, turno-nemesi). Usato da: menu iniziale (Test), menu
-// laterale (Ricomincia lo scenario), prove degli operatori (app.SCENARI, app.startScenario).
+// ui/finestre/test.ts: la Modalità test: schermata con l'elenco degli scenari (dal menu iniziale), scenari (SCENARI,
+// trasformati in una fotografia da buildScenarioState), avvio e nuovo avvio di uno scenario, uscita dal test.
+// Isolata dalla partita vera: niente salvataggio (save() non scrive con testRun), la partita salvata e "Riprendi
+// partita" restano com'erano. Uno scenario partito lascia la pagina iniziale con l'aggancio vaiAllaPartitaDaScenario.
+// Livello 4 (ui/finestre/). Dipende da: stato/ (partita, catalogo, preferenze), dati/rete.ts, regole/json.ts, ui/ base
+// (testi, pagina, dom, ridisegno), ui/componenti (animazioni, dialoghi, ripristino, scarti). Usato da: schermata menu
+// iniziale, navigazione (Esci dal test, Ricomincia lo scenario), main.ts (app.startScenario, app.SCENARI).
 
 import { I18N_IT } from '../testi.ts';
-import { aetherCost, emptyPairNext, esciDalTest, impostaUndo, iniziaProva, isVariableMinion, makeEntry, partita, emptyStats } from '../../stato/partita.ts';
-import { resetVictoryKey } from '../componenti/testata.ts';
-import { el, icon, query } from '../componenti/componenti.ts';
+import { aetherCost, emptyPairNext, emptyStats, esciDalTest, impostaUndo, iniziaProva, isVariableMinion, makeEntry,
+  partita } from '../../stato/partita.ts';
 import { closeAllModals, showToast, updateInert } from '../componenti/dialoghi.ts';
 import { closeDiscard } from '../componenti/scarti.ts';
-import { closeStart } from './opzioni.ts';
-import { render } from './turno-nemesi.ts';
 import { prefetchDeckImages } from '../../dati/rete.ts';
 import { jsonCopy } from '../../regole/json.ts';
 import type { Carta } from '../../tipi/dati.ts';
@@ -21,7 +19,10 @@ import type { FotografiaLetta, VoceLetta } from '../../tipi/salvataggio.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { preferenze } from '../../stato/preferenze.ts';
 import { nemesisBtn, resolveBtn, startLayer, ui } from '../pagina.ts';
-import { clearTransition, restore } from '../ripristino.ts';
+import { clearTransition } from '../componenti/animazioni.ts';
+import { el, icon, query } from '../dom.ts';
+import { richiediRidisegno, vaiAllaPartitaDaScenario } from '../ridisegno.ts';
+import { restore } from '../componenti/ripristino.ts';
 
 // --- Modalità test --------------------------------------------------------------------------------------------------
 // Dal menu iniziale ("Test") si sceglie uno scenario: la partita parte già in un momento preciso, senza giocarla fino
@@ -276,10 +277,10 @@ export function startScenario(sc: Scenario | null | undefined): string | null {
   ui.trackShuffle = false;
   ui.lastDrawnUid = null;
   ui.tierBanner = null;
-  resetVictoryKey();
+  ui.victoryKey = '';
   restore(state);
-  closeStart();
-  render();
+  vaiAllaPartitaDaScenario();
+  richiediRidisegno();
   prefetchDeckImages();
   (partita.resolving ? resolveBtn : nemesisBtn).focus({ preventScroll: true });
   return null;

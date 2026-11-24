@@ -1,32 +1,20 @@
-// ui/schermate/opzioni.ts: Opzioni, La mia collezione, inizio e ripresa della partita, errori della pagina iniziale.
-// Provvisorio: inizio e ripresa andranno con il menu.
-// Nuova partita e ripresa cambiano la partita solo con le funzioni di stato/partita.ts (nuovaPartita; restore e
-// impostaUndo per la ripresa).
-// Dipende da: stato/ (catalogo, preferenze, partita, salvataggio), dati/ (dati, collezione, rete), ui/ (testi, pagina,
-// ripristino), ui/componenti (componenti, dialoghi, scarti, pesca-undo, menu-laterale), ui/schermate (menu,
-// turno-nemesi, crea-mazzo, test). Usato da: menu iniziale, menu laterale, statistiche, avvio, test.
+// ui/finestre/opzioni.ts: le Opzioni del menu iniziale (La mia collezione con il riepilogo, dorso, sfondo, carte turno
+// 1/2 e 3/4), la schermata La mia collezione e la finestra "nemesi non più nella collezione" della ripresa.
+// Livello 4 (ui/finestre/). Dipende da: dati/collezione.ts, stato/ (partita, preferenze), ui/ base (testi, pagina, dom,
+// ridisegno: aggiornaInizio dopo il salvataggio della collezione), ui/componenti (dialoghi, sfondi). Usato da: schermate
+// menu iniziale e Nuova partita, navigazione (ripresa).
 
 import { I18N_IT } from '../testi.ts';
-import { battleOf } from '../../dati/dati.ts';
-import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, saveCollection, waveOfNemesis } from '../../dati/collezione.ts';
-import { impostaUndo, nuovaPartita, partita, turnPairsOn } from '../../stato/partita.ts';
-import { el, icon, queryAll } from '../componenti/componenti.ts';
-import { button, closeAllModals, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.ts';
-import { closeDiscard } from '../componenti/scarti.ts';
-import { renderStartChoices, setStartMode, updateHomeCollection, waveLabel } from './menu.ts';
-import { readSave, statoSalvataggio } from '../../stato/salvataggio.ts';
-import { render } from './turno-nemesi.ts';
-import { showDeckBuild } from './crea-mazzo.ts';
-import { slideToGame } from '../componenti/pesca-undo.ts';
-import { backgroundChoiceButton, cardBackChoiceButton } from '../componenti/menu-laterale.ts';
-import { prefetchDeckImages } from '../../dati/rete.ts';
-import { endTest } from './test.ts';
+import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, saveCollection, waveLabel,
+  waveOfNemesis } from '../../dati/collezione.ts';
+import { turnPairsOn } from '../../stato/partita.ts';
+import { button, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.ts';
 import type { CodiceProdotto, Nemesi } from '../../tipi/dati.ts';
-import type { SalvataggioValido } from '../../tipi/salvataggio.ts';
 import { preferenze, setTurnPairs } from '../../stato/preferenze.ts';
-import { catalogo } from '../../stato/catalogo.ts';
-import { byId, nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../pagina.ts';
-import { clearTransition, restore } from '../ripristino.ts';
+import { startLayer } from '../pagina.ts';
+import { backgroundChoiceButton, cardBackChoiceButton } from '../componenti/sfondi.ts';
+import { el, icon, queryAll } from '../dom.ts';
+import { aggiornaInizio } from '../ridisegno.ts';
 
 // Il pulsante "La mia collezione" non è nella pagina "Nuova partita" (sta in Opzioni e nel Menu): si toglie anche da
 // un index.html vecchio
@@ -202,8 +190,7 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
     preferenze.collection = draft;
     saveCollection();
     close();
-    renderStartChoices();
-    updateHomeCollection();
+    aggiornaInizio();
     if (onSaved) onSaved();
     showToast(I18N_IT.collectionSaved);
   });
@@ -214,79 +201,6 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
   document.body.appendChild(layer);
   startLayer.inert = true;
   x.focus();
-}
-
-export function showStartSkeleton(): void {
-  byId('nemesis-list', HTMLDivElement).replaceChildren(...[0, 1, 2, 3].map(() => el('div', 'nemesis-skeleton')));
-}
-
-export function openStart(): void {
-  // Uscendo da un test (Esci dal test o Menu iniziale della Vittoria) tornano le scelte di prima
-  endTest();
-  closeAllModals();
-  closeDiscard();
-  renderStartChoices();
-  startLayer.hidden = false;
-  updateInert();
-  setStartMode('home', true);
-}
-
-export function closeStart(): void {
-  startLayer.hidden = true;
-  updateInert();
-}
-
-// Inizia partita: la scelta "Nuova partita" nella finestra sotto il titolo vale già come conferma di sostituire
-// la partita salvata, quindi qui non si chiede altro
-export function onStartClick(): void {
-  startGame();
-}
-
-// Inizia: nuova partita con le scelte fatte (la partita salvata viene sostituita)
-export function startGame(): void {
-  if (!battleOf(preferenze.settings.nemesis)) return;
-  clearTransition();
-  closeAllModals();
-  ui.viewedUid = null;
-  ui.reveal = null;
-  ui.lastDrawnUid = null;
-  ui.drafts.clear();
-  ui.flyingDiscards = 0;
-  statoSalvataggio.gameSaved = false;
-  // Partita da zero (coda vuota, niente undo) con il mazzo nuovo
-  nuovaPartita();
-  // Prima del turno giocatori: i 9 mazzi da cui nasce il mazzo nemesi e il pulsante "Crea mazzo"
-  ui.deckBuilding = true;
-  ui.deckShown = 0;
-  ui.deckDark = true;
-  showDeckBuild();
-  render();
-  slideToGame(() => nemesisBtn.focus());
-  prefetchDeckImages();
-}
-
-// Riprendi partita: si ricarica lo stato salvato nel browser, compreso l'undo. Se la nemesi della partita non è più
-// nella collezione, una finestra lo dice; "Continua" rimette nella collezione il suo prodotto (e la scatola base della
-// sua wave) e riprende la partita. Nemesi di una wave non ancora disponibile nella collezione: si riprende e basta
-export function resumeGame(): void {
-  const saved = readSave();
-  if (!saved) return;
-  const info = catalogo.nemeses.find(n => n.name === saved.settings.nemesis);
-  const owned = preferenze.collection;
-  const product = info ? info.boxCode : null;
-  const wave = info ? waveOfNemesis(info) : null;
-  if (info && product && wave && owned && collectionWaveEnabled(wave) && !owned.has(product)) {
-    openMissingNemesis(info, () => {
-      owned.add(wave);
-      owned.add(product);
-      saveCollection();
-      renderStartChoices();
-      updateHomeCollection();
-      resumeSavedGame(saved);
-    });
-    return;
-  }
-  resumeSavedGame(saved);
 }
 
 export function openMissingNemesis(info: Nemesi, onContinue: () => void): void {
@@ -302,36 +216,6 @@ export function openMissingNemesis(info: Nemesi, onContinue: () => void): void {
   footer.append(button(I18N_IT.cancel, 'secondary', cancel), go);
   dialog.appendChild(footer);
   close = openModal(dialog, { onCancel: cancel, initialFocus: go });
-}
-
-export function resumeSavedGame(saved: SalvataggioValido): void {
-  try {
-    const previousSettings = preferenze.settings;
-    preferenze.settings = saved.settings;
-    try {
-      restore(saved.state);
-    } catch (err) {
-      preferenze.settings = previousSettings;
-      throw err;
-    }
-    impostaUndo(Array.isArray(saved.undo) ? saved.undo : []);
-    statoSalvataggio.gameSaved = true;
-    ui.deckDark = false;
-    startError.hidden = true;
-    closeStart();
-    render();
-    prefetchDeckImages();
-    (partita.resolving ? resolveBtn : nemesisBtn).focus();
-  } catch (err) {
-    console.error(err);
-    showStartError(I18N_IT.resumeError, false);
-  }
-}
-
-export function showStartError(text: string, withRetry: boolean): void {
-  startError.hidden = false;
-  startErrorText.textContent = text;
-  retryBtn.hidden = !withRetry;
 }
 
 // Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)

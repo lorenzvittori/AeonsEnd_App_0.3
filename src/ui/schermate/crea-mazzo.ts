@@ -1,23 +1,24 @@
-// ui/schermate/crea-mazzo.ts: "Crea mazzo": i 9 mazzi da cui nasce il mazzo nemesi, il cursore da trascinare, le
-// carte Specifiche in grande, la finestra della nemesi con il numero di giocatori.
-// Ricomincia e cambio dei giocatori rifanno la partita da zero con stato/partita.ts (nuovaPartita).
-// Dipende da: stato/ (catalogo, preferenze, partita), dati/ (dati, rete), ui/ (testi, pagina, ripristino), ui/componenti
-// (componenti, dialoghi, testata), ui/schermate/turno-nemesi. Usato da: opzioni (inizio partita), menu laterale (cursore,
-// Ricomincia), testata, turno-nemesi (cursore), pesca-undo (immagini delle Specifiche), ui/ripristino.ts (closeDeckBuild).
+// ui/schermate/crea-mazzo.ts: la schermata "Crea mazzo" (prima del primo turno giocatori): i 9 mazzi da cui nasce il
+// mazzo nemesi, il cursore che li porta nel mazzo in alto, le carte Specifiche in grande, la finestra con nemesi e
+// giocatori (dal nome in testata), la fine con il banner "Partita iniziata".
+// Livello 5 (ui/schermate/). Dipende da: dati/ (dati, rete), stato/ (partita, catalogo, preferenze), ui/ base (testi,
+// pagina, dom, ridisegno), ui/componenti (animazioni, banner, componenti, dialoghi, testata). Usato da: navigazione.
 
 import { I18N_IT } from '../testi.ts';
 import { battleOf, shuffle } from '../../dati/dati.ts';
 import { deckPlan, nuovaPartita, partita } from '../../stato/partita.ts';
-import { cardArt, el, query, queryAll } from '../componenti/componenti.ts';
+import { cardArt } from '../componenti/componenti.ts';
 import { button, closeAllModals, dialogShell, openModal } from '../componenti/dialoghi.ts';
-import { TIER_BANNER_MS, buzz, render, showBanner } from './turno-nemesi.ts';
 import { dockDeck, renderDockPiles } from '../componenti/testata.ts';
 import { prefetchDeckImages } from '../../dati/rete.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { preferenze } from '../../stato/preferenze.ts';
-import { CARD_BACK, app, mainEl, nemesisBtn, reducedMotion, ui } from '../pagina.ts';
-import { clearTransition, lockFor } from '../ripristino.ts';
+import { app, CARD_BACK, mainEl, nemesisBtn, reducedMotion, ui } from '../pagina.ts';
+import { buzz, clearTransition, lockFor, tween } from '../componenti/animazioni.ts';
+import { showBanner, TIER_BANNER_MS } from '../componenti/banner.ts';
+import { el, query, queryAll } from '../dom.ts';
+import { richiediRidisegno } from '../ridisegno.ts';
 
 // --- Creazione del mazzo nemesi (dopo "Inizia partita") ---
 // Si vedono i 9 mazzi da cui nasce il mazzo nemesi: righe Tier 1-3, colonne Base / Potenziate / Specifiche. Base e
@@ -197,7 +198,7 @@ export function rebuildDeck(): void {
   ui.deckShown = 0;
   ui.deckDark = true;
   showDeckBuild();
-  render();
+  richiediRidisegno();
   prefetchDeckImages();
 }
 
@@ -242,7 +243,7 @@ export function openGameSetup(): void {
         nuovaPartita();
         ui.deckShown = 0;
         showDeckBuild();
-        render();
+        richiediRidisegno();
         renderChoices();
         const pressed = query(choices, '[aria-pressed="true"]', HTMLElement);
         if (pressed) pressed.focus();
@@ -383,7 +384,7 @@ export function finishDeckBuild(): void {
     layer.remove();
   }
   // Niente carta turno pescata da sola: il pulsante è "Pesca carta turno"
-  render();
+  richiediRidisegno();
   nemesisBtn.focus({ preventScroll: true });
   // Banner "Partita iniziata", uguale a quello dei Tier; finito il banner lo sfondo si accende
   showBanner(I18N_IT.gameStarted);
@@ -403,22 +404,6 @@ export function runDeckBuild(): void {
   lockFor(ms + 120, finishDeckBuild);
   if (deckSlider) deckSlider.lock(true);
   tween(from, 1, ms, p => { setDeckProgress(p); if (deckSlider) deckSlider.setProgress(p); });
-}
-
-// Piccola animazione numerica (requestAnimationFrame, con riserva setTimeout per il browser di prova)
-export function tween(from: number, to: number, ms: number, step: (value: number) => void, done?: () => void): void {
-  const t0 = performance.now();
-  let finished = false;
-  const tick = () => {
-    if (finished) return;
-    const k = Math.min(1, (performance.now() - t0) / ms);
-    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-    step(from + (to - from) * e);
-    if (k >= 1) { finished = true; if (done) done(); return; }
-    if (typeof window.requestAnimationFrame === 'function') requestAnimationFrame(tick); else setTimeout(tick, 16);
-  };
-  tick();
-  setTimeout(() => { if (!finished) { finished = true; step(to); if (done) done(); } }, ms + 200);
 }
 
 // Cursore di "Crea mazzo" nel dock, al posto del pulsante principale: box con il quadratino dorato che si trascina a
@@ -511,6 +496,14 @@ export function buildDeckSlider(): CursoreMazzo {
   });
   box.addEventListener('contextmenu', e => e.preventDefault());
   return { box, setProgress, lock };
+}
+
+// Durante "Crea mazzo": il cursore al posto del pulsante principale; sfondo nero fino alla fine del banner "Partita
+// iniziata"
+export function disegnaCursore(): void {
+  if (deckSlider) deckSlider.box.hidden = !ui.deckBuilding;
+  app.classList.toggle('is-deck-dark', ui.deckDark);
+  app.classList.toggle('is-deck-building', ui.deckBuilding);
 }
 
 // Codice eseguito all'avvio, nell'ordine di sempre (il cursore lo crea il menu laterale)
