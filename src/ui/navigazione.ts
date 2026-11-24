@@ -39,14 +39,14 @@ import { openMissingNemesis } from './finestre/opzioni.ts';
 import { showDefeat, showVictory } from './finestre/statistiche.ts';
 import { endTest, restartScenario } from './finestre/test.ts';
 import { openLifeDialog } from './finestre/vita.ts';
-import { closeDeckBuild, createDeckSlider, disegnaCursore, openGameSetup, rebuildDeck, showDeckBuild,
-  specificCardsOf } from './schermate/crea-mazzo.ts';
+import { closeDeckBuild, openGameSetup, rebuildDeck, showDeckBuild, specificCardsOf } from './schermate/crea-mazzo.ts';
 import { disegnaMenu, showStartError, updateHomeCollection } from './schermate/menu.ts';
 import { disegnaNuovaPartita, renderStartChoices } from './schermate/nuova-partita.ts';
 import { centredQueueUid, disegnaAnnullaModifiche, disegnaPulsantePrincipale, disegnaTurnoGiocatori, ensureQueueRail,
   impostaAnnullaModifiche, onNemesisClick, queueRail, sizeQueue, toPlayersTurn } from './schermate/turno-giocatori.ts';
-import { backToActive, disegnaTurnoNemesi, enterNemesisTurnView, fasciaTurnoNemesi, onResolveClick,
-  sizeFocus } from './schermate/turno-nemesi.ts';
+import { backToActive, disegnaTurnoNemesi, enterNemesisTurnView, onResolveClick } from './schermate/turno-nemesi.ts';
+import { fasciaTurnoNemesi, sizeFocus } from './schermate/turno-nemesi-carosello.ts';
+import { createDeckSlider, disegnaCursore } from './schermate/crea-mazzo-cursore.ts';
 
 // --- Dove si è ---
 

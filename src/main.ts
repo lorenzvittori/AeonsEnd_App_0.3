@@ -43,15 +43,21 @@ import * as sfondi from './ui/componenti/sfondi.ts';
 import * as opzioni from './ui/finestre/opzioni.ts';
 import * as statistiche from './ui/finestre/statistiche.ts';
 import * as mazzoTurniFinestra from './ui/finestre/mazzo-turni.ts';
+import * as mazzoTurniBozza from './ui/finestre/mazzo-turni-bozza.ts';
+import * as mazzoTurniDisegno from './ui/finestre/mazzo-turni-disegno.ts';
+import * as mazzoTurniTrascina from './ui/finestre/mazzo-turni-trascina.ts';
 import * as vita from './ui/finestre/vita.ts';
 import * as menuLaterale from './ui/finestre/menu-laterale.ts';
 import * as schedaCarta from './ui/finestre/scheda-carta.ts';
 import * as test from './ui/finestre/test.ts';
 import * as menu from './ui/schermate/menu.ts';
 import * as nuovaPartita from './ui/schermate/nuova-partita.ts';
+import * as nuovaPartitaAnteprima from './ui/schermate/nuova-partita-anteprima.ts';
 import * as creaMazzo from './ui/schermate/crea-mazzo.ts';
+import * as creaMazzoCursore from './ui/schermate/crea-mazzo-cursore.ts';
 import * as turnoGiocatori from './ui/schermate/turno-giocatori.ts';
 import * as turnoNemesi from './ui/schermate/turno-nemesi.ts';
+import * as turnoNemesiCarosello from './ui/schermate/turno-nemesi-carosello.ts';
 import * as navigazione from './ui/navigazione.ts';
 import * as avvio from './avvio.ts';
 
@@ -73,7 +79,8 @@ const MODULI: ModuloAvviato[] = [compatibilita, testi, pagina, dati, collezione,
 
 // Moduli senza avvio() le cui funzioni stanno comunque in window.app (stato e ripristino)
 const SENZA_AVVIO: object[] = [statoCatalogo, statoPreferenze, statoPartita, statoSalvataggio, ripristino, dom, ridisegno,
-  animazioni, banner, misure, vite, vita, nuovaPartita, mazzoTurniFinestra];
+  animazioni, banner, misure, vite, vita, nuovaPartita, mazzoTurniFinestra, mazzoTurniBozza, mazzoTurniDisegno,
+  mazzoTurniTrascina, nuovaPartitaAnteprima, creaMazzoCursore, turnoNemesiCarosello];
 
 // window.app: tutto quello che i moduli esportano (app.render(), app.makeEntry, app.act(), app.SCENARI, app.ui...) più
 // i campi dello stato, leggibili e (solo per il debug) assegnabili per nome: del catalogo (app.allCards, app.nemeses...),
