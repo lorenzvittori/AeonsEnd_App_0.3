@@ -278,7 +278,7 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
       la copia della pila degli scarti rifaceva il lampo dello scarto). Mazzo, scarti e barra non si toccano.
     - **Facce delle carte turno** (v221, `turnCardFace`): l'immagine della carta vera, `Assets/ui/turn-cards/<carta>.webp`
       (p1, p2, p3, p4, p12, p34, nemesis, wild; 252 x 352, WebP 86, ritagliate a 63:88 dalle foto date dall'utente;
-      style.css `.ae-turn-card[data-card]`). Sulle carte 1/2, 3/4 e Wild con il giocatore già deciso un **tondino** in
+      mazzo-turni.css `.ae-turn-card[data-card]`). Sulle carte 1/2, 3/4 e Wild con il giocatore già deciso un **tondino** in
       basso a destra con il suo numero nel suo colore (`.ae-turn-card-who`); dalla v240 è il **token del giocatore**
       (`Assets/ui/turn-tokens/pN.webp`), grande uguale (20px) e centrato sotto la carta. Le due scelte della finestra "Chi gioca
       questo turno?" invece sono i **token** dei giocatori (dalla v223: `Assets/ui/turn-tokens/p1…p4.webp`, 232 x 232
@@ -491,7 +491,7 @@ Il proprietario scrive in **italiano**: si risponde in italiano.
   (`--ae-seg-n`; la casella accesa resta 122px). La storia riparte vuota a ogni giro. (Fino alla v221: 6 caselle, una
   per carta del mazzo dei turni, nell'ordine di estrazione.)
   - **Colori dei giocatori** (v222, dalle carte turno vere): 1 `#86811D`, 2 `#CF892B`, 3 `#007591`, 4 `#773067`
-    (`--ae-turn-p1..p4`, style.css).
+    (`--ae-turn-p1..p4`, ui/eventi.css).
   - La casella del turno in corso è **accesa** (8px, colore pieno e un bagliore leggero: dalla v203 4px al 25%, prima 12px al 60%) e più lunga delle altre: dalla v184
     **122px fissi**, abbastanza per la scritta più lunga ("Nemesi · Risolvi", circa 114px); le altre 5 si dividono lo
     spazio che resta (circa 38px su un telefono da 375px). (v170: il doppio di una casella normale.) Quelle dei turni già giocati nel giro
@@ -788,8 +788,8 @@ nemesi** (`save()` non scrive con `turn < 1`, a meno che la partita sia già sta
   - `--ae-text` avorio, `--ae-text-muted`;
   - `--ae-gold #DFAE59`, `--ae-danger #D95E5C`, `--ae-heal`, `--ae-focus`.
 - `css/components.css`: componenti (pulsanti, badge, carta, finestre, scarti, toast, interruttore).
-- `style.css`: layout e quasi tutte le aggiunte recenti, in fondo al file, spesso come ridefinizioni di regole
-  precedenti: in caso di dubbio vale l'ultima.
+- `style.css` (in `main`; su `ts` è diviso per schermata, sezione 9 "CSS"): layout e quasi tutte le aggiunte recenti,
+  in fondo al file, spesso come ridefinizioni di regole precedenti: in caso di dubbio vale l'ultima.
 
 ### Stato
 
@@ -1048,9 +1048,23 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
     sezione 6), `src/stato/` (solo lo stato, sezione 6: `catalogo.ts`, `preferenze.ts`, `partita.ts` con le azioni,
     `salvataggio.ts` per il browser), `src/dati/` (caricamento, `controllo.ts` per i JSON), `src/ui/` (`pagina.ts`:
     elementi, costanti e stato dell'interfaccia; `ripristino.ts`: restore e undo; `componenti/`, `schermate/`),
-    `src/stili/` (il CSS di prima, così com'è). In `public/`:
+    il CSS (vedi sotto). In `public/`:
     `Data/`, `thumbs/`, `Assets/`, i JSON, `manifest.webmanifest`, `sw.js`, `scheletri/` (si copiano così come sono).
     Gli strumenti Python di `tools/` scrivono in `public/`.
+  - **CSS:** un file per pezzo dell'interfaccia, accanto al `.ts` che crea quegli elementi (`ui/schermate/mazzo-turni.css`,
+    `ui/componenti/testata.css`, `ui/eventi.css` per la barra dei turni, `ui/schermate/vite.css` per le vite...); in
+    `src/stili/` restano `design-tokens.css`, `components.css` (componenti di base), `base.css` (pagina, shell, sfondo,
+    colonna su tablet e desktop) e `comuni.css`. Ogni file ha l'intestazione: cosa disegna, chi crea gli elementi, dopo
+    quali file deve venire.
+    - **Ordine:** tutti i CSS si importano **solo** da `src/stili/indice.ts` (primo import di `main.ts`), in un ordine
+      fisso; `tools/check-moduli.mjs` rifiuta un `.css` importato altrove o non importato. A parità di specificità vince
+      la regola che viene dopo, quindi l'ordine di `indice.ts` è la cascata: un file che ritocca elementi di un altro
+      viene dopo di lui (l'intestazione lo dice). Le poche regole che stanno nel file di un altro pezzo per l'ordine hanno
+      il commento "Ordine: regola di X.css; sta qui perché deve venire dopo ...".
+    - **Regola nuova:** va nel file del suo pezzo. Se ritocca a pari specificità un elemento stilato da un file
+      importato dopo, o si alza la specificità o la regola va in quel file con il commento "Ordine: ...".
+    - Fase E (tag `ts-prima-fase-E`): il vecchio `style.css` diviso così senza cambiare valori né selettori; stesse
+      regole, `getComputedStyle` identico su 33 schermate a 375×812 e a 1280×800.
   - **Console e pagina `scheletri/`:** niente più nomi globali; tutto è in **`window.app`**: le funzioni esportate dai
     moduli (`app.render()`, `app.act()`, `app.nuovaPartita()`, `app.startScenario(app.SCENARI[0])`...), i campi dello
     stato per nome (`app.queue`, `app.turn`, `app.settings`, `app.allCards`...; assegnabili solo per il debug) e gli
@@ -1106,6 +1120,8 @@ stesso controllo sui veri `public/*.json`: se `tools/import-db.py` produce dati 
 | `v157-prima-nuova-partita-e-dorsi` | Prima della v158 (pagina Nuova partita con X e wave multiple, dorsi, tempi, zoom della carta nemesi). |
 | `ts-prima-fase-C` | Branch `ts`: fine della fase B (moduli ES in JavaScript, regole pure), prima del passaggio a TypeScript. |
 | `ts-prima-fase-D` | Branch `ts`: fine della fase C (TypeScript strict), prima dello stato unico al posto di G. |
+| `ts-prima-porting-273` | Branch `ts`: fine della fase D, prima del porting di main v269–v273. |
+| `ts-prima-fase-E` | Branch `ts`: dopo il porting di main v273, prima della divisione del CSS per schermata. |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 
