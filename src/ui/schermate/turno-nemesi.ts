@@ -1,11 +1,12 @@
 // ui/schermate/turno-nemesi.ts: turno nemesi (VistaRisoluzione: carosello, fascia, pulsante principale, pesca), vite
-// di Gravehold e della nemesi, banner al centro, e render() di tutta l'app. Provvisorio: render() andrà in ui/.
+// di Gravehold e della nemesi (box con number scrubbing e finestra), banner al centro, e render() di tutta l'app.
+// Provvisorio: render() andrà in ui/.
 // La partita si legge da stato/partita.ts e si cambia con le sue azioni (pescaCarta, risolviCarta, cambiaVita,
 // pescaCartaTurno, fineTurnoGiocatore); qui le animazioni e il ridisegno dopo l'azione.
 // Dipende da: regole/ (vite, turno-nemesi: solo letture), stato/ (catalogo, preferenze, partita), dati/dati.ts, ui/
 // (testi, pagina, ripristino, eventi), ui/componenti (componenti, dialoghi, testata, pesca-undo, menu-laterale),
-// ui/schermate (turno-giocatori, mazzo-turni, statistiche, crea-mazzo). Usato da: quasi tutta l'interfaccia (render),
-// eventi, ui/ripristino.ts.
+// ui/schermate (turno-giocatori, mazzo-turni, statistiche, crea-mazzo, vite-scrub). Usato da: quasi tutta l'interfaccia
+// (render), eventi, ui/ripristino.ts.
 
 import * as Vite from '../../regole/vite.ts';
 import * as Nemesi from '../../regole/turno-nemesi.ts';
@@ -24,6 +25,7 @@ import { animateDrawIn } from '../componenti/pesca-undo.ts';
 import { currentGraveholdBg } from '../componenti/menu-laterale.ts';
 import type { TipoVita, VoceInGioco } from '../../tipi/partita.ts';
 import type { CartaPescata } from '../../regole/turno-nemesi.ts';
+import { scrubDelta, scrubStart, scrubValue } from './vite-scrub.ts';
 import { preferenze } from '../../stato/preferenze.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { app, backBtn, byId, CARD_BACK, CARD_RATIO, cssUrl, DRAW_MS, duration, focusEl, nemesisBtn, phaseLabel, queueView, rail, reducedMotion, resolveBtn, resolveHint, resolveView, ui } from '../pagina.ts';
@@ -238,14 +240,24 @@ export function ensureLivesRow(): HTMLDivElement {
     const b = el('button', 'ae-life-box ae-life-box--' + kind);
     b.type = 'button';
     b.dataset.kind = kind;
-    // Solo il numero (niente nome né goccia); il nome resta nell'etichetta per i lettori di schermo
-    b.append(el('span', 'ae-life-value'));
+    // Solo il numero (niente nome né goccia; il nome resta nell'etichetta per i lettori di schermo) e, durante lo
+    // scrubbing, il cambio "+x" / "−y" a destra in alto, come nella finestra
+    const num = el('span', 'ae-life-num');
+    const delta = el('span', 'ae-life-box-delta');
+    delta.setAttribute('aria-hidden', 'true');
+    num.append(el('span', 'ae-life-value'), delta);
+    b.append(num);
     // Scritta piccolissima sopra il box (alta 7px, solo da vedere: il nome è già nell'etichetta del pulsante)
     const tag = el('span', 'ae-life-tag', kind === 'grave' ? 'Gravehold' : 'Nemesis');
     tag.setAttribute('aria-hidden', 'true');
     b.appendChild(tag);
     b.setAttribute('aria-haspopup', 'dialog');
-    b.addEventListener('click', () => openLifeDialog(kind));
+    b.addEventListener('click', () => {
+      // Il click che chiude uno scrubbing non apre la finestra
+      if (b.dataset.scrubbed) { delete b.dataset.scrubbed; return; }
+      openLifeDialog(kind);
+    });
+    lifeScrub(b, kind);
     return b;
   };
   row.append(box('grave'), box('nemesis'));
@@ -273,10 +285,88 @@ export function renderLives(): void {
   const lives: [TipoVita, string, number][] = [['grave', I18N_IT.graveholdName, partita.graveLife], ['nemesis', preferenze.settings.nemesis || '', partita.nemesisLife]];
   lives.forEach(([kind, name, value]) => {
     const b = lifeBox(kind);
-    need(b.querySelector('.ae-life-value'), 'numero della vita').textContent = String(value);
+    // Il numero si riscrive solo se è cambiato: dopo uno scrubbing le cifre stanno ancora scorrendo
+    const v = need(query(b, '.ae-life-value', HTMLElement), 'numero della vita');
+    if (v.dataset.shown !== String(value) && !b.classList.contains('is-scrubbing')) {
+      v.textContent = String(value);
+      v.dataset.shown = String(value);
+    }
     b.classList.toggle('is-zero', value <= 0);
     b.setAttribute('aria-label', I18N_IT.lifeAria(name, value));
   });
+}
+
+// Number scrubbing sui box delle vite: tenendo premuto e trascinando in verticale (in su sale, in giù scende) la vita
+// cambia di 1 ogni LIFE_SCRUB_PX, mai sopra il massimo né sotto 0, come nella finestra (vite-scrub.ts), con le cifre
+// che scorrono (renderLifeDigits) e il cambio "+x" / "−y" accanto. Parte dopo LIFE_SCRUB_START in verticale (più in
+// verticale che di lato; di lato il gesto si annulla). Al rilascio la vita si applica una volta sola (azione cambiaVita:
+// un passo di undo, si salva); a 0 → Vittoria o Sconfitta. Un tocco senza trascinare apre ancora la finestra; il click
+// che segue uno scrubbing no (data-scrubbed). Sul box la pagina non scorre (style.css, touch-action: none)
+export function lifeScrub(b: HTMLElement, kind: TipoVita): void {
+  // Trascinamento in corso: punto di partenza, vita all'inizio, vita mostrata, partito o no, tetto
+  let s: { x: number; y: number; id: number; start: number; value: number; on: boolean; cap: number } | null = null;
+  const grave = kind === 'grave';
+  const cur = () => grave ? partita.graveLife : partita.nemesisLife;
+  const value = () => need(query(b, '.ae-life-value', HTMLElement), 'numero della vita');
+  const delta = () => need(query(b, '.ae-life-box-delta', HTMLElement), 'cambio della vita');
+  b.addEventListener('pointerdown', e => {
+    if (e.button > 0 || ui.isTransitioning || modals.length) return;
+    s = { x: e.clientX, y: e.clientY, id: e.pointerId, start: cur(), value: cur(), on: false,
+      cap: Vite.lifeCap(cur(), grave ? GRAVEHOLD_LIFE : nemesisStartLife()) };
+  });
+  b.addEventListener('pointermove', e => {
+    if (!s || e.pointerId !== s.id) return;
+    const up = s.y - e.clientY;
+    if (!s.on) {
+      const go = scrubStart(up, e.clientX - s.x);
+      if (go === 'cancel') { s = null; return; }
+      if (go === 'wait') return;
+      s.on = true;
+      s.y = e.clientY;
+      try { b.setPointerCapture(e.pointerId); } catch (err) { /* niente cattura */ }
+      b.classList.add('is-scrubbing');
+      return;
+    }
+    e.preventDefault();
+    const next = scrubValue(s.start, up, s.cap);
+    if (next === s.value) return;
+    const v = value();
+    renderLifeDigits(v, String(next), String(s.value), next < s.value ? -1 : 1);
+    v.dataset.shown = String(next);
+    s.value = next;
+    b.classList.toggle('is-loss', next < s.start);
+    b.classList.toggle('is-gain', next > s.start);
+    delta().textContent = scrubDelta(next - s.start);
+    // Una vibrazione brevissima per punto, solo se la pagina ha già avuto un tocco (altrimenti il browser la blocca)
+    if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) {
+      try { navigator.vibrate(5); } catch (err) { /* niente vibrazione */ }
+    }
+  });
+  const end = (apply: boolean) => (e: PointerEvent) => {
+    if (!s || e.pointerId !== s.id) return;
+    const { on, value: shown, start } = s;
+    s = null;
+    if (!on) return;
+    b.classList.remove('is-scrubbing', 'is-loss', 'is-gain');
+    delta().textContent = '';
+    b.dataset.scrubbed = '1';
+    setTimeout(() => { delete b.dataset.scrubbed; }, 0);
+    if (!apply || shown === start) {
+      // Annullato: le cifre tornano al valore di prima
+      if (shown !== start) {
+        const v = value();
+        renderLifeDigits(v, String(start), String(shown), start < shown ? -1 : 1);
+        v.dataset.shown = String(start);
+      }
+      return;
+    }
+    cambiaVita(kind, shown);
+    render();
+    const outcome = Vite.lifeOutcome(kind, shown, true);
+    if (outcome === 'defeat') showDefeat(); else if (outcome === 'victory') showVictory();
+  };
+  b.addEventListener('pointerup', end(true));
+  b.addEventListener('pointercancel', end(false));
 }
 
 // Finestra della vita di Gravehold o della nemesi, come quella del minion: numero, −5 −1 +1 +5 (mai sopra la vita
