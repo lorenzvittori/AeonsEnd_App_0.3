@@ -1,13 +1,13 @@
-// stato/salvataggio.ts: la partita salvata nel browser (localStorage): scrittura (save, dopo ogni azione) e lettura
-// (readSave, per "Riprendi partita"). Il formato è in tipi/salvataggio.ts, la fotografia in stato/partita.ts.
-// Dipende da: regole/salvataggio.ts, regole/json.ts, stato/partita.ts, stato/preferenze.ts, ui/pagina.ts (ui.gameSaved).
-// Usato da: stato/partita.ts (act e azioni), ui/ (ripresa, Vittoria), main.ts (app.noSave).
+// stato/salvataggio.ts: la partita salvata nel browser (localStorage): scrittura (scriviPartita, chiamata da save in
+// stato/partita.ts dopo ogni azione) e lettura (readSave, per "Riprendi partita"), più il segno "partita già scritta"
+// (statoSalvataggio.gameSaved). Il formato è in tipi/salvataggio.ts, la fotografia in regole/salvataggio.ts.
+// Livello 1 (stato/). Dipende da: regole/salvataggio.ts, regole/json.ts, stato/preferenze.ts, tipi/.
+// Usato da: stato/partita.ts (save), ui/ (ripresa, Nuova partita), main.ts (app.noSave), test.
 
 import * as Salv from '../regole/salvataggio.ts';
 import { parseJson } from '../regole/json.ts';
-import { partita, snapshot } from './partita.ts';
 import { preferenze } from './preferenze.ts';
-import { ui } from '../ui/pagina.ts';
+import type { StatoPartita } from '../tipi/partita.ts';
 import type { SalvataggioValido } from '../tipi/salvataggio.ts';
 
 // Partita salvata nel browser (localStorage).
@@ -22,16 +22,20 @@ export const SAVE_VERSION = 2;
 // Pagina scheletri/ (misura dell'app in un iframe): app.noSave = true e la partita salvata non cambia
 export const opzioniSalvataggio = { noSave: false };
 
+// La partita in corso è già stata scritta nel browser (gameSaved): da lì si salva sempre, anche al turno 0. Lo rimette a
+// false "Nuova partita", a true la ripresa di una partita salvata
+export const statoSalvataggio = { gameSaved: false };
+
 // La partita si salva solo dal primo turno nemesi (prima, anche durante "Crea mazzo", non si scrive niente e resta
 // l'eventuale partita salvata prima). Una partita già salvata (ripresa, o tornata al turno 0 con l'undo) si salva sempre.
-export function save(): void {
+export function scriviPartita(partita: Readonly<StatoPartita>): void {
   // Modalità test: niente salvataggio, la partita salvata vera resta com'è
   if (partita.testRun) return;
   if (opzioniSalvataggio.noSave) return;
-  if (partita.turn < 1 && !ui.gameSaved) return;
-  ui.gameSaved = true;
+  if (partita.turn < 1 && !statoSalvataggio.gameSaved) return;
+  statoSalvataggio.gameSaved = true;
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(Salv.buildSave(SAVE_VERSION, preferenze.settings, snapshot(), partita.undoStack)));
+    localStorage.setItem(SAVE_KEY, JSON.stringify(Salv.buildSave(SAVE_VERSION, preferenze.settings, Salv.snapshotGame(partita), partita.undoStack)));
   } catch (err) {
     console.warn('Salvataggio non riuscito', err);
   }

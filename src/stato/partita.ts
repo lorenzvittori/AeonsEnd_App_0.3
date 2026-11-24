@@ -2,8 +2,8 @@
 // `partita` in sola lettura (tipo Readonly; npm run check controlla che fuori da qui nessuno ne assegni i campi) e la
 // cambia chiamando le azioni qui sotto. Le regole di gioco (src/regole/) restano pure: qui le si chiama passando lo
 // stato, il caso (Math.random) e l'ora (Date.now).
-// Dipende da: regole/, stato/preferenze.ts, stato/catalogo.ts, stato/salvataggio.ts (save), tipi/.
-// Usato da: ui/ (lettura e azioni), stato/salvataggio.ts, stato/preferenze.ts, dati/, avvio.ts, main.ts, test.
+// Livello 1 (stato/). Dipende da: regole/, stato/preferenze.ts, stato/catalogo.ts, stato/salvataggio.ts
+// (scriviPartita), tipi/. Usato da: ui/ (lettura e azioni), dati/rete.ts, avvio.ts, main.ts, test.
 //
 // Il giro di ogni azione (act, la stessa di sempre):
 //   1. fotografia per l'undo (snapshot → undoStack, al massimo UNDO_LIMIT passi);
@@ -29,8 +29,8 @@ import * as Salv from '../regole/salvataggio.ts';
 import { GRAVEHOLD_LIFE } from '../regole/vite.ts';
 import { jsonCopy } from '../regole/json.ts';
 import { catalogo } from './catalogo.ts';
-import { preferenze, turnPairsOn } from './preferenze.ts';
-import { save } from './salvataggio.ts';
+import { preferenze, turnPairsSaved } from './preferenze.ts';
+import { scriviPartita } from './salvataggio.ts';
 import type { Carta, DatiRegole, RigaDeckSetup } from '../tipi/dati.ts';
 import type { BozzaCarta, BozzaTurni, CartaTurno, Giocatore, GruppoStatistiche, MazzoTurni, Partita, PianoMazzo,
   ProvaInCorso, SceltePerMazzo, Statistiche, StatoPartita, TipoVita, TurnoStoria, VoceInGioco } from '../tipi/partita.ts';
@@ -109,6 +109,12 @@ export function togliPassoUndo(): FotografiaLetta | undefined {
   return stato.undoStack.pop();
 }
 
+// Salvataggio della partita nel browser (stato/salvataggio.ts: niente nella Modalità test, prima del primo turno nemesi
+// o nella pagina scheletri/)
+export function save(): void {
+  scriviPartita(stato);
+}
+
 // Ogni azione che cambia la partita: prima si salva lo stato per l'undo, poi si fa l'azione, poi si salva la partita
 // (il ridisegno lo fa chi chiama, vedi in cima)
 export function act<T>(action: () => T): T {
@@ -172,6 +178,13 @@ export function emptyStats(deckSize: number): Statistiche {
 }
 
 // --- Mazzo dei turni ---
+
+// Opzione "Carte turno 1/2 e 3/4": quella del browser (stato/preferenze.ts), o quella dello scenario della Modalità test
+// se la sceglie (testRun.pairs)
+export function turnPairsOn(): boolean {
+  if (stato.testRun && typeof stato.testRun.pairs === 'boolean') return stato.testRun.pairs;
+  return turnPairsSaved();
+}
 
 // Carte del mazzo dei turni per un giro nuovo (lo scenario della Modalità test può avere le sue: testRun.turnCards)
 export function turnOrderCards(players: number): CartaTurno[] {

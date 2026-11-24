@@ -3,9 +3,8 @@
 // ("Modalità battaglia", "Unisci", carte turno 1/2 e 3/4).
 // Le scelte (settings) entrano anche nel salvataggio della partita; la Modalità test le sostituisce finché dura e le
 // rimette all'uscita (stato/partita.ts). La collezione si legge e si scrive nel browser in dati/collezione.ts.
-// Dipende da: stato/partita.ts (Modalità test in corso), tipi/. Usato da: stato/, dati/, ui/.
+// Livello 1 (stato/). Dipende da: tipi/. Usato da: stato/ (partita, salvataggio), dati/, ui/.
 
-import { partita } from './partita.ts';
 import type { CodiceProdotto } from '../tipi/dati.ts';
 import type { Impostazioni } from '../tipi/partita.ts';
 
@@ -36,11 +35,10 @@ export function saveDeckOptions(): void {
 }
 
 // Opzione "Carte turno 1/2 e 3/4" (preferenza del browser, vale dal prossimo giro). Lo scenario della Modalità test può
-// sceglierla solo per sé (testRun.pairs)
+// sceglierla solo per sé (testRun.pairs): quella in vigore la dice turnPairsOn di stato/partita.ts
 export const TURN_PAIRS_KEY = 'aeonsend-app-0.2-turn-pairs';
 
-export function turnPairsOn(): boolean {
-  if (partita.testRun && typeof partita.testRun.pairs === 'boolean') return partita.testRun.pairs;
+export function turnPairsSaved(): boolean {
   try { return localStorage.getItem(TURN_PAIRS_KEY) !== 'off'; } catch (err) { return true; }
 }
 

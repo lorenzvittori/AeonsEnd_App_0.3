@@ -5,7 +5,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vite
 import { caricaCatalogo } from '../src/stato/catalogo.ts';
 import { preferenze } from '../src/stato/preferenze.ts';
 import * as P from '../src/stato/partita.ts';
-import { SAVE_KEY, readSave, save } from '../src/stato/salvataggio.ts';
+import { SAVE_KEY, readSave } from '../src/stato/salvataggio.ts';
 import { isDrawStep } from '../src/regole/turno-nemesi.ts';
 import { cards, deckSetup, nemeses, products, seeded, must } from './aiuto.ts';
 import type { Impostazioni } from '../src/tipi/partita.ts';
@@ -136,7 +136,7 @@ describe('stato/partita.ts: la partita in corso', () => {
     expect(partita.turn).toBeGreaterThan(0);
     const snap = JSON.stringify(P.snapshot());
     const undo = JSON.stringify(partita.undoStack);
-    save();
+    P.save();
     const text = must(localStorage.getItem(SAVE_KEY), 'salvataggio scritto');
     // Si gioca un'altra partita (che salva a ogni azione), poi si rimette il salvataggio di prima e lo si riprende
     gioca('Maggoth', 2, 99, 30);

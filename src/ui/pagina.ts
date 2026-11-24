@@ -3,8 +3,7 @@
 // mostrata, animazioni in corso, bozze del turno giocatori...). Niente stato della partita: quello è in stato/.
 // Al caricamento il modulo dichiara solo funzioni e costanti; gli elementi si leggono in avvio(), chiamata da main.ts
 // nell'ordine di sempre (prima di tutti gli altri moduli dell'interfaccia).
-// Dipende da: ui/componenti/dialoghi.ts (loadImage), tipi/. Usato da: quasi tutti i moduli di ui/, stato/salvataggio.ts
-// (ui.gameSaved), dati/, avvio.ts.
+// Dipende da: ui/componenti/dialoghi.ts (loadImage), tipi/. Usato da: quasi tutti i moduli di ui/, avvio.ts.
 
 import { loadImage } from './componenti/dialoghi.ts';
 import type { BozzaCarta } from '../tipi/partita.ts';
@@ -144,7 +143,6 @@ export interface StatoUi {
   autoTokenAt: number;           // ... e quando è partita (la fascia e la carta grande restano allineate)
   deckBuilding: boolean;         // schermata "Crea mazzo" prima del primo turno giocatori
   deckShown: number | null;      // durante "Crea mazzo": carte già arrivate nel mazzo in alto (null = mazzo vero)
-  gameSaved: boolean;            // la partita in corso è già stata scritta nel browser (save)
   deckDark: boolean;             // sfondo nero da "Crea mazzo" fino alla fine del banner "Partita iniziata"
   trackPreview?: boolean;        // barra dei turni in anteprima nella finestra del mazzo dei turni
   trackShuffle?: boolean;        // barra dei turni durante la mescolata di un giro nuovo
@@ -169,7 +167,6 @@ export const ui: StatoUi = {
   autoTokenAt: 0,
   deckBuilding: false,
   deckShown: null,
-  gameSaved: false,
   deckDark: false
 };
 

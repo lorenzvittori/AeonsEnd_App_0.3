@@ -1,10 +1,9 @@
 // dati/collezione.ts: collezione (wave e prodotti posseduti, salvata nel browser) e nemesi giocabili.
-// Dipende da: regole/mazzo-nemesi.ts, stato/ (catalogo, preferenze), ui/testi. Usato da: ui/schermate (menu, opzioni, collezione),
-// stato/partita.ts (attraverso preferenze.collection).
+// Livello 1 (dati/). Dipende da: regole/ (mazzo-nemesi, json), stato/ (catalogo, preferenze), tipi/. Usato da: ui/ (menu
+// iniziale, Nuova partita, collezione), main.ts (avvio); stato/partita.ts la legge attraverso preferenze.collection.
 
 import * as Mazzo from '../regole/mazzo-nemesi.ts';
 import { parseJson } from '../regole/json.ts';
-import { I18N_IT } from '../ui/testi.ts';
 import type { Carta, CodiceProdotto, Nemesi } from '../tipi/dati.ts';
 import { preferenze } from '../stato/preferenze.ts';
 import { catalogo } from '../stato/catalogo.ts';
@@ -44,13 +43,14 @@ export function productOfNemesis(info: Nemesi): CodiceProdotto | null {
   return info.boxCode;
 }
 
-// Tutti i prodotti per wave, nell'ordine delle wave: [{ wave, products: [{ id, name, isBase }] }]
-export function collectionCatalog(): { wave: string; products: ProdottoCatalogo[] }[] {
+// Tutti i prodotti per wave, nell'ordine delle wave: [{ wave, products: [{ id, name, isBase }] }]; baseName è il nome
+// mostrato per la scatola base (il testo sta in ui/testi.ts)
+export function collectionCatalog(baseName: string): { wave: string; products: ProdottoCatalogo[] }[] {
   const codes = Object.keys(catalogo.products);
   const waves = codes.filter(c => !isMiniCode(c)).sort((a, b) => Number(a) - Number(b));
   return waves.map(wave => ({
     wave,
-    products: [{ id: wave, name: I18N_IT.baseBox, isBase: true },
+    products: [{ id: wave, name: baseName, isBase: true },
       ...codes.filter(c => isMiniCode(c) && waveOfCode(c) === wave).sort((a, b) => Number(a.split('.')[1]) - Number(b.split('.')[1]))
         .map(c => ({ id: c, name: productName(c), isBase: false }))]
   }));

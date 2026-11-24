@@ -9,12 +9,12 @@
 import { I18N_IT } from '../testi.ts';
 import { battleOf } from '../../dati/dati.ts';
 import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, saveCollection, waveOfNemesis } from '../../dati/collezione.ts';
-import { impostaUndo, nuovaPartita, partita } from '../../stato/partita.ts';
+import { impostaUndo, nuovaPartita, partita, turnPairsOn } from '../../stato/partita.ts';
 import { el, icon, queryAll } from '../componenti/componenti.ts';
 import { button, closeAllModals, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.ts';
 import { closeDiscard } from '../componenti/scarti.ts';
 import { renderStartChoices, setStartMode, updateHomeCollection, waveLabel } from './menu.ts';
-import { readSave } from '../../stato/salvataggio.ts';
+import { readSave, statoSalvataggio } from '../../stato/salvataggio.ts';
 import { render } from './turno-nemesi.ts';
 import { showDeckBuild } from './crea-mazzo.ts';
 import { slideToGame } from '../componenti/pesca-undo.ts';
@@ -23,7 +23,7 @@ import { prefetchDeckImages } from '../../dati/rete.ts';
 import { endTest } from './test.ts';
 import type { CodiceProdotto, Nemesi } from '../../tipi/dati.ts';
 import type { SalvataggioValido } from '../../tipi/salvataggio.ts';
-import { preferenze, setTurnPairs, turnPairsOn } from '../../stato/preferenze.ts';
+import { preferenze, setTurnPairs } from '../../stato/preferenze.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { byId, nemesisBtn, resolveBtn, retryBtn, startError, startErrorText, startLayer, ui } from '../pagina.ts';
 import { clearTransition, restore } from '../ripristino.ts';
@@ -132,7 +132,7 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
   // mini espansioni (valgono con "Salva")
   const bulk = el('div', 'collection-bulk');
   const setAll = (on: boolean) => {
-    collectionCatalog().filter(({ wave }) => collectionWaveEnabled(wave))
+    collectionCatalog(I18N_IT.baseBox).filter(({ wave }) => collectionWaveEnabled(wave))
       .forEach(({ products }) => products.forEach(p => { if (on) draft.add(p.id); else draft.delete(p.id); }));
     queryAll(body, '.collection-wave:not(.is-locked) .collection-item input', HTMLInputElement).forEach(input => {
       input.checked = on;
@@ -155,7 +155,7 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
     row.append(el('span', '', label), input, sw);
     return row;
   };
-  collectionCatalog().forEach(({ wave, products }) => {
+  collectionCatalog(I18N_IT.baseBox).forEach(({ wave, products }) => {
     const block = el('section', 'collection-wave');
     const base = products[0];
     const waveRow = toggle(waveLabel(wave), base.id, 'is-wave');
@@ -252,7 +252,7 @@ export function startGame(): void {
   ui.lastDrawnUid = null;
   ui.drafts.clear();
   ui.flyingDiscards = 0;
-  ui.gameSaved = false;
+  statoSalvataggio.gameSaved = false;
   // Partita da zero (coda vuota, niente undo) con il mazzo nuovo
   nuovaPartita();
   // Prima del turno giocatori: i 9 mazzi da cui nasce il mazzo nemesi e il pulsante "Crea mazzo"
@@ -315,7 +315,7 @@ export function resumeSavedGame(saved: SalvataggioValido): void {
       throw err;
     }
     impostaUndo(Array.isArray(saved.undo) ? saved.undo : []);
-    ui.gameSaved = true;
+    statoSalvataggio.gameSaved = true;
     ui.deckDark = false;
     startError.hidden = true;
     closeStart();

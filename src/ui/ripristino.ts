@@ -3,12 +3,11 @@
 // durante le animazioni (clearTransition, lockFor).
 // La partita la cambia stato/partita.ts (preparaRipristino, applicaRipristino, togliPassoUndo); qui si fermano le
 // animazioni, si chiudono finestre e "Crea mazzo" e si sceglie cosa mostrare.
-// Dipende da: stato/partita.ts, stato/salvataggio.ts, ui/pagina.ts, ui/testi.ts, ui/componenti (dialoghi, scarti),
+// Dipende da: stato/partita.ts, ui/pagina.ts, ui/testi.ts, ui/componenti (dialoghi, scarti),
 // ui/schermate (turno-nemesi, crea-mazzo). Usato da: ui/ (menu, opzioni, test, turno-nemesi, turno-giocatori, menu
 // laterale, pesca-undo...), main.ts (app.restore, app.undo).
 
-import { partita, applicaRipristino, preparaRipristino, togliPassoUndo } from '../stato/partita.ts';
-import { save } from '../stato/salvataggio.ts';
+import { partita, applicaRipristino, preparaRipristino, save, togliPassoUndo } from '../stato/partita.ts';
 import { I18N_IT } from './testi.ts';
 import { ui, undoBtn } from './pagina.ts';
 import { closeAllModals, showToast } from './componenti/dialoghi.ts';

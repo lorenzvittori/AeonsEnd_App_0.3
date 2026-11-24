@@ -662,7 +662,7 @@ export function renderDeckOptions(): void {
 
 // Wave nella scelta della nemesi: solo quelle della collezione (se nessuna, tutte)
 export function ownedWaves(): string[] {
-  const all = collectionCatalog().map(w => w.wave);
+  const all = collectionCatalog(I18N_IT.baseBox).map(w => w.wave);
   const owned = all.filter(w => [...need(preferenze.collection, 'collezione')].some(id => waveOfCode(id) === w));
   return owned.length ? owned : all;
 }
