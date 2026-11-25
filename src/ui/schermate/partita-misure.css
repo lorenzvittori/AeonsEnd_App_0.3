@@ -111,8 +111,8 @@
         | --principale-spazio-sopra  (zona 7)
      Nel turno nemesi e al passo Pesca la zona c'è, vuota e invisibile (la carta grande non cambia). */
   --interattivi-altezza: 45px;                    /* altezza della fascia dei comandi (−5 −1 +1, Rimuovi, Imposta la vita) */
-  --interattivi-distanza: 10px;                    /* spazio tra la carta grande e la fascia dei comandi */
-  --interattivi-spazio: 10px;                     /* spazio tra un comando e l'altro */
+  --interattivi-distanza: 4px;                    /* spazio tra la carta grande e la fascia dei comandi */
+  --interattivi-spazio: 6px;                     /* spazio tra un comando e l'altro */
 
   /* --- 7 pulsante principale --- */
   /*      [zona 6]

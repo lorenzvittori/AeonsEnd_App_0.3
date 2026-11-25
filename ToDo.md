@@ -50,6 +50,9 @@ quella che lo scheletro chiama barra della fase è la barra dei turni, non la ba
 - [x] le wave non numerarle con numeri arabi ma con numeri romani
 - [x] Aggiungere la scelta del back delle carte come valore estetico e customizzabile in più (idea: mettere il back delle carte da briscola)
 - Mettere le regole dentro il Gioco, magari copiando la wiki o addirittura mettendo una parte di ai (chiamata API)
+- rorfare il webp di bane sire
+- il box per il divieto rosso sulle carte potere più piccolo
+-  
 
 # Menu Principale 
 - [x] togliere il box dei pulsanti, mostra solo le scritte
