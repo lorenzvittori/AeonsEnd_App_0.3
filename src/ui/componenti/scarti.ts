@@ -6,7 +6,7 @@
 
 import { I18N_IT } from '../testi.ts';
 import { cardArt, typeName } from './componenti.ts';
-import { button, dialogShell, openModal, updateInert } from './dialoghi.ts';
+import { button, dialogShell, openModal, restoreFocus, updateInert } from './dialoghi.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import { partita } from '../../stato/partita.ts';
 import { discardClose, discardEmpty, discardGrid, discardLayer, discardTitle } from '../pagina.ts';
@@ -43,7 +43,10 @@ export function closeDiscard(): void {
   discardLayer.hidden = true;
   discardGrid.replaceChildren();
   updateInert();
-  // Il focus non torna a chi ha aperto gli scarti (discardTrigger): bug annotato in CONTESTO_SVILUPPO.md
+  // Il focus torna a chi ha aperto gli scarti, la pila in testata (se non c'è più, la pila degli scarti in testata)
+  const pila = discardTrigger instanceof HTMLElement && discardTrigger.isConnected ? discardTrigger : document.getElementById('pila-scarti');
+  discardTrigger = null;
+  restoreFocus(pila);
 }
 
 // Carta degli scarti ingrandita: sola lettura, solo "Chiudi immagine"

@@ -59,8 +59,8 @@
   --carte-grandi-spostamento: -24px;              /* turno nemesi: il blocco vita/token + carta sale di tanto */
   /* turno giocatori: il blocco si sposta di tanto (la zona 6 sotto toglie spazio: così la carta è dov'è nel turno nemesi) */
   --carte-grandi-spostamento-giocatori: calc(var(--carte-grandi-spostamento) + (var(--interattivi-distanza) + var(--interattivi-altezza)) / 2);
-  --carte-grandi-spazio-giocatori: 18px;          /* spazio tra le carte grandi, turno giocatori */
-  --carte-grandi-spazio-nemesi: 12px;             /* spazio tra le carte grandi, turno nemesi (usato anche nel calcolo della misura) */
+  --carte-grandi-spazio-giocatori: 18px;          /* spazio tra le carte grandi, turno giocatori (anche nel calcolo della loro misura) */
+  --carte-grandi-spazio-nemesi: 12px;             /* spazio tra le carte grandi, turno nemesi (anche nel calcolo della loro misura e della colonna su desktop) */
   --carte-grandi-margine-lato: 8px;               /* margine minimo a destra e a sinistra della carta, nel calcolo della misura */
   --carte-grandi-vicine-visibili: 14px;           /* quanto si vede delle carte vicine, nel calcolo della misura */
   --carte-grandi-riga-stato-altezza: 37px;        /* altezza della riga vita/token sopra la carta */

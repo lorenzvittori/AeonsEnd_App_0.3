@@ -159,7 +159,7 @@ export function sizeQueue(): void {
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
   // Stessa regola del carosello del turno nemesi (sizeFocus): la carta riempie l'altezza, ai lati si vede un pezzo delle
   // vicine (stessa larghezza della carta)
-  const peekRoom = partita.queue.length > 1 ? spazioVicine() : 0;
+  const peekRoom = partita.queue.length > 1 ? spazioVicine('giocatori') : 0;
   const width = Math.max(100, sharedCardWidth(queueViewport.clientWidth, queueViewport.clientHeight, padY, peekRoom, riserva));
   queueViewport.style.setProperty('--ae-queue-card', width + 'px');
   // I comandi della zona 6 sono larghi quanto la carta

@@ -985,7 +985,7 @@ grande e import tra moduli di `ui/`.
 | 1 | `stato/`, `dati/` | catalogo, preferenze, partita e salvataggio; caricamento, collezione, rete. Mai import da `ui/` |
 | 2 | `ui/` base: `pagina.ts`, `testi.ts`, `compatibilita.ts`, `dom.ts`, `ridisegno.ts` | elementi di index.html e stato `ui`, testi, `el`/`query`/`need`, gli agganci |
 | 3 | `ui/componenti/` | pezzi riusabili: carte (`componenti.ts`), pila delle finestre (`dialoghi.ts`), animazioni, banner, misure, testata, barra dei turni (con la scelta 1/2 e 3/4), vite (box e scrubbing), scarti, pesca-undo, sfondi e dorso, ripristino e undo |
-| 4 | `ui/finestre/` | ciò che si apre sopra una schermata: Opzioni e collezione, statistiche e Vittoria, Modalità test, mazzo dei turni, finestra della vita, menu laterale, scheda della carta |
+| 4 | `ui/finestre/` | ciò che si apre sopra una schermata: Opzioni e collezione, statistiche e Vittoria, Modalità test, mazzo dei turni, finestra della vita, menu laterale, scheda della carta; la Modalità test con il pannello "Regolazioni" (`test-regolazioni*.ts`) |
 | 5 | `ui/schermate/` | menu iniziale, Nuova partita, Crea mazzo, turno giocatori, turno nemesi: ognuna esporta il suo disegno |
 | 6 | `ui/navigazione.ts` (+ `navigazione-stato.ts`) | il coordinatore |
 | 7, 8 | `avvio.ts`, `main.ts` | lettura dei dati e primo disegno; ordine degli `avvio()` e `window.app` |
@@ -1044,21 +1044,63 @@ grande e import tra moduli di `ui/`.
   supporto non importa il file principale). Se si sposta un `.css`, in `stili/indice.ts` cambia solo il percorso, mai
   la posizione; dividendo un `.ts` il suo `.css` resta intero (o si divide in pezzi consecutivi nello stesso punto).
 
+### Colori e regolazioni (branch `ts`, dalla fase H)
+
+- **Tutti i colori sono in `src/stili/palette.css`**, in due strati: i **colori base** (`--colore-oro: #dfae59;`, un nome che
+  dice il colore, un commento "Nome: dove si usa" a destra, raggruppati con righe `/* --- titolo --- */`) e i **ruoli**
+  (`--ae-gold: var(--colore-oro);`, `--ae-text`, `--ombra`, `--carta-turno-nemesi`...: dicono a cosa serve il colore e puntano a
+  un colore base; il commento dice dove si vede). I nomi `--ae-*` dei colori del kit di design sono ruoli come gli altri.
+  `palette.css` si importa per primo da `stili/indice.ts`. Un colore base può avere una trasparenza sua (`#rrggbbaa`:
+  oggi solo `--colore-velo`, il velo dietro finestre e menu).
+- **Fuori da `palette.css` nessun colore scritto a mano nei CSS di `src/`**: né esadecimali, né `rgb()` / `rgba()` / `hsl()`,
+  né nomi (`red`, `white`). Restano permessi `transparent`, `currentColor`, `inherit` e `color-mix()`. Lo controlla Stylelint
+  (`stylelint.config.mjs`, `npm run colori`, lanciato anche da `npm run check`). Un'eccezione ha un commento che dice perché:
+  `/* stylelint-disable-next-line color-no-hex -- motivo */` (senza motivo, o non più necessaria, il controllo fallisce). I colori
+  dentro le immagini SVG in `url("data:image/svg+xml...")` non sono CSS e non si vedono (oggi: il bianco di un segno in
+  `mazzo-turni.css` e il nero della maschera in `turno-giocatori.css`).
+- **Cambiare un colore:** si cambia il valore del colore base in `palette.css` (cambia ovunque lo usano i ruoli che lo
+  puntano). Se serve solo a un ruolo, il ruolo punta a un altro colore base.
+- **Aggiungere un ruolo:** nel CSS si scrive `var(--ruolo)`; la trasparenza è `color-mix(in srgb, var(--ruolo) 60%, transparent)`
+  (mai un `rgba` scritto a mano). Il ruolo si aggiunge in `palette.css` nel secondo blocco, con il suo commento "dove si vede",
+  e punta a un colore base che c'è già; se il colore non c'è, prima si aggiunge il colore base (gruppo giusto, commento "Nome: uso").
+  `tests/regolazioni.test.ts` controlla che ogni ruolo punti a un colore base che esiste.
+- **Pannello "Regolazioni" (solo nella Modalità test, `ui/finestre/test-regolazioni*.ts`):** durante uno scenario compare il
+  pulsante "Regolazioni" (in basso a sinistra; con le regolazioni salvate: "Regolazioni attive · N"). Apre un pannello in basso,
+  alto metà schermo (la partita resta visibile sopra), con due schede: **Colori** (i colori base di `palette.css`, selettore di
+  colore e, per il velo, il cursore dell'opacità) e **Misure** (le variabili di `ui/schermate/partita-misure.css` per gruppo: carte e
+  zone 1-7, campo numerico e unità; quelle con `calc()` non si regolano). Ogni cambio si vede subito (`setProperty` su `:root`; le
+  misure ridisegnano, così anche quelle lette dal codice con `misura()` si aggiornano). **Ripristina tutto** torna ai valori dei
+  CSS. **Copia** mette negli appunti, come testo CSS, le sole variabili cambiate, con il nome del file in cui vanno.
+  Le regolazioni valgono solo nella Modalità test (uscendo dal test spariscono dalla pagina) e restano salvate a parte
+  (`localStorage['aeonsend-app-0.2-regolazioni']`, mai nel salvataggio della partita): si riapplicano al prossimo scenario.
+- **Rendere definitiva una regolazione:** si preme **Copia**, si apre il file indicato (`src/stili/palette.css` o
+  `src/ui/schermate/partita-misure.css`), si cambia il valore delle righe con gli stessi nomi (restano il nome e il commento), poi
+  nel pannello si preme **Ripristina tutto** (altrimenti la regolazione salvata nel browser maschera il valore nuovo) e si
+  lanciano `npm run check`, `npm test`, `npm run confronta -- <tag>` (le differenze attese sono quelle dei valori cambiati).
+- **Etichette e gruppi del pannello** si leggono dai commenti dei due CSS: formato di una riga `--nome: valore; /* etichetta */` e
+  gruppi `/* --- titolo --- */` da soli su una riga. La lettura è in `ui/finestre/test-regolazioni-lettura.ts` (pura, con i test in
+  `tests/regolazioni.test.ts`; importa i due CSS come testo con `?raw`: è il solo modulo che può, lo controlla
+  `tools/check-moduli.mjs`; `vite.config.ts` dice a Vitest di non svuotare i `.css?raw`). Un'etichetta o una variabile nuova nei CSS
+  compare da sola nel pannello.
+
 ### Bug noti (annotati, non corretti)
 
 - **Undo / ripresa al passo Pesca:** se la fotografia è al passo Pesca con carte in coda (`currentIndex` = lunghezza
   della coda), il ripristino limita `currentIndex` all'ultima carta. Così l'ultima carta va risolta di nuovo invece di
   pescare. Il codice è in `restoreGame` di `src/regole/salvataggio.ts` (prima in `restore`). Il test
   `tests/salvataggio.test.ts` (`afterRestore`) lo descrive.
-- **Scarti, focus:** chiudendo la pila degli scarti il focus non torna a chi l'ha aperta (la pila in testata): il codice
-  lo rimetteva sul vecchio pulsante "Scarti" del dock, tolto dalla pagina all'avvio (fase G: tolto anche il codice; il
-  comportamento è lo stesso). `discardTrigger` in `ui/componenti/scarti.ts` c'è ma non si usa.
 - **Rotella sulla fascia piccola:** sul desktop la rotella del mouse scorre la fascia delle carte piccole solo nel turno
   nemesi; nel turno giocatori no (quando le fasce erano due, solo quella del turno nemesi aveva l'ascoltatore). La
   fascia ora è una sola e il limite è tenuto apposta (`navigazione.ts`, ascoltatore `wheel`).
-- **Misura delle carte grandi nel turno giocatori:** `sharedCardWidth` calcola quanto si vede delle vicine con lo spazio
-  tra le carte del carosello (12px, `--carte-grandi-spazio-nemesi`) anche per la coda, dove lo spazio è 18px
-  (`--carte-grandi-spazio-giocatori`).
+- **Corretti nella fase H:** chiudendo la pila degli scarti il focus torna alla pila in testata (`closeDiscard` in
+  `ui/componenti/scarti.ts`); la misura delle carte grandi del turno giocatori usa il suo spazio tra le carte (18px,
+  `--carte-grandi-spazio-giocatori`) e non quello del turno nemesi (12px): `spazioVicine('giocatori' | 'nemesi')` in
+  `ui/componenti/misure.ts`. La colonna su desktop (`sizeColumn`) usa ancora, per i due turni, lo spazio del carosello nemesi
+  (la colonna è una sola e non deve cambiare da un turno all'altro). Su telefoni stretti e alti, dove la larghezza limita la
+  carta (per esempio 340-375px di larghezza, 900px di altezza), la carta del turno giocatori è 12px più stretta.
+- **Misure diverse tra i due turni:** alcune misure hanno un valore per turno (`-giocatori` / `-nemesi`, per esempio lo
+  spazio tra le carte grandi 18px / 12px): sono tenute apposta; se renderle uguali lo decide l'utente, con il pannello
+  "Regolazioni" (sezione 6, "Colori e regolazioni").
 
 ## 7. Dati
 
@@ -1155,7 +1197,9 @@ grande e import tra moduli di `ui/`.
     nessuna variabile globale tranne `window.app`; `src/regole/` pura: import solo da `src/regole/` o tipi da
     `src/tipi/`, nessun nome del browser, niente `Date` né `Math.random`; nessun `any`; `@ts-ignore` vietato,
     `@ts-expect-error` solo con il motivo; la partita si cambia solo in `src/stato/partita.ts`; nessun ciclo di import,
-    livelli, file al massimo di 500 righe, blocchi fissi solo nel coordinatore: sezione 6, "Interfaccia"). Stampa anche
+    livelli, file al massimo di 500 righe, blocchi fissi solo nel coordinatore: sezione 6, "Interfaccia"; un CSS letto come testo,
+    `...css?raw`, solo in `ui/finestre/test-regolazioni-lettura.ts`) e, per ultimo, **Stylelint** (`npm run colori`: nessun colore
+    scritto a mano fuori da `palette.css`, sezione 6, "Colori e regolazioni"). Stampa anche
     numero di file, righe del file più grande e import tra moduli di `ui/`.
     `node tools/check-moduli.mjs --conta` stampa quanti `any`, eccezioni ai tipi, file `.js` e usi di `G` ci sono in
     `src/` (attesi 0).
@@ -1179,6 +1223,8 @@ grande e import tra moduli di `ui/`.
       un'altra carta guardata; la funzione non cambia niente;
     - `navigazione.test.ts`: `schermataAttuale()` (avvio, Nuova partita, Crea mazzo, turni, ripresa di un salvataggio,
       Modalità test) e cosa chiude il tasto Indietro con e senza finestre aperte, senza la pagina;
+    - `regolazioni.test.ts`: la lettura pura del pannello "Regolazioni" (colori di `palette.css`, misure di `partita-misure.css`,
+      valori, regolazioni salvate, testo da copiare) e la coerenza di `palette.css` (ogni ruolo punta a un colore base);
     - `moduli.test.ts`: i moduli si importano senza effetti, le regole sono pure, niente `.js` in `src/`, niente `G`,
       ogni file ha l'intestazione.
   - **Struttura:** `src/main.ts` (avvio: CSS, `avvio()` dei moduli nell'ordine di prima, `window.app`, con le regole
@@ -1191,7 +1237,7 @@ grande e import tra moduli di `ui/`.
     Gli strumenti Python di `tools/` scrivono in `public/`.
   - **CSS:** un file per pezzo dell'interfaccia, accanto al `.ts` che crea quegli elementi (`ui/finestre/mazzo-turni.css`,
     `ui/componenti/testata.css`, `ui/componenti/barra-turni.css` per la barra dei turni, `ui/componenti/vite.css` per le vite...); in
-    `src/stili/` restano `design-tokens.css`, `components.css` (componenti di base), `base.css` (pagina, shell, sfondo,
+    `src/stili/` restano `palette.css` (tutti i colori), `design-tokens.css` (spazi, raggi, durate, font), `components.css` (componenti di base), `base.css` (pagina, shell, sfondo,
     colonna su tablet e desktop) e `comuni.css`. Ogni file ha l'intestazione: cosa disegna, chi crea gli elementi, dopo
     quali file deve venire.
     - **Ordine:** tutti i CSS si importano **solo** da `src/stili/indice.ts` (primo import di `main.ts`), in un ordine
@@ -1241,6 +1287,9 @@ grande e import tra moduli di `ui/`.
     `localStorage['aeonsend-app-0.2-save']`); una prova nuova = un file in `prove/` con `{ nome, esegui(ctx) }` e la riga in
     `confronta.mjs`. Le prove usano `window.app` (anche `tools/confronto/pagina-lib.js`): se un nome cambia in una fase futura
     si aggiorna lì, in un posto solo.
+  - **Colori scritti in modi diversi:** `rgba(223, 174, 89, 0.6)` e `color-mix(...)` (che il browser dà come `color(srgb ...)`) contano
+    uguali se i numeri finali a 8 bit sono uguali; un colore del tutto trasparente conta sempre "trasparente" (le sfumature usano i
+    colori premoltiplicati, il tono nascosto non si vede). Lo fa `normalizza` in `tools/confronto/differenze.mjs`.
   - **Cosa non prova:** animazioni vere (si guarda solo il punto d'arrivo), gesti con più dita, scorrimento inerziale, il
     telefono vero (Android/iOS), le immagini come pixel (solo le proprietà CSS), la rete lenta o assente, il service worker
     (spento). `:hover`/`:active`/`:focus-visible` sono forzati solo sui pulsanti elencati in `dati/schermate.mjs`.
@@ -1292,6 +1341,7 @@ grande e import tra moduli di `ui/`.
 | `ts-prima-fase-E` | Branch `ts`: dopo il porting di main v273, prima della divisione del CSS per schermata. |
 | `ts-prima-fase-E2` | Branch `ts`: fine della fase E (CSS per schermata), prima dei livelli dell'interfaccia e del coordinatore. |
 | `ts-prima-fase-G` | Branch `ts`: fine della fase E2, prima della schermata "partita" unica con le 7 zone. |
+| `ts-prima-fase-H` | Branch `ts`: fine della fase G, prima della palette, del controllo dei colori e del pannello Regolazioni. |
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia.
 

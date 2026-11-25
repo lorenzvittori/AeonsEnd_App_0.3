@@ -274,7 +274,7 @@ export function sizeFocus(recentre = true): void {
   sizeColumn(focusEl, riserva);
   const style = getComputedStyle(focusEl);
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-  const peekRoom = partita.queue.length > 1 ? spazioVicine() : 0;
+  const peekRoom = partita.queue.length > 1 ? spazioVicine('nemesi') : 0;
   const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom, riserva));
   focusEl.style.setProperty('--ae-focus-w', width + 'px');
   focusEl.style.setProperty('--cw', width + 'px');

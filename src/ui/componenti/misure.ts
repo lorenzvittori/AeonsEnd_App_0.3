@@ -17,10 +17,12 @@ export function rapportoCarta(): number {
   return misura('--carta-altezza') / misura('--carta-larghezza');
 }
 
-// Quanto si vede delle carte vicine ai lati e lo spazio tra le carte, nel calcolo della misura (lo spazio è quello del
-// carosello del turno nemesi, usato anche per la coda del turno giocatori)
-export function spazioVicine(): number {
-  return 2 * (misura('--carte-grandi-vicine-visibili') + misura('--carte-grandi-spazio-nemesi'));
+// I due turni hanno lo spazio tra le carte grandi proprio (--carte-grandi-spazio-giocatori / -nemesi, partita-misure.css)
+export type TurnoCarte = 'giocatori' | 'nemesi';
+
+// Quanto si vede delle carte vicine ai lati e lo spazio tra le carte (quello del turno), nel calcolo della misura
+export function spazioVicine(turno: TurnoCarte): number {
+  return 2 * (misura('--carte-grandi-vicine-visibili') + misura(`--carte-grandi-spazio-${turno}`));
 }
 
 // Spazio della zona 6 (comandi della carta al centro, solo nel turno giocatori): distanza dalle carte grandi + altezza
@@ -52,6 +54,7 @@ export function sizeColumn(box: HTMLElement, riserva = 0): void {
   const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
   const card = sharedCardWidth(Infinity, box.clientHeight, padY, 0, riserva);
   if (!isFinite(card) || card <= 0) return;
+  // La colonna è una sola per i due turni: sempre con lo spazio del carosello nemesi (così non cambia da un turno all'altro)
   const peek = misura('--colonna-vicine-visibili') + misura('--carte-grandi-spazio-nemesi');
   const col = Math.min(window.innerWidth, Math.max(misura('--colonna-larghezza-minima'),
     card + 2 * peek + 2 * misura('--carte-grandi-margine-lato')));
