@@ -11,7 +11,7 @@ import { button, modals, openModal, showToast } from '../componenti/dialoghi.ts'
 import { flyToDiscard } from '../componenti/testata.ts';
 import { el, icon, query } from '../dom.ts';
 import { focusEl, pulsantePrincipale, queueList, ui } from '../pagina.ts';
-import { richiediRidisegno } from '../ridisegno.ts';
+import { dopoAzioneNemesi, richiediRidisegno } from '../ridisegno.ts';
 import { T } from '../testi.ts';
 
 export function unsetHpClick(e: MouseEvent): void {
@@ -157,10 +157,19 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
     // Minion ucciso nel turno nemesi: vola negli scarti
     const killedArt = value <= 0 ? query(focusEl, `.ae-focus-slide[data-uid="${entry.uid}"] .ae-focus-stage`, HTMLElement) : null;
     const wasResolving = partita.resolving;
+    const wasNewStep = partita.newIndex >= 0;
+    const turnBefore = partita.turn;
+    const roundBefore = partita.turnOrder.round;
     // Prima impostazione della vita di un minion a vita variabile: da qui valgono le regole normali (è anche la sua vita
     // massima); a 0 il minion esce subito (stato/partita.ts, cambiaVitaMinion)
     cambiaVitaMinion(entry, value, unset);
     if (wasResolving) {
+      // Il minion era l'ultima carta del turno nemesi: il turno è finito (o è ripartito) come alla fine normale
+      if (!partita.resolving || partita.turn !== turnBefore) {
+        dopoAzioneNemesi({ scartata: value <= 0, ghostSource: killedArt, wasNewStep, uid: entry.uid, turnBefore, roundBefore });
+        showToast(T.minionDeleted(name));
+        return;
+      }
       ui.viewedUid = null;
       if (killedArt) flyToDiscard([killedArt]);
       richiediRidisegno();

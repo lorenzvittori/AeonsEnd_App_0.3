@@ -38,7 +38,7 @@ async function avvia(pg, p) {
 }
 
 // Un passo nella pagina: restituisce { az, reg } (nome dell'azione e registro dopo il passo)
-async function esegui(pg, azione, i, seme) {
+async function esegui(pg, azione, i, seme, uccidi) {
   await pg.c('seme', seme + i);
   await pg.ora(60000 + 1000 * i);
   let az = azione;
@@ -48,7 +48,7 @@ async function esegui(pg, azione, i, seme) {
     await pg.carica();
     await pg.clic('button:has-text("Riprendi partita")');
     await pg.assesta(1500);
-  } else az = await pg.c('passo', i);
+  } else az = await pg.c('passo', i, uccidi);
   await pg.assesta(400);
   return { az, reg: await pg.c('registro') };
 }
@@ -64,8 +64,8 @@ export default {
         let diverge = false;
         // Lo stesso passo nelle due pagine e confronto
         const passo = async (azione, i) => {
-          const ra = await esegui(a, azione, i, p.seme);
-          const rb = await esegui(b, azione, i, p.seme);
+          const ra = await esegui(a, azione, i, p.seme, p.uccidi);
+          const rb = await esegui(b, azione, i, p.seme, p.uccidi);
           passi++;
           const d = diffJson('partite', `${p.id}: passo ${i} (${ra.az})`, ra.reg, rb.reg);
           ctx.reg(nuove(visti, d));

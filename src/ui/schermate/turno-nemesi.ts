@@ -22,6 +22,7 @@ import { query } from '../dom.ts';
 import { beginTrackShuffle, playTurnShuffle, SHUFFLE_FADE_MS } from '../componenti/barra-turni.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
 import { passaAlTurnoGiocatori, richiediRidisegno } from '../ridisegno.ts';
+import type { DopoAzioneNemesi } from '../ridisegno.ts';
 import { activeEntry, animateDrawIn, centredFocusUid, focusProgrammaticUntil, isDrawStep, preloadNext, renderResolve,
   startReveal } from './turno-nemesi-carosello.ts';
 
@@ -79,6 +80,14 @@ export function onResolveClick(): void {
   const roundBefore = partita.turnOrder.round;
   // Fine del turno nemesi: si estrae il turno dopo dal mazzo dei turni (stato/partita.ts, risolviCarta)
   const effect = risolviCarta();
+  mostraDopoAzione({ scartata: effect === 'discard', ghostSource, wasNewStep, uid: active.uid, turnBefore, roundBefore });
+}
+
+// Dopo un'azione del turno nemesi già fatta nello stato (carta risolta, minion eliminato dalla scheda): se il turno è
+// finito si torna al turno giocatori (animazione, sfondo, pulsante), se è ripartito subito si annuncia, altrimenti si
+// mostra la carta dopo. Lo chiede anche la scheda della carta, con l'aggancio dopoAzioneNemesi
+export function mostraDopoAzione(a: DopoAzioneNemesi): void {
+  const { ghostSource, wasNewStep, turnBefore, roundBefore, scartata } = a;
   // Dal mazzo dei turni è uscita di nuovo la nemesi: il turno nemesi riparte (scossa e annuncio)
   if (partita.resolving && partita.turn !== turnBefore) {
     shakeApp();
@@ -93,12 +102,12 @@ export function onResolveClick(): void {
   if (!partita.resolving) {
     // Fine del turno nemesi: si torna alla VistaCoda con la carta pescata in vista
     // Carta appena pescata e messa in gioco (si prende dalla carta risolta, non da ui.lastDrawnUid: dopo un undo gli uid cambiano)
-    const kept = (wasNewStep && entryByUid(active.uid)) || entryByUid(ui.lastDrawnUid);
+    const kept = (wasNewStep && entryByUid(a.uid)) || entryByUid(ui.lastDrawnUid);
     const anchorUid = kept ? kept.uid : (partita.queue.length ? partita.queue[partita.queue.length - 1].uid : null);
     ui.queueAnchor = anchorUid ? { uid: anchorUid, align: partita.queue.length === 1 ? 'center' : 'anchor' } : null;
     ui.reveal = null;
     ui.viewedUid = null;
-    if (effect === 'discard' && ghostSource) {
+    if (scartata && ghostSource) {
       // Attacco appena pescato: vola negli scarti restando nel turno nemesi; quando atterra si passa al turno giocatori
       flyToDiscard([ghostSource]);
       ghostSource.style.visibility = 'hidden';
@@ -119,12 +128,12 @@ export function onResolveClick(): void {
 
   const next = activeEntry();
   // Carta risolta e scartata: vola verso la pila degli scarti in alto
-  if (effect === 'discard' && ghostSource) flyToDiscard([ghostSource]);
+  if (scartata && ghostSource) flyToDiscard([ghostSource]);
   showActive(next);
-  lockFor(duration(effect === 'discard' ? 'discard' : 'focus'));
+  lockFor(duration(scartata ? 'discard' : 'focus'));
   richiediRidisegno();
   // Risolta l'ultima carta: la carta da pescare arriva volando dal mazzo, dopo che la carta scartata è atterrata
-  if (isDrawStep()) animateDrawIn(effect === 'discard' && ghostSource ? FLY_MS + 60 : 0);
+  if (isDrawStep()) animateDrawIn(scartata && ghostSource ? FLY_MS + 60 : 0);
 }
 
 // Dopo un'azione si mostra la nuova carta da risolvere (o la carta appena pescata, che si gira). (Il parametro non si

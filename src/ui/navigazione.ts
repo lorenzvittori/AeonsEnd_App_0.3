@@ -48,7 +48,8 @@ import { disegnaMenu, showStartError, updateHomeCollection } from './schermate/m
 import { disegnaNuovaPartita, renderStartChoices } from './schermate/nuova-partita.ts';
 import { centredQueueUid, disegnaTurnoGiocatori, onNemesisClick, sizeQueue,
   toPlayersTurn } from './schermate/turno-giocatori.ts';
-import { backToActive, disegnaTurnoNemesi, enterNemesisTurnView, onResolveClick } from './schermate/turno-nemesi.ts';
+import { backToActive, disegnaTurnoNemesi, enterNemesisTurnView, mostraDopoAzione,
+  onResolveClick } from './schermate/turno-nemesi.ts';
 import { sizeFocus } from './schermate/turno-nemesi-carosello.ts';
 import { createDeckSlider, disegnaCursore } from './schermate/crea-mazzo-cursore.ts';
 import { cosaChiudeIndietro, impostaInizio, paginaIniziale } from './navigazione-stato.ts';
@@ -319,6 +320,7 @@ function backGuardArmed(): boolean {
 // Codice eseguito all'avvio, nell'ordine di sempre
 export function avvio(): void {
   registraAgganci({
+    dopoAzioneNemesi: mostraDopoAzione,
     ridisegna: render,
     menuIniziale: openStart,
     finePartita: esito => { if (esito === 'defeat') showDefeat(); else showVictory(); },

@@ -28,7 +28,7 @@ L'interfaccia. I file qui sono il livello 2 (base) e il coordinatore (livello 6)
   comuni, poi `disegnaTurnoNemesi()` o `disegnaTurnoGiocatori()`; l'ordine conta (il nome della nemesi si misura dopo le classi).
 - **Agganci** (`ridisegno.ts`, chiamate dirette, registrate da `navigazione.avvio()`): `richiediRidisegno`, `vaiAlMenuIniziale`,
   `mostraFinePartita(esito)`, `chiudiCreaMazzo`, `apriMenuLaterale(leave)`, `ricominciaMazzo`, `ricominciaScenario`,
-  `vaiAllaPartitaDaScenario`, `passaAlTurnoGiocatori(uid, nodo)`, `passaAlTurnoNemesi`, `vaiA('menu' | 'nuova-partita')`,
+  `vaiAllaPartitaDaScenario`, `passaAlTurnoGiocatori(uid, nodo)`, `passaAlTurnoNemesi`, `dopoAzioneNemesi(a)` (la scheda della carta chiede allo schermo il passaggio di fine turno nemesi), `vaiA('menu' | 'nuova-partita')`,
   `riprendiPartita`, `aggiornaInizio`, `apriFinestraVita(kind)`. Si usa invece una **funzione passata come argomento** quando chi
   crea il pezzo sa già cosa deve succedere (`creaBarraTurni(apri)`, `disegnaTestata(onNameClick)`, `enterNemesisTurnView`).
 - **Tasto/gesto Indietro** (`closeTopForBack` con `cosaChiudeIndietro`, voce in più nella cronologia `armBackGuard`): chiude il livello

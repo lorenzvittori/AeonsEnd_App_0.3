@@ -184,7 +184,8 @@
   };
 
   // Un passo di gioco con le azioni del modulo della partita (come i tocchi dell'app; stessa politica di tests/partita.test.ts)
-  C.passo = i => {
+  // uccidi: il minion da risolvere (sempre se appena pescato, altrimenti a ogni quarto passo) si porta a 0 dalla scheda
+  C.passo = (i, uccidi) => {
     const a = app();
     const p = a.partita;
     let az;
@@ -200,6 +201,7 @@
     else {
       const c = must(p.queue[p.currentIndex], 'carta da risolvere');
       if (a.hpUnset(c)) { a.cambiaVitaMinion(c, 5, true); az = 'vita'; }
+      else if (uccidi && c.data.type === 'Minion' && (p.newIndex >= 0 || i % 4 === 0)) { a.cambiaVitaMinion(c, 0, false); az = 'minion ucciso'; }
       else if (i % 5 === 0) { a.cambiaVita('nemesis', Math.max(0, p.nemesisLife - 2)); az = 'vita nemesi'; }
       else { a.risolviCarta(); az = 'risolvi'; }
     }

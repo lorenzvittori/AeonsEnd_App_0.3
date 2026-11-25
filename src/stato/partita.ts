@@ -336,7 +336,11 @@ export function cambiaVitaMinion(entry: VoceInGioco, value: number, unset: boole
     if (unset && value > 0) { entry.hpSet = true; entry.turnHp = value; entry.hpMax = value; }
     if (value <= 0 && !unset) {
       // turno nemesi: esce subito; turno giocatori: resta grigio fino al turno nemesi (isGone)
-      if (stato.resolving) removeWhileResolving(entry);
+      if (stato.resolving) {
+        removeWhileResolving(entry);
+        // L'ultima carta del turno nemesi (o quella appena pescata): il turno finisce come in risolviCarta
+        if (!stato.resolving) afterNemesisTurn();
+      }
     }
   });
 }

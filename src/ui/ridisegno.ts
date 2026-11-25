@@ -6,8 +6,21 @@
 // Livello 2 (ui/ base). Non dipende da niente. Usato da: ui/componenti/, ui/finestre/, ui/schermate/; registrato da
 // ui/navigazione.ts.
 
+// Cosa serve a schermo dopo un'azione del turno nemesi già fatta nello stato: se la carta è stata scartata (vola negli
+// scarti), la sua immagine (ghostSource), se era il passo della carta appena pescata, l'uid della carta, il turno e il
+// giro di prima dell'azione
+export interface DopoAzioneNemesi {
+  scartata: boolean;
+  ghostSource: HTMLElement | null;
+  wasNewStep: boolean;
+  uid: number;
+  turnBefore: number;
+  roundBefore: number;
+}
+
 // I gestori, uno per aggancio (vedi le funzioni sotto per il perché di ognuno)
 export interface Agganci {
+  dopoAzioneNemesi: (a: DopoAzioneNemesi) => void;
   ridisegna: () => void;
   menuIniziale: () => void;
   finePartita: (esito: 'victory' | 'defeat') => void;
@@ -28,6 +41,7 @@ export interface Agganci {
 const mancante = (nome: string) => () => { throw new Error(`Aggancio ${nome} non registrato (ui/navigazione.ts, avvio)`); };
 
 const gestori: Agganci = {
+  dopoAzioneNemesi: mancante('dopoAzioneNemesi'),
   ridisegna: mancante('ridisegna'),
   menuIniziale: mancante('menuIniziale'),
   finePartita: mancante('finePartita'),
@@ -96,6 +110,12 @@ export function vaiAllaPartitaDaScenario(): void {
 // trasforma, le altre entrano da sinistra); il turno nemesi non accende il turno giocatori
 export function passaAlTurnoGiocatori(morphUid: number | null, fromNode?: HTMLElement | null): void {
   gestori.turnoGiocatoriDaNemesi(morphUid, fromNode);
+}
+
+// Dopo una vita del minion portata a 0 dalla scheda nel turno nemesi: se l'azione ha chiuso il turno nemesi (o l'ha fatto
+// ripartire) lo schermo fa lo stesso passaggio della fine normale; la scheda sta in un livello sotto la schermata
+export function dopoAzioneNemesi(a: DopoAzioneNemesi): void {
+  gestori.dopoAzioneNemesi(a);
 }
 
 // Inizio del turno nemesi a schermo, dopo che la partita è già passata al turno nemesi ("Fine turno" del turno
