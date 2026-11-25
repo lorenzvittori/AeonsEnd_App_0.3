@@ -1,5 +1,5 @@
 // ui/finestre/opzioni.ts: le Opzioni del menu iniziale (La mia collezione con il riepilogo, dorso, sfondo, carte turno
-// 1/2 e 3/4), la schermata La mia collezione e la finestra "nemesi non più nella collezione" della ripresa.
+// 1/2 e 3/4, lingua), la schermata La mia collezione e la finestra "nemesi non più nella collezione" della ripresa.
 // Livello 4 (ui/finestre/). Dipende da: dati/collezione.ts, stato/ (partita, preferenze), ui/ base (testi, pagina, dom,
 // ridisegno: aggiornaInizio dopo il salvataggio della collezione), ui/componenti (dialoghi, sfondi). Usato da: schermate
 // menu iniziale e Nuova partita, navigazione (ripresa).
@@ -76,7 +76,26 @@ export function openOptions(trigger?: HTMLElement | null): void {
   const pairsText = el('span', 'options-switch-text');
   pairsText.append(el('span', 'options-item-label', T.turnPairsOption), el('span', 'options-item-note', T.turnPairsHint));
   pairsItem.append(pairsText, pairsInput, pairsSw);
-  // Lingua: due scelte, la scritta della voce si legge in tutte e due le lingue. Sceglierne un'altra la salva e ricarica\n  // l'app (i testi si scelgono all'avvio); la partita in corso e l'undo stanno nel salvataggio e restano\n  const langItem = el('div', 'options-item options-item--row options-item--lang');\n  langItem.appendChild(el('span', 'options-item-label', T.language));\n  const langGroup = el('div', 'options-lang');\n  langGroup.setAttribute('role', 'group');\n  langGroup.setAttribute('aria-label', T.language);\n  LINGUE.forEach(code => {\n    const b = el('button', 'ae-button options-lang-btn ae-button--' + (code === LINGUA ? 'primary' : 'secondary'), T.languageNames[code]);\n    b.type = 'button';\n    b.setAttribute('aria-pressed', String(code === LINGUA));\n    b.addEventListener('click', () => {\n      if (code === LINGUA) return;\n      setLingua(code);\n      location.reload();\n    });\n    langGroup.appendChild(b);\n  });\n  langItem.appendChild(langGroup);\n  body.append(item, backItem, bgItem, pairsItem, langItem);
+  // Lingua: due scelte, la scritta della voce si legge in tutte e due le lingue. Sceglierne un'altra la salva e ricarica
+  // l'app (i testi si scelgono all'avvio); la partita in corso e l'undo stanno nel salvataggio e restano
+  const langItem = el('div', 'options-item options-item--row options-item--lang');
+  langItem.appendChild(el('span', 'options-item-label', T.language));
+  const langGroup = el('div', 'options-lang');
+  langGroup.setAttribute('role', 'group');
+  langGroup.setAttribute('aria-label', T.language);
+  LINGUE.forEach(code => {
+    const b = el('button', 'ae-button options-lang-btn ae-button--' + (code === LINGUA ? 'primary' : 'secondary'), T.languageNames[code]);
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(code === LINGUA));
+    b.addEventListener('click', () => {
+      if (code === LINGUA) return;
+      setLingua(code);
+      location.reload();
+    });
+    langGroup.appendChild(b);
+  });
+  langItem.appendChild(langGroup);
+  body.append(item, backItem, bgItem, pairsItem, langItem);
   layer.append(head, body);
   layer.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
   document.body.appendChild(layer);
