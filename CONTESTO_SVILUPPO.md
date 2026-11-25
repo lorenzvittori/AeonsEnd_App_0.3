@@ -983,7 +983,7 @@ grande e import tra moduli di `ui/`.
 |---|---|---|
 | 0 | `tipi/`, `regole/` (e `stili/`) | contratti dei dati, regole di gioco pure (sezione "Regole di gioco nel codice") |
 | 1 | `stato/`, `dati/` | catalogo, preferenze, partita e salvataggio; caricamento, collezione, rete. Mai import da `ui/` |
-| 2 | `ui/` base: `pagina.ts`, `testi.ts`, `compatibilita.ts`, `dom.ts`, `ridisegno.ts` | elementi di index.html e stato `ui`, testi, `el`/`query`/`need`, gli agganci |
+| 2 | `ui/` base: `pagina.ts`, `testi.ts` (con `testi-it.ts` e `testi-en.ts`), `compatibilita.ts`, `dom.ts`, `ridisegno.ts` | elementi di index.html e stato `ui`, testi, `el`/`query`/`need`, gli agganci |
 | 3 | `ui/componenti/` | pezzi riusabili: carte (`componenti.ts`), pila delle finestre (`dialoghi.ts`), animazioni, banner, misure, testata, barra dei turni (con la scelta 1/2 e 3/4), vite (box e scrubbing), scarti, pesca-undo, sfondi e dorso, ripristino e undo |
 | 4 | `ui/finestre/` | ciò che si apre sopra una schermata: Opzioni e collezione, statistiche e Vittoria, Modalità test, mazzo dei turni, finestra della vita, menu laterale, scheda della carta; la Modalità test con il pannello "Regolazioni" (`test-regolazioni*.ts`) |
 | 5 | `ui/schermate/` | menu iniziale, Nuova partita, Crea mazzo, turno giocatori, turno nemesi: ognuna esporta il suo disegno |
@@ -1082,6 +1082,57 @@ grande e import tra moduli di `ui/`.
   `tests/regolazioni.test.ts`; importa i due CSS come testo con `?raw`: è il solo modulo che può, lo controlla
   `tools/check-moduli.mjs`; `vite.config.ts` dice a Vitest di non svuotare i `.css?raw`). Un'etichetta o una variabile nuova nei CSS
   compare da sola nel pannello.
+
+### Lingue: italiano e inglese (branch `ts`, dopo la fase H)
+
+- **Cosa è tradotto:** solo l'interfaccia. Nomi di carte, nemesi e maghi restano come arrivano dal DataBase (in inglese).
+  Nessuna libreria di traduzione: due dizionari TypeScript. In italiano l'app è identica a prima (lo prova `npm run confronta`).
+- **Dove sono i testi:** `ui/testi-it.ts` (`I18N_IT`, il modello), `ui/testi-en.ts` (`I18N_EN`, scritto come `Testi`: se manca una
+  chiave o una funzione ha parametri diversi, `tsc` non passa) e `ui/testi.ts`, **l'unico punto di accesso**: `T` (i testi della
+  lingua in uso), `DIZIONARI` (`{ it, en }`, per i test), `LINGUA`, il tipo `Testi`. Nei moduli si scrive `T.chiave` o
+  `T.funzione(...)`; `I18N_IT` e `I18N_EN` fuori da `ui/testi.ts` fanno fallire `npm run check`.
+- **Come si aggiunge un testo:** 1) la chiave in `I18N_IT` (una stringa, oppure una funzione per i conti e i nomi: il singolare e il
+  plurale si scelgono lì dentro); 2) la stessa chiave in `I18N_EN`, scritta in inglese e breve come l'italiano (i pulsanti devono
+  stare su una riga dove in italiano ci stanno); 3) nel codice `T.chiave`. Mai testo italiano (o inglese) scritto a mano nei `.ts`:
+  lo controlla `tools/check-moduli.mjs` (stringhe con lettere accentate o con parole comuni come "carta", "turno", "Annulla";
+  non contano commenti, nomi di variabili e i messaggi per lo sviluppatore dentro `new Error(...)`, `console.*(...)`, `need(...)`).
+  Eccezioni, nell'elenco `FILE_CON_TESTI` con il motivo: i messaggi di `dati/controllo.ts` (vanno in console) e il testo CSS da
+  incollare del pannello Regolazioni. Le funzioni di testo che ricevono più parametri del tipo giusto non servono altro: i test
+  (`tests/testi.test.ts`) le chiamano per 0, 1 e 2 e con un nome.
+- **Testi fissi di `index.html`:** non sono scritti nel file. Un elemento porta la chiave in un attributo e `avvio()` di `ui/testi.ts`
+  scrive il testo: `data-testo="chiave"` (testo), `data-testo-aria="chiave"` (`aria-label`), `data-testo-title="chiave"` (`title`); la
+  chiave deve essere una scritta fissa (non una funzione). `<html lang>` segue la lingua. Un test controlla che ogni chiave di
+  `index.html` esista in tutte le lingue e che tra i tag non resti testo a mano (a parte il nome del gioco). Il confronto (`npm run
+  confronta`) ignora questi tre attributi: sono solo il marcatore da cui viene il testo.
+- **Testi che restano fissi, e perché:** il nome del gioco ("Aeon's End", "Nemesis Companion"); `public/manifest.webmanifest`
+  (statico, resta com'è: la descrizione è in italiano; renderlo per lingua vorrebbe un manifest generato); `public/scheletri/` (la
+  pagina di misura per chi sviluppa, non fa parte dell'app); i nomi, i gruppi e la nota "Copia" del pannello **Regolazioni**, che si
+  leggono dai commenti dei CSS (in italiano; i pulsanti e i titoli del pannello invece sono tradotti); i messaggi in console.
+- **Quale lingua:** una preferenza del browser (`localStorage['aeonsend-app-0.2-language']`, `'it'` o `'en'`, `stato/preferenze.ts`:
+  `lingua()`, `setLingua()`). Al primo avvio, senza scelta salvata, vale la lingua del browser: `it*` italiano, tutto il resto inglese
+  (anche per chi ha un salvataggio di prima, che la lingua non la contiene). La scelta si fa in **Opzioni → "Lingua / Language"** (la
+  scritta è uguale nelle due lingue, per ritrovarla senza capire quella attuale); sceglierne un'altra salva e **ricarica l'app**
+  (`location.reload()`): i testi si scelgono una volta sola, all'avvio, niente ridisegno al volo. La partita in corso e l'undo non si
+  toccano (stanno nel salvataggio).
+- **Salvataggi, undo, statistiche:** contengono solo id e nomi del DataBase, mai testi dell'interfaccia (i toast e le etichette si
+  scrivono quando si mostrano); l'unico testo tradotto tenuto nello stato è il nome dello scenario della Modalità test, che non si
+  salva mai. I salvataggi di `tools/confronto/salvataggi/` si riaprono uguali nelle due lingue (lo prova la prova `lingua`).
+- **`ui/partita-variante.ts` resta pura:** `variantePartita(p, u, t = T)` e `actionText(..., t = T)` ricevono i testi come ultimo
+  parametro; i test la provano in italiano e in inglese (`tests/partita-variante.test.ts`).
+- **Aggiungere una terza lingua** (per esempio il francese): 1) in `stato/preferenze.ts` aggiungere il codice a `Lingua` e a
+  `LINGUE` e (se serve) la regola di `linguaDelBrowser`; 2) creare `ui/testi-fr.ts` con `export const I18N_FR: Testi = {...}`
+  (copiando `testi-en.ts`: tsc dice cosa manca; anche `languageNames` e `language` hanno una chiave per lingua: in tutti i
+  dizionari va aggiunta la voce `fr`); 3) in `ui/testi.ts` aggiungere `fr: I18N_FR` a `DIZIONARI` e in `check-moduli.mjs` il file
+  a `DIZIONARI`; 4) la prova `lingua` (`tools/confronto/prove/lingua.mjs`) oggi confronta italiano e inglese: per la nuova lingua si
+  aggiunge un secondo confronto con l'italiano (stesse schermate; il controllo del testo italiano rimasto, `ITALIANO`, vale per
+  tutte tranne l'italiano) e in `tests/testi.test.ts` la lingua entra da sola (usa `LINGUE`). Poi `npm run check`, `npm test`,
+  `npm run confronta -- <tag> --solo lingua`.
+- **Controllo grafico in inglese:** `npm run confronta -- <tag> --solo lingua` (prova `lingua`): apre l'app attuale in italiano e in
+  inglese, a 375×812 e a 1280×800, percorre le schermate del giro di `dati/schermate.mjs` più le finestre di `dati/lingua.mjs`
+  (Regolazioni, conferma di uscita, dorsi, sfondi, Opzioni) e riapre i salvataggi; per ogni schermata segnala in inglese un testo che
+  esce dal suo box (`scrollWidth > clientWidth`) o dallo schermo dove in italiano no, un pulsante su più righe dove in italiano ha
+  meno righe, un testo o un `aria-label` vuoto dove in italiano c'è, "undefined" / "NaN" / "[object" / "null" visibili e testo
+  italiano rimasto.
 
 ### Bug noti (annotati, non corretti)
 
@@ -1260,7 +1311,7 @@ grande e import tra moduli di `ui/`.
     sostituisce una nemesi non visibile con la prima visibile. Per giocare davvero la nemesi voluta si spunta prima la
     sua wave (casella in `#wave-menu`), come farebbe un utente; altrimenti il risultato dipende dalle partite fatte prima
     nella stessa scheda (fase D: era la causa degli hash diversi della "prima partita Maggoth").
-- **Strumento di confronto (branch `ts`): `npm run confronta -- <tag o commit> [--solo partite,scenari,salvataggi,schermate,indietro,scheletri]`.**
+- **Strumento di confronto (branch `ts`): `npm run confronta -- <tag o commit> [--solo partite,scenari,salvataggi,schermate,indietro,scheletri,lingua]`.**
   Confronta la versione attuale (anche non committata) con un tag o un commit e stampa solo l'esito; in ogni fase basta
   lanciarlo (`npm run confronta -- ts-prima-fase-G`), niente build, script di misura o giri nel browser da riscrivere.
   - **Cosa fa:** costruisce `<ref>` in una worktree temporanea di `.confronto/<ref>/` (`node_modules` collegato a quello del
@@ -1275,7 +1326,9 @@ grande e import tra moduli di `ui/`.
     e giocati), `schermate` (il giro della fase E a 375×812 e 1280×800, in più 812×375 e riduzione del movimento per le voci
     con `anche`: `getComputedStyle` di tutti gli elementi visibili con `::before`/`::after`, posizione, testo e attributi; e i
     pulsanti principali con `:hover`/`:active`/`:focus-visible` forzati), `indietro` (il giro fino al tasto Indietro), `scheletri`
-    (la pagina `public/scheletri/` nei 4 formati) e `console` (errori dell'app solo nella versione attuale; `vibrate` non conta).
+    (la pagina `public/scheletri/` nei 4 formati), `lingua` (non confronta due build: apre la versione attuale in italiano e in
+    inglese e controlla i testi inglesi, vedi "Lingue: italiano e inglese" nella sezione 6) e `console` (errori dell'app solo nella
+    versione attuale; `vibrate` non conta).
   - **Come si legge:** una riga per prova, `✓ identico` oppure `✗ N differenze` con le prime 10 (`[schermata] elemento ·
     proprietà: prima → dopo`) e le proprietà più frequenti; tutte le differenze sono in `.confronto/esito.json` (prova,
     schermata, elemento con un selettore leggibile, proprietà, prima/dopo, e in `elenco` le schermate misurate). Uscita 0 se tutto
