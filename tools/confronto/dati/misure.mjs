@@ -34,6 +34,10 @@ const ZONA6 = '[data-zona="interattivi"]';
 const PILA = '.ae-header-piles .ae-pile';
 const CASELLA = '.ae-turn-seg';
 const PICCOLA = '.ae-compact-rail .ae-queue-item';
+const PICCOLINA_ICONA = '.ae-compact-rail .ae-status-badge .ae-icon';
+const PICCOLINA_NUMERO = '.ae-compact-rail .ae-status-badge span:not(.ae-icon)';
+const GRANDE_ICONA = '.queue-slot .ae-status-badge .ae-icon, .ae-focus-status .ae-icon';
+const GRANDE_NUMERO = '.queue-slot .ae-status-badge span:not(.ae-icon), .ae-focus-status span:not(.ae-icon)';
 
 export const CASI = [
   // --- 1 testata ---
@@ -58,12 +62,11 @@ export const CASI = [
 
   // --- 3 fascia carte piccole ---
   { v: '--carte-piccole-distanza-sopra', a: ['#fascia-turno', 'bottom'], b: ['#rail', 'top'] },
-  { v: '--carte-piccole-altezza-giocatori', a: ['#rail', 'top'], b: ['#rail', 'bottom'], turni: ['giocatori'] },
-  { v: '--carte-piccole-altezza-nemesi', a: ['#rail', 'top'], b: ['#rail', 'bottom'], turni: ['nemesi'] },
-  { v: '--carte-piccole-margine-giocatori', a: ['#rail', 'left'], b: [PICCOLA + ':first-child', 'left'], turni: ['giocatori'] },
-  { v: '--carte-piccole-margine-nemesi', a: ['#rail', 'left'], b: [PICCOLA + ':first-child', 'left'], turni: ['nemesi'] },
+  { v: '--carte-piccole-altezza', a: ['#rail', 'top'], b: ['#rail', 'bottom'] },
+  { v: '--carte-piccole-margine', a: ['#rail', 'left'], b: [PICCOLA + ':first-child', 'left'] },
   { v: '--carte-piccole-spazio', a: [PICCOLA + ':nth-child(1)', 'right'], b: [PICCOLA + ':nth-child(2)', 'left'] },
   { v: '--carta-piccola-larghezza', a: [PICCOLA + ':first-child', 'left'], b: [PICCOLA + ':first-child', 'right'] },
+  { v: '--carte-piccole-goccia-numero', a: [PICCOLINA_ICONA, 'right'], b: [PICCOLINA_NUMERO, 'left'], nota: 'tra la goccia e il numero della prima carta piccola con la vita' },
 
   // --- 4 vite ---
   { v: '--vite-spazio-sopra', a: ['#rail', 'bottom'], b: ['.ae-life-box', 'top'] },
@@ -78,8 +81,9 @@ export const CASI = [
   // --- 5 fascia carte grandi ---
   { v: '--carte-grandi-spazio-sopra', a: [ZONA5, 'top'], b: [STATO, 'top'], prima: { '--carte-grandi-avanzo-sopra': '0', '--carte-grandi-avanzo-sotto': '0' }, nota: 'senza avanzo sopra, che altrimenti si somma' },
   { v: '--carte-grandi-alone-sotto', a: [ZONA6, 'top'], b: ['#focus', 'bottom'], turni: ['nemesi'], nota: 'di quanto il carosello sporge sotto la carta' },
-  { v: '--carte-grandi-spazio-giocatori', a: ['.queue-slot:nth-child(1)', 'right'], b: ['.queue-slot:nth-child(2)', 'left'], turni: ['giocatori'] },
-  { v: '--carte-grandi-spazio-nemesi', a: ['.ae-focus-slide:nth-child(1)', 'right'], b: ['.ae-focus-slide:nth-child(2)', 'left'], turni: ['nemesi'] },
+  { v: '--carte-grandi-spazio', a: ['.queue-slot:nth-child(1), .ae-focus-slide:nth-child(1)', 'right'], b: ['.queue-slot:nth-child(2), .ae-focus-slide:nth-child(2)', 'left'] },
+  { v: '--carte-grandi-goccia-numero', a: [GRANDE_ICONA, 'right'], b: [GRANDE_NUMERO, 'left'], nota: 'tra la goccia e il numero della riga vita/token della prima carta grande con la vita' },
+  { v: '--carte-grandi-numero-interlinea', a: [GRANDE_NUMERO, 'top'], b: [GRANDE_NUMERO, 'bottom'], nota: 'altezza della riga del numero' },
   { v: '--carte-grandi-riga-stato-altezza', a: [STATO, 'top'], b: [STATO, 'bottom'] },
   { v: '--carte-grandi-riga-stato-distanza', a: [STATO, 'bottom'], b: [CARTA, 'top'] },
   { v: '--carte-grandi-token', a: ['.queue-slot .ae-token, .ae-focus-status .ae-token', 'top'], b: ['.queue-slot .ae-token, .ae-focus-status .ae-token', 'bottom'], nota: 'la riga vita/token è alta il suo valore: si alza anche la riga se il token è più alto' },
@@ -108,9 +112,10 @@ export const NON_PROVABILI = [
   { v: '--carte-grandi-avanzo-sotto', motivo: 'è un peso, non px: lo prova il controllo fisso "pesi dell\'avanzo"' },
   { v: '--carte-grandi-margine-lato', motivo: 'entra solo nel calcolo della larghezza della carta quando è la larghezza a limitare (la carta non è un bordo misurabile)' },
   { v: '--carte-grandi-vicine-visibili', motivo: 'entra solo nel calcolo della larghezza della carta (quanto si vede delle vicine): la carta si arrotonda per difetto' },
-  { v: '--carta-pescata-scala', motivo: 'frazione (0,9), non px' },
-  { v: '--carta-pescata-crescita', motivo: 'moltiplicatore (1,3), non px' },
-  { v: '--carta-pescata-margine', motivo: 'vale solo per la carta da pescare/pescata, nello stato "Pesca" (la prova non lo percorre)' },
+  { v: '--carta-pescata-spazio-sopra', motivo: 'vale solo per la carta da pescare/pescata, nello stato "Pesca" (la prova non lo percorre)' },
+  { v: '--carta-pescata-margine-lati', motivo: 'vale solo per la carta da pescare/pescata, nello stato "Pesca" (la prova non lo percorre)' },
+  { v: '--carte-grandi-numero', motivo: 'misura del carattere del numero, non uno spazio: si controlla a occhio' },
+  { v: '--testata-test-altezza', motivo: 'vale solo per la scritta TEST della Modalità test (la prova non la percorre)' },
   { v: '--colonna-larghezza-minima', motivo: 'solo tablet e desktop, e solo se la carta non la supera: lo prova il controllo della colonna a 1280×800' },
   { v: '--colonna-vicine-visibili', motivo: 'solo tablet e desktop: decide la larghezza della colonna, non uno spazio tra due cose' },
   { v: '--principale-spazio', motivo: 'spazio tra pulsante e "Annulla modifiche" (compare solo con modifiche non salvate): non provato in questi momenti' },

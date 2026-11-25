@@ -4,7 +4,7 @@
    Regola: ogni variabile è una misura VERA: l'altezza di una cosa oppure lo spazio tra due cose con un nome. Cambiarla di
    N px sposta di N px esattamente quello che dice il suo commento, e niente altro (la prova "misure" dello strumento di
    confronto lo controlla: tools/confronto/prove/misure.mjs). Niente spostamenti di compensazione né margini negativi.
-   Dove i due turni hanno oggi valori diversi per la stessa cosa ci sono due variabili (-giocatori / -nemesi).
+   Le misure sono le stesse nei due turni (una variabile sola).
    Elementi: nessuno (solo variabili su :root). Usato da: partita.css, i CSS delle zone, ui/componenti/misure.ts.
    Ordine: nessuna dipendenza (solo variabili). Si importa da src/stili/indice.ts. */
 
@@ -27,6 +27,7 @@
   --testata-pile-spazio: 12px;                    /* spazio tra mazzo e scarti */
   --testata-pile-margine-destro: 6px;             /* spazio tra le pile e il Menu (oltre allo spazio delle colonne) */
   --testata-pile-numero: 22px;                    /* misura del cerchio con il numero sulle pile */
+  --testata-test-altezza: 6px;                    /* Modalità test: altezza della scritta TEST sotto la riga del turno (nome 24 + riga del turno 18 + questa = 48 = testata senza lo spazio sopra) */
 
   /* --- 2 fascia turno --- */
   /*      [testata]
@@ -46,15 +47,14 @@
   /* --- 3 fascia carte piccole --- */
   /*      [scritte della barra dei turni]
         | --carte-piccole-distanza-sopra
-     [fascia: --carte-piccole-altezza-giocatori / -nemesi]   carte a --carte-piccole-margine-... dai lati
+     [fascia: --carte-piccole-altezza]   carte a --carte-piccole-margine dai lati (uguale nei due turni)
         | --vite-spazio-sopra  (zona 4) */
   --carte-piccole-distanza-sopra: 4px;            /* spazio tra la barra dei turni e la fascia */
-  --carte-piccole-altezza-giocatori: 100px;       /* altezza della fascia, turno giocatori */
-  --carte-piccole-altezza-nemesi: 100px;          /* altezza della fascia, turno nemesi (oggi uguale a quella del turno giocatori) */
-  --carte-piccole-margine-giocatori: 16px;        /* turno giocatori: margine a destra e a sinistra delle carte */
-  --carte-piccole-margine-nemesi: 16px;           /* turno nemesi: margine a destra e a sinistra delle carte (oggi uguale) */
+  --carte-piccole-altezza: 100px;                 /* altezza della fascia (uguale nei due turni) */
+  --carte-piccole-margine: 16px;                  /* margine a destra e a sinistra delle carte (uguale nei due turni) */
   --carte-piccole-spazio: 10px;                   /* spazio tra le carte piccole */
   --carta-piccola-larghezza: 52px;                /* larghezza di una carta piccola */
+  --carte-piccole-goccia-numero: 2px;             /* nella riga vita/token di una carta piccola: spazio tra la goccia (o i token) e il numero */
 
   /* --- 4 vite --- */
   /*      [fascia carte piccole]
@@ -89,17 +89,18 @@
   --carte-grandi-avanzo-sopra: 1;                 /* peso dello spazio che avanza SOPRA la riga vita/token (con l'altro: 1 e 0 = tutto sopra) */
   --carte-grandi-avanzo-sotto: 0;                 /* peso dello spazio che avanza TRA la carta e la zona 6 (1 e 1 = metà sopra e metà sotto) */
   --carte-grandi-alone-sotto: 32px;               /* carosello: di quanto l'area delle carte sporge sotto la carta (sulla zona 6, vuota) perché l'alone non sia tagliato */
-  --carte-grandi-spazio-giocatori: 18px;         /* spazio tra le carte grandi, turno giocatori (anche nel calcolo della loro misura) */
-  --carte-grandi-spazio-nemesi: 18px;             /* spazio tra le carte grandi, turno nemesi (anche nel calcolo della loro misura e della colonna su desktop) */
+  --carte-grandi-spazio: 18px;                    /* spazio tra le carte grandi (uguale nei due turni; anche nel calcolo della loro misura e della colonna su desktop) */
   --carte-grandi-margine-lato: 8px;               /* margine minimo a destra e a sinistra della carta, nel calcolo della misura */
   --carte-grandi-vicine-visibili: 8px;            /* quanto si vede delle carte vicine, nel calcolo della misura */
   --carte-grandi-riga-stato-altezza: 35px;        /* altezza della riga vita/token sopra la carta */
   --carte-grandi-riga-stato-distanza: 5px;        /* spazio tra la riga vita/token e la carta */
   --carte-grandi-token: 35px;                     /* misura di un token nella riga sopra la carta */
   --carte-grandi-icona: 25px;                     /* misura della goccia della vita nella riga sopra la carta */
-  --carta-pescata-scala: 1;                     /* carta da pescare e pescata: frazione della misura massima */
-  --carta-pescata-crescita: 1.3;                  /* ... che è al massimo tante volte la carta normale */
-  --carta-pescata-margine: 8px;                   /* ... lasciando libero questo spazio sopra, in più dello spazio sopra la zona */
+  --carte-grandi-goccia-numero: 7px;              /* nella riga vita/token: spazio tra la goccia (o i token) e il numero */
+  --carte-grandi-numero: 21.6px;                  /* nella riga vita/token: misura del carattere del numero */
+  --carte-grandi-numero-interlinea: 27px;         /* nella riga vita/token: altezza della riga del numero */
+  --carta-pescata-spazio-sopra: 8px;              /* carta da pescare e pescata (la più grande che ci sta): spazio libero sopra la sua riga vita/token, in più di --carte-grandi-spazio-sopra */
+  --carta-pescata-margine-lati: 36px;             /* ... e spazio libero a destra e a sinistra della carta (almeno quanto l'alone, perché non sia tagliato) */
   --colonna-larghezza-minima: 440px;              /* tablet e desktop: larghezza minima della colonna della partita */
   --colonna-vicine-visibili: 42px;                /* tablet e desktop: quanto si vede delle carte vicine ai lati */
 

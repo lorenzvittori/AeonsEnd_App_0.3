@@ -271,19 +271,19 @@ export function sizeFocus(recentre = true): void {
   // La zona 6 c'è anche nel turno nemesi (vuota e invisibile): la zona 5 è alta uguale e la carta ha la stessa misura
   // del turno giocatori (sizeQueue)
   sizeColumn(focusEl);
-  const peekRoom = partita.queue.length > 1 ? spazioVicine('nemesi') : 0;
+  const peekRoom = partita.queue.length > 1 ? spazioVicine() : 0;
   const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, altezzaArea(focusEl), peekRoom));
   focusEl.style.setProperty('--ae-focus-w', width + 'px');
   focusEl.style.setProperty('--cw', width + 'px');
   track.style.paddingInline = Math.max(0, (focusEl.clientWidth - width) / 2) + 'px';
-  // Carta da pescare e carta pescata: più grandi (fino a --carta-pescata-crescita), stessa misura per dorso e fronte.
-  // Cresce solo la carta: la riga vita/token resta grande come nelle altre carte. Il blocco (riga + carta) ha il fondo
-  // dove l'hanno le altre carte (la carta cresce verso l'alto) e lascia libero --carta-pescata-margine sopra.
-  const byHeight = (altezzaArea(focusEl) - misura('--carta-pescata-margine') - misura('--carte-grandi-riga-stato-altezza')
+  // Carta da pescare e carta pescata: la più grande che ci sta, stessa misura per dorso e fronte. Cresce solo la carta: la
+  // riga vita/token resta grande come nelle altre carte. Il blocco (riga + carta) ha il fondo dove l'hanno le altre carte
+  // (la carta cresce verso l'alto) e lascia libero --carta-pescata-spazio-sopra sopra la riga (in più dello spazio sopra
+  // la zona) e --carta-pescata-margine-lati ai lati, così non sborda e l'alone non è tagliato.
+  const byHeight = (altezzaArea(focusEl) - misura('--carta-pescata-spazio-sopra') - misura('--carte-grandi-riga-stato-altezza')
     - misura('--carte-grandi-riga-stato-distanza')) / rapportoCarta();
-  // ... ridotta a --carta-pescata-scala (90%) della misura massima: a tutta grandezza è troppo grande
-  const bigW = Math.floor(Math.max(width, Math.min(width * misura('--carta-pescata-crescita'), byHeight,
-    focusEl.clientWidth - 2 * misura('--carte-grandi-margine-lato'))) * misura('--carta-pescata-scala'));
+  const byWidth = focusEl.clientWidth - 2 * misura('--carta-pescata-margine-lati');
+  const bigW = Math.max(40, Math.floor(Math.min(byHeight, byWidth)));
   focusEl.style.setProperty('--ae-big-w', bigW + 'px');
   if (recentre && focusEl.dataset.uid) scrollFocusTo(focusEl.dataset.uid, false);
 }

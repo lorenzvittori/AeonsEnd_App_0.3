@@ -17,12 +17,10 @@ export function rapportoCarta(): number {
   return misura('--carta-altezza') / misura('--carta-larghezza');
 }
 
-// I due turni hanno lo spazio tra le carte grandi proprio (--carte-grandi-spazio-giocatori / -nemesi, partita-misure.css)
-export type TurnoCarte = 'giocatori' | 'nemesi';
-
-// Quanto si vede delle carte vicine ai lati e lo spazio tra le carte (quello del turno), nel calcolo della misura
-export function spazioVicine(turno: TurnoCarte): number {
-  return 2 * (misura('--carte-grandi-vicine-visibili') + misura(`--carte-grandi-spazio-${turno}`));
+// Quanto si vede delle carte vicine ai lati e lo spazio tra le carte (--carte-grandi-spazio, uguale nei due turni), nel
+// calcolo della misura
+export function spazioVicine(): number {
+  return 2 * (misura('--carte-grandi-vicine-visibili') + misura('--carte-grandi-spazio'));
 }
 
 // Altezza dell'area delle carte (coda o carosello) senza il padding in basso (nel carosello è lo spazio per l'alone)
@@ -51,8 +49,7 @@ export function sizeColumn(box: HTMLElement): void {
   if (window.innerWidth < 768) { app.style.removeProperty('--ae-col'); return; }
   const card = sharedCardWidth(Infinity, altezzaArea(box), 0);
   if (!isFinite(card) || card <= 0) return;
-  // La colonna è una sola per i due turni: sempre con lo spazio del carosello nemesi (così non cambia da un turno all'altro)
-  const peek = misura('--colonna-vicine-visibili') + misura('--carte-grandi-spazio-nemesi');
+  const peek = misura('--colonna-vicine-visibili') + misura('--carte-grandi-spazio');
   const col = Math.min(window.innerWidth, Math.max(misura('--colonna-larghezza-minima'),
     card + 2 * peek + 2 * misura('--carte-grandi-margine-lato')));
   const current = parseFloat(app.style.getPropertyValue('--ae-col')) || 0;

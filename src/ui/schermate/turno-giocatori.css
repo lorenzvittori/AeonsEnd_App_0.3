@@ -55,13 +55,14 @@
 /* Box vita / token sopra la carta, grande come nel turno nemesi (24px, token 39px), senza scatola */
 .queue-slot { position: relative; }
 .queue-slot .ae-queue-item > .ae-status-badge {
-  height: 41px; min-width: 0; padding: 0; gap: 8px; border: 0; background: none; font: 700 24px/30px var(--ae-font-ui);
+  height: var(--carte-grandi-riga-stato-altezza); min-width: 0; padding: 0; gap: var(--carte-grandi-goccia-numero); border: 0; background: none;
+  font: 700 var(--carte-grandi-numero) / var(--carte-grandi-numero-interlinea) var(--ae-font-ui);
 }
-.queue-slot .ae-status-badge .ae-icon { width: 20px; height: 20px; }
-.queue-slot .ae-status-badge .ae-token { width: 39px; height: 39px; }
-.queue-slot .ae-new-tag { top: 47px; right: -2px; }
+.queue-slot .ae-status-badge .ae-icon { width: var(--carte-grandi-icona); height: var(--carte-grandi-icona); }
+.queue-slot .ae-status-badge .ae-token { width: var(--carte-grandi-token); height: var(--carte-grandi-token); }
+.queue-slot .ae-new-tag { top: 43px; right: -2px; }
 /* Turno giocatori: più spazio tra le carte (+50%) */
-[data-zona="carte-grandi"] .ae-queue-list { gap: var(--carte-grandi-spazio-giocatori); }
+[data-zona="carte-grandi"] .ae-queue-list { gap: var(--carte-grandi-spazio); }
 /* +1 oscurato e non cliccabile se non c'è vita tolta in questo turno */
 .ae-button.is-dimmed, .ae-button.is-dimmed:disabled { opacity: .35; cursor: not-allowed; }
 
@@ -72,7 +73,7 @@
 /* --- Zona 3 nel turno giocatori: la fascia piccola senza riga intorno, un po' più alta (turno nemesi: turno-nemesi.css) --- */
 :is([data-turno="giocatori"], [data-turno="crea-mazzo"]) .ae-compact-rail {
   margin-top: var(--carte-piccole-distanza-sopra); border-top: 0; border-bottom: 0; background: none;
-  flex-basis: var(--carte-piccole-altezza-giocatori); height: var(--carte-piccole-altezza-giocatori);
+  flex-basis: var(--carte-piccole-altezza); height: var(--carte-piccole-altezza);
 }
 /* Nessuna linea tra testata, fascia piccola e carte grandi: le zone sono separate solo dallo spazio */
 :is([data-turno="nemesi"], [data-turno="pesca"]) [data-zona="carte-piccole"] { border-top: 0; border-bottom: 0; background: none; margin-top: var(--carte-piccole-distanza-sopra); }
@@ -87,12 +88,6 @@
 .ae-queue-viewport { scrollbar-width: none; }
 .ae-queue-viewport::-webkit-scrollbar { display: none; }
 
-/* Riga vita/token sopra le carte grandi al 90% (come turno-nemesi.css .ae-focus-status; misura letta anche da
-   ui/componenti/misure.ts) */
-.queue-slot .ae-queue-item > .ae-status-badge { height: var(--carte-grandi-riga-stato-altezza); gap: 7px; font-size: 21.6px; line-height: 27px; }
-.queue-slot .ae-status-badge .ae-icon { width: var(--carte-grandi-icona); height: var(--carte-grandi-icona); }
-.queue-slot .ae-status-badge .ae-token { width: var(--carte-grandi-token); height: var(--carte-grandi-token); }
-.queue-slot .ae-new-tag { top: 43px; }
 /* Comandi vita del minion più distanti (−5 ha il contorno rosso, da turno-giocatori.ts) */
 .queue-controls { gap: var(--interattivi-spazio); }
 /* Con la scelta in sospeso le carte non si cambiano e il mazzo non si pesca: comandi sotto le carte e mazzo velati */
