@@ -7,7 +7,7 @@
 import { animDone } from '../componenti/animazioni.ts';
 import { el, need, query } from '../dom.ts';
 import { emptySetIcon, saveTurnDraft, trackPreviewCopy, turnCardFace, turnCardName, turnDeckMovable, turnDraftCurrent,
-  turnDraftKey, turnPileLocked } from './mazzo-turni-bozza.ts';
+  turnDraftKey } from './mazzo-turni-bozza.ts';
 import type { Destinazione, Finestra, Selezione } from './mazzo-turni-bozza.ts';
 import { inCardBand, spaceItems, TURN_SPREAD } from './mazzo-turni-riga.ts';
 import type { OggettoRiga } from './mazzo-turni-riga.ts';
@@ -118,18 +118,15 @@ export function draw(f: Finestra) {
   const cur = turnDraftCurrent(f.d);
   const faces: HTMLElement[] = [];
   const slots = f.d.drawn.map((kind, i) => {
-    const locked = turnPileLocked(f.d, i);
-    const face = turnCardFace(kind, i, locked ? 'span' : 'button', f.d);
+    const face = turnCardFace(kind, i, 'button', f.d);
     const name = turnCardName(kind, i, f.d);
-    if (!locked) {
-      if (face instanceof HTMLButtonElement) face.type = 'button';
-      face.classList.add('is-movable');
-    }
-    face.setAttribute('aria-label', locked ? T.turnLockedLabel(name) : T.turnPileCardLabel(name, i === cur));
+    if (face instanceof HTMLButtonElement) face.type = 'button';
+    face.classList.add('is-movable');
+    face.setAttribute('aria-label', T.turnPileCardLabel(name, i === cur));
     face.dataset.source = 'pile';
     face.dataset.index = String(i);
     face.classList.toggle('is-selected', !!f.sel && f.sel.source === 'pile' && f.sel.index === i);
-    const slot = el('div', 'ae-turn-pile-slot' + (i === cur ? ' is-current' : '') + (locked ? ' is-locked' : ''));
+    const slot = el('div', 'ae-turn-pile-slot' + (i === cur ? ' is-current' : ''));
     slot.appendChild(face);
     if (i === cur) slot.appendChild(el('span', 'ae-turn-pile-note', T.turnCurrent));
     faces.push(face);

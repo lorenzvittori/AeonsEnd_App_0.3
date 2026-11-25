@@ -129,7 +129,6 @@ export interface Impostazioni {
   nemesis: string | null;        // nome della nemesi (null: nessuna giocabile)
   battleMode?: boolean;          // "Modalità battaglia" (mancante = accesa)
   mergeCollection?: boolean;     // "Unisci le carte della collezione" (mancante = acceso)
-  includeUpgraded?: boolean;     // scelta dei salvataggi vecchi, ignorata
 }
 
 // Le scelte che contano per il mazzo nemesi

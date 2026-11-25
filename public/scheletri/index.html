@@ -1812,7 +1812,7 @@ function preparaApp() {
   noBars.textContent = '*{scrollbar-width:none !important}*::-webkit-scrollbar{display:none !important}';
   document.head.appendChild(noBars);
   const nem = app.nemeses.find(n => n.battle && app.allCards.some(c => c.category === 'Specific' && c.nemesis === n.name));
-  app.settings = { players: 2, nemesis: nem.name, includeUpgraded: true };
+  app.settings = { players: 2, nemesis: nem.name };
   app.nuovaPartita();
   app.closeStart();
   app.ui.deckBuilding = false;

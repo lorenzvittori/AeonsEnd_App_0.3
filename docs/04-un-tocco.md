@@ -50,7 +50,7 @@ sequenceDiagram
     participant S as stato/salvataggio.ts
     participant A as ui/ridisegno.ts
     U->>N: tocca il pulsante principale con data-azione fine-turno
-    N->>G: onNemesisClick()
+    N->>G: onPulsanteTurnoGiocatori()
     G->>P: fineTurnoGiocatore()
     P->>S: act() fotografa lo stato prima, snapshot e pushUndo
     P->>R: endPlayerTurnCards poi nextTurnCard
@@ -72,8 +72,8 @@ Passo per passo:
 
 1. **Il tocco.** Il pulsante è lo stesso in tutta la partita (`#pulsante-principale`, zona 7). Cosa fa lo dice l'attributo
    `data-azione`, che il disegno precedente ha scritto da `variantePartita()`. Con `fine-turno` il listener in `ui/navigazione.ts`
-   chiama `onNemesisClick()` di `ui/schermate/turno-giocatori.ts` (il nome è storico: serve per tutti i tocchi del turno giocatori).
-2. **I controlli.** `onNemesisClick()` esce subito se c'è un'animazione in corso (`ui.isTransitioning`), se c'è una carta 1/2 o 3/4 con
+   chiama `onPulsanteTurnoGiocatori()` di `ui/schermate/turno-giocatori.ts` (serve per tutti i tocchi del pulsante principale del turno giocatori).
+2. **I controlli.** `onPulsanteTurnoGiocatori()` esce subito se c'è un'animazione in corso (`ui.isTransitioning`), se c'è una carta 1/2 o 3/4 con
    il giocatore ancora da scegliere (`needsPairChoice()`), o se ci sono bozze (in quel caso il pulsante sarebbe "Salva modifiche", vedi
    il caso c).
 3. **L'azione.** Chiama `fineTurnoGiocatore()` di `stato/partita.ts`, che esegue `act(endPlayerTurn)`.
@@ -86,7 +86,7 @@ Passo per passo:
 6. **Se esce la nemesi** si chiama `nemesisTurn()`: `turn` sale di uno e `resolving` diventa vero.
 7. **Il salvataggio.** `act()` chiama `save()`, cioè `scriviPartita()`: scrive nel `localStorage` la partita e la cronologia
    dell'Undo (ma non prima del primo turno nemesi, vedi il [file 05](05-stato-e-salvataggio.md)).
-8. **Il ridisegno.** Torna il controllo a `onNemesisClick()`. Se è uscito un giocatore chiede `richiediRidisegno()`; se è uscita la
+8. **Il ridisegno.** Torna il controllo a `onPulsanteTurnoGiocatori()`. Se è uscito un giocatore chiede `richiediRidisegno()`; se è uscita la
    nemesi chiama `passaAlTurnoNemesi()` che, passando dall'aggancio, fa partire `enterNemesisTurnView()` (scossa dello schermo,
    sfondo che scorre a destra, la carta da risolvere in primo piano) e a sua volta chiede il ridisegno. Se invece era l'ultimo
    turno del giro parte l'animazione `playTurnShuffle()`.
@@ -188,7 +188,7 @@ sequenceDiagram
     A->>N: render()
     Note over N: la carta mostra HP: meno uno e x su X<br/>il pulsante diventa Salva modifiche
     U->>N: tocca Salva modifiche
-    N->>T: onNemesisClick() poi saveAllDrafts()
+    N->>T: onPulsanteTurnoGiocatori() poi saveAllDrafts()
     T->>D: copia le bozze e le svuota
     T->>P: salvaModifiche(drafts)
     P->>S: act() snapshot e pushUndo
@@ -209,7 +209,7 @@ Passo per passo:
 2. **Il ridisegno.** `richiediRidisegno()`, e `render()` mostra la bozza: l'etichetta "HP: −1" sulla carta e il box della vita con "x/X"
    (X è la vita prima del danno). `variantePartita()` vede `u.drafts.size > 0` e cambia l'azione in `salva-modifiche`: il pulsante diventa
    dorato "Salva modifiche" e compare accanto "Annulla modifiche" (che svuota le bozze, senza Undo).
-3. **Secondo tocco, il salvataggio.** Il pulsante chiama ancora `onNemesisClick()`, che vede le bozze e chiama `saveAllDrafts()`.
+3. **Secondo tocco, il salvataggio.** Il pulsante chiama ancora `onPulsanteTurnoGiocatori()`, che vede le bozze e chiama `saveAllDrafts()`.
    Questa copia le bozze, le svuota e chiama `salvaModifiche(drafts)` di `stato/partita.ts`.
 4. **Undo e regole.** `salvaModifiche()` è un `act(...)`: fotografia, poi `applyDrafts()` in `regole/turno-nemesi.ts`, che scrive le
    nuove vite, aggiorna le **statistiche del mago** del giocatore di turno (danni, minion uccisi, poteri pagati) e manda negli scarti

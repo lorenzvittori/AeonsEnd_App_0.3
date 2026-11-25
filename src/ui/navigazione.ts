@@ -46,7 +46,7 @@ import { openLifeDialog } from './finestre/vita.ts';
 import { closeDeckBuild, openGameSetup, rebuildDeck, showDeckBuild, specificCardsOf } from './schermate/crea-mazzo.ts';
 import { disegnaMenu, showStartError, updateHomeCollection } from './schermate/menu.ts';
 import { disegnaNuovaPartita, renderStartChoices } from './schermate/nuova-partita.ts';
-import { centredQueueUid, disegnaTurnoGiocatori, onNemesisClick, sizeQueue,
+import { centredQueueUid, disegnaTurnoGiocatori, onPulsanteTurnoGiocatori, sizeQueue,
   toPlayersTurn } from './schermate/turno-giocatori.ts';
 import { backToActive, disegnaTurnoNemesi, enterNemesisTurnView, mostraDopoAzione,
   onResolveClick } from './schermate/turno-nemesi.ts';
@@ -350,7 +350,7 @@ export function avvio(): void {
     const azione = pulsantePrincipale.dataset.azione;
     if (azione === 'torna') backToActive();
     else if (azione === 'risolvi' || azione === 'pesca') onResolveClick();
-    else onNemesisClick();
+    else onPulsanteTurnoGiocatori();
   });
   // Nella riga del pulsante principale, durante "Crea mazzo", il cursore al suo posto
   need(pulsantePrincipale.parentElement, 'riga del pulsante principale').append(createDeckSlider().box);

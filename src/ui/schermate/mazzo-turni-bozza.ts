@@ -167,11 +167,6 @@ export function turnDraftCurrent(d: BozzaTurni): number {
   return Turni.turnDraftCurrent(d);
 }
 
-// Nessuna carta degli scarti è bloccata: rimettendo nel mazzo la carta del turno in corso il turno continua
-export function turnPileLocked(_d?: BozzaTurni, _i?: number): boolean {
-  return false;
-}
-
 // Azioni sulla bozza (regole/mazzo-turni.ts); "Mescola" usa il caso di Math.random
 export const turnDraftOps = {
   ...Turni.turnDraftOps,

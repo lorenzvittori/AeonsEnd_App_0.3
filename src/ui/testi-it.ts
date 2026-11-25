@@ -4,7 +4,6 @@
 
 // Tutte le stringhe dell'interfaccia scritte da JS (per una futura traduzione)
 export const I18N_IT = {
-  nemesisButton: 'Turno Nemesi',
   turnN: (n: number) => `Turno ${n}`,
   ctaPowerNext: 'Vai avanti',
   ctaPowerLast: 'Effetto risolto e scarta',
@@ -22,7 +21,6 @@ export const I18N_IT = {
   newTag: 'Nuova',
   nextCard: 'Prossima carta da pescare, coperta',
   ctaResolved: 'Effetto risolto',
-  ctaPutInPlay: 'Metti in gioco',
   ctaDraw: 'Pesca',
   backToDraw: 'Torna alla carta da pescare',
   backToActive: 'Torna alla carta da risolvere',
@@ -160,8 +158,6 @@ export const I18N_IT = {
   mainMenu: 'Menu iniziale',
   exit: 'Esci',
   wave: 'Wave',
-  holdToExit: 'Tieni premuto per uscire',
-  exitGameLabel: 'Esci dalla partita: tieni premuto',
   exitConfirmTitle: 'Uscire dalla partita?',
   exitConfirmText: 'Torni al menu iniziale.',
   exitConfirm: 'Esci',
@@ -213,11 +209,9 @@ export const I18N_IT = {
   turnDeckHint: 'tocca per il mazzo dei turni',
   turnPairName: (a: number, b: number) => `Giocatore ${a} o ${b}`,
   turnDeckTitle: 'Mazzo dei turni',
-  turnPileLabel: 'Scarti dei turni',
   turnPileEmpty: 'Nessuna carta',
   // Finestra del mazzo dei turni
   turnDeckEmpty: 'Mazzo vuoto',
-  turnDeckLabel: 'Mazzo',
   turnRevealAll: 'Rivela tutto',
   turnRevealAllLabel: 'Rivela tutto il mazzo dei turni',
   turnCoverAll: 'Copri tutto',
@@ -231,7 +225,6 @@ export const I18N_IT = {
   turnCovered: 'Carta coperta',
   turnDeckCardLabel: (name: string, n: number, total: number) => `${name}, carta ${n} di ${total} dalla cima`,
   turnPileCardLabel: (name: string, current: boolean) => current ? `${name}, turno in corso` : name,
-  turnLockedLabel: (name: string) => `${name}, turno nemesi in corso: resta negli scarti`,
   turnHint: 'Trascina una carta scoperta, oppure toccala e poi tocca dove metterla. Il mazzo si legge da sinistra: la prima carta è la cima.',
   turnSelected: (name: string) => `Selezionata: ${name}. Tocca dove metterla.`,
   turnShuffleDeck: 'Mescola',
@@ -240,10 +233,6 @@ export const I18N_IT = {
   turnDeckRowTitle: 'Mazzo turno',
   turnShuffleLabel: 'Mescola il mazzo dei turni',
   turnResetAll: 'Annulla tutte le modifiche',
-  turnExitTitle: 'Uscire senza salvare?',
-  turnExitText: 'Le modifiche al mazzo dei turni si perdono.',
-  turnExitGo: 'Esci',
-  turnSaved: 'Mazzo dei turni aggiornato',
   pairChoiceLabel: (n: number) => `Giocatore ${n}`,
   ctaPutInPlayEnd: 'Metti in gioco · Fine turno nemesi',
   // Minion con vita "?"

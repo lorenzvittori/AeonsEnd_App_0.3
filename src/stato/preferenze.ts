@@ -15,7 +15,7 @@ export interface Preferenze {
 
 // Valori di prima della lettura: la collezione si legge con la pagina iniziale (dati/collezione.ts, loadCollection) e
 // le scelte si scrivono con lei (ui/schermate/menu.ts, buildStartPage)
-export const preferenze: Preferenze = { collection: null, settings: { players: 2, nemesis: null, includeUpgraded: true } };
+export const preferenze: Preferenze = { collection: null, settings: { players: 2, nemesis: null } };
 
 // Opzioni del mazzo ("Modalità battaglia", "Unisci le carte della collezione"): preferenza del browser, ricordata tra
 // le partite e copiata nelle scelte della partita (settings). Mancanti = attive

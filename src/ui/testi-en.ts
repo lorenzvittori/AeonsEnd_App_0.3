@@ -8,7 +8,6 @@ import type { Testi } from './testi-it.ts';
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
 export const I18N_EN: Testi = {
-  nemesisButton: 'Nemesis Turn',
   turnN: (n: number) => `Turn ${n}`,
   ctaPowerNext: 'Next',
   ctaPowerLast: 'Resolved, discard',
@@ -26,7 +25,6 @@ export const I18N_EN: Testi = {
   newTag: 'New',
   nextCard: 'Next card to draw, face down',
   ctaResolved: 'Effect resolved',
-  ctaPutInPlay: 'Put into play',
   ctaDraw: 'Draw',
   backToDraw: 'Back to the card to draw',
   backToActive: 'Back to the card to resolve',
@@ -164,8 +162,6 @@ export const I18N_EN: Testi = {
   mainMenu: 'Main menu',
   exit: 'Exit',
   wave: 'Wave',
-  holdToExit: 'Hold to exit',
-  exitGameLabel: 'Exit game: hold down',
   exitConfirmTitle: 'Exit the game?',
   exitConfirmText: 'You go back to the main menu.',
   exitConfirm: 'Exit',
@@ -217,11 +213,9 @@ export const I18N_EN: Testi = {
   turnDeckHint: 'tap for the turn order deck',
   turnPairName: (a: number, b: number) => `Player ${a} or ${b}`,
   turnDeckTitle: 'Turn order deck',
-  turnPileLabel: 'Turn discards',
   turnPileEmpty: 'No cards',
   // Finestra del mazzo dei turni
   turnDeckEmpty: 'Deck empty',
-  turnDeckLabel: 'Deck',
   turnRevealAll: 'Reveal all',
   turnRevealAllLabel: 'Reveal the whole turn order deck',
   turnCoverAll: 'Cover all',
@@ -235,7 +229,6 @@ export const I18N_EN: Testi = {
   turnCovered: 'Covered card',
   turnDeckCardLabel: (name: string, n: number, total: number) => `${name}, card ${n} of ${total} from the top`,
   turnPileCardLabel: (name: string, current: boolean) => current ? `${name}, current turn` : name,
-  turnLockedLabel: (name: string) => `${name}, nemesis turn in progress: stays in the discards`,
   turnHint: 'Drag a revealed card, or tap it and then tap where to put it. The deck reads from the left: the first card is the top.',
   turnSelected: (name: string) => `Selected: ${name}. Tap where to put it.`,
   turnShuffleDeck: 'Shuffle',
@@ -244,10 +237,6 @@ export const I18N_EN: Testi = {
   turnDeckRowTitle: 'Turn deck',
   turnShuffleLabel: 'Shuffle the turn order deck',
   turnResetAll: 'Cancel all changes',
-  turnExitTitle: 'Exit without saving?',
-  turnExitText: 'Changes to the turn order deck will be lost.',
-  turnExitGo: 'Exit',
-  turnSaved: 'Turn order deck updated',
   pairChoiceLabel: (n: number) => `Player ${n}`,
   ctaPutInPlayEnd: 'Put into play · End nemesis turn',
   // Minion con vita "?"

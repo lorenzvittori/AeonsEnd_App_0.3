@@ -1,6 +1,6 @@
 // ui/schermate/turno-giocatori.ts: il turno giocatori nella schermata "partita": carte grandi della coda in fila (zona 5)
 // con i comandi sotto la carta al centro (zona 6), fascia piccola nel turno giocatori (zona 3), "Annulla modifiche" e
-// l'azione del pulsante principale (onNemesisClick: "Fine turno", "Pesca carta turno", "Salva modifiche"), passaggio
+// l'azione del pulsante principale (onPulsanteTurnoGiocatori: "Fine turno", "Pesca carta turno", "Salva modifiche"), passaggio
 // animato dal turno nemesi (toPlayersTurn). Il pulsante lo disegna ui/componenti/pulsante-principale.ts. L'inizio del
 // turno nemesi a schermo lo chiede con l'aggancio passaAlTurnoNemesi.
 // Livello 5 (ui/schermate/). Dipende da: stato/ (partita, catalogo), ui/ base (testi, pagina, dom, ridisegno),
@@ -254,7 +254,7 @@ export function saveAllDrafts(): void {
 }
 
 // Tocco sul pulsante principale nel turno giocatori ("Fine turno", "Pesca carta turno", "Salva modifiche")
-export function onNemesisClick(): void {
+export function onPulsanteTurnoGiocatori(): void {
   if (partita.resolving || ui.isTransitioning || !catalogo.deckSetup) return;
   // Durante "Crea mazzo" al posto del pulsante c'è il cursore (deckSlider)
   if (ui.deckBuilding) return;
