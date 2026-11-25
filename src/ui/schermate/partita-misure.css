@@ -36,20 +36,20 @@
         | --turno-scritte-distanza
      [scritte: --turno-scritte-altezza]
         | --carte-piccole-distanza-sopra  (zona 3) */
-  --turno-spazio-sopra: 10px;                     /* spazio tra la testata e la barra dei turni */
+  --turno-spazio-sopra: 8px;                     /* spazio tra la testata e la barra dei turni */
   --turno-margine-lati: 16px;                     /* margine a destra e a sinistra della barra */
   --turno-barra-altezza: 8px;                     /* altezza della riga delle caselle */
   --turno-casella-accesa: 122px;                  /* larghezza della casella del turno in corso */
   --turno-caselle-spazio: 6px;                    /* spazio tra le caselle */
   --turno-scritte-distanza: 6px;                  /* spazio tra le caselle e la riga delle scritte */
-  --turno-scritte-altezza: 4px;                  /* altezza della riga delle scritte sotto le caselle */
+  --turno-scritte-altezza: 5px;                  /* altezza della riga delle scritte sotto le caselle */
 
   /* --- 3 fascia carte piccole --- */
   /*      [scritte della barra dei turni]
         | --carte-piccole-distanza-sopra
      [fascia: --carte-piccole-altezza]   carte a --carte-piccole-margine dai lati (uguale nei due turni)
         | --vite-spazio-sopra  (zona 4) */
-  --carte-piccole-distanza-sopra: 4px;            /* spazio tra la barra dei turni e la fascia */
+  --carte-piccole-distanza-sopra: 5px;            /* spazio tra la barra dei turni e la fascia */
   --carte-piccole-altezza: 100px;                 /* altezza della fascia (uguale nei due turni) */
   --carte-piccole-margine: 16px;                  /* margine a destra e a sinistra delle carte (uguale nei due turni) */
   --carte-piccole-spazio: 10px;                   /* spazio tra le carte piccole */
