@@ -1,0 +1,42 @@
+# tools/
+
+Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dalla cartella del repo.
+
+## File
+- `check-moduli.mjs`: controllo dei moduli di `src/` (`npm run check`, dopo `tsc`; esce con 1 se trova problemi). Legge i `.ts` con il
+  parser di rolldown e controlla: ogni nome importato esiste tra gli export; nessuna variabile globale tranne `window.app`; `src/regole/`
+  pura (import solo da `regole/` o tipi da `tipi/`, niente nomi del browser, `Date`, `Math.random`); i CSS si importano solo da
+  `stili/indice.ts` (e `...css?raw` solo in `ui/finestre/test-regolazioni-lettura.ts`); niente `any`, `@ts-ignore` vietato, `@ts-expect-error`
+  con il motivo; la partita si cambia solo in `stato/partita.ts`; nessun testo italiano nei `.ts` fuori dai dizionari (`FILE_CON_TESTI`
+  elenca le eccezioni con il motivo; `I18N_IT`/`I18N_EN` solo in `ui/testi.ts`); nessun ciclo di import; i livelli ([ui/README](../src/ui/README.md));
+  nessun file sopra 500 righe (salvo un commento in testa "Oltre 500 righe: <motivo>"); blocchi fissi mostrati e nascosti solo da
+  `ui/navigazione.ts`; **ogni file `.ts` di una cartella di `src/` citato nel `README.md` di quella cartella**. Stampa file, file più grande
+  e import tra moduli di `ui/`; `--conta` stampa `any`, eccezioni ai tipi, file `.js`, usi di `G` (attesi 0). Un file nuovo di `src/` va
+  messo in `levelOf` (livello) e nel README della sua cartella.
+- `import-db.py`: il ponte DataBase → app (Python con openpyxl e Pillow). Genera `cards.json`, `products.json`, `Data/Nemesis/`,
+  `thumbs/Nemesis/` e le immagini delle nemesi (`Assets/nemesis/`: carta, retro, ritaglio, `nemesis-art.json`): **questi file non si
+  modificano a mano**. Fonti in sola lettura: `Data/NEMESIS_CARDS.xlsx`, `Data/DataBase_*.xlsx` (foglio MAIN), `BOXES_NAMES` di `pipeline.py`.
+  `python tools/import-db.py` (DataBase predefinito `..\DataBase`) o `python tools/import-db.py "C:\percorso\DataBase"`; `--no-images` rifà solo i
+  JSON; `--force` rifà anche immagini e miniature già presenti (senza, un file esistente non si sovrascrive). Due lanci di fila danno lo stesso risultato.
+- `build-app-icons.py`: le icone dell'app installabile (`public/Assets/ui/app-icons/`) da `public/Assets/ui/decor/app-icon.png` (400×400); l'icona
+  maskable ha l'immagine nel 72% centrale con il bordo sfumato. Le usa `public/manifest.webmanifest` (a tutto schermo, verticale).
+- `pubblicazione-precedente.mjs`: nel workflow di pubblicazione, dopo `npm run build`: scarica i file di `app/` dell'`index.html` del sito
+  pubblicato e li mette in `dist/app/` accanto ai nuovi (si tengono le ultime 3 pubblicazioni, elenco in `app/precedenti.json`).
+- `confronto/`: lo strumento di confronto, vedi [confronto/README.md](confronto/README.md).
+
+## Pubblicazione
+- `.github/workflows/pages.yml` parte solo con push su `main` (anche lanciato a mano pubblica solo `main`; Pages → Source = "GitHub Actions"). Passi:
+  `npm ci`, `npm run check`, `npm test`, `npm run build`, `pubblicazione-precedente.mjs`, poi pubblica `dist/`. Ogni tentativo di deploy ha 3 minuti
+  e ce ne sono fino a 3 (GitHub ogni tanto si blocca fino al limite di 10 minuti). Sul branch `ts` il file c'è ma non parte: si attiva alla fusione in `main`.
+- **Cache di `index.html`:** GitHub Pages lo tiene circa 10 minuti, e i file costruiti (`dist/app/index-<hash>.js` e `.css`) cambiano nome a ogni
+  pubblicazione: per questo `pubblicazione-precedente.mjs` conserva i file delle pubblicazioni di prima. Un `index.html` del sito senza build
+  (fino alla v268) carica `public/script.js`, che ricarica la pagina una volta. La cartella del codice costruito si chiama `app/` e non `assets/`:
+  su Windows sarebbe la stessa di `public/Assets/`.
+- `public/sw.js` (service worker) e `manifest.webmanifest` si copiano così come sono. `public/scheletri/` è una pagina di misura per chi
+  sviluppa (scheletro della partita in mm nei formati 18:9-20:9, misure prese con l'app vera in un iframe; `misure.json` di riserva): non è
+  l'app e va rifatta se cambia il layout.
+
+## Da sapere prima di modificare
+- Aggiungere un controllo a `check-moduli.mjs`: una riga nell'elenco in testa, il controllo, e un messaggio che dica file e riga.
+- Nuovi file Python/script: si lanciano dalla cartella del repo e scrivono in `public/`.
+- Dopo aver toccato `check-moduli.mjs` si lancia `npm run check` e si prova a rompere apposta la regola (per esempio togliere un nome dal README).

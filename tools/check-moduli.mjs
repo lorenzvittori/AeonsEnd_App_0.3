@@ -27,6 +27,8 @@
 // - i blocchi fissi della pagina (#start; nella schermata "partita" #queue e #focus della zona 5, la zona 6 #interattivi)
 //   si mostrano e si nascondono solo in
 //   ui/navigazione.ts (hidden assegnato, toggleAttribute / setAttribute / removeAttribute di 'hidden').
+// - ogni file .ts di una cartella di src/ è citato (con il nome del file) nel README.md di quella cartella, così la
+//   documentazione non resta indietro quando si aggiunge un file;
 // In uscita anche: numero di file, righe del file più grande, import tra moduli di ui/.
 // --conta stampa quanti "any", @ts-expect-error / @ts-ignore, file .js e usi di G (lo stato condiviso di prima) ci sono
 // in src/. Esce con 1 se trova problemi.
@@ -349,6 +351,23 @@ for (const [from, list] of edges) {
     }
   };
   allRel.forEach(v => { if (!idx.has(v)) strong(v); });
+}
+// Documentazione: ogni file .ts di una cartella di src/ è citato nel README.md della stessa cartella
+{
+  const readmes = new Map();
+  for (const f of files.filter(f => f.endsWith('.ts'))) {
+    const dir = dirname(f);
+    if (!readmes.has(dir)) {
+      const p = join(dir, 'README.md');
+      readmes.set(dir, existsSync(p) ? readFileSync(p, 'utf8') : null);
+      if (!existsSync(p)) problems.push(`${relative(ROOT, dir).split(sep).join('/')}/: manca README.md (ogni file .ts della cartella va citato lì)`);
+    }
+    const text = readmes.get(dir);
+    const base = f.slice(dir.length + 1);
+    if (text !== null && !new RegExp(`(?<![\\w.-])${base.replace(/\./g, '\\.')}(?![\\w-])`).test(text)) {
+      problems.push(`${relative(ROOT, f).split(sep).join('/')}: non citato in ${relative(ROOT, dir).split(sep).join('/')}/README.md`);
+    }
+  }
 }
 // Numeri: file, righe del file più grande, import tra moduli di ui/
 const largest = [...linesOf].sort((a, b) => b[1] - a[1])[0];

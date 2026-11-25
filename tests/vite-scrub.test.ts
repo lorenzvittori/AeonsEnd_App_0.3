@@ -1,4 +1,4 @@
-// Conti del number scrubbing sui box delle vite (src/ui/schermate/vite-scrub.ts): quando parte, passi da 30px, limiti
+// Conti del number scrubbing sui box delle vite (src/ui/componenti/vite-scrub.ts): quando parte, passi da 30px, limiti
 // 0 e massimo, cambio mostrato.
 import { describe, it, expect } from 'vitest';
 import { LIFE_SCRUB_PX, LIFE_SCRUB_START, scrubDelta, scrubStart, scrubValue } from '../src/ui/componenti/vite-scrub.ts';
