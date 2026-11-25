@@ -1,7 +1,7 @@
 // tools/confronto/prove/lingua.mjs: prova "lingua" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9). Non confronta due
 // build: apre la versione attuale due volte, in italiano e in inglese (la scelta salvata), percorre le schermate di
-// dati/schermate.mjs più qualche finestra in più (dati/lingua.mjs) a telefono (375x812) e a desktop (1280x800) e per ogni
-// schermata segnala, in inglese:
+// dati/schermate.mjs più qualche finestra in più (dati/lingua.mjs) a telefono (375x812) e a desktop (1280x800), e riapre i
+// salvataggi di tools/confronto/salvataggi nelle due lingue (stessa partita ripresa); per ogni schermata segnala, in inglese:
 //   - testo che esce dal suo box (scrollWidth > clientWidth) o dallo schermo, dove in italiano non esce;
 //   - testo di un pulsante su più righe dove in italiano ne ha di meno;
 //   - un testo vuoto dove in italiano c'è (chiave senza testo);
@@ -9,6 +9,8 @@
 // Gli stessi controlli, per i testi brutti, valgono anche per l'italiano. Passi come in dati/schermate.mjs.
 // Dipende da: browser.mjs, dati/schermate.mjs, dati/lingua.mjs, dati/scenari.mjs. Usato da: confronta.mjs.
 
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { apri } from '../browser.mjs';
 import { diffErrori } from '../differenze.mjs';
 import { GIRO } from '../dati/schermate.mjs';
@@ -16,6 +18,10 @@ import { PIU } from '../dati/lingua.mjs';
 import { SEME } from '../dati/scenari.mjs';
 
 const ITALIANO = /[àèéìòù]|\b(carta|carte|turno|turni|nemesi|giocatore|giocatori|mazzo|partita|vita|scarti|annulla|chiudi|esci|salva|vittoria|sconfitta|pesca|impostazioni|opzioni|riprova|riprendi|nessuna|nessun|gioco)\b/i;
+
+const SALVATAGGI = join(import.meta.dirname, '..', 'salvataggi');
+const RIPRENDI = { it: 'Riprendi partita', en: 'Resume game' };
+const CONTINUA = { it: 'Continua', en: 'Continue' };
 
 const VISTE = [{ id: 'telefono 375x812', vista: 'tel' }, { id: 'desktop 1280x800', vista: 'desk' }];
 
@@ -72,6 +78,33 @@ export default {
         ctx.reg(diffErrori('console', 'lingua: ' + id, it.errori, en.errori));
       } finally { await it.chiudi(); await en.chiudi(); }
     }
-    return `${misure} schermate, italiano contro inglese`;
+    // I salvataggi di tools/confronto/salvataggi si riaprono nelle due lingue: stessa partita ripresa, nessun errore, e la schermata
+    // della partita ripresa passa gli stessi controlli di testo
+    const file = readdirSync(SALVATAGGI).filter(f => f.endsWith('.json')).sort();
+    for (const f of file) {
+      const testo = readFileSync(join(SALVATAGGI, f), 'utf8');
+      const [it, en] = await Promise.all(['it', 'en'].map(lingua => apri(ctx.browser, build, { vista: 'tel', salvataggio: testo, lingua })));
+      try {
+        await Promise.all([[it, 'it'], [en, 'en']].map(async ([pg, l]) => {
+          await pg.c('seme', SEME);
+          await pg.ora(0);
+          await pg.clic(`button:has-text(${JSON.stringify(RIPRENDI[l])})`);
+          await pg.assesta(1500);
+          const continua = pg.page.locator(`button:has-text(${JSON.stringify(CONTINUA[l])})`);
+          if (await continua.count() && await continua.first().isVisible()) { await continua.first().click({ force: true }); await pg.assesta(1500); }
+        }));
+        for (const pg of [it, en]) if (await pg.js('return !app.startLayer.hidden')) throw new Error('ripresa non riuscita in ' + pg.opz.lingua);
+        const [sa, sb] = await Promise.all([it, en].map(pg => pg.js('return JSON.stringify(app.snapshot())')));
+        if (sa !== sb) ctx.reg([{ prova: 'lingua', schermata: 'salvataggio ' + f, elemento: 'stato ripreso', proprieta: 'diverso tra italiano e inglese', prima: sa.slice(0, 80), dopo: sb.slice(0, 80) }]);
+        await Promise.all([it, en].map(pg => pg.stabilizza()));
+        const [a, b] = await Promise.all([it.page.evaluate(() => window.__c.lingua()), en.page.evaluate(() => window.__c.lingua())]);
+        misure++;
+        ctx.reg(confrontaLingue('salvataggio ' + f + ' ripreso', a, b));
+        ctx.reg(diffErrori('console', 'lingua, salvataggio: ' + f, it.errori, en.errori));
+      } catch (err) {
+        ctx.reg([{ prova: 'lingua', schermata: 'salvataggio ' + f, elemento: '(prova)', proprieta: 'errore', prima: '', dopo: String(err.message || err).split('\n')[0] }]);
+      } finally { await it.chiudi(); await en.chiudi(); }
+    }
+    return `${misure} schermate (compresi ${file.length} salvataggi ripresi), italiano contro inglese`;
   }
 };

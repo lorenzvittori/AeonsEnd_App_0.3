@@ -12,6 +12,10 @@
 //   suo elenco (partita.deck.pop(), Object.assign(partita.x, ...)) o le passa a una regola che la modifica
 //   (Nemesi.resolveCurrent(partita)). TypeScript lo vede già per i campi diretti (partita è Readonly); qui anche per
 //   quelli annidati. Non si vede un elenco della partita preso in una variabile e poi cambiato: lì vale la revisione.
+// - nessun testo italiano scritto nei .ts di src/ fuori dai dizionari (ui/testi-it.ts, ui/testi-en.ts): si cercano nelle stringhe le
+//   lettere accentate e un elenco di parole comuni dell'interfaccia (PAROLE_ITALIANE). Non contano i commenti, i nomi di
+//   variabili e i messaggi per lo sviluppatore (dentro new Error(...), console.*(...), need(...), throw); le altre eccezioni sono
+//   elencate in FILE_CON_TESTI con il motivo. I18N_IT e I18N_EN si usano solo in ui/testi.ts (T è l'unico accesso);
 // - nessun ciclo di import in src/ (anche con gli import di soli tipi);
 // - i livelli (CONTESTO_SVILUPPO.md, sezione 6): un file importa solo da livelli più bassi. Livelli: 0 tipi/, regole/,
 //   stili/; 1 stato/, dati/; 2 ui/ base (i file in ui/ tranne navigazione.ts); 3 ui/componenti/; 4 ui/finestre/;
@@ -59,6 +63,21 @@ const CSS_INDEX = 'src/stili/indice.ts';
 const RAW_MODULE = 'src/ui/finestre/test-regolazioni-lettura.ts';
 // Righe massime di un file di src/
 const MAX_LINES = 500;
+// Testi dell'interfaccia: i dizionari sono gli unici file di src/ in cui si scrive testo italiano; T e Testi si prendono da ui/testi.ts
+const DIZIONARI = new Set(['src/ui/testi-it.ts', 'src/ui/testi-en.ts']);
+const ACCESSO_TESTI = 'src/ui/testi.ts';
+// File con testo italiano ammesso fuori dai dizionari, con il motivo
+const FILE_CON_TESTI = new Map([
+  ['src/dati/controllo.ts', 'messaggi di controllo dei dati (cards.json, nemesis.json...): vanno solo in console, per chi sviluppa'],
+  ['src/ui/finestre/test-regolazioni-lettura.ts', 'testo CSS da incollare nei file dei CSS (Modalità test); i nomi e i gruppi del pannello vengono dai commenti dei CSS, scritti in italiano']
+]);
+// Parole comuni dell'interfaccia: una stringa che ne contiene una (intera) è considerata testo italiano, come ogni stringa con lettere accentate
+const PAROLE_ITALIANE = ['carta', 'carte', 'turno', 'turni', 'annulla', 'chiudi', 'esci', 'mazzo', 'nemesi', 'giocatore', 'giocatori',
+  'pesca', 'partita', 'vita', 'scarti', 'opzioni', 'riprova', 'continua', 'conferma', 'salva', 'tocca', 'nessuna', 'nessun',
+  'mancante', 'della', 'dello', 'delle', 'nella', 'non', 'sono', 'senza', 'deve', 'essere'];
+const TESTO_ITALIANO = new RegExp('[àèéìòùÀÈÉÌÒÙ]|(?<![A-Za-z])(' + PAROLE_ITALIANE.join('|') + ')(?![A-Za-z])', 'i');
+// Chiamate i cui argomenti sono messaggi per lo sviluppatore, non testi dell'interfaccia
+const CHIAMATE_DI_SERVIZIO = new Set(['need']);
 // Il coordinatore, l'unico che mostra e nasconde i blocchi fissi
 const NAV = 'src/ui/navigazione.ts';
 // I blocchi fissi (nomi degli elementi in ui/pagina.ts e id in index.html)
@@ -243,6 +262,38 @@ for (const { f, code, ast } of parsed) {
       if (!isKey) problems.push(`${rel}:${lineOf(code, n.start)}: regole pure: nome non permesso: ${n.name}`);
     }
   });
+  // Testi italiani: solo nei dizionari. Si scorrono le stringhe con gli antenati, per saltare i messaggi per lo sviluppatore
+  if (!DIZIONARI.has(rel) && !FILE_CON_TESTI.has(rel)) {
+    const servizio = anc => anc.some(a => a.type === 'ThrowStatement'
+      || (a.type === 'NewExpression' && a.callee.type === 'Identifier' && /Error$/.test(a.callee.name))
+      || (a.type === 'CallExpression' && ((a.callee.type === 'Identifier' && CHIAMATE_DI_SERVIZIO.has(a.callee.name))
+        || (a.callee.type === 'MemberExpression' && a.callee.object.type === 'Identifier' && a.callee.object.name === 'console'))));
+    (function scorri(n, anc) {
+      if (!n || typeof n.type !== 'string') return;
+      const testo = n.type === 'Literal' && typeof n.value === 'string' ? n.value : n.type === 'TemplateElement' ? n.value.cooked : null;
+      const ultimo = anc[anc.length - 1];
+      const percorso = ultimo && /^(ImportDeclaration|ExportNamedDeclaration|ExportAllDeclaration)$/.test(ultimo.type);
+      // Identificatori, percorsi, selettori e nomi di classe (solo minuscole, cifre e segni: "fascia-turno", ".ae-queue-item")
+      // non sono testi
+      // e il markup SVG ("<svg ...>", "<path ...>")
+      const tecnico = /^[a-z0-9_./#:\[\]="'>*~+()-]+$/.test(testo || '') || /^\s*<(svg|path|rect|circle|\/svg)\b/.test(testo || '');
+      if (testo && TESTO_ITALIANO.test(testo) && !percorso && !tecnico && !servizio(anc)) {
+        problems.push(`${rel}:${lineOf(code, n.start)}: testo italiano fuori dai dizionari (ui/testi-it.ts, ui/testi-en.ts): "${testo.slice(0, 40)}"`);
+      }
+      for (const k of Object.keys(n)) {
+        if (k === 'type' || k === 'start' || k === 'end') continue;
+        const v = n[k];
+        if (Array.isArray(v)) v.forEach(x => scorri(x, [...anc, n]));
+        else if (v && typeof v.type === 'string') scorri(v, [...anc, n]);
+      }
+    })(ast, []);
+  }
+  // I18N_IT e I18N_EN si usano solo per costruire il dizionario (ui/testi.ts): nei moduli si usa T
+  if (!DIZIONARI.has(rel) && rel !== ACCESSO_TESTI) {
+    visit(ast, n => {
+      if (n.type === 'Identifier' && (n.name === 'I18N_IT' || n.name === 'I18N_EN')) problems.push(`${rel}:${lineOf(code, n.start)}: ${n.name} si usa solo in ${ACCESSO_TESTI}: nei moduli si usa T`);
+    });
+  }
   // Eccezioni ai tipi: ognuna con il motivo sulla stessa riga
   code.split(/\r?\n/).forEach((l, i) => {
     const m = l.match(/@ts-(expect-error|ignore|nocheck)(.*)$/);

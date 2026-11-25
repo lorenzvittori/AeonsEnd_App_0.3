@@ -11,7 +11,7 @@ import { isDrawStep } from '../src/regole/turno-nemesi.ts';
 import { DRAW_UID } from '../src/ui/pagina.ts';
 import { actionText, variantePartita } from '../src/ui/partita-variante.ts';
 import type { UiPerVariante } from '../src/ui/partita-variante.ts';
-import { T } from '../src/ui/testi.ts';
+import { DIZIONARI } from '../src/ui/testi.ts';
 import type { BozzaCarta } from '../src/tipi/partita.ts';
 import { cards, deckSetup, nemeses, products, seeded, must } from './aiuto.ts';
 
@@ -59,7 +59,9 @@ function turnoNemesiConCarte(): boolean {
   return partita.resolving && !isDrawStep(partita) && partita.newIndex < 0 && partita.queue.length > 1;
 }
 
-describe('variantePartita()', () => {
+// Le prove si ripetono in italiano e in inglese: variantePartita riceve i testi come parametro
+describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePartita() in %s', (_lingua, T) => {
+  const variante = (p: Parameters<typeof variantePartita>[0], ui: UiPerVariante) => variantePartita(p, ui, T);
   beforeAll(() => {
     caricaCatalogo({ cards, nemeses, deckSetup, products, nemesisArt: {} });
     preferenze.collection = new Set(Object.keys(products));
@@ -74,7 +76,7 @@ describe('variantePartita()', () => {
 
   it('"Crea mazzo": cursore al posto del pulsante, stessa disposizione del turno giocatori', () => {
     for (const drafts of [new Map<number, BozzaCarta>(), conModifiche()]) {
-      const v = variantePartita(partita, uiDi({ deckBuilding: true, drafts }));
+      const v = variante(partita, uiDi({ deckBuilding: true, drafts }));
       expect(v.momento).toBe('crea-mazzo');
       expect(v.azione).toBe('cursore');
       expect(v.interattivi).toBe(true);
@@ -84,21 +86,21 @@ describe('variantePartita()', () => {
   });
 
   it('turno giocatori senza modifiche: "Pesca carta turno", poi "Fine turno"', () => {
-    let v = variantePartita(partita, uiDi());
+    let v = variante(partita, uiDi());
     expect(v).toEqual({ momento: 'giocatori', interattivi: true, carteGrandi: 'coda', azione: 'pesca-carta-turno',
       testo: T.drawTurnCard, annullaModifiche: false });
     // Esce un giocatore: si resta nel turno giocatori
     finoA(() => !partita.resolving && !P.awaitingTurnCard());
-    v = variantePartita(partita, uiDi());
+    v = variante(partita, uiDi());
     expect(v.momento).toBe('giocatori');
     expect(v.azione).toBe('fine-turno');
     expect([T.endTurn, T.endTurnShuffle]).toContain(v.testo);
     // Durante il mazzo dei turni mischiato: "Fine turno · Mischia mazzo"
-    expect(variantePartita(partita, uiDi({ trackShuffle: true })).testo).toBe(T.endTurnShuffle);
+    expect(variante(partita, uiDi({ trackShuffle: true })).testo).toBe(T.endTurnShuffle);
   });
 
   it('turno giocatori con modifiche non salvate: "Salva modifiche" e "Annulla modifiche"', () => {
-    const v = variantePartita(partita, uiDi({ drafts: conModifiche() }));
+    const v = variante(partita, uiDi({ drafts: conModifiche() }));
     expect(v).toEqual({ momento: 'giocatori', interattivi: true, carteGrandi: 'coda', azione: 'salva-modifiche',
       testo: T.saveChanges, annullaModifiche: true });
   });
@@ -107,31 +109,31 @@ describe('variantePartita()', () => {
     finoA(turnoNemesiConCarte);
     const active = must(partita.queue[partita.currentIndex], 'carta da risolvere');
     for (const drafts of [new Map<number, BozzaCarta>(), conModifiche()]) {
-      const v = variantePartita(partita, uiDi({ drafts, viewedUid: active.uid }));
+      const v = variante(partita, uiDi({ drafts, viewedUid: active.uid }));
       expect(v).toEqual({ momento: 'nemesi', interattivi: false, carteGrandi: 'carosello', azione: 'risolvi',
-        testo: actionText(active, false, P.turnRoundOver()), annullaModifiche: false });
+        testo: actionText(active, false, P.turnRoundOver(), T), annullaModifiche: false });
     }
     // Nessuna carta guardata ancora: si mostra quella da risolvere
-    expect(variantePartita(partita, uiDi()).azione).toBe('risolvi');
+    expect(variante(partita, uiDi()).azione).toBe('risolvi');
   });
 
   it('turno nemesi, si guarda un\'altra carta: "Torna alla carta da risolvere"', () => {
     finoA(turnoNemesiConCarte);
     const other = must(partita.queue.find((e, i) => i !== partita.currentIndex), 'altra carta');
-    const v = variantePartita(partita, uiDi({ viewedUid: other.uid }));
+    const v = variante(partita, uiDi({ viewedUid: other.uid }));
     expect(v.momento).toBe('nemesi');
     expect(v.azione).toBe('torna');
     expect(v.testo).toBe(T.backToActive);
     // Mentre la carta appena risolta resta in primo piano (holdUid) non è un'anteprima
-    expect(variantePartita(partita, uiDi({ viewedUid: other.uid, holdUid: other.uid })).azione).toBe('risolvi');
+    expect(variante(partita, uiDi({ viewedUid: other.uid, holdUid: other.uid })).azione).toBe('risolvi');
   });
 
   it('passo Pesca: carta coperta, "Pesca" o "Torna alla carta da pescare"', () => {
     finoA(() => isDrawStep(partita) && partita.queue.length > 0);
-    let v = variantePartita(partita, uiDi({ viewedUid: DRAW_UID }));
+    let v = variante(partita, uiDi({ viewedUid: DRAW_UID }));
     expect(v).toEqual({ momento: 'pesca', interattivi: false, carteGrandi: 'carta-coperta', azione: 'pesca',
       testo: T.ctaDraw, annullaModifiche: false });
-    v = variantePartita(partita, uiDi({ viewedUid: partita.queue[0].uid, drafts: conModifiche() }));
+    v = variante(partita, uiDi({ viewedUid: partita.queue[0].uid, drafts: conModifiche() }));
     expect(v.momento).toBe('pesca');
     expect(v.azione).toBe('torna');
     expect(v.testo).toBe(T.backToDraw);
@@ -140,17 +142,50 @@ describe('variantePartita()', () => {
   it('carta appena pescata: "Metti in gioco" (o "Effetto risolto" per un attacco)', () => {
     finoA(() => partita.resolving && partita.newIndex >= 0);
     const drawn = partita.queue[partita.newIndex];
-    const v = variantePartita(partita, uiDi({ viewedUid: drawn.uid }));
+    const v = variante(partita, uiDi({ viewedUid: drawn.uid }));
     expect(v.momento).toBe('nemesi');
     expect(v.azione).toBe('risolvi');
-    expect(v.testo).toBe(actionText(drawn, true, P.turnRoundOver()));
+    expect(v.testo).toBe(actionText(drawn, true, P.turnRoundOver(), T));
   });
 
   it('è pura: non cambia la partita né lo stato dell\'interfaccia', () => {
     finoA(turnoNemesiConCarte);
     const u = uiDi({ drafts: conModifiche(), viewedUid: partita.queue[0].uid });
     const prima = JSON.stringify({ partita, u, drafts: [...u.drafts] });
-    variantePartita(partita, u);
+    variante(partita, u);
     expect(JSON.stringify({ partita, u, drafts: [...u.drafts] })).toBe(prima);
+  });
+});
+
+// I testi dei pulsanti principali in inglese (esatti: sono la scritta che si legge sul pulsante)
+describe('variantePartita() in inglese: testo del pulsante principale', () => {
+  const EN = DIZIONARI.en;
+  beforeAll(() => {
+    caricaCatalogo({ cards, nemeses, deckSetup, products, nemesisArt: {} });
+    preferenze.collection = new Set(Object.keys(products));
+  });
+  beforeEach(() => {
+    vi.stubGlobal('localStorage', { getItem: () => null, setItem: () => {}, removeItem: () => {} });
+    fissa(5);
+    preferenze.settings = { players: 2, nemesis: 'Maggoth', battleMode: true, mergeCollection: true };
+    P.nuovaPartita();
+  });
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+  it('turno giocatori: Draw turn card, Save changes, End turn', () => {
+    expect(variantePartita(partita, uiDi(), EN).testo).toBe('Draw turn card');
+    expect(variantePartita(partita, uiDi({ drafts: conModifiche() }), EN).testo).toBe('Save changes');
+    finoA(() => !partita.resolving && !P.awaitingTurnCard());
+    expect(['End turn · Draw turn order', 'End turn · Shuffle deck']).toContain(variantePartita(partita, uiDi(), EN).testo);
+    expect(variantePartita(partita, uiDi({ trackShuffle: true }), EN).testo).toBe('End turn · Shuffle deck');
+  });
+
+  it('turno nemesi: Draw, Back to the card to draw / resolve', () => {
+    finoA(() => isDrawStep(partita) && partita.queue.length > 0);
+    expect(variantePartita(partita, uiDi({ viewedUid: DRAW_UID }), EN).testo).toBe('Draw');
+    expect(variantePartita(partita, uiDi({ viewedUid: partita.queue[0].uid }), EN).testo).toBe('Back to the card to draw');
+    finoA(turnoNemesiConCarte);
+    const other = must(partita.queue.find((e, i) => i !== partita.currentIndex), 'altra carta');
+    expect(variantePartita(partita, uiDi({ viewedUid: other.uid }), EN).testo).toBe('Back to the card to resolve');
   });
 });
