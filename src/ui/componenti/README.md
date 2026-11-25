@@ -19,6 +19,9 @@ componenti. Ogni pezzo con stile ha il suo `.css` accanto (importato da `stili/i
 - `scarti.ts` + `.css`: la pila degli scarti `#discard` (dalla più recente, tocco = carta grande in sola lettura).
 - `sfondi.ts`: sfondo dell'app (3: `BACKGROUNDS`), sfondo del box di Gravehold (`GRAVEHOLD_BGS`: Città o Torre) e dorso delle carte
   (29, `CARD_BACKS` in `ui/pagina.ts`, `setCardBack`): pulsanti con anteprima usati dal menu laterale e dalle Opzioni. Scelte nel browser, mai nell'undo.
+- `token-volo.ts`: le animazioni dei token (il potere da risolvere che pulsa e diventa grigio, i token della carta pescata che compaiono)
+  su una copia del token messa sul `body`, sopra tutta la pagina (`avviaVolo`, `riallineaVoli`; fotogrammi in `componenti.css` e
+  `schermate/turno-nemesi.css`): il carosello e la fascia piccola scorrono di lato e taglierebbero ciò che sborda.
 - `testata.ts` + `.css`: la testata (zona 1). `vite-scrub.ts`: conti puri dello scrubbing. `vite.ts` + `.css`: la riga delle vite (zona 4).
 
 ## Da sapere prima di modificare

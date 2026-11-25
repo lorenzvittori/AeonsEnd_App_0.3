@@ -30,3 +30,11 @@
 /* Più di 5 token: un token e il numero */
 .ae-tokens.is-count { gap: .25em; }
 .ae-token-count { font-variant-numeric: tabular-nums; }
+/* Animazioni dei token su una copia sopra tutta la pagina (token-volo.ts): il token vero resta invisibile mentre la copia
+   si muove (i fotogrammi ae-token-spend e ae-pop sono in turno-nemesi.css); finita l'animazione la copia sparisce.
+   Potere da risolvere: a fine animazione il token resta grigio, sulla carta grande e sulla fascia */
+.ae-token.is-in-volo { visibility: hidden; }
+.ae-token-volo { position: fixed; z-index: 70; margin: 0; pointer-events: none; }
+.ae-token-volo.is-spend { animation: ae-token-spend 1.1s ease-in-out both; }
+.ae-token-volo.is-pop { animation: ae-pop .35s cubic-bezier(.2, 1.4, .4, 1) both; }
+.ae-token.is-spent { filter: grayscale(1) brightness(.6); opacity: .55; }

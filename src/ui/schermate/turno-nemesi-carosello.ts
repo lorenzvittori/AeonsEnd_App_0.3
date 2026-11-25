@@ -3,7 +3,8 @@
 // misure), carta pescata che si gira, carta da pescare che arriva dal mazzo, pulsante principale quando cambia la carta
 // mostrata. File di supporto di turno-nemesi.ts.
 // Livello 5 (ui/schermate/). Dipende da: regole/turno-nemesi.ts, stato/partita.ts (lettura), ui/ base (testi, pagina,
-// dom, partita-variante), ui/componenti (animazioni, componenti, dialoghi, misure, pulsante-principale, testata).
+// dom, partita-variante), ui/componenti (animazioni, componenti, dialoghi, misure, pulsante-principale, testata,
+// token-volo).
 // Usato da: turno-nemesi.ts, navigazione (misure al ridimensionamento), main.ts (app.isDrawStep, app.centredFocusUid...).
 import { entryByUid, hpUnset, partita } from '../../stato/partita.ts';
 import * as Nemesi from '../../regole/turno-nemesi.ts';
@@ -15,6 +16,7 @@ import { button, loadImage } from '../componenti/dialoghi.ts';
 import { altezzaArea, misura, rapportoCarta, sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
 import { disegnaPulsantePrincipale } from '../componenti/pulsante-principale.ts';
 import { dockDeck } from '../componenti/testata.ts';
+import { avviaVolo, riallineaVoli } from '../componenti/token-volo.ts';
 import { el, icon, query } from '../dom.ts';
 import { CARD_BACK, DRAW_MS, DRAW_UID, focusEl, rail, reducedMotion, ui } from '../pagina.ts';
 import type { CartaDaGirare } from '../pagina.ts';
@@ -87,6 +89,43 @@ export function renderResolve(): void {
   // Ridimensiona di nuovo ora che il pulsante in basso è visibile: alla prima carta del turno nemesi il pulsante compare
   // solo dopo il primo calcolo, e la carta sarebbe misurata su uno spazio più alto (uscirebbe in basso)
   sizeFocus(!ui.fromScroll);
+  avviaVoliToken();
+}
+
+// Le animazioni dei token si fanno su una copia messa sopra tutta la pagina (componenti/token-volo.ts), non sul token
+// dentro il carosello o la fascia, che li taglierebbero:
+//   - potere da risolvere: il token da togliere pulsa e diventa grigio (carta grande e fascia, stesso istante);
+//   - carta pescata: i token compaiono uno alla volta dopo la rotazione (e dopo la scritta Tier, se c'è).
+// Si chiama a ogni disegno (un volo già partito non riparte). Con la riduzione del movimento non fa niente: restano le
+// animazioni CSS di sempre (turno-nemesi.css)
+const COMPARSA_MS = [400, 550, 700, 850, 1000];
+const COMPARSA_DURATA = 350;
+const SPEND_DURATA = 1100;
+let rivelazioneN = 0;
+
+function avviaVoliToken(): void {
+  if (partita.newIndex < 0 && ui.autoTokenKey) {
+    const luoghi: [string, HTMLElement, string][] = [
+      ['carta', focusEl, '.ae-focus-status.is-auto-token .ae-token:last-child'],
+      ['fascia', rail, '.ae-status-badge.is-auto-token .ae-token:last-child']
+    ];
+    for (const [luogo, radice, selettore] of luoghi) {
+      avviaVolo({ chiave: `spend:${luogo}:${ui.autoTokenKey}`, trova: () => query(radice, selettore, HTMLElement), animazione: 'is-spend',
+        durata: SPEND_DURATA, inizio: ui.autoTokenAt, nascostoPrima: false, finale: token => token.classList.add('is-spent') });
+    }
+  }
+  focusEl.querySelectorAll('.ae-focus-slide.is-drawing').forEach(slide => {
+    if (!(slide instanceof HTMLElement)) return;
+    const uid = slide.dataset.uid;
+    const attesa = Math.max(0, ui.tierWaitUntil - performance.now());
+    slide.querySelectorAll('.ae-focus-status .ae-token').forEach((_token, i) => {
+      avviaVolo({ chiave: `pop:${rivelazioneN}:${i}`,
+        trova: () => query(focusEl, `.ae-focus-slide[data-uid="${uid}"] .ae-focus-status .ae-token:nth-child(${i + 1})`, HTMLElement),
+        animazione: 'is-pop', durata: COMPARSA_DURATA, inizio: performance.now() + attesa + COMPARSA_MS[Math.min(i, COMPARSA_MS.length - 1)],
+        nascostoPrima: true, finale: () => {} });
+    });
+  });
+  riallineaVoli();
 }
 
 // Carta in primo piano: solo immagine (o retro durante la pesca) e stato numerico. Nessuna etichetta, nome o tipo
@@ -341,6 +380,7 @@ export function flipCard(entry: VoceInGioco, reveal: CartaDaGirare): HTMLDivElem
 export function startReveal(entry: VoceInGioco): void {
   const reveal: CartaDaGirare = { uid: entry.uid, status: 'loading' };
   ui.reveal = reveal;
+  rivelazioneN++;
   loadImage(encodeURI(entry.data.image)).then(ok => {
     if (ui.reveal !== reveal) return;
     reveal.status = ok ? 'ready' : 'error';

@@ -124,10 +124,6 @@
 [data-turno="pesca"] .ae-compact-rail { border-bottom-color: color-mix(in srgb, var(--ae-gold) 60%, transparent); }
 .ae-button.is-draw { background: var(--ae-gold); color: var(--testo-su-oro); letter-spacing: .08em; text-transform: uppercase; }
 
-/* Potere da risolvere: dopo 1 secondo un token sfuma fino a sparire (0,9 s) */
-.ae-focus-status.is-auto-token .ae-token:last-child { animation: ae-token-leave .9s ease-in 1s forwards; }
-@keyframes ae-token-leave { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(.6); } }
-
 /* Attacco appena pescato: lampeggia di rosso (dopo che si è girato) */
 .ae-focus-stage.is-attack-drawn { animation: ae-attack-pulse 1s ease-in-out infinite; }
 /* Carta da risolvere (non i poteri con più di un token): stesso lampeggio rosso */
@@ -138,14 +134,10 @@
   50% { box-shadow: 0 0 calc(var(--cw, 300px) * .12) calc(var(--cw, 300px) * .03) color-mix(in srgb, var(--attacco-alone) 95%, transparent); }
 }
 
-/* Carta pescata: la riga sopra è nascosta mentre carica; dopo la rotazione compaiono i token uno alla volta o la vita */
+/* Carta pescata: la riga sopra è nascosta mentre carica; dopo la rotazione compaiono la vita o i token uno alla volta (i
+   token su una copia sopra la pagina, token-volo.ts; con la riduzione del movimento sul token stesso, più sotto) */
 .ae-focus-slide.is-draw-loading .ae-focus-status { visibility: hidden; }
 .ae-focus-slide.is-drawing .ae-focus-status.is-hp > * { animation: ae-pop .4s cubic-bezier(.2, 1.4, .4, 1) .4s both; }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token { animation: ae-pop .35s cubic-bezier(.2, 1.4, .4, 1) .4s both; }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(2) { animation-delay: .55s; }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(3) { animation-delay: .7s; }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(4) { animation-delay: .85s; }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(n+5) { animation-delay: 1s; }
 @keyframes ae-pop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
 
 /* Scritta "Tier N" più marcata */
@@ -159,7 +151,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ae-focus-stage.is-attack-drawn, .ae-focus-stage.is-to-resolve { animation: none; box-shadow: 0 0 16px 4px color-mix(in srgb, var(--attacco-alone) 85%, transparent); }
-  .ae-focus-status.is-auto-token .ae-token:last-child { animation-duration: .01s; }
   .ae-tier-banner-text { animation: none; }
 }
 /* Turno nemesi: la zona 3 è una riga che contiene la fascia piccola */
@@ -173,11 +164,6 @@
 
 /* Carta pescata: token e vita compaiono dopo il banner Tier (--ae-tier-wait lo imposta turno-nemesi.ts) */
 .ae-focus-slide.is-drawing .ae-focus-status.is-hp > * { animation-delay: calc(var(--ae-tier-wait, 0ms) + .4s); }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token { animation-delay: calc(var(--ae-tier-wait, 0ms) + .4s); }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(2) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .55s); }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(3) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .7s); }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(4) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .85s); }
-.ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(n+5) { animation-delay: calc(var(--ae-tier-wait, 0ms) + 1s); }
 
 /* Carta da pescare: si tocca per pescare */
 .ae-focus-slide--draw .ae-focus-stage { cursor: pointer; }
@@ -194,21 +180,15 @@
 /* Pulsante principale "Salva modifiche": dorato */
 .ae-button.is-save { background: var(--ae-gold); color: var(--testo-su-oro); border-color: var(--ae-gold); text-shadow: none; letter-spacing: .04em; }
 
-
-/* Fascia del turno nemesi: il token del potere da risolvere sfuma insieme a quello della carta grande */
-.ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child { animation: ae-token-leave .9s ease-in var(--ae-token-delay, 1s) forwards; }
 /* Scritta Tier 2/3 più veloce del 20% (1,76 s invece di 2,2 s) */
 .ae-tier-banner { animation-duration: 1.76s; }
 .ae-tier-banner-text { animation-duration: 1.76s; }
-/* Potere da risolvere: il token non sparisce, diventa grigio (carta grande e fascia) */
-@keyframes ae-token-gray { from { filter: none; opacity: 1; } to { filter: grayscale(1) brightness(.6); opacity: .55; } }
-.ae-focus-status.is-auto-token .ae-token:last-child { animation: ae-token-gray .9s ease-in 1s forwards; }
-.ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child { animation: ae-token-gray .9s ease-in var(--ae-token-delay, 1s) forwards; }
 /* Niente barra rossa sulla carta da risolvere nella fascia */
 .ae-compact-rail .ae-queue-item .ae-card-art::after { display: none; }
 
 /* Potere da risolvere: il token da togliere lampeggia subito con un bagliore dorato (due impulsi), poi diventa grigio
-   in fretta. Nessuna attesa iniziale; uguale nella carta grande e nella fascia */
+   in fretta. Nessuna attesa iniziale; uguale nella carta grande e nella fascia. L'animazione la fa una copia del token
+   sopra tutta la pagina (token-volo.ts, componenti.css: .ae-token-volo.is-spend); qui i fotogrammi */
 @keyframes ae-token-spend {
   0% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); opacity: 1; }
   15% { transform: scale(1.3); filter: drop-shadow(0 0 8px var(--token-bagliore)) brightness(1.4); }
@@ -217,11 +197,18 @@
   62% { transform: scale(1); filter: drop-shadow(0 0 2px color-mix(in srgb, var(--token-bagliore) 40%, transparent)); opacity: 1; }
   100% { transform: scale(1); filter: grayscale(1) brightness(.6); opacity: .55; }
 }
-.ae-focus-status.is-auto-token .ae-token:last-child { animation: ae-token-spend 1.1s ease-in-out var(--ae-token-delay, 0s) both; }
-.ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child { animation: ae-token-spend 1.1s ease-in-out var(--ae-token-delay, 0s) both; }
-.ae-compact-rail .ae-status-badge.is-auto-token { overflow: visible; }
+/* Con la riduzione del movimento niente copia: le animazioni restano sul token stesso, il potere diventa grigio subito
+   (.01s, dopo l'attesa --ae-token-delay) e i token della carta pescata compaiono uno alla volta dopo il banner Tier
+   (--ae-tier-wait lo imposta turno-nemesi.ts) */
 @media (prefers-reduced-motion: reduce) {
-  .ae-focus-status.is-auto-token .ae-token:last-child, .ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child { animation-duration: .01s; }
+  .ae-focus-status.is-auto-token .ae-token:last-child, .ae-compact-rail .ae-status-badge.is-auto-token .ae-token:last-child {
+    animation: ae-token-spend .01s ease-in-out var(--ae-token-delay, 0s) both;
+  }
+  .ae-focus-slide.is-drawing .ae-focus-status .ae-token { animation: ae-pop .35s cubic-bezier(.2, 1.4, .4, 1) calc(var(--ae-tier-wait, 0ms) + .4s) both; }
+  .ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(2) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .55s); }
+  .ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(3) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .7s); }
+  .ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(4) { animation-delay: calc(var(--ae-tier-wait, 0ms) + .85s); }
+  .ae-focus-slide.is-drawing .ae-focus-status .ae-token:nth-child(n+5) { animation-delay: calc(var(--ae-tier-wait, 0ms) + 1s); }
 }
 
 /* Fascia piccola: NUOVA sulla carta da pescare (dorso) in alto a destra, dentro la carta */
