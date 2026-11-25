@@ -4,7 +4,7 @@
 // Livello 7. Dipende da: stato/ (catalogo, partita), dati/ (dati, controllo), ui/ (pagina, testi, dom, dialoghi, banner,
 // schermate/menu e nuova-partita, navigazione). Usato da: main.ts (avvio, ultimo modulo).
 
-import { I18N_IT } from './ui/testi.ts';
+import { T } from './ui/testi.ts';
 import { loadJson } from './dati/dati.ts';
 import { checkCards, checkDeckSetup, checkNemeses, checkNemesisArt, checkProducts,
   reportProblems } from './dati/controllo.ts';
@@ -61,7 +61,7 @@ export async function init(): Promise<void> {
     const list = document.getElementById('nemesis-list');
     if (list) list.innerHTML = '';
     // Sotto il messaggio, il motivo tecnico (utile per capire il problema su un dispositivo che non si può ispezionare)
-    showStartError(I18N_IT.loadError + '\n(' + (err instanceof Error && err.message ? err.message : String(err)) + ')', true);
+    showStartError(T.loadError + '\n(' + (err instanceof Error && err.message ? err.message : String(err)) + ')', true);
   } finally {
     initRunning = false;
   }
@@ -70,7 +70,7 @@ export async function init(): Promise<void> {
 // Codice eseguito all'avvio, nell'ordine di sempre
 export function avvio(): void {
   // Telefono in orizzontale: lo spazio in altezza non basta per le carte; si chiede di girarlo (CSS: .ae-rotate)
-  document.body.appendChild(el('div', 'ae-rotate', I18N_IT.rotatePhone));
+  document.body.appendChild(el('div', 'ae-rotate', T.rotatePhone));
 
   // Errore di caricamento dei dati: "Riprova" rilegge tutto
   retryBtn.addEventListener('click', init);

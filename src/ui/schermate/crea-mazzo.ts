@@ -5,7 +5,7 @@
 // pagina, dom, ridisegno), ui/componenti (animazioni, componenti, dialoghi, testata), crea-mazzo-cursore.ts (supporto).
 // Usato da: navigazione.
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { battleOf } from '../../dati/dati.ts';
 import { deckPlan, nuovaPartita } from '../../stato/partita.ts';
 import { cardArt } from '../componenti/componenti.ts';
@@ -40,9 +40,9 @@ export function showDeckBuild(): void {
   layer.id = 'deck-build';
   const grid = el('div', 'deck-build-grid');
   grid.appendChild(el('span', 'deck-build-corner'));
-  KINDS.forEach(kind => grid.appendChild(el('span', 'deck-build-head', I18N_IT.deckBuildKinds[kind])));
+  KINDS.forEach(kind => grid.appendChild(el('span', 'deck-build-head', T.deckBuildKinds[kind])));
   [1, 2, 3].forEach(tier => {
-    grid.appendChild(el('span', 'deck-build-tier', I18N_IT.tierN(tier)));
+    grid.appendChild(el('span', 'deck-build-tier', T.tierN(tier)));
     KINDS.forEach(kind => {
       const plan = deckPlan.find(p => p.tier === tier && p.kind === kind) || { count: 0 };
       const pile = el('div', 'deck-build-pile' + (plan.count ? '' : ' is-empty'));
@@ -50,7 +50,7 @@ export function showDeckBuild(): void {
       pile.dataset.kind = kind;
       pile.dataset.left = String(plan.count);
       pile.dataset.count = String(plan.count);
-      pile.setAttribute('aria-label', I18N_IT.deckBuildPile(plan.count, I18N_IT.deckBuildKinds[kind].toLowerCase(), tier));
+      pile.setAttribute('aria-label', T.deckBuildPile(plan.count, T.deckBuildKinds[kind].toLowerCase(), tier));
       if (kind === 'specific') {
         // A faccia in su, a ventaglio (come le carte in mano); si toccano per vederle grandi
         pile.classList.add('is-fan');
@@ -91,7 +91,7 @@ export function showDeckBuild(): void {
       grid.appendChild(pile);
     });
   });
-  layer.append(el('h2', 'deck-build-title', I18N_IT.deckBuildTitle), grid);
+  layer.append(el('h2', 'deck-build-title', T.deckBuildTitle), grid);
   mainEl.appendChild(layer);
 }
 
@@ -103,7 +103,7 @@ export function openSpecificViewer(tier: number): void {
   if (!cards.length) return;
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.specificTitle, preferenze.settings.nemesis, cancel, { displayTitle: false });
+  const dialog = dialogShell(T.specificTitle, preferenze.settings.nemesis, cancel, { displayTitle: false });
   dialog.classList.add('ae-spec-viewer');
   const nav = el('div', 'ae-spec-tiers');
   const dots: { d: HTMLSpanElement; group: HTMLButtonElement }[] = [];
@@ -121,7 +121,7 @@ export function openSpecificViewer(tier: number): void {
     const row = el('span', 'ae-spec-dots');
     row.setAttribute('aria-hidden', 'true');
     ofTier.forEach(() => { const d = el('span'); row.appendChild(d); dots.push({ d, group }); });
-    group.append(el('span', 'ae-spec-tier-name', I18N_IT.tierN(t)), row);
+    group.append(el('span', 'ae-spec-tier-name', T.tierN(t)), row);
     group.addEventListener('click', () => goTo(cards.findIndex(c => c.t === t), true));
     nav.appendChild(group);
   });
@@ -153,7 +153,7 @@ export function openSpecificViewer(tier: number): void {
   };
   track.addEventListener('scroll', () => mark(indexNow()), { passive: true });
   const footer = el('div', 'ae-modal-footer');
-  footer.appendChild(button(I18N_IT.close, 'secondary', cancel));
+  footer.appendChild(button(T.close, 'secondary', cancel));
   dialog.append(nav, track, footer);
   close = openModal(dialog, { onCancel: cancel });
   goTo(Math.max(0, cards.findIndex(c => c.t === tier)), false);
@@ -185,12 +185,12 @@ export function openGameSetup(): void {
   if (!ui.deckBuilding || ui.isTransitioning) return;
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.gameSetupTitle, '', cancel, { displayTitle: false });
+  const dialog = dialogShell(T.gameSetupTitle, '', cancel, { displayTitle: false });
   dialog.classList.add('ae-game-setup');
   const head = el('div', 'start-choice-head ae-game-setup-head');
   head.appendChild(el('p', 'start-choice-info', preferenze.settings.nemesis || ''));
   const battleNo = battleOf(preferenze.settings.nemesis);
-  head.appendChild(el('p', 'ae-game-setup-battle', battleNo ? I18N_IT.battle(battleNo) : I18N_IT.battleMissing));
+  head.appendChild(el('p', 'ae-game-setup-battle', battleNo ? T.battle(battleNo) : T.battleMissing));
   const art = preferenze.settings.nemesis !== null ? catalogo.nemesisArt[preferenze.settings.nemesis] : undefined;
   head.classList.toggle('has-art', !!art);
   if (art) {
@@ -212,7 +212,7 @@ export function openGameSetup(): void {
       const b = el('button', '', String(value));
       b.type = 'button';
       b.setAttribute('aria-pressed', String(value === preferenze.settings.players));
-      b.setAttribute('aria-label', I18N_IT.players(value));
+      b.setAttribute('aria-label', T.players(value));
       b.addEventListener('click', () => {
         if (preferenze.settings.players === value) return;
         preferenze.settings.players = value;
@@ -230,7 +230,7 @@ export function openGameSetup(): void {
   };
   renderChoices();
   const footer = el('div', 'ae-modal-footer');
-  footer.appendChild(button(I18N_IT.close, 'secondary', cancel));
+  footer.appendChild(button(T.close, 'secondary', cancel));
   dialog.append(head, label, choices, footer);
   close = openModal(dialog, { onCancel: cancel });
 }

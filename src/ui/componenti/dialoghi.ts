@@ -4,7 +4,7 @@
 // Livello 3 (ui/componenti/). Dipende da: ui/ base (testi, pagina, dom). Usato da: quasi tutti i moduli di ui/,
 // avvio.ts.
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { app, dialogRoot, discardLayer, liveRegion, startLayer, toastRoot } from '../pagina.ts';
 import { el, icon } from '../dom.ts';
 
@@ -94,7 +94,7 @@ export function dialogShell(titleText: string, kindText: string | null | undefin
   if (kindText) titles.appendChild(el('p', 'ae-modal-kind', kindText));
   const x = el('button', 'ae-icon-button');
   x.type = 'button';
-  x.setAttribute('aria-label', I18N_IT.close);
+  x.setAttribute('aria-label', T.close);
   x.appendChild(icon('close'));
   x.addEventListener('click', onClose);
   header.append(titles, x);

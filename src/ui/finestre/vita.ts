@@ -13,12 +13,12 @@ import { livesRow, renderLifeDigits } from '../componenti/vite.ts';
 import { el, need, query } from '../dom.ts';
 import { reducedMotion, ui } from '../pagina.ts';
 import { mostraFinePartita, richiediRidisegno } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 export function openLifeDialog(kind: TipoVita): void {
   if (ui.isTransitioning || modals.length) return;
   const grave = kind === 'grave';
-  const name = grave ? I18N_IT.graveholdName : (preferenze.settings.nemesis || '');
+  const name = grave ? T.graveholdName : (preferenze.settings.nemesis || '');
   const original = grave ? partita.graveLife : partita.nemesisLife;
   // Tetto: il valore iniziale, o la vita attuale se è più alta (regole/vite.ts)
   const cap = Vite.lifeCap(original, grave ? GRAVEHOLD_LIFE : nemesisStartLife());
@@ -30,7 +30,7 @@ export function openLifeDialog(kind: TipoVita): void {
   const dialog = el('div', 'ae-life-modal ae-life-modal--' + kind);
   dialog.setAttribute('role', 'dialog');
   dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-label', `${name}, ${I18N_IT.lifeKind}`);
+  dialog.setAttribute('aria-label', `${name}, ${T.lifeKind}`);
   const box = livesRow && query(livesRow, `[data-kind="${kind}"]`, HTMLElement);
   const bg = box && box.style.getPropertyValue('--ae-life-bg');
   if (bg) { dialog.style.setProperty('--ae-life-bg', bg); dialog.classList.add('has-bg'); }
@@ -52,7 +52,7 @@ export function openLifeDialog(kind: TipoVita): void {
     controls.appendChild(b);
   });
   // Sopra la pillola, in Cinzel, "Gravehold" o "Nemesi" (fa parte della finestra: si ingrandisce con lei)
-  const title = el('h2', 'ae-life-modal-title', grave ? I18N_IT.graveholdName : I18N_IT.nemesisWord);
+  const title = el('h2', 'ae-life-modal-title', grave ? T.graveholdName : T.nemesisWord);
   dialog.append(title, number, controls);
   let shown: number | null = null;
   function update() {

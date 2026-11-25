@@ -16,7 +16,7 @@ import { el, icon, need, pageEl, query } from '../dom.ts';
 import { ensureCollectionButton } from '../finestre/opzioni.ts';
 import { byId, reducedMotion, resumeBtn, startBtn } from '../pagina.ts';
 import { vaiA } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { CHEVRON_SVG, chevronButton, nemesisPreviewOpen, renderNemesisPreview, segnaAnteprimaChiusa,
   setNemesisPreview } from './nuova-partita-anteprima.ts';
 
@@ -28,7 +28,7 @@ export function renderPlayers(): void {
     const b = el('button', '', String(value));
     b.type = 'button';
     b.setAttribute('aria-pressed', String(value === preferenze.settings.players));
-    b.setAttribute('aria-label', I18N_IT.players(value));
+    b.setAttribute('aria-label', T.players(value));
     b.addEventListener('click', () => {
       preferenze.settings.players = value;
       renderPlayers();
@@ -65,7 +65,7 @@ export function renderBosses(): void {
     b.type = 'button';
     b.setAttribute('aria-pressed', String(info.name === preferenze.settings.nemesis));
     const tags = el('span', 'nemesis-tags');
-    tags.appendChild(el('span', '', info.battle ? I18N_IT.battle(info.battle) : I18N_IT.battleMissing));
+    tags.appendChild(el('span', '', info.battle ? T.battle(info.battle) : T.battleMissing));
     const art = catalogo.nemesisArt[info.name];
     if (art) {
       // Parte dell'illustrazione a destra del pulsante (come nella wiki)
@@ -98,7 +98,7 @@ export function renderBosses(): void {
     if (info.name === preferenze.settings.nemesis) {
       item.classList.add('is-selected');
       // Freccia verso il basso al centro del pulsante scelto: apre la carta della nemesi
-      if (art) item.appendChild(chevronButton('nemesis-expand', I18N_IT.showNemesisCard(info.name), () => setNemesisPreview(true)));
+      if (art) item.appendChild(chevronButton('nemesis-expand', T.showNemesisCard(info.name), () => setNemesisPreview(true)));
     }
     return item;
   }));
@@ -113,7 +113,7 @@ export function renderBosses(): void {
   if (!unavailable) {
     unavailable = el('ul', 'nemesis-unavailable');
     unavailable.id = 'nemesis-unavailable';
-    unavailable.setAttribute('aria-label', I18N_IT.unavailableNemeses);
+    unavailable.setAttribute('aria-label', T.unavailableNemeses);
     list.after(unavailable);
   }
   unavailable.hidden = others.length === 0;
@@ -124,9 +124,9 @@ export function renderBosses(): void {
     const notOwned = info.battle !== null && !ownsProduct(String(productOfNemesis(info)))
       && catalogo.allCards.some(c => c.category === 'Specific' && c.nemesis === info.name);
     const li = el('li', 'nemesis-locked' + (notOwned ? ' is-not-owned' : ''));
-    li.setAttribute('aria-label', notOwned ? I18N_IT.notInCollectionNemesis(info.name) : I18N_IT.unavailableNemesis(info.name));
+    li.setAttribute('aria-label', notOwned ? T.notInCollectionNemesis(info.name) : T.unavailableNemesis(info.name));
     li.appendChild(el('span', '', info.name));
-    if (notOwned) li.appendChild(el('span', 'nemesis-locked-note', I18N_IT.notInCollection));
+    if (notOwned) li.appendChild(el('span', 'nemesis-locked-note', T.notInCollection));
     return li;
   }));
   updateStartActions();
@@ -160,10 +160,10 @@ export function startSetupHead(): HTMLElement {
   head.id = 'start-setup-head';
   const x = el('button', 'ae-icon-button start-setup-close');
   x.type = 'button';
-  x.setAttribute('aria-label', I18N_IT.backToMenu);
+  x.setAttribute('aria-label', T.backToMenu);
   x.appendChild(icon('close'));
   x.addEventListener('click', () => vaiA('menu'));
-  head.append(el('h1', 'start-setup-title', I18N_IT.newGameTitle), x);
+  head.append(el('h1', 'start-setup-title', T.newGameTitle), x);
   pageEl(document, '.start-box', HTMLElement).prepend(head);
   return head;
 }
@@ -172,10 +172,10 @@ export function startSetupHead(): HTMLElement {
 export function updateStartActions(): void {
   resumeBtn.hidden = true;
   resumeBtn.className = 'ae-button ae-button--full ae-button--secondary start-resume-alt';
-  startBtn.textContent = I18N_IT.startNew;
+  startBtn.textContent = T.startNew;
   startBtn.className = 'ae-button ae-button--full ae-button--primary';
   startBtn.disabled = !preferenze.settings.nemesis || !battleOf(preferenze.settings.nemesis);
-  startBtn.title = startBtn.disabled ? I18N_IT.chooseNemesis : '';
+  startBtn.title = startBtn.disabled ? T.chooseNemesis : '';
   renderDeckOptions();
 }
 
@@ -187,7 +187,7 @@ export function deckOptionsGroup(): HTMLElement {
   const group = el('section', 'start-group start-deck-options');
   group.id = 'deck-options';
   group.setAttribute('aria-labelledby', 'deck-options-label');
-  const label = el('h2', 'start-label', I18N_IT.deckOptions);
+  const label = el('h2', 'start-label', T.deckOptions);
   label.id = 'deck-options-label';
   const row = (key: 'battleMode' | 'mergeCollection', text: string, note: string) => {
     const r = el('label', 'ae-switch-row deck-option');
@@ -210,8 +210,8 @@ export function deckOptionsGroup(): HTMLElement {
   };
   const lockNote = el('p', 'start-note deck-option-lock');
   lockNote.id = 'deck-option-lock';
-  group.append(label, row('battleMode', I18N_IT.battleMode, I18N_IT.battleModeNote),
-    row('mergeCollection', I18N_IT.mergeCollection, I18N_IT.mergeCollectionNote), lockNote);
+  group.append(label, row('battleMode', T.battleMode, T.battleModeNote),
+    row('mergeCollection', T.mergeCollection, T.mergeCollectionNote), lockNote);
   ensureWaveGroup().before(group);
   return group;
 }
@@ -229,7 +229,7 @@ export function renderDeckOptions(): void {
   need(merge.closest('.ae-switch-row'), 'riga di "Unisci"').classList.toggle('is-locked', !!locked);
   merge.setAttribute('aria-describedby', locked ? lockNote.id : '');
   lockNote.hidden = !locked;
-  lockNote.textContent = locked ? I18N_IT.mergeLocked(waveLabel(locked).split(' - ')[0]) : '';
+  lockNote.textContent = locked ? T.mergeLocked(waveLabel(locked).split(' - ')[0]) : '';
   // Riga di avviso prima di "Inizia partita": il mazzo esce più corto di deck-setup.json
   let warn = document.getElementById('deck-short');
   if (!warn) {
@@ -240,12 +240,12 @@ export function renderDeckOptions(): void {
   }
   const short = preferenze.settings.nemesis ? deckShortfall() : null;
   warn.hidden = !short;
-  warn.textContent = short ? I18N_IT.deckShort(short.have, short.want) : '';
+  warn.textContent = short ? T.deckShort(short.have, short.want) : '';
 }
 
 // Wave nella scelta della nemesi: solo quelle della collezione (se nessuna, tutte)
 export function ownedWaves(): string[] {
-  const all = collectionCatalog(I18N_IT.baseBox).map(w => w.wave);
+  const all = collectionCatalog(T.baseBox).map(w => w.wave);
   const owned = all.filter(w => [...need(preferenze.collection, 'collezione')].some(id => waveOfCode(id) === w));
   return owned.length ? owned : all;
 }
@@ -270,7 +270,7 @@ export function ensureWaveGroup(): HTMLElement {
   const group = el('section', 'start-group start-wave');
   group.id = 'wave-group';
   group.setAttribute('aria-labelledby', 'wave-label');
-  const label = el('h2', 'start-label', I18N_IT.wave);
+  const label = el('h2', 'start-label', T.wave);
   label.id = 'wave-label';
   const dropdown = el('div', 'wave-dropdown');
   dropdown.id = 'wave-pills';
@@ -284,7 +284,7 @@ export function ensureWaveGroup(): HTMLElement {
   const menu = el('div', 'wave-menu');
   menu.id = 'wave-menu';
   menu.setAttribute('role', 'group');
-  menu.setAttribute('aria-label', I18N_IT.wavesLabel);
+  menu.setAttribute('aria-label', T.wavesLabel);
   menu.hidden = true;
   const setOpen = (open: boolean) => {
     menu.hidden = !open;
@@ -310,8 +310,8 @@ export function ensureWaveGroup(): HTMLElement {
     const dice = el('button', 'ae-icon-button nemesis-random');
     dice.id = 'nemesis-random';
     dice.type = 'button';
-    dice.setAttribute('aria-label', I18N_IT.randomNemesis);
-    dice.title = I18N_IT.randomNemesis;
+    dice.setAttribute('aria-label', T.randomNemesis);
+    dice.title = T.randomNemesis;
     dice.innerHTML = DICE_SVG;
     dice.addEventListener('click', pickRandomNemesis);
     row.appendChild(dice);
@@ -338,8 +338,8 @@ export function renderWavePills(): void {
   const menu = pageEl(dropdown, '.wave-menu', HTMLElement);
   const options = need(catalogo.startOptions, 'scelte della pagina iniziale');
   const chosen = options.waves.filter(w => selectedWaves.includes(w));
-  text.textContent = !chosen.length ? I18N_IT.wavesNone
-    : chosen.length === 1 ? waveLabel(chosen[0]) : I18N_IT.wavesMore(waveLabel(chosen[0]), chosen.length - 1);
+  text.textContent = !chosen.length ? T.wavesNone
+    : chosen.length === 1 ? waveLabel(chosen[0]) : T.wavesMore(waveLabel(chosen[0]), chosen.length - 1);
   menu.replaceChildren(...options.waves.map(wave => {
     const row = el('label', 'wave-option');
     const input = document.createElement('input');

@@ -10,7 +10,7 @@
 // Livello 4 (ui/finestre/), file di supporto di test.ts. Dipende da: ui/ base (testi, dom, ridisegno), ui/componenti
 // (dialoghi: toast), test-regolazioni-lettura.ts. Usato da: test.ts (avvio e fine dello scenario).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { el, icon, query, queryAll } from '../dom.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
 import { showToast } from '../componenti/dialoghi.ts';
@@ -66,7 +66,7 @@ function togliTutte(): void {
 
 function aggiornaPulsante(): void {
   if (!pulsante) return;
-  pulsante.textContent = applicate.size ? I18N_IT.regolazioniAttive(applicate.size) : I18N_IT.regolazioni;
+  pulsante.textContent = applicate.size ? T.regolazioniAttive(applicate.size) : T.regolazioni;
   pulsante.classList.toggle('is-attive', applicate.size > 0);
 }
 
@@ -92,7 +92,7 @@ function rigaColore(c: ColoreBase): HTMLElement {
     cursore.step = '1';
     cursore.value = String(Math.round(opacita * 100));
     cursore.dataset.variabile = c.nome;
-    cursore.setAttribute('aria-label', I18N_IT.regolazioniOpacita(c.etichetta));
+    cursore.setAttribute('aria-label', T.regolazioniOpacita(c.etichetta));
     const cambia = () => imposta(c.nome, componiColore(selettore.value, Number(cursore.value) / 100));
     cursore.addEventListener('input', cambia);
     selettore.addEventListener('input', cambia);
@@ -147,15 +147,15 @@ function disegnaCorpo(): void {
 
 function copia(): void {
   const testo = testoCopia(Object.fromEntries(applicate), COLORI, MISURE);
-  if (!testo) { showToast(I18N_IT.regolazioniNiente); return; }
-  const fatto = () => showToast(I18N_IT.regolazioniCopiato(applicate.size));
+  if (!testo) { showToast(T.regolazioniNiente); return; }
+  const fatto = () => showToast(T.regolazioniCopiato(applicate.size));
   const rimedio = () => {
     // Senza appunti asincroni (pagina non sicura): si copia con un campo di testo temporaneo
     const area = el('textarea');
     area.value = testo;
     document.body.appendChild(area);
     area.select();
-    try { document.execCommand('copy'); fatto(); } catch (err) { showToast(I18N_IT.regolazioniNonCopiato); }
+    try { document.execCommand('copy'); fatto(); } catch (err) { showToast(T.regolazioniNonCopiato); }
     area.remove();
   };
   if (navigator.clipboard) navigator.clipboard.writeText(testo).then(fatto, rimedio);
@@ -182,19 +182,19 @@ function apriPannello(): void {
   if (pannello || !inScenario) return;
   const p = el('div', 'ae-regolazioni');
   p.setAttribute('role', 'region');
-  p.setAttribute('aria-label', I18N_IT.regolazioniTitolo);
+  p.setAttribute('aria-label', T.regolazioniTitolo);
   const testa = el('div', 'ae-reg-testa');
-  const titolo = el('h2', 'ae-reg-pannello-titolo', I18N_IT.regolazioniTitolo);
+  const titolo = el('h2', 'ae-reg-pannello-titolo', T.regolazioniTitolo);
   const chiudi = el('button', 'ae-icon-button');
   chiudi.type = 'button';
-  chiudi.setAttribute('aria-label', I18N_IT.close);
+  chiudi.setAttribute('aria-label', T.close);
   chiudi.appendChild(icon('close'));
   chiudi.addEventListener('click', chiudiPannello);
   testa.append(titolo, chiudi);
   const schede = el('div', 'ae-reg-schede');
   schede.setAttribute('role', 'tablist');
   (['colori', 'misure'] as const).forEach(s => {
-    const b = el('button', 'ae-reg-scheda', s === 'colori' ? I18N_IT.regolazioniColori : I18N_IT.regolazioniMisure);
+    const b = el('button', 'ae-reg-scheda', s === 'colori' ? T.regolazioniColori : T.regolazioniMisure);
     b.type = 'button';
     b.setAttribute('role', 'tab');
     b.dataset.scheda = s;
@@ -202,10 +202,10 @@ function apriPannello(): void {
     schede.appendChild(b);
   });
   const azioni = el('div', 'ae-reg-azioni');
-  const ripristinaTutto = el('button', 'ae-button ae-button--secondary', I18N_IT.regolazioniRipristina);
+  const ripristinaTutto = el('button', 'ae-button ae-button--secondary', T.regolazioniRipristina);
   ripristinaTutto.type = 'button';
   ripristinaTutto.addEventListener('click', ripristina);
-  const copiaVoci = el('button', 'ae-button ae-button--secondary', I18N_IT.regolazioniCopia);
+  const copiaVoci = el('button', 'ae-button ae-button--secondary', T.regolazioniCopia);
   copiaVoci.type = 'button';
   copiaVoci.addEventListener('click', copia);
   azioni.append(ripristinaTutto, copiaVoci);

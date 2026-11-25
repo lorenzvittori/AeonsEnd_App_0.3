@@ -13,7 +13,7 @@ import { renderTurnTrack, turnTrack } from '../componenti/barra-turni.ts';
 import { el } from '../dom.ts';
 import { ui } from '../pagina.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 export interface Selezione {
   source: 'deck' | 'pile';
@@ -144,11 +144,11 @@ export function turnCardFace(kind: CartaTurno, i: number | undefined, tag: 'span
 
 export function turnCardName(kind: CartaTurno, i: number | undefined, order: Pick<MazzoTurni, 'history' | 'waiting' | 'picks'> = partita.turnOrder): string {
   const who = turnCardPlayer(kind, i, order);
-  if (kind === 'nemesis') return I18N_IT.trackNemesisName;
-  if (kind === 'wild') return who ? I18N_IT.trackWildOf(Number(who.slice(1))) : I18N_IT.trackWildName;
-  if (who) return I18N_IT.trackPlayerName(Number(who.slice(1)));
+  if (kind === 'nemesis') return T.trackNemesisName;
+  if (kind === 'wild') return who ? T.trackWildOf(Number(who.slice(1))) : T.trackWildName;
+  if (who) return T.trackPlayerName(Number(who.slice(1)));
   const [a, b] = pairOptions(kind);
-  return I18N_IT.turnPairName(Number(a.slice(1)), Number(b.slice(1)));
+  return T.turnPairName(Number(a.slice(1)), Number(b.slice(1)));
 }
 
 // Bozza della finestra: copia di mazzo (left, left[0] = cima), carte note (known, parallelo a left), scarti (drawn),

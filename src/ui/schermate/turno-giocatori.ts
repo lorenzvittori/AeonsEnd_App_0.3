@@ -7,7 +7,7 @@
 // ui/componenti (animazioni, barra-turni, componenti, dialoghi, misure, testata), ui/finestre/scheda-carta.ts.
 // Usato da: navigazione (render, agganci, avvio).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { awaitingTurnCard, entryByUid, fineTurnoGiocatore, hpCap, hpUnset, partita, pescaCartaTurno, salvaModifiche,
   turnRoundOver } from '../../stato/partita.ts';
 import { displayEntry, draftHp, draftOf, hasHp, needsPairChoice, queueItem,
@@ -78,7 +78,7 @@ export function disegnaInterattivi(uid: number | null, forza = false): void {
   const box = cardControls(entry);
   // Per i lettori di schermo: di quale carta sono i comandi
   box.setAttribute('role', 'group');
-  box.setAttribute('aria-label', I18N_IT.comandiCarta(entry.data.name, hasHp(entry)));
+  box.setAttribute('aria-label', T.comandiCarta(entry.data.name, hasHp(entry)));
   zonaInterattivi.replaceChildren(box);
 }
 
@@ -108,10 +108,10 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
   // (Number: vita e tetto come nei confronti di JavaScript, null vale 0)
   if (hasHp(entry) && Number(entry.hp) <= 0 && !hpUnset(entry)) {
     // Minion ucciso (vita 0 salvata): grigio, va negli scarti al prossimo turno nemesi; si torna indietro con Undo
-    box.appendChild(el('p', 'queue-note is-paid', I18N_IT.killedNote));
+    box.appendChild(el('p', 'queue-note is-paid', T.killedNote));
   } else if (hasHp(entry) && hpUnset(entry)) {
     // Minion con vita "?": al posto di −5 / −1 / +1 un pulsante che apre la scheda della carta (vita da impostare)
-    box.appendChild(ctl(I18N_IT.ctaSetHp, 'primary', 'sethp', I18N_IT.setHpOf(entry.data.name), () => openCardDialog(entry)));
+    box.appendChild(ctl(T.ctaSetHp, 'primary', 'sethp', T.setHpOf(entry.data.name), () => openCardDialog(entry)));
   } else if (hasHp(entry)) {
     // I tocchi cambiano una bozza, "Salva" la conferma (un passo di undo); a 0 con Salva il minion è ucciso.
     // +1 si può usare solo per rimettere vita tolta in questo turno (fino alla vita di inizio turno): altrimenti è oscurato
@@ -132,18 +132,18 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
       box.appendChild(b);
     });
   } else if (entry.data.type === 'Power' && entry.paid) {
-    box.appendChild(el('p', 'queue-note is-paid', I18N_IT.paidNote));
+    box.appendChild(el('p', 'queue-note is-paid', T.paidNote));
   } else if (entry.data.type === 'Power' && entry.data.removable !== false) {
     const d = draftOf(entry);
     if (d && d.paid) {
-      box.appendChild(ctl(I18N_IT.cancelPay, 'secondary', 'cancel', null, () => { setDraft(entry, { paid: false }); richiediRidisegno(); refocus('remove'); }));
+      box.appendChild(ctl(T.cancelPay, 'secondary', 'cancel', null, () => { setDraft(entry, { paid: false }); richiediRidisegno(); refocus('remove'); }));
     } else {
-      box.appendChild(ctl(I18N_IT.removePowerShort, 'danger', 'remove', I18N_IT.removePower + ': ' + entry.data.name,
+      box.appendChild(ctl(T.removePowerShort, 'danger', 'remove', T.removePower + ': ' + entry.data.name,
         () => { setDraft(entry, { paid: true }); richiediRidisegno(); refocus('cancel'); }));
     }
   } else if (entry.data.type === 'Power') {
     // Potere senza "TO DISCARD": nota piccola (con il simbolo di divieto) al posto del pulsante
-    box.appendChild(el('p', 'queue-note is-locked', I18N_IT.notRemovable));
+    box.appendChild(el('p', 'queue-note is-locked', T.notRemovable));
   }
   return box;
 }
@@ -173,7 +173,7 @@ export function sizeQueue(): void {
 
 // Etichetta "HP: −x" della vita in bozza su una carta (sulla sua immagine)
 function addHpTag(card: HTMLElement, className: string, change: number): void {
-  const tag = el('span', className + ' ' + (change < 0 ? 'is-loss' : 'is-gain'), I18N_IT.hpTurnTag(change));
+  const tag = el('span', className + ' ' + (change < 0 ? 'is-loss' : 'is-gain'), T.hpTurnTag(change));
   tag.setAttribute('aria-hidden', 'true');
   const art = card.querySelector('.ae-card-art');
   if (art) art.appendChild(tag);
@@ -211,7 +211,7 @@ export function renderQueue(): void {
   const emptyHint = queueEmpty.querySelector('p');
   if (emptyHint) {
     emptyHint.hidden = partita.turn > 0;
-    emptyHint.textContent = awaitingTurnCard() ? I18N_IT.emptyHintStart : I18N_IT.emptyHintWait;
+    emptyHint.textContent = awaitingTurnCard() ? T.emptyHintStart : T.emptyHintWait;
   }
   sizeQueue();
 
@@ -374,7 +374,7 @@ export function avvio(): void {
   // Turno giocatori con modifiche non salvate: "Annulla modifiche" accanto a "Salva modifiche" (stessa riga, zona 7)
   // toglie tutte le bozze (vita dei minion, costi pagati); non è un passo di undo, perché le bozze non sono ancora nella
   // partita
-  annullaModificheBtn.textContent = I18N_IT.cancelChanges;
+  annullaModificheBtn.textContent = T.cancelChanges;
   annullaModificheBtn.addEventListener('click', () => {
     if (partita.resolving || ui.isTransitioning || !ui.drafts.size) return;
     ui.drafts.clear();

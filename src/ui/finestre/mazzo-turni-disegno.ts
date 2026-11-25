@@ -12,7 +12,7 @@ import type { Destinazione, Finestra, Selezione } from './mazzo-turni-bozza.ts';
 import { inCardBand, spaceItems, TURN_SPREAD } from './mazzo-turni-riga.ts';
 import type { OggettoRiga } from './mazzo-turni-riga.ts';
 import { reducedMotion } from '../pagina.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 // La cuspide sopra il segmento verticale: larga 14px, alta 8px (SVG 14x8)
 const CUSP_W = 14;
@@ -85,10 +85,10 @@ export function draw(f: Finestra) {
       // Nota già all'apertura = scurita (60%) e ferma, tranne in cima
       card.classList.toggle('is-old', !!(f.d.old && f.d.old[i]));
       card.classList.toggle('is-movable', turnDeckMovable(f.d, i));
-      card.setAttribute('aria-label', I18N_IT.turnDeckCardLabel(turnCardName(kind, -1, f.d), i + 1, n));
+      card.setAttribute('aria-label', T.turnDeckCardLabel(turnCardName(kind, -1, f.d), i + 1, n));
     } else {
       card.setAttribute('role', 'img');
-      card.setAttribute('aria-label', I18N_IT.turnDeckCardLabel(I18N_IT.turnCovered, i + 1, n));
+      card.setAttribute('aria-label', T.turnDeckCardLabel(T.turnCovered, i + 1, n));
     }
     card.dataset.source = 'deck';
     card.dataset.index = String(i);
@@ -101,7 +101,7 @@ export function draw(f: Finestra) {
   if (!n) {
     const empty = el('span', 'ae-turn-fan-empty');
     empty.setAttribute('role', 'img');
-    empty.setAttribute('aria-label', I18N_IT.turnDeckEmpty);
+    empty.setAttribute('aria-label', T.turnDeckEmpty);
     empty.appendChild(emptySetIcon());
     f.lane.appendChild(empty);
   }
@@ -112,8 +112,8 @@ export function draw(f: Finestra) {
   // Con una carta sola nel mazzo basta l'occhio sulla carta: niente Rivela tutto
   f.revealAll.hidden = n < 2;
   f.revealAllEye.className = 'ae-icon ae-icon--' + (f.allKnown() ? 'eye-off' : 'eye');
-  f.revealAll.title = f.allKnown() ? I18N_IT.turnCoverAll : I18N_IT.turnRevealAll;
-  f.revealAll.setAttribute('aria-label', f.allKnown() ? I18N_IT.turnCoverAllLabel : I18N_IT.turnRevealAllLabel);
+  f.revealAll.title = f.allKnown() ? T.turnCoverAll : T.turnRevealAll;
+  f.revealAll.setAttribute('aria-label', f.allKnown() ? T.turnCoverAllLabel : T.turnRevealAllLabel);
   f.revealAll.classList.toggle('is-cover', f.allKnown());
   const cur = turnDraftCurrent(f.d);
   const faces: HTMLElement[] = [];
@@ -125,13 +125,13 @@ export function draw(f: Finestra) {
       if (face instanceof HTMLButtonElement) face.type = 'button';
       face.classList.add('is-movable');
     }
-    face.setAttribute('aria-label', locked ? I18N_IT.turnLockedLabel(name) : I18N_IT.turnPileCardLabel(name, i === cur));
+    face.setAttribute('aria-label', locked ? T.turnLockedLabel(name) : T.turnPileCardLabel(name, i === cur));
     face.dataset.source = 'pile';
     face.dataset.index = String(i);
     face.classList.toggle('is-selected', !!f.sel && f.sel.source === 'pile' && f.sel.index === i);
     const slot = el('div', 'ae-turn-pile-slot' + (i === cur ? ' is-current' : '') + (locked ? ' is-locked' : ''));
     slot.appendChild(face);
-    if (i === cur) slot.appendChild(el('span', 'ae-turn-pile-note', I18N_IT.turnCurrent));
+    if (i === cur) slot.appendChild(el('span', 'ae-turn-pile-note', T.turnCurrent));
     faces.push(face);
     return slot;
   });
@@ -140,7 +140,7 @@ export function draw(f: Finestra) {
   else {
     const empty = el('span', 'ae-turn-pile-empty');
     empty.setAttribute('role', 'img');
-    empty.setAttribute('aria-label', I18N_IT.turnPileEmpty);
+    empty.setAttribute('aria-label', T.turnPileEmpty);
     empty.appendChild(emptySetIcon());
     f.pileRow.replaceChildren(empty);
   }
@@ -157,7 +157,7 @@ export function draw(f: Finestra) {
   f.heads.classList.toggle('no-shuffle', n < 2);
   f.resetBtn.disabled = !f.dirty();
   markTargets(f, f.sel);
-  f.hint.textContent = f.sel ? I18N_IT.turnSelected(selName(f, f.sel)) : I18N_IT.turnHint;
+  f.hint.textContent = f.sel ? T.turnSelected(selName(f, f.sel)) : T.turnHint;
   layoutFan(f);
   // Ogni modifica vale subito nel mazzo dei turni; la selezione da sola non cambia niente
   const key = turnDraftKey(f.d);

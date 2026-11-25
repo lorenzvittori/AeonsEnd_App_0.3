@@ -6,7 +6,7 @@
 // dalla copia della testata), ui/componenti (animazioni, dialoghi, testata), i file di supporto mazzo-turni-*.ts.
 // Usato da: navigazione (tocco sulla barra dei turni).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { aggiungiPassoUndo, partita, snapshot } from '../../stato/partita.ts';
 import { button, dialogShell, modals, openModal } from '../componenti/dialoghi.ts';
 import { fitPhaseName } from '../componenti/testata.ts';
@@ -52,7 +52,7 @@ export function openTurnScreen(): void {
   const d = fresh(partita.turnOrder);
 
   // Il titolo è "Mazzo dei turni" ("Turno N" è nella copia della testata, sopra)
-  const dialog = dialogShell(I18N_IT.turnDeckTitle, '', () => tryClose(f));
+  const dialog = dialogShell(T.turnDeckTitle, '', () => tryClose(f));
   dialog.classList.add('ae-turn-screen');
   // Tutto tranne la copia della testata sta in un foglio che scende da sotto la barra dei turni
   const sheet = el('div', 'ae-turn-sheet');
@@ -77,7 +77,7 @@ export function openTurnScreen(): void {
     });
   })(copyShell);
   if (copyMenu) {
-    copyMenu.setAttribute('aria-label', I18N_IT.menu);
+    copyMenu.setAttribute('aria-label', T.menu);
     copyMenu.setAttribute('aria-haspopup', 'dialog');
     copyMenu.addEventListener('click', () => {
       if (f.drag || f.shuffling || f.closing) return;
@@ -103,18 +103,18 @@ export function openTurnScreen(): void {
   const deckArea = el('div', 'ae-turn-area ae-turn-area--deck');
   const shuffleBtn = el('button', 'ae-icon-button ae-turn-shuffle');
   shuffleBtn.type = 'button';
-  shuffleBtn.setAttribute('aria-label', I18N_IT.turnShuffleLabel);
-  shuffleBtn.title = I18N_IT.turnShuffleDeck;
+  shuffleBtn.setAttribute('aria-label', T.turnShuffleLabel);
+  shuffleBtn.title = T.turnShuffleDeck;
   shuffleBtn.appendChild(icon('shuffle'));
   shuffleBtn.addEventListener('click', () => runShuffle(f));
   // Le scritte "Scarti" e "Mazzo turno" stanno in una riga sopra le carte, ai due lati del segmento verticale
   // (--ae-split, da layoutFan), così non cambiano la larghezza delle carte né lo spazio; Mescola in fondo a destra
   const heads = el('div', 'ae-turn-heads');
-  const pileHead = el('h3', 'ae-turn-subtitle ae-turn-head--pile', I18N_IT.turnPileTitle);
+  const pileHead = el('h3', 'ae-turn-subtitle ae-turn-head--pile', T.turnPileTitle);
   const deckHead = el('h3', 'ae-turn-subtitle ae-turn-head--deck');
   // Le due parole in due elementi, così con .is-two-lines vanno una sotto l'altra; il testo letto resta lo stesso
   {
-    const words = I18N_IT.turnDeckRowTitle.split(' ');
+    const words = T.turnDeckRowTitle.split(' ');
     deckHead.append(el('span', 'ae-turn-head-w', words[0]), document.createTextNode(' '), el('span', 'ae-turn-head-w', words.slice(1).join(' ')));
   }
   // Una linea sottile attraversa la riga dei titoli: [linea] SCARTI [linea] cuspide [linea] MAZZO TURNO [Mescola].
@@ -145,13 +145,13 @@ export function openTurnScreen(): void {
   const lane = el('div', 'ae-turn-lane');
   // Carta presa o selezionata: le carte del mazzo si stringono al centro e ai due lati compaiono i posti "Cima" (a
   // sinistra) e "Fondo" (a destra)
-  const zoneTop = el('button', 'ae-turn-zone ae-turn-zone--top', I18N_IT.turnTopEnd);
-  const zoneBottom = el('button', 'ae-turn-zone ae-turn-zone--bottom', I18N_IT.turnBottomEnd);
+  const zoneTop = el('button', 'ae-turn-zone ae-turn-zone--top', T.turnTopEnd);
+  const zoneBottom = el('button', 'ae-turn-zone ae-turn-zone--bottom', T.turnBottomEnd);
   zoneBottom.type = zoneTop.type = 'button';
   zoneBottom.dataset.zone = 'bottom';
   zoneTop.dataset.zone = 'top';
-  zoneBottom.setAttribute('aria-label', I18N_IT.turnZoneBottom);
-  zoneTop.setAttribute('aria-label', I18N_IT.turnZoneTop);
+  zoneBottom.setAttribute('aria-label', T.turnZoneBottom);
+  zoneTop.setAttribute('aria-label', T.turnZoneTop);
   const zones: [HTMLButtonElement, 'top' | 'bottom'][] = [[zoneTop, 'top'], [zoneBottom, 'bottom']];
   zones.forEach(([z, type]) => z.addEventListener('click', () => {
     if (!f.sel || z.hidden) return;
@@ -159,7 +159,7 @@ export function openTurnScreen(): void {
   }));
   const revealTop = el('button', 'ae-turn-eye ae-turn-eye--top');
   revealTop.type = 'button';
-  revealTop.setAttribute('aria-label', I18N_IT.turnRevealTopLabel);
+  revealTop.setAttribute('aria-label', T.turnRevealTopLabel);
   revealTop.appendChild(icon('eye'));
   revealTop.addEventListener('click', () => flipChange(f, () => turnDraftOps.revealTop(f.d)));
   // Segmento verticale dove cadrà la carta (come tra le slide di Canva)
@@ -183,7 +183,7 @@ export function openTurnScreen(): void {
   });
   const revealAll = el('button', 'ae-turn-eye ae-turn-eye--all');
   revealAll.type = 'button';
-  revealAll.setAttribute('aria-label', I18N_IT.turnRevealAllLabel);
+  revealAll.setAttribute('aria-label', T.turnRevealAllLabel);
   // Solo l'occhio, senza scritta (il nome resta per i lettori di schermo); con tutto scoperto diventa l'occhio barrato
   // ("Copri tutto")
   const revealAllEye = icon('eye');
@@ -204,10 +204,10 @@ export function openTurnScreen(): void {
     dropOn(f, { type: 'top' }, f.sel);
   });
 
-  const hint = el('p', 'ae-turn-hint', I18N_IT.turnHint);
+  const hint = el('p', 'ae-turn-hint', T.turnHint);
   hint.setAttribute('aria-live', 'polite');
   const footer = el('div', 'ae-turn-screen-footer');
-  const resetBtn = button(I18N_IT.turnResetAll, 'secondary', () => {
+  const resetBtn = button(T.turnResetAll, 'secondary', () => {
     if (f.drag || f.shuffling) return;
     f.d = f.fresh(f.initial);
     f.d.old = need(f.initial.old, 'carte note all\'apertura').slice();

@@ -6,7 +6,7 @@
 // turni).
 
 import * as Nemesi from '../../regole/turno-nemesi.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { currentTurnCard, hpMaxOf, hpUnset, isPairCard, partita, turnCardPlayer } from '../../stato/partita.ts';
 import type { Carta } from '../../tipi/dati.ts';
 import type { BozzaCarta, VoceInGioco } from '../../tipi/partita.ts';
@@ -32,7 +32,7 @@ export interface OpzioniMiniatura {
 
 // Nome del tipo in italiano (Minion, Potere, Attacco; gli altri tipi restano in inglese)
 export function typeName(data: Pick<Carta, 'type'>): string {
-  const names: Record<string, string> = I18N_IT.types;
+  const names: Record<string, string> = T.types;
   return names[data.type] || data.type;
 }
 
@@ -42,18 +42,18 @@ export function hasHp(entry: VoceInGioco): boolean {
 
 // Stato numerico della carta in parole (per i lettori di schermo)
 export function statusText(entry: VoceInGioco): string {
-  if (hasHp(entry) && hpUnset(entry)) return I18N_IT.hpUnknown;
-  if (hasHp(entry) && typeof hpMaxOf(entry) === 'number') return I18N_IT.hpLong(entry.hp, hpMaxOf(entry));
-  if (hasHp(entry) && typeof entry.data.hp !== 'number') return I18N_IT.hpOnly(entry.hp);
-  if (hasHp(entry)) return I18N_IT.hpLong(entry.hp, entry.data.hp);
-  if (entry.data.type === 'Power') return I18N_IT.tokens(entry.tokens);
+  if (hasHp(entry) && hpUnset(entry)) return T.hpUnknown;
+  if (hasHp(entry) && typeof hpMaxOf(entry) === 'number') return T.hpLong(entry.hp, hpMaxOf(entry));
+  if (hasHp(entry) && typeof entry.data.hp !== 'number') return T.hpOnly(entry.hp);
+  if (hasHp(entry)) return T.hpLong(entry.hp, entry.data.hp);
+  if (entry.data.type === 'Power') return T.tokens(entry.tokens);
   return '';
 }
 
 // Riquadro segnaposto quando l'immagine non si carica: nome, tipo e avviso (mai un rettangolo vuoto)
 export function placeholderArt(data: Carta): HTMLSpanElement {
   const box = el('span', 'ae-card-art ae-card-art--placeholder');
-  box.append(el('strong', '', data.name), el('small', '', typeName(data)), el('em', '', I18N_IT.imageMissing));
+  box.append(el('strong', '', data.name), el('small', '', typeName(data)), el('em', '', T.imageMissing));
   return box;
 }
 
@@ -147,7 +147,7 @@ export function statusBadge(entry: VoceMostrata): HTMLSpanElement {
     badge.classList.add('ae-status-badge--danger');
     // Vita + goccia; con una modifica non ancora salvata: vita / vita prima del danno (vita variabile non ancora
     // impostata: "?"; in bozza solo "x", senza "/X")
-    const hpText = entry.isDraft ? (hpUnset(entry) ? String(entry.hp) : I18N_IT.hp(entry.hp, entry.hpBefore))
+    const hpText = entry.isDraft ? (hpUnset(entry) ? String(entry.hp) : T.hp(entry.hp, entry.hpBefore))
       : hpUnset(entry) ? '?' : String(entry.hp);
     // Box "?" toccabile: apre la scheda della carta per impostare la vita (unsetHpClick)
     if (hpUnset(entry) && !entry.isDraft) { badge.classList.add('is-unset'); badge.dataset.uid = String(entry.uid); }
@@ -180,11 +180,11 @@ export function queueItem(entry: VoceMostrata, opts: OpzioniMiniatura): HTMLButt
   if (opts.current) button.setAttribute('aria-current', 'true');
   if (opts.viewed) button.dataset.viewed = 'true';
 
-  const parts = [data.name, typeName(data), statusText(entry), I18N_IT.cardOf(opts.index + 1, opts.total)];
-  if (entry.isNew) parts.push(I18N_IT.newTag.toLowerCase());
-  if (data.type === 'Power' && data.removable === false) parts.push(I18N_IT.notRemovable.toLowerCase());
-  if (entry.paid) parts.push(I18N_IT.paidNote.toLowerCase());
-  else if (isGone(entry)) parts.push(I18N_IT.killedNote.toLowerCase());
+  const parts = [data.name, typeName(data), statusText(entry), T.cardOf(opts.index + 1, opts.total)];
+  if (entry.isNew) parts.push(T.newTag.toLowerCase());
+  if (data.type === 'Power' && data.removable === false) parts.push(T.notRemovable.toLowerCase());
+  if (entry.paid) parts.push(T.paidNote.toLowerCase());
+  else if (isGone(entry)) parts.push(T.killedNote.toLowerCase());
   if (opts.current) parts.push('da risolvere');
   if (opts.viewed && !opts.current) parts.push('in anteprima');
   button.setAttribute('aria-label', parts.filter(Boolean).join(', '));
@@ -208,7 +208,7 @@ export function queueItem(entry: VoceMostrata, opts: OpzioniMiniatura): HTMLButt
     button.appendChild(ban);
   }
   if (entry.isNew) {
-    const tag = el('span', 'ae-new-tag', I18N_IT.newTag);
+    const tag = el('span', 'ae-new-tag', T.newTag);
     tag.setAttribute('aria-hidden', 'true');
     button.appendChild(tag);
   }
@@ -222,7 +222,7 @@ export function nextSlotItem(): HTMLDivElement {
   item.setAttribute('aria-hidden', 'true');
   const badge = el('span', 'ae-status-badge ae-status-badge--empty', '·');
   // Anche qui il box NUOVA, come sul dorso al passo Pesca
-  const tag = el('span', 'ae-new-tag', I18N_IT.newTag);
+  const tag = el('span', 'ae-new-tag', T.newTag);
   item.append(badge, el('span', 'ae-card-art'), tag);
   return item;
 }
@@ -239,7 +239,7 @@ export function nextCardItem({ current = false, viewed = false }: { current?: bo
   }
   if (viewed) item.dataset.viewed = 'true';
   item.setAttribute('role', 'listitem');
-  item.setAttribute('aria-label', I18N_IT.nextCard);
+  item.setAttribute('aria-label', T.nextCard);
   const badge = el('span', 'ae-status-badge ae-status-badge--empty', '·');
   badge.setAttribute('aria-hidden', 'true');
   const art = el('span', 'ae-card-art');
@@ -247,7 +247,7 @@ export function nextCardItem({ current = false, viewed = false }: { current?: bo
   img.alt = '';
   img.src = CARD_BACK;
   art.appendChild(img);
-  const tag = el('span', 'ae-new-tag', I18N_IT.newTag);
+  const tag = el('span', 'ae-new-tag', T.newTag);
   tag.setAttribute('aria-hidden', 'true');
   item.append(badge, art, tag);
   return item;

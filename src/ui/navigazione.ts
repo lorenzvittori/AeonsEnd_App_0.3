@@ -10,7 +10,7 @@
 // Livello 6. Dipende da: stato/, dati/, ui/ base (pagina, testi, dom, ridisegno, partita-variante), ui/componenti/,
 // ui/finestre/, ui/schermate/. Usato da: avvio.ts (init: render, setStartMode), main.ts (avvio, window.app), test.
 
-import { I18N_IT } from './testi.ts';
+import { T } from './testi.ts';
 import { battleOf } from '../dati/dati.ts';
 import { collectionWaveEnabled, saveCollection, waveOfNemesis } from '../dati/collezione.ts';
 import { prefetchDeckImages } from '../dati/rete.ts';
@@ -77,8 +77,8 @@ function mostraTurno(v: VariantePartita): void {
   zonaInterattivi.hidden = !v.interattivi;
   // Per i lettori di schermo: di quali carte si tratta
   const nemesi = v.momento === 'nemesi' || v.momento === 'pesca';
-  zonaCarteGrandi.setAttribute('aria-label', nemesi ? I18N_IT.zonaCarteGrandiNemesi : I18N_IT.zonaCarteGrandiGiocatori);
-  rail.setAttribute('aria-label', nemesi ? I18N_IT.railNemesi : I18N_IT.queueRail);
+  zonaCarteGrandi.setAttribute('aria-label', nemesi ? T.zonaCarteGrandiNemesi : T.zonaCarteGrandiGiocatori);
+  rail.setAttribute('aria-label', nemesi ? T.railNemesi : T.queueRail);
   // Dissolvenza delle zone entrando nel turno giocatori: dal turno nemesi no (la classe la mette toPlayersTurn e si
   // toglie nel turno nemesi, quando le zone non hanno dissolvenza: toglierla prima la farebbe ripartire)
   if (nemesi) mainEl.classList.remove('is-from-nemesis');
@@ -102,7 +102,7 @@ export function render(): void {
   updateUndoBtn();
   if (ui.tierBanner) {
     ui.tierWaitUntil = performance.now() + TIER_BANNER_MS;
-    showBanner(I18N_IT.tierN(ui.tierBanner));
+    showBanner(T.tierN(ui.tierBanner));
     ui.tierBanner = null;
   }
   // Vite (zona 4)
@@ -280,7 +280,7 @@ export function resumeSavedGame(saved: SalvataggioValido): void {
     pulsantePrincipale.focus();
   } catch (err) {
     console.error(err);
-    showStartError(I18N_IT.resumeError, false);
+    showStartError(T.resumeError, false);
   }
 }
 
@@ -406,7 +406,7 @@ export function avvio(): void {
   window.addEventListener('popstate', () => {
     if (closeTopForBack()) armBackGuard();
     else {
-      showToast(I18N_IT.backAgainToExit);
+      showToast(T.backAgainToExit);
       // Passato il messaggio, Indietro torna a chiudere i livelli (e il prossimo "uscire" chiede di nuovo conferma)
       setTimeout(() => { if (!backGuardArmed()) armBackGuard(); }, 2500);
     }

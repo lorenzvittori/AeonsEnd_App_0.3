@@ -7,7 +7,7 @@ import { catalogo } from '../../stato/catalogo.ts';
 import { preferenze } from '../../stato/preferenze.ts';
 import { el, pageEl, query } from '../dom.ts';
 import { byId, DRAG_THRESHOLD, SWIPE_MIN_DISTANCE } from '../pagina.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 interface Punto { x: number; y: number }
 
@@ -58,7 +58,7 @@ export function renderNemesisPreview(): void {
     preview.appendChild(image);
   }
   if (!preview.querySelector('.nemesis-collapse')) {
-    preview.prepend(chevronButton('nemesis-collapse', I18N_IT.hideNemesisCard, () => setNemesisPreview(false)));
+    preview.prepend(chevronButton('nemesis-collapse', T.hideNemesisCard, () => setNemesisPreview(false)));
   }
   if (!preview.querySelector('.nemesis-flip')) buildNemesisFlip(preview);
   // La carta sta subito dopo il pulsante della nemesi scelta, su tutta la larghezza della lista
@@ -87,14 +87,14 @@ export function renderNemesisPreview(): void {
   }
   const front = pageEl(preview, '.nemesis-face--front', HTMLImageElement);
   const back = pageEl(preview, '.nemesis-face--back', HTMLImageElement);
-  front.alt = I18N_IT.nemesisCard(nemesis);
+  front.alt = T.nemesisCard(nemesis);
   const src = encodeURI(art.card);
   if (front.getAttribute('src') !== src) front.src = src;
   // Retro (setup e storia), se c'è: si vede con uno slide sulla carta
   const flip = pageEl(preview, '.nemesis-flip', HTMLElement);
   flip.classList.toggle('has-back', !!art.back);
   if (art.back) {
-    back.alt = I18N_IT.nemesisCardBack(nemesis);
+    back.alt = T.nemesisCardBack(nemesis);
     const backSrc = encodeURI(art.back);
     if (back.getAttribute('src') !== backSrc) back.src = backSrc;
   } else {

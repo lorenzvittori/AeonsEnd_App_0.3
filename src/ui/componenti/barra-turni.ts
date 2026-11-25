@@ -15,7 +15,7 @@ import { headerPiles } from './testata.ts';
 import { el, query } from '../dom.ts';
 import { app, byId, mainEl, pulsantePrincipale, reducedMotion, ui } from '../pagina.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { needsPairChoice } from './componenti.ts';
 
 export const SHUFFLE_FADE_MS = 320;
@@ -36,7 +36,7 @@ export function playTurnShuffle(fadeMs: number): void {
     ui.trackShuffle = false;
     turnTrack.classList.remove('is-shuffling');
     pulsantePrincipale.focus({ preventScroll: true });
-    announce(I18N_IT.drawFirstTurnCard);
+    announce(T.drawFirstTurnCard);
   });
   richiediRidisegno();
   if (!motion) return;
@@ -137,7 +137,7 @@ export function renderTurnTrack(): void {
   turnTrackBar.classList.toggle('is-idle', cur < 0);
   // Mazzo dei turni appena mischiato (playTurnShuffle): le scritte di prima restano e svaniscono (is-shuffling)
   if (ui.trackShuffle) {
-    turnTrack.setAttribute('aria-label', I18N_IT.trackWaiting);
+    turnTrack.setAttribute('aria-label', T.trackWaiting);
     renderPairChoice();
     return;
   }
@@ -150,19 +150,19 @@ export function renderTurnTrack(): void {
   if (choosing) {
     turnTrackLabel.replaceChildren(pairOptions(curKind).map(p => p.slice(1)).join(' / '));
   } else if (partita.resolving) {
-    turnTrackLabel.replaceChildren(I18N_IT.trackNemesisName, el('span', 'ae-turn-label-dot'),
-      drawStep ? I18N_IT.trackDraw : I18N_IT.trackResolve);
+    turnTrackLabel.replaceChildren(T.trackNemesisName, el('span', 'ae-turn-label-dot'),
+      drawStep ? T.trackDraw : T.trackResolve);
   } else {
     // Turno di un giocatore: "Giocatore N" nel colore del giocatore; wild: "Wild · N" ("Wild" bianco e il numero del
     // giocatore nel suo colore)
     const kind = currentTurnCard();
     const owner = turnCardPlayer(kind);
     if (kind === 'wild' && owner) {
-      turnTrackLabel.replaceChildren(el('span', 'ae-turn-label-wild', I18N_IT.trackWildName), el('span', 'ae-turn-label-dot'),
+      turnTrackLabel.replaceChildren(el('span', 'ae-turn-label-wild', T.trackWildName), el('span', 'ae-turn-label-dot'),
         owner.slice(1));
     } else {
-      turnTrackLabel.replaceChildren(kind === 'wild' ? I18N_IT.trackWildName
-        : owner ? I18N_IT.trackPlayerName(Number(owner.slice(1))) : '');
+      turnTrackLabel.replaceChildren(kind === 'wild' ? T.trackWildName
+        : owner ? T.trackPlayerName(Number(owner.slice(1))) : '');
     }
   }
   const labelKind = partita.resolving ? 'nemesis' : (turnCardPlayer(currentTurnCard()) || currentTurnCard());
@@ -198,7 +198,7 @@ export function renderTurnTrack(): void {
   turnTrackLabel.classList.remove('is-start', 'is-end');
   // Centro della casella accesa (eventi.css .ae-turn-seg.is-current): accesa = 122px
   turnTrackLabel.style.left = cur >= 0 ? `calc(${cur} * (${narrow} + 6px) + 61px)` : '0%';
-  turnTrack.setAttribute('aria-label', [trackName(drawStep), cur >= 0 ? I18N_IT.trackPosition(cur + 1, total) : '', I18N_IT.turnDeckHint]
+  turnTrack.setAttribute('aria-label', [trackName(drawStep), cur >= 0 ? T.trackPosition(cur + 1, total) : '', T.turnDeckHint]
     .filter(Boolean).join(', '));
   // Niente scelta 1/2 o 3/4 né riquadro mentre la finestra del mazzo dei turni disegna la sua copia della barra
   if (ui.trackPreview) return;
@@ -222,16 +222,16 @@ export function chooseTurnPlayer(player: Giocatore): void {
 // Nome del turno in corso per i lettori di schermo
 function trackName(drawStep: boolean): string {
   const card = currentTurnCard();
-  if (awaitingTurnCard()) return I18N_IT.trackWaiting;
-  if (partita.resolving) return drawStep ? I18N_IT.trackNemesisDraw : I18N_IT.trackNemesisResolve;
-  if (card === 'wild') return partita.turnOrder.wild ? I18N_IT.trackWildOf(partita.turnOrder.wild) : I18N_IT.trackWild;
+  if (awaitingTurnCard()) return T.trackWaiting;
+  if (partita.resolving) return drawStep ? T.trackNemesisDraw : T.trackNemesisResolve;
+  if (card === 'wild') return partita.turnOrder.wild ? T.trackWildOf(partita.turnOrder.wild) : T.trackWild;
   if (isPairCard(card)) {
     const player = turnCardPlayer(card);
-    if (player) return I18N_IT.trackPlayer(Number(player.slice(1)));
+    if (player) return T.trackPlayer(Number(player.slice(1)));
     const [a, b] = pairOptions(card);
-    return I18N_IT.trackPairChoose(Number(a.slice(1)), Number(b.slice(1)));
+    return T.trackPairChoose(Number(a.slice(1)), Number(b.slice(1)));
   }
-  return card && card !== 'nemesis' ? I18N_IT.trackPlayer(Number(card.slice(1))) : '';
+  return card && card !== 'nemesis' ? T.trackPlayer(Number(card.slice(1))) : '';
 }
 
 // Finestra "Chi gioca questo turno?": esce una carta 1/2 o 3/4 senza giocatore. Al centro due carte grandi come quelle
@@ -289,7 +289,7 @@ export function pairButtons(kind: CartaTurno | null, cls: string, label: (p: Gio
     const b = el('button', cls, label(p));
     b.type = 'button';
     b.dataset.kind = p;
-    b.setAttribute('aria-label', I18N_IT.pairChoiceLabel(Number(p.slice(1))));
+    b.setAttribute('aria-label', T.pairChoiceLabel(Number(p.slice(1))));
     b.addEventListener('click', () => chooseTurnPlayer(p));
     return b;
   });
@@ -318,7 +318,7 @@ export function renderPairChoice(): void {
   if (minimized && pairDock.dataset.kind !== curCard) {
     pairDock.dataset.kind = String(curCard);
     pairDock.replaceChildren(...pairButtons(curCard, 'ae-button ae-pair-half',
-      p => I18N_IT.trackPlayerName(Number(p.slice(1)))));
+      p => T.trackPlayerName(Number(p.slice(1)))));
   }
   if (!minimized) delete pairDock.dataset.kind;
   if (!show) return;
@@ -332,7 +332,7 @@ export function renderPairChoice(): void {
     pairChoiceCards.replaceChildren(...pairButtons(kind, 'ae-pair-pick', p => p.slice(1)));
   }
   if (!wasShown) {
-    announce(I18N_IT.pairChoiceTitle);
+    announce(T.pairChoiceTitle);
     const first = pairChoiceCards.firstChild;
     if (first instanceof HTMLElement) first.focus({ preventScroll: true });
     else throw new TypeError('scelta del giocatore senza pulsanti');
@@ -361,7 +361,7 @@ export function avvio(): void {
   pairChoicePanel = el('div', 'ae-pair-choice-panel');
   pairChoicePanel.setAttribute('role', 'dialog');
   pairChoicePanel.setAttribute('aria-labelledby', 'ae-pair-choice-title');
-  pairChoiceTitle = el('h2', 'ae-pair-choice-title', I18N_IT.pairChoiceTitle);
+  pairChoiceTitle = el('h2', 'ae-pair-choice-title', T.pairChoiceTitle);
   pairChoiceTitle.id = 'ae-pair-choice-title';
   pairChoiceCards = el('div', 'ae-pair-choice-cards');
   pairChoicePanel.append(pairChoiceTitle, pairChoiceCards);
@@ -382,5 +382,5 @@ export function avvio(): void {
 
   // Nella zona 7, sotto la riga del pulsante principale (index.html)
   pairDock = byId('scelta-coppia', HTMLDivElement);
-  pairDock.setAttribute('aria-label', I18N_IT.pairChoiceTitle);
+  pairDock.setAttribute('aria-label', T.pairChoiceTitle);
 }

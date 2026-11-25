@@ -13,7 +13,7 @@ import { closeAllModals, showToast } from './dialoghi.ts';
 import { closeDiscard } from './scarti.ts';
 import { DRAW_UID, ui, undoBtn } from '../pagina.ts';
 import { chiudiCreaMazzo, richiediRidisegno } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 // Rimette la partita come nella fotografia (senza animazioni; quelle in corso si fermano); formati vecchi letti da
 // regole/salvataggio.ts
@@ -50,7 +50,7 @@ export function undo(): void {
   if (ui.drafts.size) {
     ui.drafts.clear();
     richiediRidisegno();
-    showToast(I18N_IT.draftDiscarded);
+    showToast(T.draftDiscarded);
     return;
   }
   const previous = togliPassoUndo();
@@ -58,6 +58,6 @@ export function undo(): void {
   restore(previous);
   richiediRidisegno();
   save();
-  showToast(I18N_IT.undone);
+  showToast(T.undone);
 }
 

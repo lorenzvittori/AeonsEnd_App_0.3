@@ -11,7 +11,7 @@ import { isDrawStep } from '../src/regole/turno-nemesi.ts';
 import { DRAW_UID } from '../src/ui/pagina.ts';
 import { actionText, variantePartita } from '../src/ui/partita-variante.ts';
 import type { UiPerVariante } from '../src/ui/partita-variante.ts';
-import { I18N_IT } from '../src/ui/testi.ts';
+import { T } from '../src/ui/testi.ts';
 import type { BozzaCarta } from '../src/tipi/partita.ts';
 import { cards, deckSetup, nemeses, products, seeded, must } from './aiuto.ts';
 
@@ -86,21 +86,21 @@ describe('variantePartita()', () => {
   it('turno giocatori senza modifiche: "Pesca carta turno", poi "Fine turno"', () => {
     let v = variantePartita(partita, uiDi());
     expect(v).toEqual({ momento: 'giocatori', interattivi: true, carteGrandi: 'coda', azione: 'pesca-carta-turno',
-      testo: I18N_IT.drawTurnCard, annullaModifiche: false });
+      testo: T.drawTurnCard, annullaModifiche: false });
     // Esce un giocatore: si resta nel turno giocatori
     finoA(() => !partita.resolving && !P.awaitingTurnCard());
     v = variantePartita(partita, uiDi());
     expect(v.momento).toBe('giocatori');
     expect(v.azione).toBe('fine-turno');
-    expect([I18N_IT.endTurn, I18N_IT.endTurnShuffle]).toContain(v.testo);
+    expect([T.endTurn, T.endTurnShuffle]).toContain(v.testo);
     // Durante il mazzo dei turni mischiato: "Fine turno · Mischia mazzo"
-    expect(variantePartita(partita, uiDi({ trackShuffle: true })).testo).toBe(I18N_IT.endTurnShuffle);
+    expect(variantePartita(partita, uiDi({ trackShuffle: true })).testo).toBe(T.endTurnShuffle);
   });
 
   it('turno giocatori con modifiche non salvate: "Salva modifiche" e "Annulla modifiche"', () => {
     const v = variantePartita(partita, uiDi({ drafts: conModifiche() }));
     expect(v).toEqual({ momento: 'giocatori', interattivi: true, carteGrandi: 'coda', azione: 'salva-modifiche',
-      testo: I18N_IT.saveChanges, annullaModifiche: true });
+      testo: T.saveChanges, annullaModifiche: true });
   });
 
   it('turno nemesi: carosello, niente zona 6, il pulsante risolve la carta di turno (le modifiche non contano)', () => {
@@ -121,7 +121,7 @@ describe('variantePartita()', () => {
     const v = variantePartita(partita, uiDi({ viewedUid: other.uid }));
     expect(v.momento).toBe('nemesi');
     expect(v.azione).toBe('torna');
-    expect(v.testo).toBe(I18N_IT.backToActive);
+    expect(v.testo).toBe(T.backToActive);
     // Mentre la carta appena risolta resta in primo piano (holdUid) non è un'anteprima
     expect(variantePartita(partita, uiDi({ viewedUid: other.uid, holdUid: other.uid })).azione).toBe('risolvi');
   });
@@ -130,11 +130,11 @@ describe('variantePartita()', () => {
     finoA(() => isDrawStep(partita) && partita.queue.length > 0);
     let v = variantePartita(partita, uiDi({ viewedUid: DRAW_UID }));
     expect(v).toEqual({ momento: 'pesca', interattivi: false, carteGrandi: 'carta-coperta', azione: 'pesca',
-      testo: I18N_IT.ctaDraw, annullaModifiche: false });
+      testo: T.ctaDraw, annullaModifiche: false });
     v = variantePartita(partita, uiDi({ viewedUid: partita.queue[0].uid, drafts: conModifiche() }));
     expect(v.momento).toBe('pesca');
     expect(v.azione).toBe('torna');
-    expect(v.testo).toBe(I18N_IT.backToDraw);
+    expect(v.testo).toBe(T.backToDraw);
   });
 
   it('carta appena pescata: "Metti in gioco" (o "Effetto risolto" per un attacco)', () => {

@@ -4,7 +4,7 @@
 // ridisegno: aggiornaInizio dopo il salvataggio della collezione), ui/componenti (dialoghi, sfondi). Usato da: schermate
 // menu iniziale e Nuova partita, navigazione (ripresa).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, saveCollection, waveLabel,
   waveOfNemesis } from '../../dati/collezione.ts';
 import { turnPairsOn } from '../../stato/partita.ts';
@@ -27,7 +27,7 @@ export function collectionSummaryText(): string {
   const owned = preferenze.collection;
   if (!owned) throw new TypeError('collezione non ancora letta');
   const waves = new Set([...owned].map(id => id.split('|')[0]));
-  return I18N_IT.collectionSummary(waves.size, owned.size);
+  return T.collectionSummary(waves.size, owned.size);
 }
 
 // Opzioni (dal menu iniziale): La mia collezione (con il riepilogo), Dorso delle carte, Sfondo, Carte turno 1/2 e 3/4
@@ -35,7 +35,7 @@ export function openOptions(trigger?: HTMLElement | null): void {
   const layer = el('div', 'collection-screen options-screen');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
-  layer.setAttribute('aria-label', I18N_IT.options);
+  layer.setAttribute('aria-label', T.options);
   const head = el('div', 'collection-head');
   const close = () => {
     layer.remove();
@@ -45,24 +45,24 @@ export function openOptions(trigger?: HTMLElement | null): void {
   };
   const x = el('button', 'ae-icon-button');
   x.type = 'button';
-  x.setAttribute('aria-label', I18N_IT.close);
+  x.setAttribute('aria-label', T.close);
   x.appendChild(icon('close'));
   x.addEventListener('click', close);
-  head.append(el('h2', 'collection-title', I18N_IT.options), x);
+  head.append(el('h2', 'collection-title', T.options), x);
   const body = el('div', 'collection-body');
   const item = el('button', 'options-item');
   item.type = 'button';
   const summary = el('span', 'options-item-note', collectionSummaryText());
-  item.append(el('span', 'options-item-label', I18N_IT.myCollection), summary);
+  item.append(el('span', 'options-item-label', T.myCollection), summary);
   item.addEventListener('click', () => openCollection(item, () => { summary.textContent = collectionSummaryText(); }));
   // Dorso delle carte: miniatura (piccola, a destra della scritta) e nome del dorso scelto; si tocca per la griglia di
   // tutti i dorsi. Chiusa la griglia, la pagina iniziale resta coperta dalle Opzioni
   const backItem = el('div', 'options-item options-item--row');
-  backItem.append(el('span', 'options-item-label', I18N_IT.cardBack),
+  backItem.append(el('span', 'options-item-label', T.cardBack),
     cardBackChoiceButton(() => { if (layer.isConnected) startLayer.inert = true; }, { compact: true }));
   // Sfondo: anteprima e nome dello sfondo scelto; si tocca per le anteprime di tutti gli sfondi
   const bgItem = el('div', 'options-item options-item--row');
-  bgItem.append(el('span', 'options-item-label', I18N_IT.background),
+  bgItem.append(el('span', 'options-item-label', T.background),
     backgroundChoiceButton(() => { if (layer.isConnected) startLayer.inert = true; }, { compact: true }));
   // Carte turno 1/2 e 3/4 (wave 4): interruttore, attivo di default
   const pairsItem = el('label', 'options-item options-item--row ae-switch-row options-switch');
@@ -74,7 +74,7 @@ export function openOptions(trigger?: HTMLElement | null): void {
   const pairsSw = el('span', 'ae-switch');
   pairsSw.setAttribute('aria-hidden', 'true');
   const pairsText = el('span', 'options-switch-text');
-  pairsText.append(el('span', 'options-item-label', I18N_IT.turnPairsOption), el('span', 'options-item-note', I18N_IT.turnPairsHint));
+  pairsText.append(el('span', 'options-item-label', T.turnPairsOption), el('span', 'options-item-note', T.turnPairsHint));
   pairsItem.append(pairsText, pairsInput, pairsSw);
   body.append(item, backItem, bgItem, pairsItem);
   layer.append(head, body);
@@ -99,7 +99,7 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
   const layer = el('div', 'collection-screen');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
-  layer.setAttribute('aria-label', I18N_IT.myCollection);
+  layer.setAttribute('aria-label', T.myCollection);
   const head = el('div', 'collection-head');
   const close = () => {
     layer.remove();
@@ -110,17 +110,17 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
   };
   const x = el('button', 'ae-icon-button');
   x.type = 'button';
-  x.setAttribute('aria-label', I18N_IT.close);
+  x.setAttribute('aria-label', T.close);
   x.appendChild(icon('close'));
   x.addEventListener('click', close);
-  head.append(el('h2', 'collection-title', I18N_IT.myCollection), x);
+  head.append(el('h2', 'collection-title', T.myCollection), x);
   const body = el('div', 'collection-body');
-  body.appendChild(el('p', 'start-note', I18N_IT.collectionHint));
+  body.appendChild(el('p', 'start-note', T.collectionHint));
   // Seleziona tutto / Deseleziona tutto: spuntano o tolgono tutte le wave (solo quelle che si possono scegliere) e le
   // mini espansioni (valgono con "Salva")
   const bulk = el('div', 'collection-bulk');
   const setAll = (on: boolean) => {
-    collectionCatalog(I18N_IT.baseBox).filter(({ wave }) => collectionWaveEnabled(wave))
+    collectionCatalog(T.baseBox).filter(({ wave }) => collectionWaveEnabled(wave))
       .forEach(({ products }) => products.forEach(p => { if (on) draft.add(p.id); else draft.delete(p.id); }));
     queryAll(body, '.collection-wave:not(.is-locked) .collection-item input', HTMLInputElement).forEach(input => {
       input.checked = on;
@@ -128,7 +128,7 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
     });
     body.querySelectorAll('.collection-wave:not(.is-locked) .collection-item.is-mini').forEach(r => r.classList.toggle('is-disabled', !on));
   };
-  bulk.append(button(I18N_IT.selectAll, 'secondary', () => setAll(true)), button(I18N_IT.deselectAll, 'secondary', () => setAll(false)));
+  bulk.append(button(T.selectAll, 'secondary', () => setAll(true)), button(T.deselectAll, 'secondary', () => setAll(false)));
   body.appendChild(bulk);
 
   const toggle = (label: string, id: CodiceProdotto, extraClass: string) => {
@@ -143,7 +143,7 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
     row.append(el('span', '', label), input, sw);
     return row;
   };
-  collectionCatalog(I18N_IT.baseBox).forEach(({ wave, products }) => {
+  collectionCatalog(T.baseBox).forEach(({ wave, products }) => {
     const block = el('section', 'collection-wave');
     const base = products[0];
     const waveRow = toggle(waveLabel(wave), base.id, 'is-wave');
@@ -181,18 +181,18 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
         r.classList.add('is-disabled');
       });
       const label = waveRow.querySelector('span');
-      if (label) label.append(el('span', 'collection-locked-note', I18N_IT.collectionLocked));
+      if (label) label.append(el('span', 'collection-locked-note', T.collectionLocked));
     }
     body.appendChild(block);
   });
   const footer = el('div', 'collection-footer');
-  const saveBtn = button(I18N_IT.collectionSave, 'primary', () => {
+  const saveBtn = button(T.collectionSave, 'primary', () => {
     preferenze.collection = draft;
     saveCollection();
     close();
     aggiornaInizio();
     if (onSaved) onSaved();
-    showToast(I18N_IT.collectionSaved);
+    showToast(T.collectionSaved);
   });
   saveBtn.classList.add('ae-button--full');
   footer.appendChild(saveBtn);
@@ -206,14 +206,14 @@ export function openCollection(trigger?: HTMLElement | null, onSaved?: () => voi
 export function openMissingNemesis(info: Nemesi, onContinue: () => void): void {
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.nemesisMissingTitle, '', cancel, { displayTitle: false });
+  const dialog = dialogShell(T.nemesisMissingTitle, '', cancel, { displayTitle: false });
   dialog.classList.add('ae-exit-confirm');
   const product = String(info.boxCode);
-  dialog.appendChild(el('p', 'ae-modal-text', I18N_IT.nemesisMissingText(info.name,
+  dialog.appendChild(el('p', 'ae-modal-text', T.nemesisMissingText(info.name,
     isMiniCode(info.boxCode) ? productName(product) : waveLabel(waveOfNemesis(info)))));
   const footer = el('div', 'ae-modal-footer');
-  const go = button(I18N_IT.continueLabel, 'primary', () => { close(); onContinue(); });
-  footer.append(button(I18N_IT.cancel, 'secondary', cancel), go);
+  const go = button(T.continueLabel, 'primary', () => { close(); onContinue(); });
+  footer.append(button(T.cancel, 'secondary', cancel), go);
   dialog.appendChild(footer);
   close = openModal(dialog, { onCancel: cancel, initialFocus: go });
 }

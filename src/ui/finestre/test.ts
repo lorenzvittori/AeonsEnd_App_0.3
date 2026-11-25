@@ -7,7 +7,7 @@
 // (testi, pagina, dom, ridisegno), ui/componenti (animazioni, dialoghi, ripristino, scarti). Usato da: schermata menu
 // iniziale, navigazione (Esci dal test, Ricomincia lo scenario), main.ts (app.startScenario, app.SCENARI).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { aetherCost, emptyPairNext, emptyStats, esciDalTest, impostaUndo, iniziaProva, isVariableMinion, makeEntry,
   partita } from '../../stato/partita.ts';
 import { closeAllModals, showToast, updateInert } from '../componenti/dialoghi.ts';
@@ -199,8 +199,8 @@ export function scenarioCard(ref: CartaScenario): Carta {
   const name = typeof ref === 'string' ? ref : ref.name;
   const box = typeof ref === 'object' && ref.boxCode !== undefined ? String(ref.boxCode) : null;
   const found = catalogo.allCards.filter(c => c.name === name && (box === null || c.boxCode === box));
-  if (!found.length) throw new Error(I18N_IT.testCardMissing(box ? `${name} (${box})` : name));
-  if (found.length > 1) throw new Error(I18N_IT.testCardAmbiguous(name));
+  if (!found.length) throw new Error(T.testCardMissing(box ? `${name} (${box})` : name));
+  if (found.length > 1) throw new Error(T.testCardAmbiguous(name));
   return found[0];
 }
 
@@ -256,7 +256,7 @@ export function buildScenarioState(sc: Scenario): FotografiaLetta {
 
 // Avvia (o riavvia) uno scenario. Restituisce null se è partito, altrimenti il motivo (per esempio una carta che manca)
 export function startScenario(sc: Scenario | null | undefined): string | null {
-  if (!catalogo.allCards.length || !sc) return I18N_IT.testNotReady;
+  if (!catalogo.allCards.length || !sc) return T.testNotReady;
   let state: FotografiaLetta;
   try {
     state = buildScenarioState(sc);
@@ -315,7 +315,7 @@ export function openTestScreen(trigger?: HTMLElement | null): void {
   const layer = el('div', 'collection-screen options-screen test-screen');
   layer.setAttribute('role', 'dialog');
   layer.setAttribute('aria-modal', 'true');
-  layer.setAttribute('aria-label', I18N_IT.testTitle);
+  layer.setAttribute('aria-label', T.testTitle);
   const head = el('div', 'collection-head');
   const close = () => {
     layer.remove();
@@ -325,12 +325,12 @@ export function openTestScreen(trigger?: HTMLElement | null): void {
   };
   const x = el('button', 'ae-icon-button');
   x.type = 'button';
-  x.setAttribute('aria-label', I18N_IT.close);
+  x.setAttribute('aria-label', T.close);
   x.appendChild(icon('close'));
   x.addEventListener('click', close);
-  head.append(el('h2', 'collection-title', I18N_IT.testTitle), x);
+  head.append(el('h2', 'collection-title', T.testTitle), x);
   const body = el('div', 'collection-body');
-  body.appendChild(el('p', 'start-note', I18N_IT.testHint));
+  body.appendChild(el('p', 'start-note', T.testHint));
   SCENARI.forEach(sc => {
     const item = el('button', 'options-item test-scenario');
     item.type = 'button';
@@ -341,7 +341,7 @@ export function openTestScreen(trigger?: HTMLElement | null): void {
     item.addEventListener('click', () => {
       const problem = startScenario(sc);
       if (problem) {
-        error.textContent = I18N_IT.testFailed(problem);
+        error.textContent = T.testFailed(problem);
         error.hidden = false;
       }
     });

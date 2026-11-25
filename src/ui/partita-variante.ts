@@ -11,7 +11,7 @@ import { hpUnset, isDrawStep } from '../regole/turno-nemesi.ts';
 import type { Partita, VoceInGioco } from '../tipi/partita.ts';
 import { DRAW_UID } from './pagina.ts';
 import type { StatoUi } from './pagina.ts';
-import { I18N_IT } from './testi.ts';
+import { T } from './testi.ts';
 
 // Momento della partita (attributo data-turno della schermata, #app):
 //   giocatori:  turno dei giocatori (coda delle carte grandi, comandi sotto la carta al centro);
@@ -55,14 +55,14 @@ export type UiPerVariante = Pick<StatoUi, 'deckBuilding' | 'drafts' | 'trackShuf
 export function actionText(entry: VoceInGioco, isNew: boolean, roundOver: boolean): string {
   const { data, tokens } = entry;
   // Minion con vita "?": non si mette in gioco finché non si imposta la vita; il pulsante apre la sua scheda
-  if (hpUnset(entry)) return I18N_IT.ctaSetHp;
+  if (hpUnset(entry)) return T.ctaSetHp;
   // Ultima carta del giro dei turni: "Metti in gioco · Mischia mazzo"
-  if (isNew) return data.type === 'Attack' ? I18N_IT.ctaResolved
-    : roundOver ? I18N_IT.ctaPutInPlayShuffle : I18N_IT.ctaPutInPlayEnd;
+  if (isNew) return data.type === 'Attack' ? T.ctaResolved
+    : roundOver ? T.ctaPutInPlayShuffle : T.ctaPutInPlayEnd;
   // Potere: il token se ne va da solo; il pulsante dice solo cosa succede dopo (Number: null vale 0)
-  if (data.type === 'Power') return Number(tokens) > 1 ? I18N_IT.ctaPowerNext : I18N_IT.ctaPowerLast;
+  if (data.type === 'Power') return Number(tokens) > 1 ? T.ctaPowerNext : T.ctaPowerLast;
   // Minion (resta in gioco) e attacco (va negli scarti)
-  return I18N_IT.ctaResolved;
+  return T.ctaResolved;
 }
 
 // Turno nemesi: si sta guardando una carta diversa da quella da risolvere (o da pescare)? Stessa scelta della carta
@@ -87,9 +87,9 @@ export function variantePartita(p: PartitaPerVariante, u: UiPerVariante): Varian
     const carteGrandi: CarteGrandi = drawStep ? 'carta-coperta' : 'carosello';
     if (inAnteprima(p, u)) {
       return { momento, interattivi: false, carteGrandi, azione: 'torna',
-        testo: drawStep ? I18N_IT.backToDraw : I18N_IT.backToActive, annullaModifiche: false };
+        testo: drawStep ? T.backToDraw : T.backToActive, annullaModifiche: false };
     }
-    const testo = drawStep || !active ? I18N_IT.ctaDraw : actionText(active, p.newIndex >= 0, turnRoundOver(p.turnOrder));
+    const testo = drawStep || !active ? T.ctaDraw : actionText(active, p.newIndex >= 0, turnRoundOver(p.turnOrder));
     return { momento, interattivi: false, carteGrandi, azione: drawStep ? 'pesca' : 'risolvi', testo, annullaModifiche: false };
   }
   // Turno giocatori (e "Crea mazzo", che ha la stessa disposizione con il cursore al posto del pulsante)
@@ -97,10 +97,10 @@ export function variantePartita(p: PartitaPerVariante, u: UiPerVariante): Varian
   const awaiting = awaitingTurnCard(p.turnOrder, p.resolving);
   // A inizio giro (dopo il primo) "Pesca la prima carta turno"; all'ultimo turno del giro "Fine turno · Mischia mazzo"
   // (anche durante l'animazione del mazzo mischiato)
-  const testo = saving ? I18N_IT.saveChanges
-    : u.trackShuffle ? I18N_IT.endTurnShuffle
-    : awaiting ? (p.turnOrder.round >= 1 && !(p.turnOrder.history || []).length ? I18N_IT.drawFirstTurnCard : I18N_IT.drawTurnCard)
-    : turnRoundOver(p.turnOrder) ? I18N_IT.endTurnShuffle : I18N_IT.endTurn;
+  const testo = saving ? T.saveChanges
+    : u.trackShuffle ? T.endTurnShuffle
+    : awaiting ? (p.turnOrder.round >= 1 && !(p.turnOrder.history || []).length ? T.drawFirstTurnCard : T.drawTurnCard)
+    : turnRoundOver(p.turnOrder) ? T.endTurnShuffle : T.endTurn;
   if (u.deckBuilding) {
     return { momento: 'crea-mazzo', interattivi: true, carteGrandi: 'coda', azione: 'cursore', testo, annullaModifiche: false };
   }

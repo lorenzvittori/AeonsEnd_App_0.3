@@ -4,7 +4,7 @@
 // ridisegno), ui/componenti (componenti, dialoghi, testata, ripristino). Usato da: menu laterale, navigazione (Indietro,
 // Esc).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { cardArt, needsPairChoice } from './componenti.ts';
 import { button, dialogShell, modals, openModal, showToast } from './dialoghi.ts';
 import { dockDeck, flyToDiscard } from './testata.ts';
@@ -21,7 +21,7 @@ export let undoFloat: HTMLDivElement | null = null;
 export function openUndoFloat(): void {
   closeUndoFloat();
   const layer = el('div', 'ae-undo-float');
-  const b = button(I18N_IT.undoAction, 'primary', e => {
+  const b = button(T.undoAction, 'primary', e => {
     e.stopPropagation();
     undo();
     sync();
@@ -51,7 +51,7 @@ export function openDeckPopover(): void {
   closeDeckPopover();
   const layer = el('div', 'ae-deck-popover');
   const r = dockDeck.getBoundingClientRect();
-  const b = button(I18N_IT.drawCard, 'primary', e => {
+  const b = button(T.drawCard, 'primary', e => {
     e.stopPropagation();
     closeDeckPopover();
     openDeckDraw();
@@ -77,12 +77,12 @@ export function closeDeckPopover(): void {
 export function openExitConfirm(onExit: () => void): void {
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.exitConfirmTitle, '', cancel, { displayTitle: false });
+  const dialog = dialogShell(T.exitConfirmTitle, '', cancel, { displayTitle: false });
   dialog.classList.add('ae-exit-confirm');
-  dialog.appendChild(el('p', 'ae-modal-text', I18N_IT.exitConfirmText));
+  dialog.appendChild(el('p', 'ae-modal-text', T.exitConfirmText));
   const footer = el('div', 'ae-modal-footer');
-  const cancelBtn = button(I18N_IT.cancel, 'secondary', cancel);
-  footer.append(cancelBtn, button(I18N_IT.exitConfirm, 'danger', () => { close(); onExit(); }));
+  const cancelBtn = button(T.cancel, 'secondary', cancel);
+  footer.append(cancelBtn, button(T.exitConfirm, 'danger', () => { close(); onExit(); }));
   dialog.appendChild(footer);
   close = openModal(dialog, { onCancel: cancel, initialFocus: cancelBtn });
 }
@@ -91,13 +91,13 @@ export function openDeckDraw(): void {
   const data = partita.deck[partita.deck.length - 1];
   if (!data) return;
   let close = () => {};
-  const putBack = () => { close(); showToast(I18N_IT.cardPutBack(data.name)); };
-  const dialog = dialogShell(I18N_IT.deckCardTitle, data.name, putBack, { displayTitle: false });
+  const putBack = () => { close(); showToast(T.cardPutBack(data.name)); };
+  const dialog = dialogShell(T.deckCardTitle, data.name, putBack, { displayTitle: false });
   dialog.classList.add('ae-deck-draw');
   const art = cardArt(data);
   art.classList.add('ae-modal-art');
   const footer = el('div', 'ae-modal-footer');
-  const discardBtnEl = button(I18N_IT.discardDrawn, 'danger', () => {
+  const discardBtnEl = button(T.discardDrawn, 'danger', () => {
     const source = art.getBoundingClientRect().width ? art : null;
     // La carta in cima va negli scarti (la finestra è aperta solo con il mazzo non vuoto)
     scartaCimaDelMazzo();
@@ -105,9 +105,9 @@ export function openDeckDraw(): void {
     if (source) flyToDiscard([source]);
     close();
     richiediRidisegno();
-    showToast(I18N_IT.cardDiscarded(data.name));
+    showToast(T.cardDiscarded(data.name));
   });
-  footer.append(button(I18N_IT.putBack, 'secondary', putBack), discardBtnEl);
+  footer.append(button(T.putBack, 'secondary', putBack), discardBtnEl);
   dialog.append(art, footer);
   close = openModal(dialog, { onCancel: putBack });
 }

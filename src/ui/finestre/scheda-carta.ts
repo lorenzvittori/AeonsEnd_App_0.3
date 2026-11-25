@@ -12,7 +12,7 @@ import { flyToDiscard } from '../componenti/testata.ts';
 import { el, icon, query } from '../dom.ts';
 import { focusEl, pulsantePrincipale, queueList, ui } from '../pagina.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 export function unsetHpClick(e: MouseEvent): void {
   const target = e.target;
@@ -45,7 +45,7 @@ export function openCardDialog(entry: VoceInGioco): void {
   const dialog = el('div', 'ae-modal ae-modal--card');
   dialog.setAttribute('role', 'dialog');
   dialog.setAttribute('aria-modal', 'true');
-  dialog.setAttribute('aria-label', [data.name || I18N_IT.cardInPlay, typeName(data)].join(', '));
+  dialog.setAttribute('aria-label', [data.name || T.cardInPlay, typeName(data)].join(', '));
   const art = cardArt(data);
   art.classList.add('ae-modal-art');
   const panel = el('div', 'ae-card-panel');
@@ -58,25 +58,25 @@ export function openCardDialog(entry: VoceInGioco): void {
   } else if (data.type === 'Power' && !locked) {
     // Token rimasti come icone, un token per ogni token
     const tokens = el('p', 'ae-card-panel-tokens');
-    tokens.setAttribute('aria-label', I18N_IT.tokensLeft(entry.tokens));
+    tokens.setAttribute('aria-label', T.tokensLeft(entry.tokens));
     tokens.appendChild(tokenIcons(Number(entry.tokens)));
     panel.appendChild(tokens);
     // Costo pagato: la carta diventa grigia (modifica non salvata); con "Salva modifiche" va negli scarti
-    const remove = button(I18N_IT.removePower, 'danger', () => {
+    const remove = button(T.removePower, 'danger', () => {
       close();
       setDraft(entry, { paid: true });
       richiediRidisegno();
       focusQueueItem(entry.uid);
     });
     const footer = el('div', 'ae-modal-footer');
-    footer.append(button(I18N_IT.close, 'secondary', cancel));
+    footer.append(button(T.close, 'secondary', cancel));
     // Solo i poteri con "TO DISCARD" si possono rimuovere pagando il costo (cards.json: removable)
     const d = draftOf(entry);
     if (data.removable !== false && !entry.paid && !(d && d.paid)) footer.appendChild(remove);
     dialog.appendChild(footer);
   } else {
     const footer = el('div', 'ae-modal-footer');
-    footer.append(button(I18N_IT.close, 'secondary', cancel));
+    footer.append(button(T.close, 'secondary', cancel));
     dialog.appendChild(footer);
   }
   close = openModal(dialog, { onCancel: cancel });
@@ -114,8 +114,8 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
     controls.appendChild(b);
   });
   const footer = el('div', 'ae-modal-footer');
-  const confirm = button(I18N_IT.confirmHp, 'primary', commit);
-  footer.append(button(I18N_IT.cancel, 'secondary', close), confirm);
+  const confirm = button(T.confirmHp, 'primary', commit);
+  footer.append(button(T.cancel, 'secondary', close), confirm);
   panel.append(row, controls);
   dialog.appendChild(footer);
 
@@ -128,12 +128,12 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
     const dies = draft === 0 && !unset;
     delta.className = 'ae-hp-delta' + (change < 0 ? ' is-loss' : change > 0 ? ' is-gain' : '');
     delta.replaceChildren();
-    if (dies) delta.append(icon('heart'), el('span', '', I18N_IT.willBeDeleted));
-    else if (change !== 0 && !unset) delta.append(icon('heart'), el('span', '', I18N_IT.hpDelta(change)));
+    if (dies) delta.append(icon('heart'), el('span', '', T.willBeDeleted));
+    else if (change !== 0 && !unset) delta.append(icon('heart'), el('span', '', T.hpDelta(change)));
     stepButtons.forEach(([step, b]) => {
       if (step > 0 && !partita.resolving) { b.disabled = draft >= cap; b.classList.toggle('is-dimmed', draft >= cap); }
     });
-    confirm.textContent = dies ? I18N_IT.deleteMinion : I18N_IT.confirmHp;
+    confirm.textContent = dies ? T.deleteMinion : T.confirmHp;
     confirm.className = 'ae-button ' + (dies ? 'ae-button--danger' : 'ae-button--primary');
   }
 
@@ -165,13 +165,13 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
       if (killedArt) flyToDiscard([killedArt]);
       richiediRidisegno();
       pulsantePrincipale.focus();
-      showToast(value <= 0 ? I18N_IT.minionDeleted(name) : I18N_IT.hpLeftToast(name, value));
+      showToast(value <= 0 ? T.minionDeleted(name) : T.hpLeftToast(name, value));
       return;
     }
     ui.queueAnchor = { uid: entry.uid, align: 'nearest' };
     richiediRidisegno();
     focusQueueItem(entry.uid);
-    showToast(value <= 0 ? I18N_IT.minionKilled(name) : I18N_IT.hpLeftToast(name, value));
+    showToast(value <= 0 ? T.minionKilled(name) : T.hpLeftToast(name, value));
   }
 
   update();

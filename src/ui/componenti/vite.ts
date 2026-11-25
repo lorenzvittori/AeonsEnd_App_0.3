@@ -17,7 +17,7 @@ import { el, need, query, queryAll } from '../dom.ts';
 import { byId, cssUrl, reducedMotion, ui } from '../pagina.ts';
 import type { Sfondo } from '../pagina.ts';
 import { apriFinestraVita, mostraFinePartita, richiediRidisegno } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 // La riga delle vite (#vite in index.html, zona 4 della schermata "partita"): i due box si creano al primo disegno
 export let livesRow: HTMLDivElement | null = null;
@@ -70,7 +70,7 @@ export function renderLives(): void {
   setBg(lifeBox('grave'), currentGraveholdBg().src);
   const art = preferenze.settings.nemesis ? catalogo.nemesisArt[preferenze.settings.nemesis] : undefined;
   setBg(lifeBox('nemesis'), art && art.portrait);
-  const lives: [TipoVita, string, number][] = [['grave', I18N_IT.graveholdName, partita.graveLife], ['nemesis', preferenze.settings.nemesis || '', partita.nemesisLife]];
+  const lives: [TipoVita, string, number][] = [['grave', T.graveholdName, partita.graveLife], ['nemesis', preferenze.settings.nemesis || '', partita.nemesisLife]];
   lives.forEach(([kind, name, value]) => {
     const b = lifeBox(kind);
     // Il numero si riscrive solo se è cambiato: dopo uno scrubbing le cifre stanno ancora scorrendo
@@ -80,7 +80,7 @@ export function renderLives(): void {
       v.dataset.shown = String(value);
     }
     b.classList.toggle('is-zero', value <= 0);
-    b.setAttribute('aria-label', I18N_IT.lifeAria(name, value));
+    b.setAttribute('aria-label', T.lifeAria(name, value));
   });
 }
 

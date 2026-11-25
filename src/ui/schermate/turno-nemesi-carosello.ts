@@ -19,7 +19,7 @@ import { el, icon, query } from '../dom.ts';
 import { CARD_BACK, DRAW_MS, DRAW_UID, focusEl, rail, reducedMotion, ui } from '../pagina.ts';
 import type { CartaDaGirare } from '../pagina.ts';
 import { variantePartita } from '../partita-variante.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 export function activeEntry(): VoceInGioco | null {
   return partita.queue[partita.currentIndex] || null;
@@ -125,7 +125,7 @@ export function focusSlide(entry: VoceInGioco): HTMLDivElement {
   if (entry.isNew) {
     // Carta appena pescata: glow dorato attorno ed etichetta NUOVA
     stage.classList.add('is-new');
-    const tag = el('span', 'ae-new-tag', I18N_IT.newTag);
+    const tag = el('span', 'ae-new-tag', T.newTag);
     tag.setAttribute('aria-hidden', 'true');
     stage.appendChild(tag);
   }
@@ -159,13 +159,13 @@ export function drawSlide(): HTMLDivElement {
   // Toccando il retro la carta si pesca (come il pulsante "Pesca")
   stage.setAttribute('role', 'button');
   stage.tabIndex = 0;
-  stage.setAttribute('aria-label', I18N_IT.ctaDraw);
+  stage.setAttribute('aria-label', T.ctaDraw);
   const art = el('div', 'ae-card-art ae-card-back');
   const img = document.createElement('img');
-  img.alt = I18N_IT.nextCard;
+  img.alt = T.nextCard;
   img.src = CARD_BACK;
   art.appendChild(img);
-  const tag = el('span', 'ae-new-tag', I18N_IT.newTag);
+  const tag = el('span', 'ae-new-tag', T.newTag);
   tag.setAttribute('aria-hidden', 'true');
   stage.append(art, tag);
   slide.append(el('p', 'ae-focus-status'), stage);
@@ -312,7 +312,7 @@ export function flipCard(entry: VoceInGioco, reveal: CartaDaGirare): HTMLDivElem
     holder.appendChild(placeholderArt(entry.data));
     const placeholder = holder.firstChild;
     if (placeholder) front.appendChild(placeholder);
-    const retry = button(I18N_IT.retryImage, 'secondary', () => {
+    const retry = button(T.retryImage, 'secondary', () => {
       reveal.status = 'loading';
       startReveal(entry);
     });
@@ -324,7 +324,7 @@ export function flipCard(entry: VoceInGioco, reveal: CartaDaGirare): HTMLDivElem
 
   front.appendChild(cardArt(entry.data, { sync: true }));
   if (reveal.status === 'loading') {
-    flip.appendChild(el('p', 'ae-hint ae-flip-loading', I18N_IT.loadingCard));
+    flip.appendChild(el('p', 'ae-hint ae-flip-loading', T.loadingCard));
   } else if (reveal.status === 'ready') {
     // Immagine pronta: si gira subito dopo essere stata disegnata; finita la rotazione resta la carta normale
     setTimeout(() => flip.classList.add('is-flipped'), 30);

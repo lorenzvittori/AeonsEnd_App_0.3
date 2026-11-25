@@ -5,7 +5,7 @@
 // dom), ui/componenti/scarti.ts. Usato da: barra dei turni, pesca-undo, finestre (mazzo dei turni, scheda della carta),
 // schermate (crea mazzo, turni), navigazione (render).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { partita } from '../../stato/partita.ts';
 import { openDiscard } from './scarti.ts';
 import { byId, CARD_BACK, cssUrl, menuBtn, phaseLabel, reducedMotion, ui } from '../pagina.ts';
@@ -44,12 +44,12 @@ export function renderDockPiles(): void {
   // Durante la creazione del mazzo il numero sale man mano che le carte arrivano (ui.deckShown)
   const deckCount = ui.deckShown !== null && ui.deckShown !== undefined ? ui.deckShown : partita.deck.length;
   pileContent(dockDeck, deckCount ? CARD_BACK : null, deckCount);
-  dockDeck.setAttribute('aria-label', I18N_IT.deckLabel(partita.deck.length));
+  dockDeck.setAttribute('aria-label', T.deckLabel(partita.deck.length));
   dockDeck.setAttribute('aria-haspopup', 'true');
   const shown = Math.max(0, partita.discard.length - ui.flyingDiscards);
   const last = partita.discard[shown - 1];
   pileContent(dockDiscard, last ? encodeURI(last.thumb || last.image) : null, shown);
-  dockDiscard.setAttribute('aria-label', I18N_IT.discardButtonLabel(partita.discard.length));
+  dockDiscard.setAttribute('aria-label', T.discardButtonLabel(partita.discard.length));
 }
 
 // Animazione dello scarto: una copia della carta si stacca (si alza e si inclina), vola in arco verso la pila degli
@@ -139,20 +139,20 @@ export function disegnaTestata(onNameClick: () => void): void {
   const playersIcon = el('span', 'ae-players-icon');
   playersIcon.style.setProperty('--ae-players-icon', cssUrl(`Assets/ui/icons/players-${players}.png`));
   playersIcon.setAttribute('role', 'img');
-  playersIcon.setAttribute('aria-label', I18N_IT.players(players));
-  const turnText = el('span', '', I18N_IT.turnN(partita.turnOrder.round));
+  playersIcon.setAttribute('aria-label', T.players(players));
+  const turnText = el('span', '', T.turnN(partita.turnOrder.round));
   turnText.hidden = !(partita.turnOrder.round >= 1);
   const battleNo = battleOf(preferenze.settings.nemesis);
   const battle = el('span', 'ae-battle-flame', battleNo ? String(battleNo) : '?');
   battle.setAttribute('role', 'img');
-  battle.setAttribute('aria-label', battleNo ? I18N_IT.battle(battleNo) : I18N_IT.battleMissing);
+  battle.setAttribute('aria-label', battleNo ? T.battle(battleNo) : T.battleMissing);
   const sep = () => { const s = el('span', 'ae-info-sep', '|'); s.setAttribute('aria-hidden', 'true'); return s; };
   const sep2 = sep();
   sep2.hidden = partita.turn < 1;
   turnLine.append(battle, sep(), playersIcon, sep2, turnText);
   phaseLabel.replaceChildren(el('span', 'ae-phase-name', preferenze.settings.nemesis || ''), turnLine);
   // Modalità test: "TEST · <scenario>" sempre visibile, sotto il nome della nemesi (non copre i comandi)
-  if (partita.testRun) phaseLabel.appendChild(el('span', 'ae-phase-test', I18N_IT.testLabel(String(partita.testRun.name))));
+  if (partita.testRun) phaseLabel.appendChild(el('span', 'ae-phase-test', T.testLabel(String(partita.testRun.name))));
   // Nome della nemesi: durante "Crea mazzo" si tocca e apre la finestra con nemesi e giocatori
   const phaseName = phaseLabel.querySelector('.ae-phase-name');
   if (ui.deckBuilding && phaseName) {
@@ -177,7 +177,7 @@ export function avvio(): void {
 
   // Menu in alto a destra: apre un pannello laterale largo il 70% dello schermo, il resto dell'app resta visibile ma
   // oscurato
-  menuBtn.setAttribute('aria-label', I18N_IT.menu);
+  menuBtn.setAttribute('aria-label', T.menu);
 
   // Nome della nemesi: si adatta di nuovo quando cambia la larghezza della testata
   window.addEventListener('resize', () => fitPhaseName());

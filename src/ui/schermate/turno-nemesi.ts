@@ -9,7 +9,7 @@
 // turno-nemesi-carosello.ts (supporto). Usato da: navigazione (render, agganci, avvio).
 
 import * as Nemesi from '../../regole/turno-nemesi.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { awaitingTurnCard, entryByUid, hpUnset, partita, pescaCarta, risolviCarta } from '../../stato/partita.ts';
 import { announce } from '../componenti/dialoghi.ts';
 import { FLY_MS, flyToDiscard } from '../componenti/testata.ts';
@@ -82,7 +82,7 @@ export function onResolveClick(): void {
   // Dal mazzo dei turni è uscita di nuovo la nemesi: il turno nemesi riparte (scossa e annuncio)
   if (partita.resolving && partita.turn !== turnBefore) {
     shakeApp();
-    announce(I18N_IT.trackNemesisResolve);
+    announce(T.trackNemesisResolve);
   }
 
   // Fine dell'ultimo turno del giro: mazzo dei turni mischiato; scritte e colori della barra svaniscono durante il
@@ -135,7 +135,7 @@ export function showActive(entry?: VoceInGioco | null): void {
   ui.viewedUid = current ? current.uid : (isDrawStep() ? DRAW_UID : null);
   if (current && partita.newIndex >= 0 && current.isNew && (!ui.reveal || ui.reveal.uid !== current.uid)) {
     startReveal(current);
-    announce(I18N_IT.cardDrawn(current.data.name));
+    announce(T.cardDrawn(current.data.name));
   }
   preloadNext();
 }

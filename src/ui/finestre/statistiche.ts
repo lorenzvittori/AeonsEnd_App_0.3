@@ -4,7 +4,7 @@
 // ui/componenti (animazioni, componenti, dialoghi, scarti). Usato da: navigazione (Vittoria a mazzo vuoto, aggancio
 // mostraFinePartita).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { isVariableMinion, partita, playerKinds, segnaFinePartita } from '../../stato/partita.ts';
 import { cardArt, typeName } from '../componenti/componenti.ts';
 import { button, dialogShell, openModal } from '../componenti/dialoghi.ts';
@@ -19,10 +19,10 @@ import { vaiAlMenuIniziale } from '../ridisegno.ts';
 // Schermata Vittoria: scritta "Vittoria" come il banner dei Tier, ma resta ferma sullo schermo; sotto Statistiche e
 // Menu iniziale; un tocco su una parte vuota torna alla partita com'era. Si apre da sola (checkVictory) o dal Menu
 // ("Nemesi uccisa").
-export function showVictory(): void { showEndScreen(I18N_IT.victoryTitle, false); }
+export function showVictory(): void { showEndScreen(T.victoryTitle, false); }
 
 // Sconfitta (vita di Gravehold a 0): stessa schermata della Vittoria, con la scritta "Sconfitta"
-export function showDefeat(): void { showEndScreen(I18N_IT.defeatTitle, true); }
+export function showDefeat(): void { showEndScreen(T.defeatTitle, true); }
 
 export function showEndScreen(text: string, defeat: boolean): void {
   // Fine del tempo di partita (statistiche): l'ultima volta che si arriva alla Vittoria (o alla Sconfitta)
@@ -36,8 +36,8 @@ export function showEndScreen(text: string, defeat: boolean): void {
   title.id = 'victory-title';
   screen.setAttribute('aria-labelledby', title.id);
   const actions = el('div', 'ae-victory-actions');
-  const statsBtn = button(I18N_IT.statsTitle, 'primary', openStats);
-  const home = button(I18N_IT.mainMenu, 'secondary', () => { close(); vaiAlMenuIniziale(); });
+  const statsBtn = button(T.statsTitle, 'primary', openStats);
+  const home = button(T.mainMenu, 'secondary', () => { close(); vaiAlMenuIniziale(); });
   [statsBtn, home].forEach(b => b.classList.add('ae-button--full'));
   actions.append(statsBtn, home);
   screen.append(title, actions);
@@ -56,10 +56,10 @@ type RigaStatistiche = [string, number, Carta[]?, string?];
 export function openStats(): void {
   let close = () => {};
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.statsTitle, preferenze.settings.nemesis || '', cancel, { displayTitle: false });
+  const dialog = dialogShell(T.statsTitle, preferenze.settings.nemesis || '', cancel, { displayTitle: false });
   dialog.classList.add('ae-stats');
-  const rows = I18N_IT.statsRows;
-  const lists = I18N_IT.statsLists;
+  const rows = T.statsRows;
+  const lists = T.statsLists;
   const ids: Partial<Record<string, string[]>> = (partita.stats && partita.stats.cards) || {};
   const byId = (list: string[] | undefined): Carta[] => (Array.isArray(list) ? list : []).map(id => catalogo.cardsById.get(id))
     .filter((c): c is Carta => !!c);
@@ -85,10 +85,10 @@ export function openStats(): void {
     if (cards) list.appendChild(statsCardStrip(cards, listLabel || ''));
   });
   // Tempi: partita intera e ogni Tier (dalla sua prima carta pescata alla prima del Tier dopo, o alla Vittoria)
-  const timeTitle = el('h3', 'ae-stats-subtitle', I18N_IT.statsTimeTitle);
+  const timeTitle = el('h3', 'ae-stats-subtitle', T.statsTimeTitle);
   const timeList = el('dl', 'ae-side-stats ae-stats-times');
   statsTimes().forEach(([label, ms]) => timeList.append(el('dt', '', label),
-    el('dd', '', ms === null ? I18N_IT.statsTimeUnknown : formatDuration(ms))));
+    el('dd', '', ms === null ? T.statsTimeUnknown : formatDuration(ms))));
   // Turni in gioco di ogni minion: prima quelli uccisi, poi quelli ancora in gioco. Ogni minion con la sua carta (le
   // partite vecchie non hanno l'id: si cerca per nome)
   const minionCard = (m: { id?: string; name: string }): Carta | null => (m.id && catalogo.cardsById.get(m.id)) || catalogo.allCards.find(c => c.type === 'Minion' && c.name === m.name) || null;
@@ -96,7 +96,7 @@ export function openStats(): void {
     ...partita.stats.minions.map(m => ({ name: m.name, data: minionCard(m), turns: m.turns, alive: false })),
     ...partita.queue.filter(e => e.data.type === 'Minion').map(e => ({ name: e.data.name, data: e.data, turns: Math.max(0, partita.turn - (e.bornTurn || 0)), alive: true }))
   ];
-  const minionTitle = el('h3', 'ae-stats-subtitle', I18N_IT.statsMinionsTitle);
+  const minionTitle = el('h3', 'ae-stats-subtitle', T.statsMinionsTitle);
   let minionList: HTMLElement;
   if (minions.length) {
     // Una riga per minion: miniatura (toccandola la carta si vede grande), nome e turni in gioco
@@ -114,19 +114,19 @@ export function openStats(): void {
       }
       const text = el('div', 'ae-stats-minion-text');
       text.append(el('span', 'ae-stats-minion-name', m.name),
-        el('span', 'ae-stats-minion-note', m.alive ? I18N_IT.stillInPlay : ''));
-      row.append(text, el('span', 'ae-stats-minion-turns', I18N_IT.minionTurns(m.turns)));
+        el('span', 'ae-stats-minion-note', m.alive ? T.stillInPlay : ''));
+      row.append(text, el('span', 'ae-stats-minion-turns', T.minionTurns(m.turns)));
       box.appendChild(row);
     });
     minionList = box;
   } else {
-    minionList = el('p', 'ae-stats-empty', I18N_IT.statsNoMinions);
+    minionList = el('p', 'ae-stats-empty', T.statsNoMinions);
   }
   // Statistiche maghi: una riga per giocatore ("Æ spesi" per ora è vuoto)
-  const magesTitle = el('h3', 'ae-stats-subtitle', I18N_IT.statsMagesTitle);
+  const magesTitle = el('h3', 'ae-stats-subtitle', T.statsMagesTitle);
   const magesTable = el('table', 'ae-stats-mages');
   const head = el('tr');
-  I18N_IT.statsMagesHead.forEach(h => head.appendChild(el('th', '', h)));
+  T.statsMagesHead.forEach(h => head.appendChild(el('th', '', h)));
   magesTable.appendChild(el('thead')).appendChild(head);
   const body = magesTable.appendChild(el('tbody'));
   // Una riga per giocatore (il wild non ha una riga sua: i suoi turni contano per il giocatore che era wild)
@@ -137,13 +137,13 @@ export function openStats(): void {
     name.scope = 'row';
     const dot = el('span', 'ae-stats-mage-dot');
     dot.dataset.kind = kind;
-    name.append(dot, I18N_IT.trackPlayerName(Number(kind.slice(1))));
+    name.append(dot, T.trackPlayerName(Number(kind.slice(1))));
     tr.append(name, el('td', '', String(m.damage)), el('td', '', String(m.kills)), el('td', '', String(m.powers)),
       el('td', '', '—'));
     body.appendChild(tr);
   });
   const footer = el('div', 'ae-modal-footer');
-  footer.appendChild(button(I18N_IT.close, 'secondary', cancel));
+  footer.appendChild(button(T.close, 'secondary', cancel));
   dialog.append(timeTitle, timeList, list, magesTitle, magesTable, minionTitle, minionList, footer);
   close = openModal(dialog, { onCancel: cancel });
 }
@@ -154,15 +154,15 @@ export function statsTimes(): [string, number | null][] {
   const start = partita.stats.startedAt;
   const at = partita.stats.tierAt || {};
   const end = partita.stats.endedAt || Date.now();
-  if (!start) return [[I18N_IT.statsTime, null], [I18N_IT.statsTierTime(1), null], [I18N_IT.statsTierTime(2), null], [I18N_IT.statsTierTime(3), null]];
+  if (!start) return [[T.statsTime, null], [T.statsTierTime(1), null], [T.statsTierTime(2), null], [T.statsTierTime(3), null]];
   const t2 = at[2] || null;
   const t3 = at[3] || null;
   const span = (from: number | null, to: number | null) => (from ? Math.max(0, (to || end) - from) : null);
   return [
-    [I18N_IT.statsTime, Math.max(0, end - start)],
-    [I18N_IT.statsTierTime(1), span(start, t2 || t3)],
-    [I18N_IT.statsTierTime(2), span(t2, t3)],
-    [I18N_IT.statsTierTime(3), span(t3, null)]
+    [T.statsTime, Math.max(0, end - start)],
+    [T.statsTierTime(1), span(start, t2 || t3)],
+    [T.statsTierTime(2), span(t2, t3)],
+    [T.statsTierTime(3), span(t3, null)]
   ];
 }
 
@@ -182,7 +182,7 @@ export function statsCardStrip(cards: readonly Carta[], label: string): HTMLDivE
   box.setAttribute('aria-label', label);
   if (!cards.length) {
     box.classList.add('is-empty');
-    box.appendChild(el('p', 'ae-stats-empty', I18N_IT.statsListEmpty));
+    box.appendChild(el('p', 'ae-stats-empty', T.statsListEmpty));
     return box;
   }
   cards.forEach(data => {
@@ -191,7 +191,7 @@ export function statsCardStrip(cards: readonly Carta[], label: string): HTMLDivE
     item.setAttribute('role', 'listitem');
     // Minion a vita variabile: "*", come sulla carta
     const hp = isVariableMinion(data) ? '*' : data.type === 'Minion' && typeof data.hp === 'number' ? data.hp : null;
-    item.setAttribute('aria-label', [data.name, typeName(data), hp !== null ? I18N_IT.statsHp(hp) : ''].filter(Boolean).join(', '));
+    item.setAttribute('aria-label', [data.name, typeName(data), hp !== null ? T.statsHp(hp) : ''].filter(Boolean).join(', '));
     item.appendChild(cardArt(data, { thumb: true, lazy: true }));
     if (hp !== null) {
       const badge = el('span', 'ae-stats-hp');

@@ -6,7 +6,7 @@
 // ui/componenti (animazioni, dialoghi, pesca-undo, ripristino, scarti, sfondi). Usato da: navigazione (pulsante Menu,
 // aggancio apriMenuLaterale).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { partita } from '../../stato/partita.ts';
 import { menuBtn, reducedMotion, ui } from '../pagina.ts';
 import { el } from '../dom.ts';
@@ -28,44 +28,44 @@ export function openSideMenu(leave?: () => void): void {
   let close = () => {};
   const cancel = () => close();
   const go = () => { close(); if (typeof leave === 'function') leave(); };
-  const panel = dialogShell(I18N_IT.menu, '', cancel, { displayTitle: false });
+  const panel = dialogShell(T.menu, '', cancel, { displayTitle: false });
   panel.classList.add('ae-side-menu');
   const statsList = el('dl', 'ae-side-stats');
-  statsList.append(el('dt', '', I18N_IT.menuTurn), el('dd', '', String(partita.turn)),
-    el('dt', '', I18N_IT.menuDeck), el('dd', '', String(partita.deck.length)));
+  statsList.append(el('dt', '', T.menuTurn), el('dd', '', String(partita.turn)),
+    el('dt', '', T.menuDeck), el('dd', '', String(partita.deck.length)));
   // Sfondo: anteprima dello sfondo scelto con il nome; si tocca per scegliere tra le anteprime di tutti gli sfondi
   const bgRow = el('div', 'ae-side-field ae-side-field--row');
-  bgRow.append(el('span', 'ae-side-field-label', I18N_IT.background), backgroundChoiceButton(null, { compact: true }));
+  bgRow.append(el('span', 'ae-side-field-label', T.background), backgroundChoiceButton(null, { compact: true }));
   // Sfondo del box della vita di Gravehold (stessa riga con anteprima)
   const graveRow = el('div', 'ae-side-field ae-side-field--row');
-  graveRow.append(el('span', 'ae-side-field-label', I18N_IT.graveholdBg),
+  graveRow.append(el('span', 'ae-side-field-label', T.graveholdBg),
     backgroundChoiceButton(null, { compact: true, choice: GRAVEHOLD_BG_CHOICE }));
   // Dorso delle carte: miniatura del dorso scelto con il nome; si tocca per scegliere tra tutti i dorsi
   const backRow = el('div', 'ae-side-field ae-side-field--row');
-  backRow.append(el('span', 'ae-side-field-label', I18N_IT.cardBack), cardBackChoiceButton(null, { compact: true }));
-  const discardOpen = button(I18N_IT.discardButton(partita.discard.length), 'secondary', () => { go(); openDiscard(); });
+  backRow.append(el('span', 'ae-side-field-label', T.cardBack), cardBackChoiceButton(null, { compact: true }));
+  const discardOpen = button(T.discardButton(partita.discard.length), 'secondary', () => { go(); openDiscard(); });
   discardOpen.classList.add('ae-button--full');
-  discardOpen.setAttribute('aria-label', I18N_IT.discardButtonLabel(partita.discard.length));
+  discardOpen.setAttribute('aria-label', T.discardButtonLabel(partita.discard.length));
   // Nemesi uccisa al tavolo (vita a 0): si va alla schermata Vittoria; la partita non cambia (Chiudi torna indietro)
-  const killed = button(I18N_IT.nemesisKilled, 'secondary', () => { go(); mostraFinePartita('victory'); });
+  const killed = button(T.nemesisKilled, 'secondary', () => { go(); mostraFinePartita('victory'); });
   killed.classList.add('ae-button--full');
   // Esci dalla partita (rosso): finestra di conferma, poi il menu iniziale (Modalità test: "Esci dal test")
-  const exit = button(partita.testRun ? I18N_IT.testExit : I18N_IT.exitGame, 'danger', () => openExitConfirm(() => { go(); vaiAlMenuIniziale(); }));
+  const exit = button(partita.testRun ? T.testExit : T.exitGame, 'danger', () => openExitConfirm(() => { go(); vaiAlMenuIniziale(); }));
   exit.classList.add('ae-button--full', 'ae-side-exit', 'ae-hold-exit');
   // Undo: annulla l'ultima azione (prima le modifiche non salvate)
-  const undoItem = button(I18N_IT.undoAction, 'secondary', () => { go(); undo(); openUndoFloat(); });
+  const undoItem = button(T.undoAction, 'secondary', () => { go(); undo(); openUndoFloat(); });
   undoItem.classList.add('ae-button--full');
   undoItem.disabled = partita.undoStack.length === 0 && ui.drafts.size === 0;
   const items: HTMLElement[] = [statsList, undoItem, discardOpen, killed];
   // Durante "Crea mazzo": Ricomincia la partita (mazzo nuovo con la stessa nemesi e gli stessi giocatori)
   if (ui.deckBuilding) {
-    const restart = button(I18N_IT.restartGame, 'secondary', () => { go(); ricominciaMazzo(); });
+    const restart = button(T.restartGame, 'secondary', () => { go(); ricominciaMazzo(); });
     restart.classList.add('ae-button--full');
     items.splice(1, 0, restart);
   }
   // Modalità test: "Ricomincia lo scenario" (di nuovo dallo stato iniziale, undo vuoto)
   if (partita.testRun) {
-    const restartTest = button(I18N_IT.testRestart, 'secondary', () => { go(); ricominciaScenario(); });
+    const restartTest = button(T.testRestart, 'secondary', () => { go(); ricominciaScenario(); });
     restartTest.classList.add('ae-button--full', 'ae-side-test-restart');
     items.splice(1, 0, restartTest);
   }
@@ -99,7 +99,7 @@ export function menuCloseToggle(source: HTMLElement, backdrop: HTMLElement, clos
   if (!r.width) return;
   const x = el('button', 'ae-icon-button ae-menu-button ae-menu-toggle');
   x.type = 'button';
-  x.setAttribute('aria-label', I18N_IT.close);
+  x.setAttribute('aria-label', T.close);
   x.appendChild(el('span', 'ae-menu-lines'));
   Object.assign(x.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
   x.addEventListener('click', e => {

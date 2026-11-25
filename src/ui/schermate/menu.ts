@@ -5,7 +5,7 @@
 // Livello 5 (ui/schermate/). Dipende da: stato/ (salvataggio, catalogo, preferenze), ui/ base (testi, pagina, dom,
 // ridisegno), ui/componenti/dialoghi.ts, ui/finestre (opzioni, test). Usato da: navigazione, avvio.ts (errore).
 
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { button } from '../componenti/dialoghi.ts';
 import { readSave } from '../../stato/salvataggio.ts';
 import { catalogo } from '../../stato/catalogo.ts';
@@ -26,10 +26,10 @@ export function startChoicePanel(): HTMLElement {
   panel.id = 'start-choice';
   panel.setAttribute('aria-labelledby', 'start-choice-title');
   const head = el('div', 'start-choice-head');
-  const title = el('h2', 'start-choice-title', I18N_IT.savedGameTitle);
+  const title = el('h2', 'start-choice-title', T.savedGameTitle);
   title.id = 'start-choice-title';
   head.append(title, el('p', 'start-choice-info'));
-  const resume = button(I18N_IT.resumeGame, 'primary', riprendiPartita);
+  const resume = button(T.resumeGame, 'primary', riprendiPartita);
   resume.classList.add('ae-button--full', 'start-choice-resume');
   panel.append(head, resume);
   pageEl(document, '.start-title', HTMLElement).after(panel);
@@ -41,18 +41,18 @@ export function startHomeActions(): HTMLElement {
   if (existing) return existing;
   const box = el('div', 'start-home');
   box.id = 'start-home';
-  const fresh = button(I18N_IT.newGame, 'primary', () => vaiA('nuova-partita'));
+  const fresh = button(T.newGame, 'primary', () => vaiA('nuova-partita'));
   fresh.classList.add('ae-button--full', 'start-home-new');
   // Collezione vuota: "Inserisci collezione" apre La mia collezione; "Nuova partita" è oscurato
-  const addCollection = button(I18N_IT.addCollection, 'primary', () => openCollection(addCollection, () => {
+  const addCollection = button(T.addCollection, 'primary', () => openCollection(addCollection, () => {
     const next = query(startHomeActions(), '.start-home-new', HTMLButtonElement);
     if (next && !next.disabled) next.focus({ preventScroll: true });
   }));
   addCollection.classList.add('ae-button--full', 'start-home-collection');
-  const options = button(I18N_IT.options, 'secondary', () => openOptions(options));
+  const options = button(T.options, 'secondary', () => openOptions(options));
   options.classList.add('ae-button--full', 'start-home-options');
   // Modalità test: scenari che partono in un momento preciso della partita
-  const test = button(I18N_IT.testMenu, 'secondary', () => openTestScreen(test));
+  const test = button(T.testMenu, 'secondary', () => openTestScreen(test));
   test.classList.add('ae-button--full', 'start-home-test');
   box.append(addCollection, fresh, options, test);
   startChoicePanel().after(box);
@@ -66,7 +66,7 @@ export function updateHomeCollection(): void {
   pageEl(box, '.start-home-collection', HTMLElement).hidden = !empty;
   const fresh = pageEl(box, '.start-home-new', HTMLButtonElement);
   fresh.disabled = empty;
-  fresh.title = empty ? I18N_IT.collectionEmptyHint : '';
+  fresh.title = empty ? T.collectionEmptyHint : '';
   // Con la collezione vuota il pulsante principale è "Inserisci collezione" (altrimenti principale solo senza partita
   // salvata, come in setStartMode)
   const primary = !empty && !readSave();
@@ -97,7 +97,7 @@ export function disegnaMenu(saved: SalvataggioValido | null, isHome: boolean): H
   if (saved) {
     const head = pageEl(panel, '.start-choice-head', HTMLElement);
     pageEl(head, '.start-choice-info', HTMLElement).textContent =
-      [saved.settings.nemesis, I18N_IT.players(saved.settings.players)].filter(Boolean).join(' · ');
+      [saved.settings.nemesis, T.players(saved.settings.players)].filter(Boolean).join(' · ');
     const old = head.querySelector('.nemesis-art');
     if (old) old.remove();
     const nemesis = saved.settings.nemesis;

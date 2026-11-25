@@ -7,7 +7,7 @@ import { el, query } from '../dom.ts';
 import { app, CARD_BACK, CARD_BACKS, cssUrl, currentCardBack, impostaDorso, startLayer, ui } from '../pagina.ts';
 import type { Sfondo } from '../pagina.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 import { currentGraveholdBg, GRAVEHOLD_BGS, setGraveholdBg } from './vite.ts';
 
 // Una scelta di sfondo: stesso pulsante con anteprima e stessa finestra per lo sfondo dell'app e quello di Gravehold
@@ -68,8 +68,8 @@ export function cardBackChoiceButton(onClosed: (() => void) | null, { compact = 
   const sync = () => {
     const b = currentCardBack();
     thumb.src = b.thumb;
-    name.textContent = textOf(I18N_IT.cardBacks, b.id);
-    btn.setAttribute('aria-label', I18N_IT.cardBackChosen(textOf(I18N_IT.cardBacks, b.id)));
+    name.textContent = textOf(T.cardBacks, b.id);
+    btn.setAttribute('aria-label', T.cardBackChosen(textOf(T.cardBacks, b.id)));
   };
   btn.append(thumb, name);
   btn.addEventListener('click', () => openCardBackPicker(sync, onClosed));
@@ -123,7 +123,7 @@ export function openBackgroundPicker(onChosen: (() => void) | null, onClosed: ((
     list.appendChild(item);
   });
   const footer = el('div', 'ae-modal-footer');
-  footer.appendChild(button(I18N_IT.close, 'secondary', close));
+  footer.appendChild(button(T.close, 'secondary', close));
   dialog.append(list, footer);
   closeModalFn = openModal(dialog, { onCancel: close, initialFocus: query(list, '[aria-pressed="true"]', HTMLElement) });
 }
@@ -134,7 +134,7 @@ export function openCardBackPicker(onChosen: (() => void) | null, onClosed: (() 
   let closeModalFn = () => {};
   const close = () => { closeModalFn(); if (onClosed) onClosed(); };
   const cancel = () => close();
-  const dialog = dialogShell(I18N_IT.cardBack, '', cancel, { displayTitle: false });
+  const dialog = dialogShell(T.cardBack, '', cancel, { displayTitle: false });
   dialog.classList.add('ae-back-picker');
   const grid = el('div', 'ae-back-grid');
   const chosen = currentCardBack().id;
@@ -146,7 +146,7 @@ export function openCardBackPicker(onChosen: (() => void) | null, onClosed: (() 
     img.alt = '';
     img.loading = 'lazy';
     img.src = b.thumb;
-    item.append(img, el('span', 'ae-back-item-name', textOf(I18N_IT.cardBacks, b.id)));
+    item.append(img, el('span', 'ae-back-item-name', textOf(T.cardBacks, b.id)));
     item.addEventListener('click', () => {
       setCardBack(b.id);
       close();
@@ -159,7 +159,7 @@ export function openCardBackPicker(onChosen: (() => void) | null, onClosed: (() 
     grid.appendChild(item);
   });
   const footer = el('div', 'ae-modal-footer');
-  footer.appendChild(button(I18N_IT.close, 'secondary', cancel));
+  footer.appendChild(button(T.close, 'secondary', cancel));
   dialog.append(grid, footer);
   closeModalFn = openModal(dialog, { onCancel: cancel, initialFocus: query(grid, '[aria-pressed="true"]', HTMLElement) });
 }
@@ -175,12 +175,12 @@ export function avvio(): void {
   applyBackground();
 
   APP_BG_CHOICE = {
-    className: '', title: () => I18N_IT.background, list: BACKGROUNDS, current: currentBackground, set: setBackground,
-    name: id => textOf(I18N_IT.backgrounds, id), chosen: n => I18N_IT.backgroundChosen(n)
+    className: '', title: () => T.background, list: BACKGROUNDS, current: currentBackground, set: setBackground,
+    name: id => textOf(T.backgrounds, id), chosen: n => T.backgroundChosen(n)
   };
 
   GRAVEHOLD_BG_CHOICE = {
-    className: ' ae-bg-choice--gravehold', title: () => I18N_IT.graveholdBg, list: GRAVEHOLD_BGS, current: currentGraveholdBg,
-    set: setGraveholdBg, name: id => textOf(I18N_IT.graveholdBgs, id), chosen: n => I18N_IT.graveholdBgChosen(n)
+    className: ' ae-bg-choice--gravehold', title: () => T.graveholdBg, list: GRAVEHOLD_BGS, current: currentGraveholdBg,
+    set: setGraveholdBg, name: id => textOf(T.graveholdBgs, id), chosen: n => T.graveholdBgChosen(n)
   };
 }

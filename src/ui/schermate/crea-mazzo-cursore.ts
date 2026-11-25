@@ -12,7 +12,7 @@ import { dockDeck, renderDockPiles } from '../componenti/testata.ts';
 import { el, query, queryAll } from '../dom.ts';
 import { app, CARD_BACK, pulsantePrincipale, reducedMotion, ui } from '../pagina.ts';
 import { richiediRidisegno } from '../ridisegno.ts';
-import { I18N_IT } from '../testi.ts';
+import { T } from '../testi.ts';
 
 interface CartaInVolo {
   pile: HTMLElement;             // mazzo di partenza
@@ -160,7 +160,7 @@ export function finishDeckBuild(): void {
   richiediRidisegno();
   pulsantePrincipale.focus({ preventScroll: true });
   // Banner "Partita iniziata", uguale a quello dei Tier; finito il banner lo sfondo si accende
-  showBanner(I18N_IT.gameStarted);
+  showBanner(T.gameStarted);
   setTimeout(() => {
     ui.deckDark = false;
     app.classList.remove('is-deck-dark');
@@ -199,14 +199,14 @@ export function createDeckSlider(): CursoreMazzo {
 export function buildDeckSlider(): CursoreMazzo {
   const box = el('div', 'ae-deck-slider');
   box.setAttribute('role', 'slider');
-  box.setAttribute('aria-label', I18N_IT.slideToBuildLabel);
+  box.setAttribute('aria-label', T.slideToBuildLabel);
   box.setAttribute('aria-valuemin', '0');
   box.setAttribute('aria-valuemax', '100');
   box.setAttribute('aria-valuenow', '0');
   box.tabIndex = 0;
   box.hidden = true;
   const fill = el('span', 'ae-deck-slider-fill');
-  const label = el('span', 'ae-deck-slider-label', I18N_IT.slideToBuild);
+  const label = el('span', 'ae-deck-slider-label', T.slideToBuild);
   const knob = el('span', 'ae-deck-slider-knob');
   knob.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">'
     + '<path d="M6 6l6 6-6 6M12 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
