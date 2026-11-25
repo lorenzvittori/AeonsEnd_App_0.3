@@ -14,7 +14,7 @@ export default defineConfig({
     // Niente file piccoli dentro il codice: le immagini restano file normali (cache del service worker)
     assetsInlineLimit: 0,
     // CSS non minificato: il minificatore riscrive regole e valori (prefissi, colori, variabili aggiunte) e il CSS deve
-    // restare quello di prima (fase A: aspetto identico)
+    // restare quello scritto nei file .css
     cssMinify: false
   },
   test: {

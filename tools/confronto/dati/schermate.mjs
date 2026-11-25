@@ -1,5 +1,5 @@
 // tools/confronto/dati/schermate.mjs: le schermate e gli stati della prova "schermate" (strumento di confronto,
-// CONTESTO_SVILUPPO.md sezione 9). È un unico giro (come quello della fase E): ogni voce parte da dove è arrivata la
+// tools/confronto/README.md). È un unico giro: ogni voce parte da dove è arrivata la
 // precedente, esegue i suoi `passi` (linguaggio dei passi in browser.mjs, Pagina.passo) e poi la misura. Per aggiungere una
 // schermata: una voce in più, nel punto del giro da cui si raggiunge.
 //
@@ -12,7 +12,7 @@
 //   forza     [[selettore, [pseudo-classi]]]: stati forzati da misurare dopo la schermata (:hover, :active, :focus, :focus-visible)
 //   misura    selettore a cui limitare la misura (default tutta la pagina)
 //
-// Nei passi il nome `app` è window.app: se un nome cambia in una fase futura, si aggiorna qui e in pagina-lib.js.
+// Nei passi il nome `app` è window.app: se un nome cambia, si aggiorna qui e in pagina-lib.js.
 
 const CHIUDI = ['js', 'app.closeAllModals(); app.closeDiscard()'];
 const INDIETRO = ['js', 'app.closeTopForBack()'];

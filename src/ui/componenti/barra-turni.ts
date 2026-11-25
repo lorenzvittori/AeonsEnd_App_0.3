@@ -3,7 +3,7 @@
 // 3/4 (finestra al centro o ridotta nel pulsante in basso).
 // Livello 3 (ui/componenti/). Dipende da: regole/ (mazzo-turni, turno-nemesi: letture), stato/partita.ts (lettura e
 // azione scegliGiocatoreCoppia), ui/ base (testi, pagina, dom, ridisegno), ui/componenti (animazioni, componenti,
-// dialoghi, testata). Usato da: finestra del mazzo dei turni, schermate dei turni, navigazione (creaBarraTurni, render).
+// dialoghi, testata). Usato da: schermata del mazzo dei turni, schermate dei turni, navigazione (creaBarraTurni, render).
 import * as Nemesi from '../../regole/turno-nemesi.ts';
 import { playerOf } from '../../regole/mazzo-turni.ts';
 import { awaitingTurnCard, currentTurn, currentTurnCard, historyPlayer, isPairCard, pairOptions, partita,
@@ -68,7 +68,7 @@ interface Casella {
 // Barra della fase sotto la testata: una casella per turno del giro, nell'ordine (prima la storia, poi le carte del
 // mazzo dei turni). La casella del turno in corso è accesa (8px, colore pieno e bagliore), quelle dei turni già giocati
 // in questo giro sono linee sottili colorate e velate, quelle ancora da estrarre linee grigie.
-// Colori: giocatori 1-4 verde, giallo, blu, viola; wild grigio chiaro; nemesi rosso scuro (eventi.css).
+// Colori: giocatori 1-4 verde, giallo, blu, viola; wild grigio chiaro; nemesi rosso scuro (barra-turni.css).
 // Nel turno nemesi sotto la casella accesa c'è la scritta "Nemesi · Risolvi" o "Nemesi · Pesca"; nel turno di un
 // giocatore il nome del giocatore (il turno è detto anche nell'aria-label). Elementi creati in avvio()
 export let turnTrack: HTMLDivElement;

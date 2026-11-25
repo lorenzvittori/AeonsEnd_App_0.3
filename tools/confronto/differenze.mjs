@@ -1,6 +1,6 @@
 // tools/confronto/differenze.mjs: confronto di due risultati di prova (stato della partita in JSON, misure degli elementi
 // della pagina) e raccolta delle differenze in una forma leggibile: { prova, schermata, elemento, proprieta, prima, dopo }
-// (CONTESTO_SVILUPPO.md sezione 9). "prima" è la versione di riferimento (<ref>), "dopo" quella attuale.
+// (tools/confronto/README.md). "prima" è la versione di riferimento (<ref>), "dopo" quella attuale.
 // Dipende da: niente. Usato da: confronta.mjs e prove/*.mjs.
 
 // Un colore scritto in due modi (rgba(223, 174, 89, 0.6) oppure color(srgb 0.87 0.68 0.35 / 0.6), come lo dà color-mix) vale

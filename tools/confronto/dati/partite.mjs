@@ -1,4 +1,4 @@
-// tools/confronto/dati/partite.mjs: le partite della prova "partite" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9).
+// tools/confronto/dati/partite.mjs: le partite della prova "partite" (strumento di confronto, tools/confronto/README.md).
 // Per aggiungerne una: un oggetto in più nell'elenco.
 //   id         nome nell'esito
 //   nemesi     nome della nemesi (come in nemesis.json)

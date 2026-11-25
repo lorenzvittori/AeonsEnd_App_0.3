@@ -1,5 +1,4 @@
-// tools/confronto/browser.mjs: il browser senza finestra (Playwright, Chromium) per le prove di confronto (CONTESTO_SVILUPPO.md
-// sezione 9). Ogni pagina ha: caso fisso (Math.random con semente), orologio fermo (Date.now, performance.now, timer e
+// tools/confronto/browser.mjs: il browser senza finestra (Playwright, Chromium) per le prove di confronto (tools/confronto/README.md). Ogni pagina ha: caso fisso (Math.random con semente), orologio fermo (Date.now, performance.now, timer e
 // requestAnimationFrame sono quelli finti di Playwright, uguali per le due build: il tempo avanza solo con aspetta()),
 // niente service worker, niente rete fuori dal server locale, errori dell'app raccolti. Qui anche il piccolo linguaggio dei
 // passi usato dai file di dati (dati/*.mjs): ['scenario', id], ['clic', selettore], ['js', codice], ['aspetta', ms]...

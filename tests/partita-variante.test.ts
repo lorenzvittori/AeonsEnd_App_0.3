@@ -2,7 +2,7 @@
 // giocatori, turno nemesi, passo Pesca e "Crea mazzo", con e senza modifiche non salvate, e la carta guardata nel turno
 // nemesi ("Torna alla carta da risolvere"). La partita è quella vera, cambiata dalle sue azioni (src/stato/partita.ts),
 // con caso e orologio fissati. Il disegno delle zone (data-turno, pulsante, zona 6) si prova nel browser
-// (CONTESTO_SVILUPPO.md, sezione 9).
+// (tools/confronto/README.md).
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { caricaCatalogo } from '../src/stato/catalogo.ts';
 import { preferenze } from '../src/stato/preferenze.ts';

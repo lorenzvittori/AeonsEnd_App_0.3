@@ -1,4 +1,4 @@
-// tools/confronto/dati/lingua.mjs: finestre in più per la prova "lingua" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9),
+// tools/confronto/dati/lingua.mjs: finestre in più per la prova "lingua" (strumento di confronto, tools/confronto/README.md),
 // dopo il giro di dati/schermate.mjs (stessa forma delle sue voci: id, passi). Sono finestre che il giro non apre: il pannello
 // Regolazioni della Modalità test (colori e misure), la conferma di uscita, i dorsi delle carte, la Nuova partita con
 // un salvataggio da riprendere. Dipende da: niente. Usato da: prove/lingua.mjs.

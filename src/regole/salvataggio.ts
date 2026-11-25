@@ -67,7 +67,7 @@ export function snapshotGame(g: Partita): Fotografia {
 // di creare qualcosa. Restituisce { game, view }:
 // - game: i campi della partita (da scrivere nello stato);
 // - view: cosa mostrare (VistaRipristino).
-// Nel turno nemesi currentIndex si limita all'ultima carta della coda (bug noto in CONTESTO, sezione 6: al passo Pesca
+// Nel turno nemesi currentIndex si limita all'ultima carta della coda (bug noto, in CONTESTO_SVILUPPO.md: al passo Pesca
 // con carte in coda si torna all'ultima carta da risolvere). Il caso (random) si usa solo per il mazzo dei turni.
 export function restoreGame(s: FotografiaLetta, ctx: ContestoRipristino): { game: Partita; view: VistaRipristino } {
   const get = (id: string): Carta => {

@@ -4,7 +4,7 @@
 # Da lanciare dalla cartella del repo: python tools/build-app-icons.py
 from PIL import Image, ImageFilter
 
-# (dalla fase A del passaggio a Vite i file del sito sono in public/; si lancia dalla cartella del repo)
+# (i file del sito sono in public/; si lancia dalla cartella del repo)
 SRC = 'public/Assets/ui/decor/app-icon.png'
 OUT = 'public/Assets/ui/app-icons/'
 

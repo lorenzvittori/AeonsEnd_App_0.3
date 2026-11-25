@@ -1,4 +1,4 @@
-// tools/confronto/dati/indietro.mjs: il giro della prova "indietro" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9):
+// tools/confronto/dati/indietro.mjs: il giro della prova "indietro" (strumento di confronto, tools/confronto/README.md):
 // menu → Nuova partita → Crea mazzo → partita → finestre una sull'altra → tasto Indietro fino al menu. Stessi passi di
 // dati/schermate.mjs, più ['reg', nome] che registra dove si è (schermata, finestre, livelli aperti, messaggio) nelle due
 // build: i due registri devono essere uguali. ['indietro'] manda lo stesso evento del tasto Indietro del browser.

@@ -3,7 +3,7 @@
 // finestra con caso e orologio fissati, fa le prove (tools/confronto/prove/) in tutte e due e stampa una riga per prova:
 // "✓ identico" oppure "✗ N differenze". I dettagli (prova, schermata, elemento, proprietà, prima/dopo) sono in
 // .confronto/esito.json; in console le prime 10 per prova. Uscita 0 se tutto identico, 1 altrimenti, 2 se lo strumento non
-// riesce a lavorare. Come si usa e come si aggiunge una prova: CONTESTO_SVILUPPO.md, sezione 9.
+// riesce a lavorare. Come si usa e come si aggiunge una prova: tools/confronto/README.md.
 // Dipende da: costruzione.mjs, server.mjs, browser.mjs, prove/*.mjs. Usato da: npm run confronta. Non entra nella build.
 
 import { mkdirSync, writeFileSync } from 'node:fs';

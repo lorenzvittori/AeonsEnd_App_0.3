@@ -47,7 +47,7 @@
 
 /* Menu laterale: si trascina verso destra per chiuderlo (menu-laterale.ts, swipeToClose) */
 .ae-modal.ae-side-menu { touch-action: pan-y; }
-/* "Crea mazzo" da tenere premuto: il pulsante si riempie d'oro da sinistra in 800ms (HOLD_BUILD_MS in menu-laterale.ts) */
+/* "Crea mazzo" da tenere premuto (holdToConfirm in menu-laterale.ts): il pulsante si riempie d'oro da sinistra per --ae-hold-ms (800ms se non è impostato) */
 .ae-button.is-hold-action {
   position: relative; overflow: hidden; isolation: isolate; touch-action: manipulation;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;

@@ -1,6 +1,6 @@
-/* Aeon's End Nemesis Companion - Design tokens v1.0 (dal kit di design, §2 di REPORT_IMPLEMENTAZIONE.md).
+/* Aeon's End Nemesis Companion - Design tokens (spazi, raggi, durate, font).
    Misure in CSS px. I font arrivano da Google Fonts (serve la rete); senza rete si usano i fallback di sistema.
-   Va caricato PRIMA di components.css e style.css. I colori non sono qui: stanno tutti in palette.css. */
+   Viene dopo palette.css e prima di components.css (l'ordine lo fissa stili/indice.ts). I colori non sono qui: stanno tutti in palette.css. */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {

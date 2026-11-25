@@ -1,4 +1,4 @@
-// tools/confronto/prove/lingua.mjs: prova "lingua" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9). Non confronta due
+// tools/confronto/prove/lingua.mjs: prova "lingua" (strumento di confronto, tools/confronto/README.md). Non confronta due
 // build: apre la versione attuale due volte, in italiano e in inglese (la scelta salvata), percorre le schermate di
 // dati/schermate.mjs più qualche finestra in più (dati/lingua.mjs) a telefono (375x812) e a desktop (1280x800), e riapre i
 // salvataggi di tools/confronto/salvataggi nelle due lingue (stessa partita ripresa); per ogni schermata segnala, in inglese:

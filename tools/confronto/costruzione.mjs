@@ -1,5 +1,5 @@
 // tools/confronto/costruzione.mjs: costruisce le due versioni da confrontare in .confronto/ (strumento di confronto,
-// CONTESTO_SVILUPPO.md sezione 9). <ref> (tag o commit) in una worktree git .confronto/<ref>/ con node_modules collegato a
+// tools/confronto/README.md). <ref> (tag o commit) in una worktree git .confronto/<ref>/ con node_modules collegato a
 // quello del repo, costruita con `vite build`; la versione attuale (comprese le modifiche non committate) direttamente dal
 // repo in .confronto/attuale/dist. Una build di <ref> già fatta si riusa se il commit non è cambiato.
 // Dipende da: Node, git, vite. Usato da: confronta.mjs.

@@ -1,4 +1,4 @@
-// tools/confronto/prove/schermate.mjs: prova "schermate" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9). Percorre il giro
+// tools/confronto/prove/schermate.mjs: prova "schermate" (strumento di confronto, tools/confronto/README.md). Percorre il giro
 // di dati/schermate.mjs nelle due build, per ogni giro (telefono, desktop, telefono in orizzontale, riduzione del movimento):
 // a ogni schermata confronta getComputedStyle (anche ::before/::after), posizione, testo e attributi di tutti gli elementi
 // visibili; dopo le schermate con `forza` anche i pulsanti con :hover/:active/:focus forzati.

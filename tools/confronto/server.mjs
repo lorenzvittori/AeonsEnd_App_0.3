@@ -1,5 +1,5 @@
 // tools/confronto/server.mjs: server statico minimo per le build da confrontare (strumento di confronto, vedi
-// CONTESTO_SVILUPPO.md sezione 9). Serve una cartella `dist` sotto il percorso /AeonsEnd_App_0.2/ (la base di Vite),
+// tools/confronto/README.md). Serve una cartella `dist` sotto il percorso /AeonsEnd_App_0.2/ (la base di Vite),
 // ognuna su una porta sua: così ogni build ha il suo localStorage. Non fa parte dell'app e non entra nella build.
 // Dipende da: Node. Usato da: confronta.mjs.
 

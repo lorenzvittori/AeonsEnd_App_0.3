@@ -1,4 +1,4 @@
-// tools/confronto/prove/indietro.mjs: prova "indietro" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9). Percorre il giro di
+// tools/confronto/prove/indietro.mjs: prova "indietro" (strumento di confronto, tools/confronto/README.md). Percorre il giro di
 // dati/indietro.mjs (menu → Nuova partita → Crea mazzo → partita → finestre una sull'altra → Indietro fino al menu) nelle due
 // build, a telefono e su desktop; a ogni ['reg', nome] confronta dove si è: schermata, finestre aperte, livelli sopra la
 // pagina (collezioni, scarti, pagina iniziale), messaggio "premi di nuovo Indietro".

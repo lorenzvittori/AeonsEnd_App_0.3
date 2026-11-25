@@ -1,4 +1,4 @@
-// tools/confronto/prove/partite.mjs: prova "partite" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9). Ogni partita di
+// tools/confronto/prove/partite.mjs: prova "partite" (strumento di confronto, tools/confronto/README.md). Ogni partita di
 // dati/partite.mjs si gioca come sequenza di azioni (le stesse del modulo della partita) nelle due build, con Undo e ripresa a
 // metà; dopo ogni passo si confronta lo stato (snapshot completo, compreso l'undo) e la vista (momento, pulsante, fase).
 // Dipende da: browser.mjs, differenze.mjs, dati/partite.mjs. Usato da: confronta.mjs.

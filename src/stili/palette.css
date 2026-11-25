@@ -6,7 +6,7 @@
      Un valore di 8 cifre (#rrggbbaa) ha una trasparenza propria;
    - ruoli: dicono a cosa serve il colore e puntano a un colore base. Il commento dice dove si vede.
    Le trasparenze di un ruolo nei CSS si scrivono color-mix(in srgb, var(--ruolo) 60%, transparent). Per un colore nuovo:
-   prima il colore base qui sotto, poi un ruolo (vedi CONTESTO_SVILUPPO.md, sezione 6 "Colori").
+   prima il colore base qui sotto, poi un ruolo (vedi src/stili/README.md).
    Elementi: nessuno (solo variabili su :root). Usato da: tutti i CSS di src/.
    Ordine: nessuna dipendenza. Va importato per primo tra i CSS con variabili (src/stili/indice.ts). */
 
@@ -96,7 +96,7 @@
 }
 
 :root {
-  /* --- Ruoli generali (nomi del kit di design) --- */
+  /* --- Ruoli generali (nomi dei ruoli) --- */
   --ae-bg: var(--colore-notte);                         /* sfondo dell'app, velo scuro dei pannelli, sfumature in alto e in basso della pagina iniziale */
   --ae-surface: var(--colore-grafite);                  /* pannelli, menu e finestre; fondo del dorso nel mazzo dei turni */
   --ae-surface-raised: var(--colore-ardesia);           /* pulsanti, campi e carte senza immagine */

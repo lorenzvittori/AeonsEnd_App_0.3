@@ -1,5 +1,5 @@
-/* Componenti riutilizzabili del nuovo design (dal kit: components.css, adattati al DOM dell'app).
-   Usano i token di design-tokens.css. Le misure seguono REPORT_IMPLEMENTAZIONE.md (§2, §3, §5-§9). */
+/* Componenti di base riutilizzabili (pulsanti, badge, carta, finestre, scarti, toast, interruttore).
+   Usano i token di design-tokens.css. */
 
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--ae-bg); }
@@ -16,7 +16,7 @@ button:disabled { cursor: not-allowed; }
   clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-/* --- Icone: SVG del kit usati come maschera, quindi prendono il colore del testo --- */
+/* --- Icone: SVG usati come maschera, quindi prendono il colore del testo --- */
 .ae-icon {
   display: inline-block; width: 18px; height: 18px; flex: 0 0 auto;
   background-color: currentColor;

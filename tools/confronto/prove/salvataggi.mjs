@@ -1,4 +1,4 @@
-// tools/confronto/prove/salvataggi.mjs: prova "salvataggi" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9). Ogni file di
+// tools/confronto/prove/salvataggi.mjs: prova "salvataggi" (strumento di confronto, tools/confronto/README.md). Ogni file di
 // tools/confronto/salvataggi/*.json (un salvataggio del browser: quello di main v228 dei test e quelli scritti dal sito
 // pubblicato) viene messo nel localStorage di una pagina nuova, ripreso con "Riprendi partita" e giocato per qualche passo,
 // nelle due build; si confrontano lo stato e la vista dopo la ripresa e dopo ogni passo.

@@ -1,7 +1,7 @@
 // La navigazione senza la pagina (src/ui/navigazione-stato.ts): schermataAttuale() nei casi principali, con la partita
 // vera cambiata dalle sue azioni (src/stato/partita.ts) e la pagina iniziale aperta o chiusa come fa il coordinatore
 // (impostaInizio), e cosa chiude il tasto Indietro con e senza finestre aperte (cosaChiudeIndietro). I blocchi della
-// pagina mostrati e nascosti (ui/navigazione.ts) si provano nel browser (CONTESTO_SVILUPPO.md, sezione 9).
+// pagina mostrati e nascosti (ui/navigazione.ts) si provano nel browser (tools/confronto/README.md).
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

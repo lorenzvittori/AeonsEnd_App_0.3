@@ -2,7 +2,7 @@
    Elementi creati da: index.html, avvio.ts (avviso del telefono in orizzontale), ui/componenti/sfondi.ts (sfondo).
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
 
-/* Layout dell'app (new design 0.2). Token in css/design-tokens.css, componenti in css/components.css. */
+/* Layout dell'app. Token in design-tokens.css, componenti in components.css (stessa cartella). */
 html, body { height: 100%; }
 body { overflow: hidden; }
 
@@ -16,8 +16,7 @@ body { overflow: hidden; }
 
 /* Tablet e desktop: la partita resta la stessa del telefono (fascia piccola, carte grandi, pulsante), in una colonna al
    centro larga quanto serve alla carta più un pezzo delle vicine (--ae-col, calcolata da sizeColumn in JS);
-   lo sfondo riempie tutto lo schermo. La pagina iniziale ha la sua colonna (560px). La vecchia vista a due colonne
-   (coda a sinistra, carta a destra), mai aggiornata al design attuale, è stata tolta: tag v152-prima-layout-tablet-desktop */
+   lo sfondo riempie tutto lo schermo. La pagina iniziale ha la sua colonna (560px). */
 @media (min-width: 768px) {
   .ae-shell { grid-template-columns: minmax(0, var(--ae-col, 560px)); justify-content: center; }
 }
@@ -26,7 +25,7 @@ body { overflow: hidden; }
 /* --- Sfondo unico: la maga a sinistra, la nemesi a destra ---
    Immagine scelta nel Menu (--ae-battle-bg, impostata da JS; BACKGROUNDS), predefinita battle-bg.webp.
    Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro
-   (partita.css, in base a data-turno). Velo scuro al 50%. Stato precedente (due sfondi): tag git v123-prima-sfondo-unico */
+   (partita.css, in base a data-turno). Velo scuro al 50%. */
 .ae-shell {
   background: linear-gradient(color-mix(in srgb, var(--ae-bg) 50%, transparent), color-mix(in srgb, var(--ae-bg) 50%, transparent)), var(--ae-battle-bg, url('/Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
   transition: background-position .8s cubic-bezier(.45, 0, .2, 1);

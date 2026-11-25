@@ -1,4 +1,4 @@
-// tools/confronto/prove/scenari.mjs: prova "scenari" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9). Ogni scenario della
+// tools/confronto/prove/scenari.mjs: prova "scenari" (strumento di confronto, tools/confronto/README.md). Ogni scenario della
 // Modalità test (app.SCENARI) parte nelle due build e si gioca per qualche azione; dopo ogni passo si confronta lo stato
 // (snapshot completo) e la vista (momento, pulsante principale, fase).
 // Dipende da: browser.mjs, differenze.mjs, dati/scenari.mjs. Usato da: confronta.mjs.

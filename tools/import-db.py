@@ -42,7 +42,7 @@ import openpyxl
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]  # cartella del repository
-# File del sito (Data/, thumbs/, Assets/, cards.json, products.json, nemesis.json): dal passaggio a Vite (fase A) sono
+# File del sito (Data/, thumbs/, Assets/, cards.json, products.json, nemesis.json): stanno
 # in public/. I percorsi scritti DENTRO i JSON restano relativi alla radice del sito (Data/..., Assets/...)
 SITE = ROOT / 'public'
 IMG_ROOT = Path('Data') / 'Nemesis'
@@ -180,11 +180,11 @@ def git(*args):
 
 
 # ------------------------------------------------------------------------------- illustrazioni delle nemesi
-# Stessa logica e stesse misure di tools/build-nemesis-art.py (che parte da scansioni in Assets/nemesis/src/):
+# Le illustrazioni hanno una misura fissa (sotto):
 # qui la fonte e' la plancia della nemesi nel MAIN (Format "mat", Type "Nemesis", Category = Name = nome nemesi).
 ART_DIR = SITE / 'Assets' / 'nemesis'
 ART_CARD_WIDTH = 1000
-ART_PORTRAIT = (480, 212)  # circa 2,26:1, la forma del riquadro nel pulsante (style.css: .nemesis-art)
+ART_PORTRAIT = (480, 212)  # circa 2,26:1, la forma del riquadro nel pulsante (menu.css: .nemesis-art)
 ART_QUALITY = 90
 # Ritaglio standard (frazioni della carta: sinistra, alto, destra, basso); l'altezza si calcola dalla proporzione
 # di ART_PORTRAIT (None). Eccezioni per nemesi in ART_CROPS.

@@ -17,7 +17,7 @@
 //   variabili e i messaggi per lo sviluppatore (dentro new Error(...), console.*(...), need(...), throw); le altre eccezioni sono
 //   elencate in FILE_CON_TESTI con il motivo. I18N_IT e I18N_EN si usano solo in ui/testi.ts (T è l'unico accesso);
 // - nessun ciclo di import in src/ (anche con gli import di soli tipi);
-// - i livelli (CONTESTO_SVILUPPO.md, sezione 6): un file importa solo da livelli più bassi. Livelli: 0 tipi/, regole/,
+// - i livelli (src/ui/README.md): un file importa solo da livelli più bassi. Livelli: 0 tipi/, regole/,
 //   stili/; 1 stato/, dati/; 2 ui/ base (i file in ui/ tranne navigazione.ts); 3 ui/componenti/; 4 ui/finestre/;
 //   5 ui/schermate/; 6 ui/navigazione.ts; 7 avvio.ts; 8 main.ts. Nei livelli 0-3 (librerie) un file può importare dallo
 //   stesso livello (senza cicli); nei livelli 4 e 5 (finestre e schermate) no, salvo i file di supporto della stessa

@@ -2,8 +2,8 @@
 // battaglia, giocatori e turno (disegnaTestata, fitPhaseName), il mazzo nemesi e la pila degli scarti in alto
 // (renderDockPiles), il pulsante Menu e il volo delle carte verso gli scarti (flyToDiscard).
 // Livello 3 (ui/componenti/). Dipende da: stato/ (partita, preferenze: lettura), dati/dati.ts, ui/ base (testi, pagina,
-// dom), ui/componenti/scarti.ts. Usato da: barra dei turni, pesca-undo, finestre (mazzo dei turni, scheda della carta),
-// schermate (crea mazzo, turni), navigazione (render).
+// dom), ui/componenti/scarti.ts. Usato da: barra dei turni, pesca-undo, finestre (scheda della carta),
+// schermate (mazzo dei turni, crea mazzo, turni), navigazione (render).
 
 import { T } from '../testi.ts';
 import { partita } from '../../stato/partita.ts';

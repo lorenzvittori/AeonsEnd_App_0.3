@@ -1,4 +1,4 @@
-// tools/confronto/prove/scheletri.mjs: prova "scheletri" (strumento di confronto, CONTESTO_SVILUPPO.md sezione 9). Apre la pagina
+// tools/confronto/prove/scheletri.mjs: prova "scheletri" (strumento di confronto, tools/confronto/README.md). Apre la pagina
 // public/scheletri/ delle due build: la pagina misura da sola l'app vera (in un iframe) nei 4 formati dello schermo (18:9,
 // 19:9, 19.5:9, 20:9) e disegna box, spazi e tabelle. Per ogni formato, in px e in mm, si confronta il testo della pagina
 // (nomi, misure dei box e spazi verticali); si confronta anche il file misure.json (le misure salvate).

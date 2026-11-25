@@ -51,7 +51,7 @@ import { avviaRegolazioni, terminaRegolazioni } from './test-regolazioni.ts';
 //   graveLife, nemesisLife    (facoltativi) vite di Gravehold e della nemesi
 //   stats                     (facoltativo) { startedMinAgo, tierMinAgo: { 2, 3 }, minionsKilled: [{ name, turns }],
 //                             powersPaid, powersResolved, attacksResolved (nomi), mages: { p1: { damage, powers, kills } } }
-// Per aggiungere uno scenario basta un oggetto in più qui sotto (CONTESTO_SVILUPPO.md, sezione 9).
+// Per aggiungere uno scenario basta un oggetto in più qui sotto (src/ui/finestre/README.md).
 // Una carta di uno scenario: il nome, o { name, boxCode } quando il nome è di più carte
 export type CartaScenario = string | { name: string; boxCode?: string };
 
