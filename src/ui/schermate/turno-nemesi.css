@@ -159,11 +159,11 @@
 }
 /* Turno nemesi: la zona 3 è una riga che contiene la fascia piccola */
 :is([data-turno="nemesi"], [data-turno="pesca"]) [data-zona="carte-piccole"] {
-  flex: 0 0 auto; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 0 var(--carte-piccole-margine-riga-nemesi);
+  flex: 0 0 auto; display: flex; flex-direction: row; align-items: center; gap: 8px; padding: 0;
   min-width: auto; min-height: auto;
   border-bottom: 1px solid var(--ae-border);
 }
-:is([data-turno="nemesi"], [data-turno="pesca"]) .ae-compact-rail { flex: 1 1 auto; min-width: 0; border-bottom: 0; padding: 0 var(--carte-piccole-margine-fascia-nemesi); }
+:is([data-turno="nemesi"], [data-turno="pesca"]) .ae-compact-rail { flex: 1 1 auto; min-width: 0; border-bottom: 0; padding: 0 var(--carte-piccole-margine-nemesi); }
 [data-turno="pesca"] [data-zona="carte-piccole"] { border-bottom-color: color-mix(in srgb, var(--ae-gold) 60%, transparent); }
 
 /* Carta pescata: token e vita compaiono dopo il banner Tier (--ae-tier-wait lo imposta turno-nemesi.ts) */
@@ -185,8 +185,6 @@
 /* Fascia piccola: senza box, a tutta larghezza; stessa posizione nei due turni (16px ai lati) */
 :is([data-turno="nemesi"], [data-turno="pesca"]) .ae-compact-rail { border: 0; }
 [data-turno="pesca"] [data-zona="carte-piccole"] { border-color: color-mix(in srgb, var(--ae-gold) 60%, transparent); }
-
-:is([data-turno="nemesi"], [data-turno="pesca"]) [data-zona="carte-piccole"] { padding: var(--carte-piccole-bordo-nemesi) var(--carte-piccole-margine-riga-nemesi); }
 
 /* Pulsante principale "Salva modifiche": dorato */
 .ae-button.is-save { background: var(--ae-gold); color: var(--testo-su-oro); border-color: var(--ae-gold); text-shadow: none; letter-spacing: .04em; }

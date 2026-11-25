@@ -66,8 +66,9 @@
 .ae-shell.clear-header > .ae-header { min-height: calc(48px + var(--ae-safe-top)); }
 
 /* Testata: stesso spazio dal bordo in alto che c'è tra il pulsante principale e il bordo in basso */
+/* Altezza vera: zona sicura + spazio sopra (padding) + la riga della testata (--testata-altezza, content-box) */
 .ae-shell.clear-header > .ae-header {
-  padding-top: calc(var(--ae-safe-top) + var(--testata-spazio-sopra)); min-height: calc(var(--testata-altezza) + var(--ae-safe-top));
+  box-sizing: content-box; padding-top: calc(var(--ae-safe-top) + var(--testata-spazio-sopra)); height: var(--testata-altezza); min-height: 0;
 }
 
 /* Icona dei giocatori (2, 3, 4 figure) a sinistra di "Turno N", dello stesso colore del testo */

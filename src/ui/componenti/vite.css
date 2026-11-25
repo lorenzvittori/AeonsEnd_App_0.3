@@ -5,8 +5,10 @@
 
 /* Vite di Gravehold (sinistra) e della nemesi (destra) sotto la fascia delle carte piccole, ai margini della fascia */
 .ae-lives {
-  flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: var(--vite-spazio);
-  padding: var(--vite-spazio-sopra) var(--vite-margine-lati) 0; position: relative; z-index: 1;
+  flex: 0 0 auto; display: flex; justify-content: space-between; align-items: flex-start; gap: var(--vite-spazio);
+  /* Altezza della zona: spazio sopra + box − la parte dei box che sta già sulla zona 5 (i box escono dal fondo, positivi) */
+  box-sizing: border-box; height: max(0px, calc(var(--vite-spazio-sopra) + var(--vite-box-altezza) - var(--vite-sovrapposizione-zona-5)));
+  padding: var(--vite-spazio-sopra) var(--vite-margine-lati) 0; position: relative; z-index: 4;
 }
 .ae-lives[hidden] { display: none; }
 .ae-life-box {
@@ -23,20 +25,15 @@
   min-width: var(--vite-box-larghezza-minima-sfondo); background: linear-gradient(color-mix(in srgb, var(--velo-vita-sfondo) 42%, transparent), color-mix(in srgb, var(--velo-vita-sfondo) 42%, transparent)), var(--ae-life-bg) center / cover no-repeat;
 }
 .ae-life-box.has-bg .ae-life-value { text-shadow: 0 1px 3px color-mix(in srgb, var(--ombra) 90%, transparent), 0 0 2px color-mix(in srgb, var(--ombra) 90%, transparent); }
-/* Sopra ogni box "GRAVEHOLD" / "NEMESIS" alto 7px. I box scendono di 3.8px (padding sopra) e la riga resta alta
-   uguale (margine sotto negativo, le carte grandi non cambiano): così fascia piccola → box e box → riga vita/token
-   sono lo stesso spazio (scheletro: spazi 5 e 6, 24.5px) */
-.ae-lives { padding-top: var(--vite-spazio-sopra); margin-bottom: var(--vite-margine-sotto); }
+/* Sopra ogni box "GRAVEHOLD" / "NEMESIS" alto 7px, dentro lo spazio sopra la riga (--vite-spazio-sopra). I box stanno in
+   alto nella riga e la loro parte bassa (--vite-sovrapposizione-zona-5) sta già sulla zona 5, accanto alla riga
+   vita/token della carta (che è al centro): sopra a tutto per il tocco (z-index sulla riga) */
 .ae-life-box { position: relative; }
 .ae-life-tag {
   position: absolute; left: 50%; bottom: calc(100% + var(--vite-scritta-distanza)); transform: translateX(-50%);
   font: 600 8px/7px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
   color: var(--ae-text); opacity: .75; pointer-events: none;
 }
-/* Box delle vite 16px più in basso (spostati e basta: la riga e le carte grandi non cambiano). Stanno ai lati e
-   la riga vita/token della carta è sempre al centro, quindi possono scendere accanto a lei; sopra a tutto per il tocco */
-.ae-lives { z-index: 4; }
-.ae-life-box { top: var(--vite-box-discesa); }
 /* Finestra della vita = una pillola al centro come il box (stesso sfondo): numero grande sopra, −5 −1 · +1 +5 sotto */
 .ae-life-modal {
   width: min(340px, 100%); min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;

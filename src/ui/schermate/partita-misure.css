@@ -14,7 +14,11 @@
   --carta-altezza: 88;                            /* proporzioni della carta: altezza (88 mm) */
 
   /* --- 1 testata --- */
-  --testata-altezza: 58px;                        /* altezza minima della testata (più la zona sicura in alto) */
+  /*      (zona sicura in alto)
+        | --testata-spazio-sopra
+     [riga della testata: --testata-altezza]   nome | pile (--testata-pile-altezza) | Menu
+        | --turno-spazio-sopra  (zona 2) */
+  --testata-altezza: 56px;                        /* altezza della riga della testata (sotto la zona sicura e lo spazio sopra) */
   --testata-spazio-sopra: 10px;                   /* spazio tra il bordo in alto (zona sicura) e la testata */
   --testata-margine-sinistro: 16px;               /* margine a sinistra (nome della nemesi) */
   --testata-margine-destro: 12px;                 /* margine a destra (Menu) */
@@ -25,6 +29,12 @@
   --testata-pile-numero: 22px;                    /* misura del cerchio con il numero sulle pile */
 
   /* --- 2 fascia turno --- */
+  /*      [testata]
+        | --turno-spazio-sopra
+     [caselle: --turno-barra-altezza]
+        | --turno-scritte-distanza
+     [scritte: --turno-scritte-altezza]
+        | --carte-piccole-distanza-sopra  (zona 3) */
   --turno-spazio-sopra: 10px;                     /* spazio tra la testata e la barra dei turni */
   --turno-margine-lati: 16px;                     /* margine a destra e a sinistra della barra */
   --turno-barra-altezza: 8px;                     /* altezza della riga delle caselle */
@@ -34,19 +44,27 @@
   --turno-scritte-altezza: 14px;                  /* altezza della riga delle scritte sotto le caselle */
 
   /* --- 3 fascia carte piccole --- */
+  /*      [scritte della barra dei turni]
+        | --carte-piccole-distanza-sopra
+     [fascia: --carte-piccole-altezza-giocatori / -nemesi]   carte a --carte-piccole-margine-... dai lati
+        | --vite-spazio-sopra  (zona 4) */
   --carte-piccole-distanza-sopra: 4px;            /* spazio tra la barra dei turni e la fascia */
   --carte-piccole-altezza-giocatori: 106px;       /* altezza della fascia, turno giocatori */
-  --carte-piccole-altezza-nemesi: 104px;          /* altezza della fascia, turno nemesi (più il bordo della riga) */
-  --carte-piccole-bordo-nemesi: 1px;              /* turno nemesi: spazio sopra e sotto la fascia, dentro la sua riga */
+  --carte-piccole-altezza-nemesi: 106px;          /* altezza della fascia, turno nemesi (oggi uguale a quella del turno giocatori) */
   --carte-piccole-margine-giocatori: 16px;        /* turno giocatori: margine a destra e a sinistra delle carte */
-  --carte-piccole-margine-riga-nemesi: 10px;      /* turno nemesi: margine della riga ... */
-  --carte-piccole-margine-fascia-nemesi: 6px;     /* ... più quello della fascia (in tutto 16px, come nel turno giocatori) */
+  --carte-piccole-margine-nemesi: 16px;           /* turno nemesi: margine a destra e a sinistra delle carte (oggi uguale) */
   --carte-piccole-spazio: 10px;                   /* spazio tra le carte piccole */
   --carta-piccola-larghezza: 52px;                /* larghezza di una carta piccola */
 
   /* --- 4 vite --- */
-  --vite-spazio-sopra: 0px;                     /* spazio tra la fascia piccola e la riga delle vite (dentro la riga) */
-  --vite-margine-sotto: 0px;                   /* margine sotto la riga (negativo: le carte grandi non cambiano) */
+  /*      [fascia carte piccole]
+        | --vite-spazio-sopra         (dentro c'è la scritta GRAVEHOLD / NEMESIS a --vite-scritta-distanza dal box)
+     [box delle vite: --vite-box-altezza]   a --vite-margine-lati dai bordi, almeno --vite-spazio tra i due
+        |  gli ultimi --vite-sovrapposizione-zona-5 del box stanno già sulla zona 5 (accanto alla riga vita/token)
+     [zona 5 comincia qui]
+     L'altezza della zona = --vite-spazio-sopra + --vite-box-altezza − --vite-sovrapposizione-zona-5 */
+  --vite-spazio-sopra: 16px;                      /* spazio tra la fascia piccola e la cima dei box delle vite (con la scritta) */
+  --vite-sovrapposizione-zona-5: 16px;            /* di quanto la parte bassa dei box scende sulla zona 5 (positiva: la zona 4 è più bassa di tanto) */
   --vite-margine-lati: 16px;                      /* margine a destra e a sinistra (box ai margini della fascia) */
   --vite-spazio: 12px;                            /* spazio minimo tra i due box */
   --vite-box-altezza: 34px;                       /* altezza di un box della vita */
@@ -54,7 +72,6 @@
   --vite-box-larghezza-minima: 56px;              /* larghezza minima di un box senza sfondo */
   --vite-box-larghezza-minima-sfondo: 72px;       /* larghezza minima di un box con lo sfondo */
   --vite-box-margine-interno: 16px;               /* spazio tra il numero e il bordo del box */
-  --vite-box-discesa: 16px;                       /* di quanto i box scendono (spostati, la riga non cambia) */
   --vite-scritta-distanza: 2px;                   /* spazio tra la scritta GRAVEHOLD / NEMESIS e il box */
 
   /* --- 5 fascia carte grandi --- */
