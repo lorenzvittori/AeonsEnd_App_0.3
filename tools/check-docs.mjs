@@ -65,11 +65,26 @@ function ePercorso(t) {
   return t.includes('/') || ESTENSIONI.test(t);
 }
 
+// Il file o la cartella esiste, con le maiuscole e le minuscole esatte (come su Linux, anche se si lavora su Windows, dove
+// existsSync ignora la differenza): ogni pezzo del percorso si confronta con i nomi veri della cartella.
+function esisteEsatto(assoluto) {
+  const rel = relative(ROOT, assoluto);
+  if (rel.startsWith('..')) return existsSync(assoluto);
+  let cartella = ROOT;
+  for (const pezzo of rel.split(sep).filter(Boolean)) {
+    let nomi;
+    try { nomi = readdirSync(cartella); } catch { return false; }
+    if (!nomi.includes(pezzo)) return false;
+    cartella = join(cartella, pezzo);
+  }
+  return true;
+}
+
 function esiste(percorso) {
   const pulito = percorso.replace(/^\.?\//, '');
   const primo = pulito.split('/')[0];
   if (GENERATI.includes(primo)) return true;
-  return BASI.some(base => existsSync(join(ROOT, base + pulito)));
+  return BASI.some(base => esisteEsatto(join(ROOT, base + pulito)));
 }
 
 function controllaPercorsi(file, normali) {
@@ -92,7 +107,7 @@ function controllaLink(file, normali) {
       if (!senzaAncora) continue;
       const bersaglio = resolve(dirname(file), decodeURIComponent(senzaAncora));
       if (!bersaglio.startsWith(ROOT + sep)) { segnala(file, numero, `il link ${dove} esce dal repository`); continue; }
-      if (!existsSync(bersaglio)) segnala(file, numero, `il link ${dove} non porta a un file che esiste`);
+      if (!esisteEsatto(bersaglio)) segnala(file, numero, `il link ${dove} non porta a un file che esiste`);
     }
   }
 }

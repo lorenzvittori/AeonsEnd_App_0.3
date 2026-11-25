@@ -62,7 +62,7 @@ codice è moderno: lo si lascia moderno (i telefoni di oggi lo capiscono).
 
 **Unisce.** In `src/` ci sono una sessantina di file `.ts`, ognuno con un compito piccolo (per esempio `regole/vite.ts` per le vite).
 Caricarli uno a uno costerebbe troppe richieste di rete. La build li **impacchetta** in pochi file: un JavaScript e un CSS dentro `dist/app/`
-(la cartella si chiama `dist/app/` e non `assets/` perché su Windows si confonderebbe con `public/Assets/`). I CSS di tutte le schermate
+(la cartella si chiama `dist/app/` e non assets perché su Windows si confonderebbe con `public/Assets/`). I CSS di tutte le schermate
 diventano un solo foglio, nell'ordine deciso da `stili/indice.ts` (vedi [file 09](09-aspetto.md)).
 
 **Dà un nome con l'hash.** I file costruiti hanno un nome come `index-<hash>.js`: la parte finale (l'**hash**) cambia a ogni modifica
