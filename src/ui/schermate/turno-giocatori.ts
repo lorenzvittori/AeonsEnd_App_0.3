@@ -180,6 +180,7 @@ export function renderQueue(): void {
     return item;
   }));
   railEl.scrollLeft = railScroll;
+  railEl.classList.remove('is-bloccata');
   railEl.hidden = partita.queue.length === 0;
   queueList.replaceChildren(...partita.queue.map((entry, i) => {
     // Ogni carta grande, con i suoi comandi sotto (si vedono solo per la carta al centro)

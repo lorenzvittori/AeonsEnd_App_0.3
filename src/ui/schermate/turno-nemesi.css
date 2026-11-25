@@ -13,6 +13,8 @@
   border-bottom: 1px solid var(--ae-border); overscroll-behavior-x: contain; scroll-snap-type: x proximity;
 }
 .ae-compact-rail .ae-queue-item { --cw: var(--carta-piccola-larghezza); width: var(--carta-piccola-larghezza); flex-basis: var(--carta-piccola-larghezza); gap: 4px; opacity: .7; }
+/* Dal passo Pesca alla carta pescata messa in gioco le carte piccole non si toccano: nessun cambio di aspetto, cursore normale */
+.ae-compact-rail.is-bloccata .ae-queue-item { cursor: default; }
 .ae-compact-rail .ae-queue-item[aria-current='true'],
 .ae-compact-rail .ae-queue-item[data-viewed='true'] { opacity: 1; }
 /* Box vita / token sopra la carta, centrato in alto (sovrapposto all'immagine) */

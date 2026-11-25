@@ -26,7 +26,6 @@ export const I18N_EN: Testi = {
   nextCard: 'Next card to draw, face down',
   ctaResolved: 'Effect resolved',
   ctaDraw: 'Draw',
-  backToDraw: 'Back to the card to draw',
   backToActive: 'Back to the card to resolve',
   loadingCard: 'Loading card…',
   imageMissing: 'Image not available',

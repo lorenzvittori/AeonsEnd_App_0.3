@@ -8,7 +8,8 @@ import { caricaCatalogo } from '../src/stato/catalogo.ts';
 import { preferenze } from '../src/stato/preferenze.ts';
 import * as P from '../src/stato/partita.ts';
 import { isDrawStep } from '../src/regole/turno-nemesi.ts';
-import { DRAW_UID } from '../src/ui/pagina.ts';
+import { DRAW_UID, ui } from '../src/ui/pagina.ts';
+import { viewCard } from '../src/ui/schermate/turno-nemesi.ts';
 import { actionText, variantePartita } from '../src/ui/partita-variante.ts';
 import type { UiPerVariante } from '../src/ui/partita-variante.ts';
 import { DIZIONARI } from '../src/ui/testi.ts';
@@ -127,24 +128,38 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
     expect(variante(partita, uiDi({ viewedUid: other.uid, holdUid: other.uid })).azione).toBe('risolvi');
   });
 
-  it('passo Pesca: carta coperta, "Pesca" o "Torna alla carta da pescare"', () => {
+  it('passo Pesca: carta coperta e "Pesca", anche se un\'altra carta risulta guardata (le carte piccole non si toccano)', () => {
     finoA(() => isDrawStep(partita) && partita.queue.length > 0);
     let v = variante(partita, uiDi({ viewedUid: DRAW_UID }));
     expect(v).toEqual({ momento: 'pesca', carteGrandi: 'carta-coperta', azione: 'pesca',
       testo: T.ctaDraw, annullaModifiche: false });
     v = variante(partita, uiDi({ viewedUid: partita.queue[0].uid, drafts: conModifiche() }));
-    expect(v.momento).toBe('pesca');
-    expect(v.azione).toBe('torna');
-    expect(v.testo).toBe(T.backToDraw);
+    expect(v).toEqual({ momento: 'pesca', carteGrandi: 'carta-coperta', azione: 'pesca',
+      testo: T.ctaDraw, annullaModifiche: false });
   });
 
-  it('carta appena pescata: "Metti in gioco" (o "Effetto risolto" per un attacco)', () => {
+  it('carta appena pescata: "Metti in gioco" (o "Effetto risolto" per un attacco), mai "Torna alla carta"', () => {
     finoA(() => partita.resolving && partita.newIndex >= 0);
     const drawn = partita.queue[partita.newIndex];
-    const v = variante(partita, uiDi({ viewedUid: drawn.uid }));
-    expect(v.momento).toBe('nemesi');
-    expect(v.azione).toBe('risolvi');
-    expect(v.testo).toBe(actionText(drawn, true, P.turnRoundOver(), T));
+    for (const viewedUid of [drawn.uid, partita.queue[0].uid]) {
+      const v = variante(partita, uiDi({ viewedUid }));
+      expect(v.momento).toBe('nemesi');
+      expect(v.azione).toBe('risolvi');
+      expect(v.testo).toBe(actionText(drawn, true, P.turnRoundOver(), T));
+    }
+  });
+
+  it('passo Pesca e carta pescata: un tocco sulla fascia piccola non cambia carta mostrata né pulsante', () => {
+    for (const quando of [() => isDrawStep(partita) && partita.queue.length > 1, () => partita.resolving && partita.newIndex >= 0 && partita.queue.length > 1]) {
+      finoA(quando);
+      const main = isDrawStep(partita) ? DRAW_UID : partita.queue[partita.newIndex].uid;
+      ui.viewedUid = main;
+      const altra = must(partita.queue.find(e => e.uid !== main), 'altra carta');
+      const prima = variante(partita, ui);
+      viewCard(altra.uid);
+      expect(ui.viewedUid).toBe(main);
+      expect(variante(partita, ui)).toEqual(prima);
+    }
   });
 
   it('è pura: non cambia la partita né lo stato dell\'interfaccia', () => {
@@ -179,10 +194,11 @@ describe('variantePartita() in inglese: testo del pulsante principale', () => {
     expect(variantePartita(partita, uiDi({ trackShuffle: true }), EN).testo).toBe('End turn · Shuffle deck');
   });
 
-  it('turno nemesi: Draw, Back to the card to draw / resolve', () => {
+  it('turno nemesi: Draw, Back to the card to resolve', () => {
     finoA(() => isDrawStep(partita) && partita.queue.length > 0);
     expect(variantePartita(partita, uiDi({ viewedUid: DRAW_UID }), EN).testo).toBe('Draw');
-    expect(variantePartita(partita, uiDi({ viewedUid: partita.queue[0].uid }), EN).testo).toBe('Back to the card to draw');
+    // Al passo Pesca le carte piccole non si toccano: nessuna anteprima, resta "Draw"
+    expect(variantePartita(partita, uiDi({ viewedUid: partita.queue[0].uid }), EN).testo).toBe('Draw');
     finoA(turnoNemesiConCarte);
     const other = must(partita.queue.find((e, i) => i !== partita.currentIndex), 'altra carta');
     expect(variantePartita(partita, uiDi({ viewedUid: other.uid }), EN).testo).toBe('Back to the card to resolve');

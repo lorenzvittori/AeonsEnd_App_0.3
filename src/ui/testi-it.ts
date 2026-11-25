@@ -22,7 +22,6 @@ export const I18N_IT = {
   nextCard: 'Prossima carta da pescare, coperta',
   ctaResolved: 'Effetto risolto',
   ctaDraw: 'Pesca',
-  backToDraw: 'Torna alla carta da pescare',
   backToActive: 'Torna alla carta da risolvere',
   loadingCard: 'Caricamento carta…',
   imageMissing: 'Immagine non disponibile',

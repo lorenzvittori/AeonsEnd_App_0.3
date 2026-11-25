@@ -182,7 +182,8 @@ export function enterNemesisTurnView(railScrollOf: () => number, centred: () => 
 
 // Mostra un'altra carta senza risolvere nulla (anteprima): non cambia mazzo, vita, token, scarti, turno, undo
 export function viewCard(uid: number): void {
-  if (!partita.resolving || ui.holdUid) return;
+  // Dal passo Pesca alla carta pescata messa in gioco le carte piccole non si toccano (tocco, frecce, carte grandi)
+  if (!partita.resolving || ui.holdUid || isDrawStep() || partita.newIndex >= 0) return;
   if ((uid === DRAW_UID ? !isDrawStep() : !entryByUid(uid)) || ui.viewedUid === uid) return;
   ui.viewedUid = uid;
   renderResolve();
@@ -197,7 +198,6 @@ export function moveView(step: number): void {
 export function backToActive(): void {
   const active = activeEntry();
   if (active) viewCard(active.uid);
-  else if (isDrawStep()) viewCard(DRAW_UID);
   pulsantePrincipale.focus();
 }
 

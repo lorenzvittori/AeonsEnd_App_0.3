@@ -29,7 +29,7 @@ export type AzionePrincipale =
   | 'fine-turno'         // turno giocatori: fine del turno del giocatore
   | 'risolvi'            // turno nemesi: risolve la carta di turno (o la mette in gioco, o imposta la vita)
   | 'pesca'              // turno nemesi, passo Pesca: gira la carta coperta
-  | 'torna';             // turno nemesi, si guarda un'altra carta: torna alla carta da risolvere (o da pescare)
+  | 'torna';             // turno nemesi, si guarda un'altra carta: torna alla carta da risolvere
 
 // Come si comporta la zona 5 ("carte-grandi"): stesso contenitore, stessa posizione
 //   coda:          scorrimento libero, il tocco sulla carta al centro apre la sua scheda (turno giocatori, crea-mazzo);
@@ -65,17 +65,14 @@ export function actionText(entry: VoceInGioco, isNew: boolean, roundOver: boolea
   return t.ctaResolved;
 }
 
-// Turno nemesi: si sta guardando una carta diversa da quella da risolvere (o da pescare)? Stessa scelta della carta
-// mostrata del carosello (turno-nemesi-carosello.ts, renderResolve)
+// Turno nemesi: si sta guardando una carta diversa da quella da risolvere? Stessa scelta della carta mostrata del carosello
+// (turno-nemesi-carosello.ts, renderResolve). Dal passo Pesca fino alla carta pescata messa in gioco (newIndex >= 0) le
+// carte piccole non si toccano: la carta mostrata è sempre quella da pescare o pescata, mai un'anteprima
 export function inAnteprima(p: PartitaPerVariante, u: UiPerVariante): boolean {
-  if (u.holdUid) return false;
-  const drawStep = isDrawStep(p);
+  if (u.holdUid || isDrawStep(p) || p.newIndex >= 0) return false;
   const active = p.queue[p.currentIndex] || null;
-  const viewedUid = u.holdUid || u.viewedUid;
-  const byUid = viewedUid === null ? null : p.queue.find(e => e.uid === viewedUid) || null;
-  const viewed = (viewedUid === DRAW_UID && drawStep) ? null : (byUid || active);
-  const viewingDraw = drawStep && !viewed;
-  return drawStep ? !viewingDraw : viewed !== active;
+  const byUid = u.viewedUid === null ? null : p.queue.find(e => e.uid === u.viewedUid) || null;
+  return (byUid || active) !== active;
 }
 
 // Il momento della partita e le sue varianti. `t` sono i testi (di norma quelli in uso, T): i test lo passano per provare
@@ -88,7 +85,7 @@ export function variantePartita(p: PartitaPerVariante, u: UiPerVariante, t: Test
     const carteGrandi: CarteGrandi = drawStep ? 'carta-coperta' : 'carosello';
     if (inAnteprima(p, u)) {
       return { momento, carteGrandi, azione: 'torna',
-        testo: drawStep ? t.backToDraw : t.backToActive, annullaModifiche: false };
+        testo: t.backToActive, annullaModifiche: false };
     }
     const testo = drawStep || !active ? t.ctaDraw : actionText(active, p.newIndex >= 0, turnRoundOver(p.turnOrder), t);
     return { momento, carteGrandi, azione: drawStep ? 'pesca' : 'risolvi', testo, annullaModifiche: false };

@@ -39,7 +39,10 @@ export function renderResolve(): void {
   const drawStep = isDrawStep();
   const active = activeEntry();
   if (!active && !drawStep) return;
-  const viewedUid = ui.holdUid || ui.viewedUid;
+  // Dal passo Pesca alla carta pescata messa in gioco le carte piccole non si toccano: la carta mostrata è quella da
+  // pescare o pescata, mai un'anteprima (anche se ui.viewedUid dice altro, per esempio dopo un undo)
+  const bloccata = !ui.holdUid && (drawStep || partita.newIndex >= 0);
+  const viewedUid = ui.holdUid || (bloccata ? (drawStep ? DRAW_UID : active && active.uid) : ui.viewedUid);
   // Nel passo da pescare la carta "da risolvere" è la carta coperta (DRAW_UID)
   const viewed = (viewedUid === DRAW_UID && drawStep) ? null : (entryByUid(viewedUid) || active);
   // (fuori dal passo Pesca c'è sempre una carta mostrata: la carta da risolvere esiste, vedi sopra)
@@ -69,6 +72,7 @@ export function renderResolve(): void {
   // Fase di risoluzione: al posto della carta da pescare solo una cornice tratteggiata grigia (come mazzo e scarti vuoti)
   else if (!drawStep && partita.newIndex < 0 && canDraw()) railItems.push(nextSlotItem());
   rail.replaceChildren(...railItems);
+  rail.classList.toggle('is-bloccata', bloccata);
   // (la fascia è la stessa del turno giocatori, che la nasconde quando la coda è vuota)
   rail.hidden = false;
   rail.scrollLeft = railScroll;
