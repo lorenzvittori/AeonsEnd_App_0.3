@@ -2,14 +2,14 @@
 // Indietro (cosaChiudeIndietro). Lo stato è solo quello che la partita non sa già: la pagina iniziale aperta e in quale
 // modo (inizio); "Crea mazzo" (ui.deckBuilding) e il turno (partita.resolving) si leggono da dove stanno. File di
 // supporto di navigazione.ts, che mostra e nasconde i blocchi della pagina di conseguenza; senza DOM si prova nei test.
-// Livello 6 (coordinatore). Dipende da: stato/partita.ts (lettura), ui/pagina.ts (ui). Usato da: ui/navigazione.ts,
+// Livello 2 (ui/ base). Dipende da: stato/partita.ts (lettura), ui/pagina.ts (ui). Usato da: ui/navigazione.ts, ui/schermate/mazzo-turni.ts (impostaMazzoTurniAperto),
 // tests/navigazione.test.ts.
 
 import { partita } from '../stato/partita.ts';
 import { ui } from './pagina.ts';
 
 // Le schermate dell'app
-export type Schermata = 'menu' | 'nuova-partita' | 'crea-mazzo' | 'turno-giocatori' | 'turno-nemesi';
+export type Schermata = 'menu' | 'nuova-partita' | 'crea-mazzo' | 'turno-giocatori' | 'turno-nemesi' | 'mazzo-turni';
 
 // Pagina iniziale (#start): aperta nel menu iniziale o nella pagina Nuova partita, oppure chiusa (null: si è nella
 // partita)
@@ -27,10 +27,18 @@ export function impostaInizio(modo: Inizio): void {
   inizio = modo;
 }
 
-// La schermata in primo piano: la pagina iniziale se è aperta, altrimenti "Crea mazzo" (prima del primo turno
-// giocatori) o il turno in corso della partita
+// Il mazzo dei turni aperto (la schermata ui/schermate/mazzo-turni.ts lo segna all'apertura e alla chiusura)
+let mazzoTurniAperto = false;
+
+export function impostaMazzoTurniAperto(aperto: boolean): void {
+  mazzoTurniAperto = aperto;
+}
+
+// La schermata in primo piano: la pagina iniziale se è aperta, il mazzo dei turni se è aperto, altrimenti "Crea mazzo"
+// (prima del primo turno giocatori) o il turno in corso della partita
 export function schermataAttuale(): Schermata {
   if (inizio !== null) return inizio;
+  if (mazzoTurniAperto) return 'mazzo-turni';
   if (ui.deckBuilding) return 'crea-mazzo';
   return partita.resolving ? 'turno-nemesi' : 'turno-giocatori';
 }

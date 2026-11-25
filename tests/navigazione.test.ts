@@ -182,6 +182,16 @@ describe('tasto Indietro (cosaChiudeIndietro)', () => {
     expect(cosaChiudeIndietro({ ...niente, finestre: 1, scarti: true, schermiCollezione: 1 }, 'menu')).toBe('finestra');
   });
 
+  it('nel mazzo dei turni (schermata aperta come finestra) Indietro la chiude, come con ogni finestra', () => {
+    expect(cosaChiudeIndietro({ ...niente, finestre: 1 }, 'mazzo-turni')).toBe('finestra');
+    expect(cosaChiudeIndietro({ ...niente, finestre: 2 }, 'mazzo-turni')).toBe('finestra');
+    expect(cosaChiudeIndietro(niente, 'mazzo-turni')).toBeNull();
+  });
+
+  it('schermataAttuale() senza il mazzo dei turni aperto non lo restituisce', () => {
+    expect(schermataAttuale()).not.toBe('mazzo-turni');
+  });
+
   it("l'ordine dei livelli: finestre, Annulla sospeso, Pesca carta, collezione e Opzioni, scarti", () => {
     expect(cosaChiudeIndietro({ ...niente, annullaSospeso: true, pescaCarta: true, scarti: true }, 'turno-giocatori')).toBe('annulla-sospeso');
     expect(cosaChiudeIndietro({ ...niente, pescaCarta: true, scarti: true }, 'turno-giocatori')).toBe('pesca-carta');

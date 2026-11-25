@@ -1,7 +1,7 @@
-// ui/finestre/mazzo-turni-bozza.ts: la bozza della finestra del mazzo dei turni (copia del mazzo, operazioni, scrittura
+// ui/schermate/mazzo-turni-bozza.ts: la bozza della schermata del mazzo dei turni (copia del mazzo, operazioni, scrittura
 // subito nella partita senza undo), le carte dei turni disegnate (faccia e nome), la copia della barra dei turni con la
 // bozza e il tipo dello stato della finestra aperta (Finestra). File di supporto di mazzo-turni.ts.
-// Livello 4 (ui/finestre/). Dipende da: regole/mazzo-turni.ts, stato/partita.ts (applicaBozzaTurni, conMazzoTurni),
+// Livello 5 (ui/schermate/). Dipende da: regole/mazzo-turni.ts, stato/partita.ts (applicaBozzaTurni, conMazzoTurni),
 // ui/ base (testi, pagina, dom, ridisegno), ui/componenti/barra-turni.ts. Usato da: mazzo-turni.ts e gli altri suoi file
 // di supporto.
 import * as Turni from '../../regole/mazzo-turni.ts';

@@ -24,7 +24,7 @@ import '../ui/componenti/pesca-undo.css';
 import '../ui/componenti/barra-turni.css';
 import '../ui/finestre/opzioni.css';
 import '../ui/componenti/vite.css';
-import '../ui/finestre/mazzo-turni.css';
+import '../ui/schermate/mazzo-turni.css';
 import '../ui/finestre/test.css';
 import '../ui/finestre/test-regolazioni.css';
 import '../ui/finestre/menu-laterale.css';

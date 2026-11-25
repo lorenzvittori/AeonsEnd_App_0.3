@@ -1,6 +1,6 @@
-// ui/finestre/mazzo-turni-trascina.ts: tocchi e trascinamento nella finestra del mazzo dei turni (selezione, rilascio su
+// ui/schermate/mazzo-turni-trascina.ts: tocchi e trascinamento nella schermata del mazzo dei turni (selezione, rilascio su
 // Cima, Fondo, tra due carte o negli scarti) e Mescola con l'animazione. File di supporto di mazzo-turni.ts.
-// Livello 4 (ui/finestre/). Dipende da: ui/ base (pagina, dom), ui/componenti/animazioni.ts, mazzo-turni-bozza.ts,
+// Livello 5 (ui/schermate/). Dipende da: ui/ base (pagina, dom), ui/componenti/animazioni.ts, mazzo-turni-bozza.ts,
 // mazzo-turni-disegno.ts e mazzo-turni-riga.ts (supporto). Usato da: mazzo-turni.ts.
 
 import { animDone } from '../componenti/animazioni.ts';

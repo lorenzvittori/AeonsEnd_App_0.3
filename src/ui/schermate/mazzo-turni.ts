@@ -1,8 +1,8 @@
-// ui/finestre/mazzo-turni.ts: la finestra del mazzo dei turni (dalla barra dei turni): apertura (elementi, stato della
+// ui/schermate/mazzo-turni.ts: la schermata del mazzo dei turni (dalla barra dei turni): apertura (elementi, stato della
 // finestra, gestori), discesa del foglio, chiusura con un solo passo di undo per la visita, Esc e Indietro. Disegno della
 // riga in mazzo-turni-disegno.ts, tocchi, trascinamento e Mescola in mazzo-turni-trascina.ts, bozza e stato in
 // mazzo-turni-bozza.ts.
-// Livello 4 (ui/finestre/). Dipende da: stato/partita.ts, ui/ base (testi, pagina, dom, ridisegno: apriMenuLaterale
+// Livello 5 (ui/schermate/). Dipende da: stato/partita.ts, ui/ base (testi, pagina, dom, ridisegno: apriMenuLaterale
 // dalla copia della testata), ui/componenti (animazioni, dialoghi, testata), i file di supporto mazzo-turni-*.ts.
 // Usato da: navigazione (tocco sulla barra dei turni).
 
@@ -15,6 +15,7 @@ import { app, byId, reducedMotion, ui } from '../pagina.ts';
 import { animDone } from '../componenti/animazioni.ts';
 import { el, icon, need, query } from '../dom.ts';
 import { apriMenuLaterale } from '../ridisegno.ts';
+import { impostaMazzoTurniAperto } from '../navigazione-stato.ts';
 import { turnDraftFrom, turnDraftKey, turnDraftOps, viewOnlyCopy } from './mazzo-turni-bozza.ts';
 import type { Finestra } from './mazzo-turni-bozza.ts';
 import { draw, flipChange, inPileZone, layoutFan } from './mazzo-turni-disegno.ts';
@@ -261,6 +262,7 @@ export function openTurnScreen(): void {
   }
   turnScreen = { dialog, get draft() { return f.d; }, dirty: f.dirty, tryClose: () => tryClose(f), onCancel: () => onCancel(f),
     shuffle: f.h.runShuffle, get shuffling() { return f.shuffling; } };
+  impostaMazzoTurniAperto(true);
 }
 
 // Chiusura: le modifiche sono già valide (niente "Uscire senza salvare?"). Con la X o Esc il foglio risale sotto la
@@ -270,6 +272,7 @@ function shut(f: Finestra): void {
   window.removeEventListener('resize', f.h.onResize);
   commitUndo(f);
   turnScreen = null;
+  impostaMazzoTurniAperto(false);
   f.close();
 }
 // Un solo passo di undo per la visita: lo stato di prima, se alla fine il mazzo dei turni è diverso

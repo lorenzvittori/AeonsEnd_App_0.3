@@ -1,8 +1,8 @@
 // Conti della riga della finestra del mazzo dei turni (src/ui/schermate/mazzo-turni-riga.ts): spazi, metà tra due
 // carte, centratura, oggetti centrati su un altro (it.on), fascia delle zone di rilascio.
 import { describe, it, expect } from 'vitest';
-import { CARD_GAP_K, DROP_PAD_BOTTOM, DROP_PAD_TOP, TURN_GAP_MAX, inCardBand, isCardItem, spaceItems } from '../src/ui/finestre/mazzo-turni-riga.ts';
-import type { OggettoRiga } from '../src/ui/finestre/mazzo-turni-riga.ts';
+import { CARD_GAP_K, DROP_PAD_BOTTOM, DROP_PAD_TOP, TURN_GAP_MAX, inCardBand, isCardItem, spaceItems } from '../src/ui/schermate/mazzo-turni-riga.ts';
+import type { OggettoRiga } from '../src/ui/schermate/mazzo-turni-riga.ts';
 
 const item = (kind: OggettoRiga['kind'], vis: number, on?: OggettoRiga): OggettoRiga => ({ kind, i: -1, vis, left: 0, right: 0, ...(on ? { on } : {}) });
 const gaps = (its: OggettoRiga[]) => its.slice(1).map((it, i) => +(it.left - its[i].right).toFixed(6));

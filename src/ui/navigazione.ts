@@ -37,7 +37,7 @@ import { closeDiscard } from './componenti/scarti.ts';
 import { currentBackground } from './componenti/sfondi.ts';
 import { disegnaTestata, fitPhaseName, renderDockPiles } from './componenti/testata.ts';
 import { renderLives } from './componenti/vite.ts';
-import { openTurnScreen } from './finestre/mazzo-turni.ts';
+import { openTurnScreen } from './schermate/mazzo-turni.ts';
 import { openSideMenu } from './finestre/menu-laterale.ts';
 import { openMissingNemesis } from './finestre/opzioni.ts';
 import { showDefeat, showVictory } from './finestre/statistiche.ts';

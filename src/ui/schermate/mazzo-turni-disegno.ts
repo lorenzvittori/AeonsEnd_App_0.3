@@ -1,7 +1,7 @@
-// ui/finestre/mazzo-turni-disegno.ts: il disegno della finestra del mazzo dei turni: carte del mazzo e degli scarti,
+// ui/schermate/mazzo-turni-disegno.ts: il disegno della schermata del mazzo dei turni: carte del mazzo e degli scarti,
 // disposizione della riga (misura delle carte, Cima e Fondo, guida, cerchi), riga dei titoli con la cuspide, carte che
 // si girano rivelandole. File di supporto di mazzo-turni.ts.
-// Livello 4 (ui/finestre/). Dipende da: ui/ base (testi, pagina, dom), ui/componenti/animazioni.ts, mazzo-turni-bozza.ts
+// Livello 5 (ui/schermate/). Dipende da: ui/ base (testi, pagina, dom), ui/componenti/animazioni.ts, mazzo-turni-bozza.ts
 // e mazzo-turni-riga.ts (supporto). Usato da: mazzo-turni.ts, mazzo-turni-trascina.ts.
 
 import { animDone } from '../componenti/animazioni.ts';
