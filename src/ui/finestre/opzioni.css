@@ -44,3 +44,7 @@
 .collection-bulk .ae-button { flex: 1 1 0; min-width: 0; min-height: 44px; font-size: 14px; }
 /* Opzioni: voce in una riga, scritta a sinistra e miniatura piccola a destra (Dorso delle carte) */
 .options-item.options-item--row { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; cursor: default; }
+/* Opzioni: la voce Lingua / Language, con le due scelte a destra (se non ci stanno, vanno a capo sotto la scritta) */
+.options-item--lang { flex-wrap: wrap; }
+.options-lang { display: flex; gap: 6px; }
+.options-lang-btn { min-height: 36px; padding: 0 12px; font-size: 14px; }

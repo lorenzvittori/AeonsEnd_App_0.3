@@ -4,13 +4,13 @@
 // ridisegno: aggiornaInizio dopo il salvataggio della collezione), ui/componenti (dialoghi, sfondi). Usato da: schermate
 // menu iniziale e Nuova partita, navigazione (ripresa).
 
-import { T } from '../testi.ts';
+import { LINGUA, T } from '../testi.ts';
 import { collectionCatalog, collectionWaveEnabled, isMiniCode, productName, saveCollection, waveLabel,
   waveOfNemesis } from '../../dati/collezione.ts';
 import { turnPairsOn } from '../../stato/partita.ts';
 import { button, dialogShell, openModal, showToast, updateInert } from '../componenti/dialoghi.ts';
 import type { CodiceProdotto, Nemesi } from '../../tipi/dati.ts';
-import { preferenze, setTurnPairs } from '../../stato/preferenze.ts';
+import { LINGUE, preferenze, setLingua, setTurnPairs } from '../../stato/preferenze.ts';
 import { startLayer } from '../pagina.ts';
 import { backgroundChoiceButton, cardBackChoiceButton } from '../componenti/sfondi.ts';
 import { el, icon, queryAll } from '../dom.ts';
@@ -76,7 +76,7 @@ export function openOptions(trigger?: HTMLElement | null): void {
   const pairsText = el('span', 'options-switch-text');
   pairsText.append(el('span', 'options-item-label', T.turnPairsOption), el('span', 'options-item-note', T.turnPairsHint));
   pairsItem.append(pairsText, pairsInput, pairsSw);
-  body.append(item, backItem, bgItem, pairsItem);
+  // Lingua: due scelte, la scritta della voce si legge in tutte e due le lingue. Sceglierne un'altra la salva e ricarica\n  // l'app (i testi si scelgono all'avvio); la partita in corso e l'undo stanno nel salvataggio e restano\n  const langItem = el('div', 'options-item options-item--row options-item--lang');\n  langItem.appendChild(el('span', 'options-item-label', T.language));\n  const langGroup = el('div', 'options-lang');\n  langGroup.setAttribute('role', 'group');\n  langGroup.setAttribute('aria-label', T.language);\n  LINGUE.forEach(code => {\n    const b = el('button', 'ae-button options-lang-btn ae-button--' + (code === LINGUA ? 'primary' : 'secondary'), T.languageNames[code]);\n    b.type = 'button';\n    b.setAttribute('aria-pressed', String(code === LINGUA));\n    b.addEventListener('click', () => {\n      if (code === LINGUA) return;\n      setLingua(code);\n      location.reload();\n    });\n    langGroup.appendChild(b);\n  });\n  langItem.appendChild(langGroup);\n  body.append(item, backItem, bgItem, pairsItem, langItem);
   layer.append(head, body);
   layer.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
   document.body.appendChild(layer);
