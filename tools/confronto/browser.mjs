@@ -15,6 +15,7 @@ export const LANGUAGE_KEY = 'aeonsend-app-0.2-language';
 
 export const VISTE = {
   tel: { width: 375, height: 812 },
+  tel390: { width: 390, height: 844 },
   desk: { width: 1280, height: 800 },
   orizz: { width: 812, height: 375 }
 };

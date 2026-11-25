@@ -1,6 +1,6 @@
 # tools/confronto/
 
-Lo strumento di confronto: `npm run confronta -- <tag o commit> [--solo partite,scenari,salvataggi,schermate,indietro,scheletri,lingua]`.
+Lo strumento di confronto: `npm run confronta -- <tag o commit> [--solo partite,scenari,salvataggi,schermate,indietro,scheletri,lingua,misure]`.
 Confronta la versione attuale (anche non committata) con un tag o un commit e stampa solo l'esito. Un giro completo dura circa 3 minuti.
 Playwright è una dipendenza di sviluppo (non entra nella build).
 
@@ -30,6 +30,13 @@ uguali per le due build; le animazioni vanno alla fine.
   più le finestre di `dati/lingua.mjs` e riapre i salvataggi; segnala in inglese un testo che esce dal suo box (`scrollWidth > clientWidth`) o dallo
   schermo, un pulsante su più righe dove in italiano ha meno righe, un testo o `aria-label` vuoto, "undefined"/"NaN"/"[object"/"null" visibili e testo
   italiano rimasto (`ITALIANO`; per una terza lingua si aggiunge un secondo confronto con l'italiano).
+- `misure`: come `lingua`, non confronta due build: apre la versione attuale a 375×812, 390×844 e 1280×800, nel turno giocatori e nel turno nemesi, e per ogni
+  variabile di `partita-misure.css` (casi in `dati/misure.mjs`: le due cose che separa, selettore e bordo) la aumenta di 10px e controlla con
+  `getBoundingClientRect` che lo spazio tra le due cose cresca di 10px. Controlli fissi: fondo della carta grande → zona 6 uguale a `--interattivi-distanza`;
+  carta grande, zona 5 e zona 6 uguali (misura e posizione) nei due turni; i pesi dell'avanzo (`--carte-grandi-avanzo-sopra` / `-sotto`) dividono lo spazio
+  come dicono (non su desktop: la colonna si adatta alla carta). Le variabili che non si provano così (proporzioni, pesi, minimi, valori che dipendono
+  dal testo) stanno in `NON_PROVABILI` con il motivo, e nell'elenco dell'esito. Una variabile nuova in `partita-misure.css` = un caso in `dati/misure.mjs`
+  (o una riga in `NON_PROVABILI`).
 - `console`: errori dell'app solo nella versione attuale (`vibrate` non conta).
 
 ## Come si legge
