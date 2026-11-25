@@ -66,9 +66,12 @@
 .ae-shell.clear-header > .ae-header { min-height: calc(48px + var(--ae-safe-top)); }
 
 /* Testata: stesso spazio dal bordo in alto che c'è tra il pulsante principale e il bordo in basso */
-/* Altezza vera: zona sicura + spazio sopra (padding) + la riga della testata (--testata-altezza, content-box) */
+/* Altezza vera: zona sicura + --testata-altezza (che comprende lo spazio sopra). Il contenuto parte dallo spazio sopra, in alto
+   (non centrato): così --testata-spazio-sopra sposta la testata di tanto, e niente altro. La scritta TEST della Modalità test, più alta
+   della riga, esce un poco sotto la testata, nello spazio sopra la barra dei turni */
 .ae-shell.clear-header > .ae-header {
-  box-sizing: content-box; padding-top: calc(var(--ae-safe-top) + var(--testata-spazio-sopra)); height: var(--testata-altezza); min-height: 0;
+  box-sizing: border-box; align-items: start; padding-top: calc(var(--ae-safe-top) + var(--testata-spazio-sopra));
+  height: calc(var(--testata-altezza) + var(--ae-safe-top)); min-height: 0;
 }
 
 /* Icona dei giocatori (2, 3, 4 figure) a sinistra di "Turno N", dello stesso colore del testo */

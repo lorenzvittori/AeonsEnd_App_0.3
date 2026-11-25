@@ -16,9 +16,9 @@
   /* --- 1 testata --- */
   /*      (zona sicura in alto)
         | --testata-spazio-sopra
-     [riga della testata: --testata-altezza]   nome | pile (--testata-pile-altezza) | Menu
+     [testata: --testata-altezza in tutto]   nome | pile (--testata-pile-altezza) | Menu
         | --turno-spazio-sopra  (zona 2) */
-  --testata-altezza: 56px;                        /* altezza della riga della testata (sotto la zona sicura e lo spazio sopra) */
+  --testata-altezza: 58px;                        /* altezza della testata, compreso lo spazio sopra (più la zona sicura in alto) */
   --testata-spazio-sopra: 10px;                   /* spazio tra il bordo in alto (zona sicura) e la testata */
   --testata-margine-sinistro: 16px;               /* margine a sinistra (nome della nemesi) */
   --testata-margine-destro: 12px;                 /* margine a destra (Menu) */
