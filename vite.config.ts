@@ -19,6 +19,9 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // Di norma Vitest svuota i file CSS importati; quelli letti come testo ('...css?raw', pannello Regolazioni della
+    // Modalità test) servono interi
+    css: { include: [/\.css\?raw$/] },
     include: ['tests/**/*.test.ts']
   }
 });

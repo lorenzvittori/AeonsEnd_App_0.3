@@ -2,6 +2,7 @@
 // trasformati in una fotografia da buildScenarioState), avvio e nuovo avvio di uno scenario, uscita dal test.
 // Isolata dalla partita vera: niente salvataggio (save() non scrive con testRun), la partita salvata e "Riprendi
 // partita" restano com'erano. Uno scenario partito lascia la pagina iniziale con l'aggancio vaiAllaPartitaDaScenario.
+// Durante lo scenario c'è il pannello "Regolazioni" (colori e misure, test-regolazioni.ts), che sparisce con l'uscita.
 // Livello 4 (ui/finestre/). Dipende da: stato/ (partita, catalogo, preferenze), dati/rete.ts, regole/json.ts, ui/ base
 // (testi, pagina, dom, ridisegno), ui/componenti (animazioni, dialoghi, ripristino, scarti). Usato da: schermata menu
 // iniziale, navigazione (Esci dal test, Ricomincia lo scenario), main.ts (app.startScenario, app.SCENARI).
@@ -23,6 +24,7 @@ import { clearTransition } from '../componenti/animazioni.ts';
 import { el, icon, query } from '../dom.ts';
 import { richiediRidisegno, vaiAllaPartitaDaScenario } from '../ridisegno.ts';
 import { restore } from '../componenti/ripristino.ts';
+import { avviaRegolazioni, terminaRegolazioni } from './test-regolazioni.ts';
 
 // --- Modalità test --------------------------------------------------------------------------------------------------
 // Dal menu iniziale ("Test") si sceglie uno scenario: la partita parte già in un momento preciso, senza giocarla fino
@@ -279,6 +281,7 @@ export function startScenario(sc: Scenario | null | undefined): string | null {
   ui.tierBanner = null;
   ui.victoryKey = '';
   restore(state);
+  avviaRegolazioni();
   vaiAllaPartitaDaScenario();
   richiediRidisegno();
   prefetchDeckImages();
@@ -289,6 +292,7 @@ export function startScenario(sc: Scenario | null | undefined): string | null {
 // Fine del test (menu iniziale): tornano le scelte di prima della pagina iniziale e la partita di test si butta
 // (stato/partita.ts, esciDalTest): "Riprendi partita" ricarica quella salvata, "Nuova partita" ne fa una nuova
 export function endTest(): void {
+  terminaRegolazioni();
   esciDalTest();
 }
 

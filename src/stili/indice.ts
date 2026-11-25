@@ -26,6 +26,7 @@ import '../ui/finestre/opzioni.css';
 import '../ui/componenti/vite.css';
 import '../ui/finestre/mazzo-turni.css';
 import '../ui/finestre/test.css';
+import '../ui/finestre/test-regolazioni.css';
 import '../ui/finestre/menu-laterale.css';
 import '../ui/schermate/menu.css';
 import '../ui/schermate/turno-nemesi.css';

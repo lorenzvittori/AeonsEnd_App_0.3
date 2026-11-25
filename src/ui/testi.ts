@@ -268,7 +268,19 @@ export const I18N_IT = {
   testFailed: (why: string) => `Lo scenario non parte: ${why}`,
   testCardMissing: (name: string) => `la carta «${name}» non è in cards.json`,
   testCardAmbiguous: (name: string) => `il nome «${name}» è di più carte: serve il boxCode`,
-  testNotReady: 'dati non ancora caricati'
+  testNotReady: 'dati non ancora caricati',
+  // Pannello "Regolazioni" della Modalità test (colori e misure)
+  regolazioni: 'Regolazioni',
+  regolazioniAttive: (n: number) => `Regolazioni attive · ${n}`,
+  regolazioniTitolo: 'Regolazioni (solo nel test)',
+  regolazioniColori: 'Colori',
+  regolazioniMisure: 'Misure',
+  regolazioniRipristina: 'Ripristina tutto',
+  regolazioniCopia: 'Copia',
+  regolazioniOpacita: (colore: string) => `Opacità: ${colore}`,
+  regolazioniNiente: 'Nessuna regolazione da copiare',
+  regolazioniCopiato: (n: number) => (n === 1 ? 'Copiata 1 variabile cambiata' : `Copiate ${n} variabili cambiate`),
+  regolazioniNonCopiato: 'Non riesco a copiare negli appunti'
 };
 
 // Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)

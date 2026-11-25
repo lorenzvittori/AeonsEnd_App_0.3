@@ -4,7 +4,8 @@
 // - nessun modulo scrive variabili globali (window.x = ..., globalThis.x = ...), tranne window.app in main.ts;
 // - src/regole/ è logica pura: importa solo da src/regole/ e (solo tipi) da src/tipi/, non usa nomi del browser né
 //   l'orologio (Date) e non chiama Math.random (il caso arriva come argomento);
-// - i file CSS si importano solo da src/stili/indice.ts (l'ordine della cascata è lì) e ci sono tutti;
+// - i file CSS si importano solo da src/stili/indice.ts (l'ordine della cascata è lì) e ci sono tutti; fa eccezione la
+//   lettura come testo ('...css?raw'), permessa solo a src/ui/finestre/test-regolazioni-lettura.ts;
 // - nessun "any" nei tipi; ogni @ts-expect-error ha il motivo sulla stessa riga (@ts-ignore e @ts-nocheck no);
 // - la partita in corso (`partita`, stato/partita.ts) si cambia solo in stato/partita.ts: fuori da lì nessuno assegna
 //   un suo campo (partita.turn = ..., partita.stats.endedAt = ..., partita.nextUid++), chiama un metodo che cambia un
@@ -54,6 +55,8 @@ function rootedAtPartita(n) {
 
 // L'unico modulo che importa i CSS (l'ordine della cascata)
 const CSS_INDEX = 'src/stili/indice.ts';
+// L'unico modulo che può leggere un CSS come testo (import '...css?raw'): le etichette del pannello Regolazioni
+const RAW_MODULE = 'src/ui/finestre/test-regolazioni-lettura.ts';
 // Righe massime di un file di src/
 const MAX_LINES = 500;
 // Il coordinatore, l'unico che mostra e nasconde i blocchi fissi
@@ -162,6 +165,13 @@ for (const { f, code, ast } of parsed) {
         }
       }
       if (!src.startsWith('.')) return;
+      // Un CSS letto come testo (import '...css?raw'): solo il modulo del pannello Regolazioni, e il file deve esistere
+      if (/\?raw$/.test(src)) {
+        const file = resolve(dirname(f), src.replace(/\?raw$/, ''));
+        if (rel !== RAW_MODULE) problems.push(`${rel}:${line}: import ?raw fuori da ${RAW_MODULE}: ${src}`);
+        if (!/\.css$/.test(file) || !existsSync(file)) problems.push(`${rel}:${line}: import ?raw di un CSS che non esiste: ${src}`);
+        return;
+      }
       const target = resolve(dirname(f), src);
       if (/\.css$/.test(target)) {
         if (rel !== CSS_INDEX) problems.push(`${rel}:${line}: CSS importato fuori da ${CSS_INDEX} (l'ordine della cascata è lì): ${src}`);
