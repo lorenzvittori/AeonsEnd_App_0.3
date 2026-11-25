@@ -17,3 +17,6 @@ tools/anteprima-nemesi/*.webp
 # Pacchetti di Node (npm ci / npm install) e sito costruito da Vite (npm run build)
 node_modules/
 dist/
+
+# Strumento di confronto (npm run confronta): build e worktree dei confronti, esito
+.confronto/

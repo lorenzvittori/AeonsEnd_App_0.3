@@ -1214,6 +1214,36 @@ grande e import tra moduli di `ui/`.
     sostituisce una nemesi non visibile con la prima visibile. Per giocare davvero la nemesi voluta si spunta prima la
     sua wave (casella in `#wave-menu`), come farebbe un utente; altrimenti il risultato dipende dalle partite fatte prima
     nella stessa scheda (fase D: era la causa degli hash diversi della "prima partita Maggoth").
+- **Strumento di confronto (branch `ts`): `npm run confronta -- <tag o commit> [--solo partite,scenari,salvataggi,schermate,indietro,scheletri]`.**
+  Confronta la versione attuale (anche non committata) con un tag o un commit e stampa solo l'esito; in ogni fase basta
+  lanciarlo (`npm run confronta -- ts-prima-fase-G`), niente build, script di misura o giri nel browser da riscrivere.
+  - **Cosa fa:** costruisce `<ref>` in una worktree temporanea di `.confronto/<ref>/` (`node_modules` collegato a quello del
+    repo; la build si riusa se il commit non è cambiato) e la versione attuale in `.confronto/attuale/`; le serve su due porte
+    (localStorage separati) e le apre in Chromium senza finestra (Playwright, dipendenza di sviluppo; non entra nella build).
+    Caso (`Math.random` con semente, rifissata a ogni passo) e orologio (`Date.now`, timer, `requestAnimationFrame`: quelli
+    finti di Playwright, che avanzano solo di quanto si dice) sono uguali per le due build; le animazioni vanno alla fine.
+    Tempo di un giro completo: circa 2-3 minuti (`--solo` per le sole prove che servono).
+  - **Le prove** (`tools/confronto/prove/`, i casi nei file di `tools/confronto/dati/`): `partite` (7 partite come sequenze di
+    azioni, con Undo e ripresa a metà, stato e vista a ogni passo), `scenari` (tutti quelli della Modalità test),
+    `salvataggi` (i file di `tools/confronto/salvataggi/`: main v228 dei test e uno scritto dal sito pubblicato v273, ripresi
+    e giocati), `schermate` (il giro della fase E a 375×812 e 1280×800, in più 812×375 e riduzione del movimento per le voci
+    con `anche`: `getComputedStyle` di tutti gli elementi visibili con `::before`/`::after`, posizione, testo e attributi; e i
+    pulsanti principali con `:hover`/`:active`/`:focus-visible` forzati), `indietro` (il giro fino al tasto Indietro), `scheletri`
+    (la pagina `public/scheletri/` nei 4 formati) e `console` (errori dell'app solo nella versione attuale; `vibrate` non conta).
+  - **Come si legge:** una riga per prova, `✓ identico` oppure `✗ N differenze` con le prime 10 (`[schermata] elemento ·
+    proprietà: prima → dopo`) e le proprietà più frequenti; tutte le differenze sono in `.confronto/esito.json` (prova,
+    schermata, elemento con un selettore leggibile, proprietà, prima/dopo, e in `elenco` le schermate misurate). Uscita 0 se tutto
+    identico, 1 se ci sono differenze, 2 se lo strumento non riesce a lavorare. Nelle partite le differenze di *vista*
+    (momento, testo del pulsante, fase) non fermano il confronto dello stato; quelle dello *stato* sì, al primo passo che differisce.
+  - **Aggiungere una prova:** una partita = una riga in `dati/partite.mjs`; una schermata = una voce in `dati/schermate.mjs`
+    (passi `['js', …]`, `['clic', …]`, `['scenario', id]`…, nel punto del giro da cui si raggiunge; `forza` per i pulsanti);
+    un passo del giro Indietro = una riga in `dati/indietro.mjs`; un salvataggio = un `.json` in `salvataggi/` (il testo di
+    `localStorage['aeonsend-app-0.2-save']`); una prova nuova = un file in `prove/` con `{ nome, esegui(ctx) }` e la riga in
+    `confronta.mjs`. Le prove usano `window.app` (anche `tools/confronto/pagina-lib.js`): se un nome cambia in una fase futura
+    si aggiorna lì, in un posto solo.
+  - **Cosa non prova:** animazioni vere (si guarda solo il punto d'arrivo), gesti con più dita, scorrimento inerziale, il
+    telefono vero (Android/iOS), le immagini come pixel (solo le proprietà CSS), la rete lenta o assente, il service worker
+    (spento). `:hover`/`:active`/`:focus-visible` sono forzati solo sui pulsanti elencati in `dati/schermate.mjs`.
 - **Server (`main`, sito senza build):** `python -m http.server 8124 --bind 127.0.0.1`, lanciato in background dalla
   cartella del repo. Poi si apre `http://127.0.0.1:8124/` nel browser interno.
 - **Misura del telefono:** `resize_window` preset `mobile` (375×812); alla fine si torna a `desktop`.
