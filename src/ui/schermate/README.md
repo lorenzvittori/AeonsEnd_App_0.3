@@ -15,9 +15,12 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
 ## La schermata "partita" (turni, Pesca e "Crea mazzo": un solo `#app`, `data-schermata="partita"`)
 - 7 zone dall'alto, ognuna un blocco di `index.html` con `data-zona`: 1 `testata` (`#topbar`), 2 `turno` (`#fascia-turno`, barra dei
   turni), 3 `carte-piccole` (`#rail`, una sola fascia), 4 `vite` (`#vite`), 5 `carte-grandi` (`#queue` o `#focus`, uno alla volta),
-  6 `interattivi` (`#interattivi`, comandi della carta al centro, nel turno giocatori e in "Crea mazzo": `variantePartita()` dà `interattivi: true`), 7 `principale` (`#dock`, `#pulsante-principale`).
+  6 `interattivi` (`#interattivi`, comandi della carta al centro, nel turno giocatori e in "Crea mazzo": `variantePartita()` dà `interattivi: true`;
+  nel turno nemesi e al passo Pesca la zona c'è, vuota e invisibile, classe `is-vuota` di `mostraTurno`), 7 `principale` (`#dock`, `#pulsante-principale`).
 - Disposizione: `partita.css` (`grid-template-areas`, una riga per zona; le zone 2-6 stanno in `.ae-main`). Misure: `partita-misure.css`
-  (nome parlante e commento; `-giocatori` / `-nemesi` dove i turni differiscono); il codice le legge con `misura()`.
+  (nome parlante e commento; `-giocatori` / `-nemesi` dove i turni differiscono; **ogni variabile è una misura vera**: l'altezza di una cosa o lo
+  spazio tra due cose, con il disegno della zona in cima; la prova `misure` di `tools/confronto` lo controlla); il codice le legge con `misura()`.
+  Zona 5 dal basso: carta, `--carte-grandi-riga-stato-distanza`, riga vita/token; l'avanzo si divide con i pesi `--carte-grandi-avanzo-sopra` / `-sotto`.
 - `data-turno` = `giocatori` | `nemesi` | `pesca` | `crea-mazzo`, deciso da `variantePartita` (`ui/partita-variante.ts`): presenza della zona 6,
   testo e azione (`data-azione`) del pulsante (`pesca-carta-turno`, `fine-turno`, `salva-modifiche`, `risolvi`, `pesca`, `torna`,
   `cursore`), contenuto della zona 5 (`coda`, `carosello`, `carta-coperta`), sfondo (nemesi e Pesca mostrano il lato destro).

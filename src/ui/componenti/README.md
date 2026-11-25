@@ -11,7 +11,8 @@ componenti. Ogni pezzo con stile ha il suo `.css` accanto (importato da `stili/i
 - `barra-turni.ts` + `.css`: la barra dei turni sotto la testata (zona 2). `componenti.ts` + `.css`: le carte disegnate.
 - `dialoghi.ts` + `.css`: la pila delle finestre (`openModal`, Esc, Tab, resto inerte), pulsanti, toast, annunci, immagini.
 - `misure.ts`: `misura()` legge le variabili di `schermate/partita-misure.css` (proporzioni della carta, riga vita/token, comandi,
-  spazi, colonna del desktop `sizeColumn`, `sharedCardWidth` unica per i due turni, `spazioVicine('giocatori' | 'nemesi')`).
+  spazi, colonna del desktop `sizeColumn`, `sharedCardWidth` unica per i due turni (senza riserve: la zona 6 c'è sempre), `altezzaArea` (altezza
+  dell'area delle carte senza lo spazio dell'alone), `spazioVicine('giocatori' | 'nemesi')`).
 - `pesca-undo.ts` + `.css`: "Pesca carta" dal mazzo in alto (Rimetti nel mazzo / Scarta), Annulla sospeso, conferma di uscita.
 - `pulsante-principale.ts`: zona 7, l'unico pulsante e "Annulla modifiche"; disegnato dal coordinatore e dal carosello.
 - `ripristino.ts`: `restore`/`undo` lato interfaccia (animazioni ferme, finestre chiuse, carta da mostrare, `chiudiCreaMazzo`).

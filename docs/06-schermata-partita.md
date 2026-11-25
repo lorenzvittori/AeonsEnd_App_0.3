@@ -35,7 +35,7 @@ Passo per passo (la tabella sotto dice chi disegna ogni zona):
 | 3 | carte piccole | tutte le carte in gioco in piccolo, in una fascia che scorre. Una sola fascia, uguale nei due turni | `renderQueue()` (turno giocatori) o `renderResolve()` (turno nemesi) |
 | 4 | vite | i due box: Gravehold e la nemesi. Si toccano per cambiarne la vita | `renderLives()` in `ui/componenti/vite.ts` |
 | 5 | carte grandi | **la coda** `#queue` (turno giocatori) oppure **il carosello** `#focus` (turno nemesi e Pesca): uno solo è visibile | `renderQueue()` o `renderFocus()` |
-| 6 | interattivi | i comandi della carta al centro (−5 −1 +1, "Rimuovi · costo pagato"). Solo nel turno giocatori | `disegnaInterattivi()` in `ui/schermate/turno-giocatori.ts` |
+| 6 | interattivi | i comandi della carta al centro (−5 −1 +1, "Rimuovi · costo pagato"). Solo nel turno giocatori (nel turno nemesi la zona c'è, vuota e invisibile) | `disegnaInterattivi()` in `ui/schermate/turno-giocatori.ts` |
 | 7 | principale | **un solo** pulsante, con accanto "Annulla modifiche" quando serve; in "Crea mazzo" al suo posto c'è il cursore | `disegnaPulsantePrincipale()` in `ui/componenti/pulsante-principale.ts` |
 
 Come sono messe le zone e quanto sono grandi:
@@ -48,6 +48,49 @@ Come sono messe le zone e quanto sono grandi:
   propri**.
 - Dalla larghezza di 768px in su (tablet e desktop) la partita sta in una **colonna al centro**; `sizeColumn()` ne calcola la larghezza.
 
+## Le misure tra le zone
+
+Ogni variabile di `ui/schermate/partita-misure.css` è una **misura vera**: l'altezza di una cosa, oppure lo spazio tra due cose con un nome. Cambiarla di
+N px sposta di N px esattamente quello che dice il suo commento, e niente altro (niente "centra e poi sposta", niente margini negativi di
+compensazione). Il disegno è lo stesso che sta in cima a ogni zona nel file delle misure: dall'alto in basso, con la variabile tra una cosa e l'altra.
+
+```mermaid
+flowchart TB
+    Z1["1 · riga della testata<br/>--testata-altezza"]
+    Z2["2 · barra dei turni<br/>caselle --turno-barra-altezza<br/>scritte --turno-scritte-altezza"]
+    Z3["3 · fascia carte piccole<br/>--carte-piccole-altezza-giocatori / -nemesi"]
+    Z4["4 · box delle vite<br/>--vite-box-altezza<br/>(--vite-sovrapposizione-zona-5 stanno già sulla zona 5)"]
+    Z5a["5 · riga vita/token<br/>--carte-grandi-riga-stato-altezza"]
+    Z5b["5 · carta grande<br/>alta quanto avanza"]
+    Z6["6 · comandi<br/>--interattivi-altezza<br/>(vuota e invisibile nel turno nemesi)"]
+    Z7["7 · pulsante principale<br/>--principale-altezza"]
+    Z1 -->|"--turno-spazio-sopra"| Z2
+    Z2 -->|"--carte-piccole-distanza-sopra"| Z3
+    Z3 -->|"--vite-spazio-sopra"| Z4
+    Z4 -->|"--carte-grandi-spazio-sopra<br/>+ avanzo sopra (peso)"| Z5a
+    Z5a -->|"--carte-grandi-riga-stato-distanza"| Z5b
+    Z5b -->|"avanzo sotto (peso)<br/>+ --interattivi-distanza"| Z6
+    Z6 -->|"--principale-spazio-sopra"| Z7
+```
+
+Passo per passo:
+
+1. **Zone 5 e 6 dal basso.** La zona 6 c'è sempre, alta `--interattivi-altezza`: nel turno nemesi e al passo Pesca è vuota e invisibile (classe
+   `is-vuota`, messa da `mostraTurno()`). Così la zona 5 è alta uguale nei due turni. Dentro la zona 5, dal basso: la carta grande, poi
+   `--carte-grandi-riga-stato-distanza`, poi la riga vita/token. Tra la zona 5 e la zona 6 c'è esattamente `--interattivi-distanza`.
+2. **La carta grande** ha una sola regola per i due turni (`sharedCardWidth()`): altezza dell'area meno la riga vita/token e il suo spazio, oppure la
+   larghezza se questa limita. Non c'è nessuna riserva per la zona 6, perché la zona 6 ha già la sua riga: carta e posizione sono uguali nei due
+   turni (lo controlla la prova `misure`). La carta da pescare e quella pescata hanno il fondo sulla stessa linea e crescono verso l'alto.
+3. **I due pesi dell'avanzo.** Quando la carta è limitata dalla larghezza, avanza altezza. Si divide tra due spaziatori (`::before` e `::after`
+   dell'area delle carte, con `flex-grow`): `--carte-grandi-avanzo-sopra` (sopra la riga vita/token) e `--carte-grandi-avanzo-sotto` (tra la carta e la
+   zona 6). Sono pesi, non pixel: 1 e 0 = tutto sopra (come oggi), 0 e 1 = tutto sotto, 1 e 1 = metà e metà, 3 e 1 = tre quarti sopra.
+4. **Provarli dal pannello.** In Modalità test apri uno scenario e il pulsante **Regolazioni**, scheda **Misure**, gruppo "5 fascia carte grandi". Sul
+   telefono la carta riempie l'altezza e non avanza niente: per vedere l'avanzo alza prima `--carte-grandi-margine-lato` (per esempio a 70px: la
+   carta si stringe), poi cambia i due pesi e guarda dove va lo spazio. Sul desktop la colonna si adatta alla carta e non c'è avanzo.
+5. **Le vite** stanno tra la fascia piccola e la zona 5: `--vite-spazio-sopra` sopra i box (con la scritta), e la loro parte bassa
+   (`--vite-sovrapposizione-zona-5`, positiva) sta già sulla zona 5, accanto alla riga vita/token. Il carosello sporge sotto la carta di
+   `--carte-grandi-alone-sotto` (sulla zona 6, vuota) solo perché l'alone della carta non venga tagliato.
+
 ## I momenti e cosa cambia in ciascuno
 
 Il **momento** è l'attributo `data-turno` di `#app`: `giocatori`, `nemesi`, `pesca` o `crea-mazzo`. Lo decide una funzione sola,
@@ -56,7 +99,7 @@ descrizione (il momento, se c'è la zona 6, cosa fa il pulsante, cosa fanno le c
 con i test (`tests/partita-variante.test.ts`) in tutte e due le lingue.
 
 Il coordinatore `render()` prende quella descrizione e la applica (`mostraTurno()` in `ui/navigazione.ts`): scrive `data-turno`, mostra
-la coda o il carosello, mostra o nasconde la zona 6.
+la coda o il carosello, rende vuota e invisibile la zona 6 (resta alta uguale).
 
 Ogni riga della tabella è una variante; la colonna "Azione" è il valore di `data-azione` sul pulsante, cioè cosa farà il tocco.
 

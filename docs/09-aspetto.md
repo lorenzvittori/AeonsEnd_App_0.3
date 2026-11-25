@@ -65,14 +65,17 @@ Passo per passo:
 1. **Per cambiare una misura** si cambia il valore in `ui/schermate/partita-misure.css` e basta: il CSS e il codice usano tutti la stessa variabile.
 2. **Nel codice non ci sono numeri di misura propri.** `misura('--carte-grandi-margine-lato')` legge la variabile dalla pagina (quando serve,
    perché al caricamento del modulo il CSS non c'è ancora). Se la variabile manca, l'app si ferma con un errore chiaro.
-3. **Le carte grandi** hanno una larghezza calcolata (non fissa): `sharedCardWidth()` prende il minimo tra quanto starebbe per la larghezza,
-   per l'altezza e per lo spazio riservato ai comandi. È **una sola regola per i due turni**, così una carta ha la stessa dimensione nel turno
-   giocatori e nel turno nemesi. `sizeQueue()` e `sizeFocus()` la applicano alla coda e al carosello, e si rilanciano al ridimensionamento
+3. **Le carte grandi** hanno una larghezza calcolata (non fissa): `sharedCardWidth()` prende il minimo tra quanto starebbe per la larghezza
+   e per l'altezza (zona 5 meno la riga vita/token e il suo spazio). La zona 6 dei comandi c'è sempre, vuota nel turno nemesi, quindi non serve
+   nessuna riserva: è **una sola regola per i due turni**, e una carta ha la stessa dimensione e posizione nel turno giocatori e nel turno nemesi.
+   L'altezza che avanza si divide con i due pesi `--carte-grandi-avanzo-sopra` / `-sotto` (vedi [06](06-schermata-partita.md)). `sizeQueue()` e `sizeFocus()` la applicano alla coda e al carosello, e si rilanciano al ridimensionamento
    della finestra.
 4. **Tablet e desktop** (da 768px di larghezza): la partita sta in una colonna al centro, calcolata da `sizeColumn()` (la carta più due
    pezzi delle vicine, mai meno di una larghezza minima).
-5. Il valore `-giocatori` e `-nemesi` delle misure può **differire**: è una scelta nota (per esempio lo spazio tra le carte grandi, 18px e
-   12px). Renderle uguali o no lo decide chi usa l'app, provandole con le Regolazioni.
+5. Il valore `-giocatori` e `-nemesi` delle misure può **differire**: è una scelta nota (oggi sono uguali: spazio tra le carte grandi 18px e 18px,
+   altezza della fascia piccola 106px e 106px, margine 16px e 16px). Unirle o no lo decide chi usa l'app, provandole con le Regolazioni.
+6. **Ogni variabile è una misura vera** (l'altezza di una cosa o lo spazio tra due cose con un nome): la prova `misure` dello strumento di confronto
+   la aumenta di 10px e controlla che lo spazio misurato cresca di 10px. Una variabile nuova ha il suo caso in `tools/confronto/dati/misure.mjs`.
 
 ### Il pannello Regolazioni
 

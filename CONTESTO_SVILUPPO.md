@@ -168,9 +168,13 @@ import, nessun `any`, nessun file sopra 500 righe. Dettagli in [src/ui/README.md
 - **Rotella sulla fascia piccola:** sul desktop la rotella del mouse scorre la fascia delle carte piccole solo nel turno nemesi, non nel
   turno giocatori (quando le fasce erano due, solo quella del turno nemesi aveva l'ascoltatore). Il limite è tenuto apposta
   (`navigazione.ts`, ascoltatore `wheel`).
-- **Misure diverse tra i due turni:** alcune misure hanno un valore per turno (`-giocatori` / `-nemesi`, per esempio lo spazio tra le carte
-  grandi 18px / 12px); la colonna su desktop (`sizeColumn`) usa lo spazio del carosello nemesi per tutti e due. Se renderle uguali lo decide
-  l'utente, con il pannello "Regolazioni". Su telefoni stretti e alti la carta del turno giocatori è 12px più stretta di quella del turno nemesi.
+- **Misure diverse tra i due turni:** risolto nella parte che contava. La zona 6 c'è sempre (vuota e invisibile nel turno nemesi), la misura della
+  carta grande è una sola regola senza riserve e la carta ha la stessa misura e posizione nei due turni (lo prova `npm run confronta -- <ref> --solo
+  misure`, a 375×812, 390×844 e 1280×800); ogni variabile di `partita-misure.css` è una misura vera. Restano due valori per turno
+  (`-giocatori` / `-nemesi`), oggi **uguali** tra loro: spazio tra le carte grandi 18px/18px, altezza della fascia piccola 106px/106px, margine
+  della fascia piccola 16px/16px. Unirle lo decide l'utente. La colonna su desktop (`sizeColumn`) usa lo spazio del carosello nemesi per tutti e due.
+  La carta da pescare / pescata è il 90% (`--carta-pescata-scala`) della carta piena: oggi è quindi un po' più piccola della carta normale
+  (prima era più grande, perché la normale lasciava libero lo spazio della zona 6); con scala 1 è uguale.
 
 ## 10. Idee e cose aperte
 

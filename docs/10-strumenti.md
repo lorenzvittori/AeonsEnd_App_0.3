@@ -86,7 +86,7 @@ flowchart TD
     B --> D["le serve su due porte<br/>localStorage separati"]
     C --> D
     D --> E["Chromium senza finestra<br/>caso e orologio fissati"]
-    E --> F["le prove: partite, scenari, salvataggi,<br/>schermate, indietro, scheletri, lingua, console"]
+    E --> F["le prove: partite, scenari, salvataggi,<br/>schermate, indietro, scheletri, lingua, misure, console"]
     F --> G["una riga per prova<br/>identico o N differenze"]
     G --> H["TUTTO IDENTICO oppure<br/>CI SONO DIFFERENZE"]
 ```
@@ -100,7 +100,8 @@ Passo per passo:
 4. Le **prove**: `partite` (sette partite complete, con Undo e ripresa a metà), `scenari` (tutti quelli della Modalità test), `salvataggi` (salvataggi
    veri di versioni vecchie, ripresi e giocati), `schermate` (il giro di tutte le schermate a due misure: telefono e desktop, con lo stile
    calcolato di ogni elemento), `indietro` (il tasto Indietro), `scheletri` (la pagina `public/scheletri/`), `lingua` (l'app in italiano e inglese:
-   cerca testi che escono dal loro riquadro) e `console` (errori dell'app, solo nella versione attuale).
+   cerca testi che escono dal loro riquadro), `misure` (non confronta due versioni: per ogni variabile di `src/ui/schermate/partita-misure.css` la aumenta di 10px e
+   controlla che lo spazio tra le due cose del suo commento cresca di 10px, a tre formati di schermo e nei due turni) e `console` (errori dell'app, solo nella versione attuale).
 5. L'esito è una riga per prova. Si legge con attenzione: **una differenza voluta** (un testo, un valore cambiato) si dichiara nel report;
    **le altre sono errori**. Tutti i dettagli sono in `.confronto/esito.json`. L'uscita è 0 se tutto è identico, 1 se ci sono differenze, 2 se lo
    strumento non riesce a lavorare. Un giro completo dura circa tre minuti.
