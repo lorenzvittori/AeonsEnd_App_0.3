@@ -1,5 +1,5 @@
 // Uso (nel workflow di pubblicazione, dopo npm run build):
-//   node tools/pubblicazione-precedente.mjs https://lorenzvittori.github.io/AeonsEnd_App_0.2/ dist
+//   node tools/pubblicazione-precedente.mjs https://lorenzvittori.github.io/AeonsEnd_App_0.3/ dist
 //
 // Perché: con Vite il codice e il CSS hanno un hash nel nome (app/index-AbC123.js) e ogni pubblicazione li cambia.
 // GitHub Pages tiene index.html in cache circa 10 minuti: dopo una pubblicazione un telefono può avere ancora

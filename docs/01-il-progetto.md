@@ -24,7 +24,7 @@ flowchart LR
     C --> E
     E --> G["dist/<br/>il sito pronto"]
     G --> H["GitHub Actions<br/>.github/workflows/pages.yml"]
-    H --> I["Il sito su GitHub Pages<br/>lorenzvittori.github.io/AeonsEnd_App_0.2"]
+    H --> I["Il sito su GitHub Pages<br/>lorenzvittori.github.io/AeonsEnd_App_0.3"]
 ```
 
 Passo per passo:
@@ -69,9 +69,9 @@ diventano un solo foglio, nell'ordine deciso da `stili/indice.ts` (vedi [file 09
 del contenuto. Così un telefono non può mai usare per sbaglio un codice vecchio: quando il file cambia, cambia il nome, e il browser
 lo scarica di nuovo. Per questo non servono più i numeri di versione a mano che si usavano prima.
 
-Un dettaglio: il sito vive sotto l'indirizzo `/AeonsEnd_App_0.2/` e non alla radice del dominio. L'impostazione `base` in
+Un dettaglio: il sito vive sotto l'indirizzo `/AeonsEnd_App_0.3/` e non alla radice del dominio. L'impostazione `base` in
 `vite.config.ts` dice a Vite di aggiungere questo pezzo a tutti i percorsi. Per questo in locale l'app è su
-`http://localhost:5173/AeonsEnd_App_0.2/`.
+`http://localhost:5173/AeonsEnd_App_0.3/`.
 
 ## La pubblicazione, con più attenzione
 

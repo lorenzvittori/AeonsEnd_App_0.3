@@ -12,7 +12,7 @@ uguali per le due build; le animazioni vanno alla fine.
 
 ## File
 - `confronta.mjs`: il comando (elenco delle prove, esito, uscita 0 se identico, 1 se ci sono differenze, 2 se lo strumento non riesce a lavorare).
-- `costruzione.mjs`: costruisce le due versioni. `server.mjs`: serve `dist` sotto `/AeonsEnd_App_0.2/` (la base di Vite).
+- `costruzione.mjs`: costruisce le due versioni. `server.mjs`: serve `dist` sotto la base di Vite (letta da `vite.config.ts`).
 - `browser.mjs`: il browser senza finestra, con caso e orologio fissi, niente service worker né rete fuori dal server locale, errori dell'app
   raccolti, e il piccolo linguaggio dei passi dei file di dati (`['scenario', id]`, `['clic', selettore]`, `['js', codice]`, `['aspetta', ms]`...).
 - `differenze.mjs`: confronto di due risultati (`normalizza` fa contare uguali `rgba(223, 174, 89, 0.6)` e `color-mix(...)` se i numeri finali a 8 bit

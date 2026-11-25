@@ -1,13 +1,15 @@
 // tools/confronto/server.mjs: server statico minimo per le build da confrontare (strumento di confronto, vedi
-// tools/confronto/README.md). Serve una cartella `dist` sotto il percorso /AeonsEnd_App_0.2/ (la base di Vite),
+// tools/confronto/README.md). Serve una cartella `dist` sotto il percorso della base di Vite (vite.config.ts),
 // ognuna su una porta sua: così ogni build ha il suo localStorage. Non fa parte dell'app e non entra nella build.
 // Dipende da: Node. Usato da: confronta.mjs.
 
 import { createServer } from 'node:http';
-import { createReadStream, statSync } from 'node:fs';
+import { createReadStream, readFileSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 
-const BASE = '/AeonsEnd_App_0.2/';
+// La base si legge da vite.config.ts (unico posto in cui è scritta)
+const BASE = /base:\s*'([^']+)'/.exec(readFileSync(new URL('../../vite.config.ts', import.meta.url), 'utf8'))?.[1];
+if (!BASE) throw new Error('base non trovata in vite.config.ts');
 const TIPI = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.webmanifest': 'application/manifest+json',

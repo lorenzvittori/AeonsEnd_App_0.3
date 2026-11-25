@@ -60,7 +60,7 @@ function leggi(testo) {
 // Un testo tra backtick è un percorso di file da cercare?
 function ePercorso(t) {
   if (/\s|[()<>*{}$|=,;:?"']/.test(t)) return false;
-  // Un indirizzo del sito (`/AeonsEnd_App_0.2/`) non è un file del repository
+  // Un indirizzo del sito (`/AeonsEnd_App_0.3/`) non è un file del repository
   if (t.length < 4 || t.startsWith('/') || (t.startsWith('.') && !t.includes('/'))) return false;
   return t.includes('/') || ESTENSIONI.test(t);
 }

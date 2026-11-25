@@ -61,7 +61,7 @@ jobs:
         run: npm run build
 
       - name: File delle pubblicazioni precedenti (index.html vecchi ancora in cache)
-        run: node tools/pubblicazione-precedente.mjs https://lorenzvittori.github.io/AeonsEnd_App_0.2/ dist
+        run: node tools/pubblicazione-precedente.mjs https://lorenzvittori.github.io/AeonsEnd_App_0.3/ dist
 
       - run: du -sh dist
 

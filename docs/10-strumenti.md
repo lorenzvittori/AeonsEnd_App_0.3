@@ -13,9 +13,9 @@ come `npm run check` sono "scorciatoie" definite nel file `package.json`, alla v
 
 | Comando | Cosa fa | Quando usarlo |
 |---|---|---|
-| `npm run dev` | avvia l'app in locale su `http://localhost:5173/AeonsEnd_App_0.2/`; ogni modifica ai file si vede da sola | mentre si lavora |
+| `npm run dev` | avvia l'app in locale su `http://localhost:5173/AeonsEnd_App_0.3/`; ogni modifica ai file si vede da sola | mentre si lavora |
 | `npm run build` | costruisce il sito finito in `dist/` ([file 01](01-il-progetto.md)) | prima di un commit, e per provare che la costruzione riesce |
-| `npm run preview` | serve il contenuto di `dist/` su `http://localhost:4173/AeonsEnd_App_0.2/`, come sarà pubblicato | per provare il sito costruito, con il service worker vero |
+| `npm run preview` | serve il contenuto di `dist/` su `http://localhost:4173/AeonsEnd_App_0.3/`, come sarà pubblicato | per provare il sito costruito, con il service worker vero |
 | `npm run check` | tutti i controlli statici, vedi sotto | **prima di ogni commit** |
 | `npm test` | i test automatici (Vitest) | **prima di ogni commit** |
 | `npm run confronta -- <tag o commit>` | confronta la versione attuale con un'altra nel browser | a fine fase, dopo modifiche che non devono cambiare l'app |

@@ -2,10 +2,11 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  // Il sito è pubblicato su GitHub Pages in https://lorenzvittori.github.io/AeonsEnd_App_0.2/: Vite aggiunge questo
+  // Il sito è pubblicato su GitHub Pages in https://lorenzvittori.github.io/AeonsEnd_App_0.3/: Vite aggiunge questo
   // percorso agli indirizzi che iniziano con / (file di public/ in index.html e nel CSS) e ai file costruiti.
-  // In locale l'app è quindi in http://localhost:5173/AeonsEnd_App_0.2/ (dev) e :4173 (preview).
-  base: '/AeonsEnd_App_0.2/',
+  // In locale l'app è quindi in http://localhost:5173/AeonsEnd_App_0.3/ (dev) e :4173 (preview).
+  // È l'UNICO posto dove scrivere il nome del repository: tools/confronto/server.mjs legge questa riga.
+  base: '/AeonsEnd_App_0.3/',
   build: {
     outDir: 'dist',
     // Codice e CSS in dist/app/ con un hash nel nome; le immagini e i dati di public/ si copiano così come sono.

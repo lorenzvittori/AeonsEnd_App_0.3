@@ -21,9 +21,9 @@ framework, nessun dato personale: tutto resta nel browser (`localStorage`).
 
 | Cosa | Dove |
 |---|---|
-| Repo attivo (si lavora qui) | `C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\AeonsEnd\AeonsEnd_App_0.2` – GitHub `lorenzvittori/AeonsEnd_App_0.2` (non lavorare in `AeonsEnd_App_0.2.5`) |
+| Repo attivo (si lavora qui) | `C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\AeonsEnd\AeonsEnd_App_0.2` – GitHub `lorenzvittori/AeonsEnd_App_0.3` (non lavorare in `AeonsEnd_App_0.2.5`) |
 | DataBase (fonte di cards.json e delle immagini, solo lettura) | `...\GiuHub Local Repository\AeonsEnd\DataBase` (predefinito di `tools/import-db.py`) |
-| Sito | <https://lorenzvittori.github.io/AeonsEnd_App_0.2/> |
+| Sito | <https://lorenzvittori.github.io/AeonsEnd_App_0.3/> |
 | Versione vecchia (v1, non toccare se non richiesto) | `...\GiuHub Local Repository\AeonsEnd_APP` – GitHub `lorenzvittori/AeonsEnd_APP` – il sito vecchio ha anche il prototipo in `new_design_0.2/` |
 
 Il proprietario scrive in **italiano**: si risponde in italiano. Si lavora sul branch `sviluppo`; `main` è il sito pubblicato (a ogni push GitHub Actions costruisce il sito con Vite e lo pubblica) e riceve il
@@ -34,7 +34,7 @@ lavoro solo quando l'utente scrive "pubblica" (sezione 3). Il branch `ts` resta 
 - **Accesso ai file:** solo dentro le cartelle dei due repository e nei file che l'utente allega. Non si legge né si
   scrive altrove sul PC; se serve, prima si chiede.
 - **Vite + TypeScript.** L'app si costruisce con Vite:
-  - **`npm run dev`** per provare (http://localhost:5173/AeonsEnd_App_0.2/, si aggiorna da solo a ogni modifica);
+  - **`npm run dev`** per provare (http://localhost:5173/AeonsEnd_App_0.3/, si aggiorna da solo a ogni modifica);
     `npm run build` + `npm run preview` per provare il sito costruito come sarà pubblicato (porta 4173);
   - **prima di ogni commit `npm run check`, `npm test` e `npm run build`**, tutti senza errori;
   - **niente `version.json`** e niente `?v=N`: Vite dà ai file costruiti un nome con l'hash (vedi sezione 8);
@@ -60,7 +60,7 @@ lavoro solo quando l'utente scrive "pubblica" (sezione 3). Il branch `ts` resta 
     ```
   - Nei commit si aggiungono solo i file toccati, con percorsi espliciti: niente `git add -A` sui file dell'utente.
 - **Dopo "pubblica":** non si fa push su `main` mentre una pubblicazione è ancora in corso; dopo il push si fa **un solo**
-  controllo ritardato (attesa di qualche minuto, poi si legge `https://lorenzvittori.github.io/AeonsEnd_App_0.2/`: l'`index.html`
+  controllo ritardato (attesa di qualche minuto, poi si legge `https://lorenzvittori.github.io/AeonsEnd_App_0.3/`: l'`index.html`
   deve caricare i file `app/index-<hash>`). L'API `api.github.com` a volte non risponde: basta il sito.
 - **Verifiche:** **niente screenshot** per verificare (costano troppi token). Si verifica con JS e testo: misure con
   `getBoundingClientRect`, classi, stato.
@@ -81,9 +81,9 @@ Da lanciare dalla cartella del repo (PowerShell).
 | Comando | Cosa fa |
 |---|---|
 | `npm install` (o `npm ci`) | la prima volta |
-| `npm run dev` | prova l'app su <http://localhost:5173/AeonsEnd_App_0.2/>, si aggiorna a ogni modifica |
+| `npm run dev` | prova l'app su <http://localhost:5173/AeonsEnd_App_0.3/>, si aggiorna a ogni modifica |
 | `npm run build` | costruisce il sito in `dist/` (file con l'hash nel nome, codice in `dist/app/`) |
-| `npm run preview` | serve il sito costruito, come sarà pubblicato: <http://localhost:4173/AeonsEnd_App_0.2/> |
+| `npm run preview` | serve il sito costruito, come sarà pubblicato: <http://localhost:4173/AeonsEnd_App_0.3/> |
 | `npm run check` | `tsc` su `src/` e `tests/`, `tools/check-moduli.mjs` (livelli, cicli, `any`, testi, README...), Stylelint dei colori (`npm run colori`), `tools/check-docs.mjs` (percorsi, link e diagrammi di `docs/`, `npm run docs`) |
 | `npm test` | i test con Vitest (`tests/`) |
 | `npm run confronta -- <tag o commit> [--solo prova,...]` | confronta la versione attuale con un tag o un commit nel browser senza finestra |
