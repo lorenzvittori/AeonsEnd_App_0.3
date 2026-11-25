@@ -37,15 +37,19 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
 
       - name: Pacchetti
         run: npm ci
+
+      # tools/check-docs.mjs (dentro npm run check) apre Chromium con Playwright: sul server il browser non c'è e npm ci non lo scarica
+      - name: Browser per i controlli (Playwright)
+        run: npx playwright install --with-deps chromium
 
       - name: Controlli (tsc e moduli)
         run: npm run check
