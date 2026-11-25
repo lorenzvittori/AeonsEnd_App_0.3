@@ -176,7 +176,7 @@ describe('variantePartita() in inglese: testo del pulsante principale', () => {
     expect(variantePartita(partita, uiDi(), EN).testo).toBe('Draw turn card');
     expect(variantePartita(partita, uiDi({ drafts: conModifiche() }), EN).testo).toBe('Save changes');
     finoA(() => !partita.resolving && !P.awaitingTurnCard());
-    expect(['End turn · Draw turn order', 'End turn · Shuffle deck']).toContain(variantePartita(partita, uiDi(), EN).testo);
+    expect(['End turn · Draw turn card', 'End turn · Shuffle deck']).toContain(variantePartita(partita, uiDi(), EN).testo);
     expect(variantePartita(partita, uiDi({ trackShuffle: true }), EN).testo).toBe('End turn · Shuffle deck');
   });
 
