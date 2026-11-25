@@ -32,11 +32,11 @@
         <div class="ae-pile ae-pile--deck" id="pila-mazzo" role="button" tabindex="0"></div>
         <button class="ae-pile ae-pile--discard" id="pila-scarti" type="button"></button>
       </div>
-      <button id="undo-btn" class="ae-icon-button" type="button" aria-label="Annulla l'ultima azione" title="Annulla" disabled hidden>
+      <button id="undo-btn" class="ae-icon-button" type="button" data-testo-aria="undoAriaLabel" data-testo-title="cancel" disabled hidden>
         <span class="ae-icon ae-icon--undo" aria-hidden="true"></span>
       </button>
-      <span id="phase-label" class="ae-phase">Turno dei giocatori</span>
-      <button id="menu-btn" class="ae-icon-button ae-menu-button" type="button" aria-label="Menu" aria-haspopup="dialog"><span class="ae-menu-lines"></span></button>
+      <span id="phase-label" class="ae-phase" data-testo="playersTurn"></span>
+      <button id="menu-btn" class="ae-icon-button ae-menu-button" type="button" data-testo-aria="menu" aria-haspopup="dialog"><span class="ae-menu-lines"></span></button>
     </header>
 
     <!-- Zone 2-6 (sottogriglia della schermata) -->
@@ -46,7 +46,7 @@
 
       <!-- 3 fascia carte piccole: le carte in gioco in piccolo, uguale nei due turni -->
       <div data-zona="carte-piccole">
-        <div id="rail" class="ae-compact-rail" role="list" aria-label="Coda in gioco, tocca una carta per mostrarla"></div>
+        <div id="rail" class="ae-compact-rail" role="list" data-testo-aria="queueRail"></div>
       </div>
 
       <!-- 4 vite di Gravehold e della nemesi (box creati da src/ui/componenti/vite.ts) -->
@@ -55,13 +55,13 @@
       </div>
 
       <!-- 5 fascia carte grandi: la coda del turno giocatori (#queue) o il carosello del turno nemesi (#focus) -->
-      <section data-zona="carte-grandi" id="carte-grandi" aria-label="Coda in gioco">
+      <section data-zona="carte-grandi" id="carte-grandi" data-testo-aria="zonaCarteGrandiGiocatori">
         <div id="queue" class="ae-queue-viewport">
           <div id="queue-list" class="ae-queue-list" role="list"></div>
           <div id="queue-empty" class="ae-empty" hidden>
             <img class="ae-empty-icon" src="Assets/ui/icons/empty-deck.svg" alt="" width="56" height="56">
-            <strong>Nessuna carta nemesi in gioco</strong>
-            <p>Premi «Pesca carta turno» per iniziare</p>
+            <strong data-testo="queueEmptyTitle"></strong>
+            <p data-testo="emptyHintStart"></p>
           </div>
         </div>
         <div id="focus" class="ae-focus" hidden></div>
@@ -76,8 +76,8 @@
          "Crea mazzo" al suo posto e la scelta del giocatore 1/2 o 3/4 ridotta -->
     <footer class="ae-dock" id="dock" data-zona="principale">
       <div class="ae-main-row">
-        <button id="annulla-modifiche" class="ae-button ae-button--secondary ae-cancel-drafts" type="button" hidden>Annulla modifiche</button>
-        <button id="pulsante-principale" class="ae-button ae-button--primary ae-button--full" type="button">Pesca carta turno</button>
+        <button id="annulla-modifiche" class="ae-button ae-button--secondary ae-cancel-drafts" type="button" data-testo="cancelChanges" hidden></button>
+        <button id="pulsante-principale" class="ae-button ae-button--primary ae-button--full" type="button" data-testo="drawTurnCard"></button>
       </div>
       <div class="ae-pair-dock" id="scelta-coppia" role="group" hidden></div>
     </footer>
@@ -89,30 +89,30 @@
       <h1 class="start-title">Aeon's End<span class="start-subtitle">Nemesis Companion</span></h1>
 
       <section class="start-group" aria-labelledby="players-label">
-        <h2 id="players-label" class="start-label">Giocatori</h2>
+        <h2 id="players-label" class="start-label" data-testo="playersTitle"></h2>
         <div class="choices" id="choices-players" role="group" aria-labelledby="players-label"></div>
       </section>
 
       <section class="start-group" aria-labelledby="nemesis-label">
-        <h2 id="nemesis-label" class="start-label">Nemesi</h2>
-        <label class="visually-hidden" for="wave-select">Wave</label>
+        <h2 id="nemesis-label" class="start-label" data-testo="nemesisWord"></h2>
+        <label class="visually-hidden" for="wave-select" data-testo="wave"></label>
         <select id="wave-select" class="ae-select"></select>
         <div id="nemesis-list" class="nemesis-list" role="group" aria-labelledby="nemesis-label"></div>
         <!-- Nemesi non disponibili: solo il nome, barrate, non cliccabili -->
-        <ul id="nemesis-unavailable" class="nemesis-unavailable" aria-label="Nemesi non disponibili" hidden></ul>
+        <ul id="nemesis-unavailable" class="nemesis-unavailable" data-testo-aria="unavailableNemeses" hidden></ul>
         <!-- Carta della nemesi scelta (solo se c'è l'immagine: Assets/nemesis/nemesis-art.json) -->
         <figure id="nemesis-preview" class="nemesis-preview" hidden><img alt="" decoding="async"></figure>
-        <p id="nemesis-empty" class="start-note" hidden>Nessuna nemesi disponibile in questa wave. Scegli un'altra wave per iniziare.</p>
+        <p id="nemesis-empty" class="start-note" data-testo="noNemesisInWave" hidden></p>
       </section>
 
       <div id="start-error" class="start-error" role="alert" hidden>
         <p id="start-error-text"></p>
-        <button id="retry-btn" class="ae-button ae-button--secondary" type="button" hidden>Riprova</button>
+        <button id="retry-btn" class="ae-button ae-button--secondary" type="button" data-testo="retry" hidden></button>
       </div>
 
       <div class="start-actions">
-        <button id="resume-btn" class="ae-button ae-button--primary ae-button--full" type="button" hidden>Riprendi partita</button>
-        <button id="start-btn" class="ae-button ae-button--primary ae-button--full" type="button" disabled>Inizia partita</button>
+        <button id="resume-btn" class="ae-button ae-button--primary ae-button--full" type="button" data-testo="resumeGame" hidden></button>
+        <button id="start-btn" class="ae-button ae-button--primary ae-button--full" type="button" data-testo="startNew" disabled></button>
       </div>
     </div>
   </div>
@@ -121,14 +121,14 @@
   <div id="discard" class="ae-drawer-backdrop" hidden>
     <aside class="ae-drawer" role="dialog" aria-modal="true" aria-labelledby="discard-title">
       <div class="ae-drawer-header">
-        <h2 id="discard-title" class="ae-drawer-title">Scarti · 0</h2>
-        <button id="discard-close" class="ae-text-button" type="button">Chiudi</button>
+        <h2 id="discard-title" class="ae-drawer-title"></h2>
+        <button id="discard-close" class="ae-text-button" type="button" data-testo="close"></button>
       </div>
       <div class="ae-drawer-body">
         <div id="discard-grid" class="ae-discard-grid"></div>
         <div id="discard-empty" class="ae-empty" hidden>
           <span class="ae-icon ae-icon--discard discard-empty-icon" aria-hidden="true"></span>
-          <strong>Nessuna carta negli scarti</strong>
+          <strong data-testo="discardEmpty"></strong>
         </div>
       </div>
     </aside>

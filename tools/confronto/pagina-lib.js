@@ -99,7 +99,8 @@
       if (!out.nomi.length) out.nomi = [...cs].filter(n => !n.startsWith('--'));
       const r = e.getBoundingClientRect();
       const a = {};
-      for (const at of e.attributes) if (ATTR.test(at.name)) a[at.name] = at.value;
+      // data-testo* è solo il marcatore che dice da quale chiave del dizionario viene il testo: il testo si confronta lo stesso
+      for (const at of e.attributes) if (ATTR.test(at.name) && !at.name.startsWith('data-testo')) a[at.name] = at.value;
       const voce = { l: lab, v: out.nomi.map(n => cs.getPropertyValue(n)).join('\u0001'), r: [r.x, r.y, r.width, r.height].map(r2).join(','),
         t: testoProprio(e), a };
       for (const ps of ['::before', '::after']) {

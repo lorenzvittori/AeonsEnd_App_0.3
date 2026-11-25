@@ -200,7 +200,7 @@ export function openGameSetup(): void {
     portrait.style.backgroundImage = `url("${encodeURI(String(art.portrait))}")`;
     head.prepend(portrait);
   }
-  const label = el('h3', 'start-label', 'Giocatori');
+  const label = el('h3', 'start-label', T.playersTitle);
   label.id = 'game-setup-players';
   const choices = el('div', 'choices');
   choices.setAttribute('role', 'group');

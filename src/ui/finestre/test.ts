@@ -90,31 +90,31 @@ export interface Scenario {
 
 export const SCENARI: Scenario[] = [
   {
-    id: 'turn-deck', name: 'Carte sul mazzo dei turni',
-    desc: 'Solo carte nemesi nel mazzo dei turni; in cima Hissing Acid, Sunder e Thunderous Tempest (riquadri e finestra)',
+    id: 'turn-deck', name: T.testScenari.turnDeck.name,
+    desc: T.testScenari.turnDeck.desc,
     players: 2, nemesis: 'Maggoth', phase: 'nemesis', turn: 1, maxTier: 1,
     deck: ['Hissing Acid', { name: 'Sunder', boxCode: '4' }, 'Thunderous Tempest', 'Drillbeak Wurm', 'Rend', 'Morbid Gyre'],
     turnCards: ['nemesis', 'nemesis', 'nemesis', 'nemesis', 'nemesis', 'nemesis'],
     turnOrder: { left: ['nemesis', 'nemesis', 'nemesis', 'nemesis', 'nemesis'], drawn: ['nemesis'], round: 1 }
   },
   {
-    id: 'variable-hp', name: 'Minion a vita variabile',
-    desc: 'Carapace Queen: in cima Maggot Engine e poi Mindguzzler, turno nemesi pronto a pescare',
+    id: 'variable-hp', name: T.testScenari.variableHp.name,
+    desc: T.testScenari.variableHp.desc,
     players: 2, nemesis: 'Carapace Queen', phase: 'nemesis', turn: 1, maxTier: 3,
     deck: ['Maggot Engine', 'Mindguzzler', 'Broodwomb', 'Hatch'],
     turnOrder: { left: ['p1', 'nemesis', 'p2', 'p1', 'p2'], drawn: ['nemesis'], round: 1 }
   },
   {
-    id: 'tier', name: 'Cambio Tier',
-    desc: 'La prossima carta è la prima di Tier 2, quella dopo la prima di Tier 3 (scritte "Tier 2" e "Tier 3")',
+    id: 'tier', name: T.testScenari.tier.name,
+    desc: T.testScenari.tier.desc,
     players: 2, nemesis: 'Maggoth', phase: 'nemesis', turn: 3, maxTier: 1,
     queue: ['Drillbeak Wurm'],
     deck: ['Volcanic Zala', 'Crushing Storm', 'Eliminate', 'Gore'],
     turnOrder: { left: ['nemesis', 'p1', 'p2', 'p1', 'p2'], drawn: ['nemesis'], round: 1 }
   },
   {
-    id: 'full-queue', name: 'Coda piena',
-    desc: '10 carte in gioco: minion pieni e danneggiati, poteri da 1 a 4 segnalini, forzati a 5 e 7, non rimovibili',
+    id: 'full-queue', name: T.testScenari.fullQueue.name,
+    desc: T.testScenari.fullQueue.desc,
     players: 2, nemesis: 'Arachnos', phase: 'players', turn: 4, maxTier: 3,
     queue: ['Volcanic Zala', { name: 'Carriode Colony', hp: 3 }, { name: 'Blind Enigma', hp: 2 },
       'Morbid Gyre', 'Eye of Nothing', 'Chaos Orb', 'The End', { name: 'Spirit Snare', tokens: 5 },
@@ -123,8 +123,8 @@ export const SCENARI: Scenario[] = [
     turnOrder: { left: ['nemesis', 'p2', 'p1', 'nemesis', 'p2'], drawn: ['p1'], round: 2 }
   },
   {
-    id: 'victory', name: 'Vittoria',
-    desc: 'Un minion con 1 di vita e una sola carta nel mazzo: uccidilo e finisci il mazzo per la Vittoria',
+    id: 'victory', name: T.testScenari.victory.name,
+    desc: T.testScenari.victory.desc,
     players: 2, nemesis: 'Maggoth', phase: 'players', turn: 9, maxTier: 3,
     queue: [{ name: 'Drillbeak Wurm', hp: 1 }],
     deck: ['Morbid Gyre'],
@@ -132,8 +132,8 @@ export const SCENARI: Scenario[] = [
     stats: { startedMinAgo: 45, tierMinAgo: { 2: 28, 3: 10 } }
   },
   {
-    id: 'pairs', name: 'Carte 1/2 e 3/4',
-    desc: '4 giocatori con le carte 1/2 e 3/4: la prossima carta turno è 1/2, più avanti c\'è l\'altra 1/2',
+    id: 'pairs', name: T.testScenari.pairs.name,
+    desc: T.testScenari.pairs.desc,
     players: 4, nemesis: 'Maggoth', phase: 'players', turn: 1, maxTier: 1, pairs: true,
     queue: ['Carriode Colony'],
     deck: ['Drillbeak Wurm', 'Rend', 'Disorient', 'Blind Enigma'],
@@ -142,8 +142,8 @@ export const SCENARI: Scenario[] = [
       pairNext: { p12: null, p34: 'p3' }, round: 1 }
   },
   {
-    id: 'pair-memory', name: 'Memoria 1/2 tra i giri',
-    desc: '4 giocatori: il giocatore 1 ha giocato una 1/2 nel giro prima; la prossima 1/2 è del 2, senza scelta',
+    id: 'pair-memory', name: T.testScenari.pairMemory.name,
+    desc: T.testScenari.pairMemory.desc,
     players: 4, nemesis: 'Maggoth', phase: 'players', turn: 3, maxTier: 1, pairs: true,
     queue: ['Carriode Colony'],
     deck: ['Drillbeak Wurm', 'Rend', 'Disorient', 'Blind Enigma'],
@@ -151,16 +151,16 @@ export const SCENARI: Scenario[] = [
       pairNext: { p12: 'p2', p34: 'p4' }, round: 2 }
   },
   {
-    id: 'wild-round', name: 'Wild e fine giro',
-    desc: '3 giocatori, ultima carta del giro (il wild è il giocatore 2): "Fine turno · Mischia mazzo"',
+    id: 'wild-round', name: T.testScenari.wildRound.name,
+    desc: T.testScenari.wildRound.desc,
     players: 3, nemesis: 'Maggoth', phase: 'players', turn: 4, maxTier: 2,
     queue: [{ name: 'Volcanic Zala', hp: 6 }],
     deck: ['Gore', 'Eliminate', 'Crushing Storm'],
     turnOrder: { left: [], drawn: ['p1', 'nemesis', 'p2', 'nemesis', 'p3', 'wild'], round: 2, wild: 2 }
   },
   {
-    id: 'full-stats', name: 'Statistiche piene',
-    desc: 'Partita avanzata (turno 8, giro 3) con minion uccisi, poteri, attacchi, Æ spesi e statistiche maghi',
+    id: 'full-stats', name: T.testScenari.fullStats.name,
+    desc: T.testScenari.fullStats.desc,
     players: 2, nemesis: 'Maggoth', phase: 'players', turn: 8, maxTier: 3,
     queue: [{ name: 'Jagged One', hp: 9, bornTurn: 5 }, { name: 'Chaos Orb', tokens: 1, bornTurn: 7 }],
     discard: ['Drillbeak Wurm', 'Rend', 'Carriode Colony', 'Disorient', 'Morbid Gyre', 'Blind Enigma', 'Eye of Nothing',
@@ -176,16 +176,16 @@ export const SCENARI: Scenario[] = [
     }
   },
   {
-    id: 'empty-deck', name: 'Mazzo nemesi vuoto',
-    desc: 'Mazzo nemesi vuoto e un minion in gioco: niente pesca, niente vittoria finché vive',
+    id: 'empty-deck', name: T.testScenari.emptyDeck.name,
+    desc: T.testScenari.emptyDeck.desc,
     players: 2, nemesis: 'Maggoth', phase: 'players', turn: 11, maxTier: 3,
     queue: [{ name: 'Volcanic Zala', hp: 4 }],
     deck: [],
     turnOrder: { left: ['nemesis', 'p2', 'p1', 'nemesis'], drawn: ['p1', 'p2'], round: 4 }
   },
   {
-    id: 'low-lives', name: 'Vite quasi a zero',
-    desc: 'Nemesi e Gravehold a 3 di vita: togli 3 alla nemesi per la Vittoria, a Gravehold per la Sconfitta (Undo torna indietro)',
+    id: 'low-lives', name: T.testScenari.lowLives.name,
+    desc: T.testScenari.lowLives.desc,
     players: 2, nemesis: 'Maggoth', phase: 'players', turn: 6, maxTier: 2,
     queue: [{ name: 'Volcanic Zala', hp: 6 }],
     deck: ['Gore', 'Eliminate', 'Crushing Storm'],

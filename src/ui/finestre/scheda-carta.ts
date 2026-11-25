@@ -110,7 +110,7 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
       update();
     });
     stepButtons.push([step, b]);
-    b.setAttribute('aria-label', (step > 0 ? 'Aggiungi ' : 'Togli ') + Math.abs(step) + ' punti vita');
+    b.setAttribute('aria-label', T.lifeStepAria(step));
     controls.appendChild(b);
   });
   const footer = el('div', 'ae-modal-footer');

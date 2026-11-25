@@ -185,8 +185,8 @@ export function queueItem(entry: VoceMostrata, opts: OpzioniMiniatura): HTMLButt
   if (data.type === 'Power' && data.removable === false) parts.push(T.notRemovable.toLowerCase());
   if (entry.paid) parts.push(T.paidNote.toLowerCase());
   else if (isGone(entry)) parts.push(T.killedNote.toLowerCase());
-  if (opts.current) parts.push('da risolvere');
-  if (opts.viewed && !opts.current) parts.push('in anteprima');
+  if (opts.current) parts.push(T.queueCurrentNote);
+  if (opts.viewed && !opts.current) parts.push(T.queueViewedNote);
   button.setAttribute('aria-label', parts.filter(Boolean).join(', '));
 
   const meta = el('span', 'ae-queue-meta');

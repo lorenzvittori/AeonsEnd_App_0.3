@@ -281,5 +281,42 @@ export const I18N_IT = {
   regolazioniOpacita: (colore: string) => `Opacità: ${colore}`,
   regolazioniNiente: 'Nessuna regolazione da copiare',
   regolazioniCopiato: (n: number) => (n === 1 ? 'Copiata 1 variabile cambiata' : `Copiate ${n} variabili cambiate`),
-  regolazioniNonCopiato: 'Non riesco a copiare negli appunti'
+  regolazioniNonCopiato: 'Non riesco a copiare negli appunti',
+  // Testi che prima stavano fissi in index.html o nei moduli
+  undoAriaLabel: "Annulla l'ultima azione",
+  playersTurn: 'Turno dei giocatori',
+  queueEmptyTitle: 'Nessuna carta nemesi in gioco',
+  playersTitle: 'Giocatori',
+  noNemesisInWave: "Nessuna nemesi disponibile in questa wave. Scegli un'altra wave per iniziare.",
+  retry: 'Riprova',
+  discardEmpty: 'Nessuna carta negli scarti',
+  queueCurrentNote: 'da risolvere',
+  queueViewedNote: 'in anteprima',
+  lifeStepAria: (step: number) => (step > 0 ? 'Aggiungi ' : 'Togli ') + Math.abs(step) + ' punti vita',
+  lifeStepAriaOf: (step: number, name: string) => (step > 0 ? 'Rimetti ' : 'Togli ') + Math.abs(step) + ' punti vita a ' + name,
+  // Scenari della Modalità test (nome e riga di descrizione)
+  testScenari: {
+    turnDeck: { name: 'Carte sul mazzo dei turni',
+      desc: 'Solo carte nemesi nel mazzo dei turni; in cima Hissing Acid, Sunder e Thunderous Tempest (riquadri e finestra)' },
+    variableHp: { name: 'Minion a vita variabile',
+      desc: 'Carapace Queen: in cima Maggot Engine e poi Mindguzzler, turno nemesi pronto a pescare' },
+    tier: { name: 'Cambio Tier',
+      desc: 'La prossima carta è la prima di Tier 2, quella dopo la prima di Tier 3 (scritte "Tier 2" e "Tier 3")' },
+    fullQueue: { name: 'Coda piena',
+      desc: '10 carte in gioco: minion pieni e danneggiati, poteri da 1 a 4 segnalini, forzati a 5 e 7, non rimovibili' },
+    victory: { name: 'Vittoria',
+      desc: 'Un minion con 1 di vita e una sola carta nel mazzo: uccidilo e finisci il mazzo per la Vittoria' },
+    pairs: { name: 'Carte 1/2 e 3/4',
+      desc: '4 giocatori con le carte 1/2 e 3/4: la prossima carta turno è 1/2, più avanti c\'è l\'altra 1/2' },
+    pairMemory: { name: 'Memoria 1/2 tra i giri',
+      desc: '4 giocatori: il giocatore 1 ha giocato una 1/2 nel giro prima; la prossima 1/2 è del 2, senza scelta' },
+    wildRound: { name: 'Wild e fine giro',
+      desc: '3 giocatori, ultima carta del giro (il wild è il giocatore 2): "Fine turno · Mischia mazzo"' },
+    fullStats: { name: 'Statistiche piene',
+      desc: 'Partita avanzata (turno 8, giro 3) con minion uccisi, poteri, attacchi, Æ spesi e statistiche maghi' },
+    emptyDeck: { name: 'Mazzo nemesi vuoto',
+      desc: 'Mazzo nemesi vuoto e un minion in gioco: niente pesca, niente vittoria finché vive' },
+    lowLives: { name: 'Vite quasi a zero',
+      desc: 'Nemesi e Gravehold a 3 di vita: togli 3 alla nemesi per la Vittoria, a Gravehold per la Sconfitta (Undo torna indietro)' }
+  }
 };

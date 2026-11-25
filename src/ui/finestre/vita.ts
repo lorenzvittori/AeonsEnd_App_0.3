@@ -46,7 +46,7 @@ export function openLifeDialog(kind: TipoVita): void {
     const b = el('button', 'ae-life-step', step > 0 ? '+' + step : '−' + Math.abs(step));
     b.type = 'button';
     b.addEventListener('click', () => { draft = Vite.stepLife(draft, step, cap); update(); });
-    b.setAttribute('aria-label', (step > 0 ? 'Aggiungi ' : 'Togli ') + Math.abs(step) + ' punti vita');
+    b.setAttribute('aria-label', T.lifeStepAria(step));
     steps.push([step, b]);
     if (step === 1) controls.appendChild(el('span', 'ae-life-step-gap'));
     controls.appendChild(b);

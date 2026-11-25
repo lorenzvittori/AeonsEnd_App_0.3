@@ -121,7 +121,7 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
       const key = String(step);
       // −5 con il contorno rosso, diverso da −1 e +1: è il tocco sbagliato più costoso
       const b = ctl(step > 0 ? '+' + step : '−' + Math.abs(step), step === -5 ? 'danger' : 'secondary', key,
-        (step > 0 ? 'Rimetti ' : 'Togli ') + Math.abs(step) + ' punti vita a ' + entry.data.name, () => {
+        T.lifeStepAriaOf(step, entry.data.name), () => {
           const value = Math.min(cap, Math.max(0, Number(draftHp(entry)) + step));
           if (value === draftHp(entry)) return;
           setDraft(entry, { hp: value });

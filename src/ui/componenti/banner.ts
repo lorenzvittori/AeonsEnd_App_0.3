@@ -1,9 +1,10 @@
 // ui/componenti/banner.ts: la scritta al centro ("Tier 2", "Tier 3", "Partita iniziata"), con il carattere caricato
 // all'avvio perché l'animazione non vada a scatti.
-// Livello 3 (ui/componenti/). Dipende da: ui/dom.ts, ui/componenti/animazioni.ts (buzz). Usato da: navigazione (render:
+// Livello 3 (ui/componenti/). Dipende da: ui/dom.ts, ui/testi.ts, ui/componenti/animazioni.ts (buzz). Usato da: navigazione (render:
 // Tier), crea mazzo (Partita iniziata), avvio.ts (carattere).
 import { buzz } from './animazioni.ts';
 import { el } from '../dom.ts';
+import { T } from '../testi.ts';
 
 export const TIER_BANNER_MS = 1760;
 
@@ -35,5 +36,5 @@ export function showBanner(text: string): void {
 export const BANNER_FONT = '600 64px Cinzel';
 
 export function preloadBannerFont(): void {
-  if (document.fonts && document.fonts.load) document.fonts.load(BANNER_FONT, 'Tier 123 Partita iniziata Vittoria!').catch(() => {});
+  if (document.fonts && document.fonts.load) document.fonts.load(BANNER_FONT, 'Tier 123 ' + T.gameStarted + ' ' + T.victoryTitle + '!').catch(() => {});
 }
