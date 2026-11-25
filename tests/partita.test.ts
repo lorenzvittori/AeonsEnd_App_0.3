@@ -55,7 +55,7 @@ function passo(i: number): string {
 }
 
 // Una partita intera da nuovaPartita(): le fotografie dopo ogni azione, fino a `n` azioni o al turno giocatori dopo
-// almeno `n` azioni (così la ripresa non cade nel bug noto del passo Pesca)
+// almeno `n` azioni
 function gioca(nemesis: string, players: number, seed: number, n: number): string[] {
   fissa(seed);
   preferenze.settings = scelte(nemesis, players);
@@ -147,6 +147,50 @@ describe('stato/partita.ts: la partita in corso', () => {
     P.impostaUndo(saved.undo || []);
     expect(JSON.stringify(P.snapshot())).toBe(snap);
     expect(JSON.stringify(partita.undoStack)).toBe(undo);
+  });
+
+  // Gioca finché la partita è al passo Pesca con carte in coda (turno nemesi, tutte risolte, resta da pescare)
+  function finoAlPassoPescaConCoda(): void {
+    for (let i = 0; i < 400 && !(partita.resolving && partita.queue.length > 0 && isDrawStep(partita)); i++) passo(1);
+    expect(partita.resolving && partita.queue.length > 0 && isDrawStep(partita)).toBe(true);
+  }
+
+  it('Undo dopo la pesca al passo Pesca con carte in coda: si torna a pescare, non all\'ultima carta', () => {
+    fissa(11);
+    preferenze.settings = scelte('Rageborne', 2);
+    P.nuovaPartita();
+    finoAlPassoPescaConCoda();
+    const prima = JSON.stringify(P.snapshot());
+    const coda = partita.queue.length;
+    P.pescaCarta();
+    expect(partita.queue.length).toBe(coda + 1);
+    // Undo come in componenti/ripristino.ts: l'ultimo passo tolto e la partita ripristinata da quello
+    const passo = must(P.togliPassoUndo(), 'passo di undo');
+    const ripristino = P.preparaRipristino(passo);
+    P.applicaRipristino(ripristino.game);
+    expect(ripristino.view.viewed).toBe('draw');
+    expect(isDrawStep(partita)).toBe(true);
+    expect(partita.currentIndex).toBe(coda);
+    expect(JSON.stringify(P.snapshot())).toBe(prima);
+  });
+
+  it('ripresa al passo Pesca con carte in coda: la partita riparte da lì', () => {
+    fissa(11);
+    preferenze.settings = scelte('Rageborne', 2);
+    P.nuovaPartita();
+    finoAlPassoPescaConCoda();
+    const snap = JSON.stringify(P.snapshot());
+    P.save();
+    const text = must(localStorage.getItem(SAVE_KEY), 'salvataggio scritto');
+    gioca('Maggoth', 2, 99, 30);
+    localStorage.setItem(SAVE_KEY, text);
+    const saved = must(readSave(), 'salvataggio');
+    preferenze.settings = saved.settings;
+    const ripristino = P.preparaRipristino(saved.state);
+    P.applicaRipristino(ripristino.game);
+    expect(ripristino.view.viewed).toBe('draw');
+    expect(isDrawStep(partita)).toBe(true);
+    expect(JSON.stringify(P.snapshot())).toBe(snap);
   });
 
   it('Modalità test: all\'uscita tornano le scelte di prima e la partita riparte da zero', () => {

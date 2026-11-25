@@ -23,11 +23,11 @@ const MAIN_V228: SalvataggioValido = (() => {
 // Partita di prova: i campi della partita più le scelte e il prossimo uid (come in stato/partita.ts)
 type PartitaProva = Partita & { settings: Impostazioni; nextUid: number };
 
-// Fotografia attesa dopo un ripristino. Bug noto (annotato, non corretto): al passo Pesca con carte in coda
-// (currentIndex = lunghezza della coda) il ripristino riporta currentIndex sull'ultima carta, da risolvere di nuovo
+// Fotografia attesa dopo un ripristino: la stessa, anche al passo Pesca con carte in coda (currentIndex = lunghezza della
+// coda). Solo a mazzo vuoto (un salvataggio vecchio: il passo Pesca non c'è) l'indice torna sull'ultima carta
 function afterRestore(snap: FotografiaLetta): FotografiaLetta {
   const s = jsonCopy(snap);
-  if (s.resolving && s.queue.length && s.newIndex < 0 && s.currentIndex >= s.queue.length) s.currentIndex = s.queue.length - 1;
+  if (s.resolving && s.queue.length && s.newIndex < 0 && s.currentIndex >= s.queue.length && s.deck.length === 0) s.currentIndex = s.queue.length - 1;
   return s;
 }
 // Partita come i campi usati dalle regole (stato/partita.ts)
@@ -91,6 +91,29 @@ describe('fotografia e ripristino', () => {
         expect(new Set(copy.queue.map(e => e.uid)).size).toBe(copy.queue.length);
       }
     });
+  });
+
+  it('passo Pesca con carte in coda: il ripristino torna a pescare (currentIndex = lunghezza della coda, vista "draw")', () => {
+    const random = seeded(7);
+    const game = newGame({ players: 2, nemesis: 'Rageborne', battleMode: true, mergeCollection: true }, random);
+    let trovato = false;
+    for (let i = 0; i < 400 && !trovato; i++) {
+      play(game, 1, random);
+      trovato = game.resolving && game.queue.length > 0 && N.isDrawStep(game);
+    }
+    expect(trovato).toBe(true);
+    const snap = S.snapshotGame(game);
+    expect(snap.currentIndex).toBe(snap.queue.length);
+    const r = restored(jsonCopy(snap), game.settings, seeded(1));
+    expect(r.game.resolving).toBe(true);
+    expect(r.game.currentIndex).toBe(r.game.queue.length);
+    expect(r.game.newIndex).toBe(-1);
+    expect(N.isDrawStep(r.game)).toBe(true);
+    expect(r.view.viewed).toBe('draw');
+    // Salvataggio vecchio a mazzo vuoto: il passo Pesca non c'è, si torna sull'ultima carta come prima
+    const vuoto = restored({ ...jsonCopy(snap), deck: [] }, game.settings, seeded(1));
+    expect(vuoto.game.currentIndex).toBe(vuoto.game.queue.length - 1);
+    expect(vuoto.view.viewed).toBe(vuoto.game.queue[vuoto.game.queue.length - 1].uid);
   });
 
   it('formato: i campi di sempre più le vite, carte come id, coda senza uid; la partita non cambia', () => {

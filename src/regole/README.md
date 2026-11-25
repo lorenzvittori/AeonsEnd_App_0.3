@@ -46,4 +46,4 @@ l'ora come `now()`, gli uid come `newUid()`) e restituiscono il risultato, oppur
 - Una regola nuova prende tutto come argomento; se serve il caso o l'ora, si aggiunge un parametro e lo passa `stato/partita.ts`.
 - Le regole che modificano la partita ricevuta sono elencate in `MUTATING_RULES` (`tools/check-moduli.mjs`): se ne aggiungi una, aggiungila lì.
 - Prova con i dati veri: `tests/mazzo-nemesi.test.ts`, `mazzo-turni.test.ts`, `turno-nemesi.test.ts`, `vite.test.ts`, `salvataggio.test.ts`.
-- Bug noto in `restoreGame` (`salvataggio.ts`): vedi "Bug noti" in CONTESTO_SVILUPPO.md.
+- `restoreGame` (`salvataggio.ts`) riporta al passo Pesca una fotografia con `currentIndex` = lunghezza della coda e mazzo non vuoto; a mazzo vuoto (salvataggi vecchi) `currentIndex` torna sull'ultima carta. Provato da `tests/salvataggio.test.ts` e `tests/partita.test.ts` (Undo e ripresa).

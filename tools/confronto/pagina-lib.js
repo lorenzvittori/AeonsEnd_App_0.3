@@ -209,6 +209,7 @@
     return az;
   };
   C.undo = () => { app().undo(); app().render(); return 'undo'; };
+  C.alPassoPesca = () => { const p = app().partita; return p.resolving && p.queue.length > 0 && app().isDrawStep(p); };
   C.inTurnoGiocatori = () => !app().partita.resolving;
   C.finita = () => app().partita.deck.length === 0 && app().isVictory();
 })();

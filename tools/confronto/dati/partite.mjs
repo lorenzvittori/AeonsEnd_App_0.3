@@ -10,6 +10,7 @@
 //   passi      quante azioni giocare (poi si prosegue fino al turno giocatori)
 //   undo       numeri dei passi dopo i quali si preme Undo (due Undo di fila se il numero è ripetuto)
 //   uccidi     (facoltativo) true: i minion da risolvere si portano a 0 dalla scheda (appena pescati, o a ogni quarto passo)
+//   ripresaAlPesca (facoltativo) true: la prima volta che la partita è al passo Pesca con carte in coda, la pagina si ricarica e riprende
 //   ripresa    dopo questo passo (nel turno giocatori) la pagina si ricarica e la partita si riprende dal salvataggio
 export const PARTITE = [
   { id: 'Maggoth 2 giocatori (UI, wave IV spuntata)', nemesi: 'Maggoth', giocatori: 2, via: 'ui', onda: 'IV', seme: 11, passi: 70, undo: [12, 13, 40], ripresa: 30 },
@@ -19,5 +20,6 @@ export const PARTITE = [
   { id: 'Fenrix 4 giocatori', nemesi: 'Fenrix', giocatori: 4, via: 'api', seme: 31, passi: 80, undo: [15, 16, 55], ripresa: 36 },
   { id: 'The Wailing 3 giocatori', nemesi: 'The Wailing', giocatori: 3, via: 'api', seme: 27, passi: 80, undo: [30, 62], ripresa: 40 },
   { id: 'Crooked Mask 2 giocatori', nemesi: 'Crooked Mask', giocatori: 2, via: 'api', seme: 9, passi: 60, undo: [14, 35], ripresa: 22 },
-  { id: 'Rageborne 2 giocatori, minion ucciso dalla scheda', nemesi: 'Rageborne', giocatori: 2, via: 'api', seme: 4, passi: 80, undo: [30, 31], uccidi: true, ripresa: 45 }
+  { id: 'Rageborne 2 giocatori, minion ucciso dalla scheda', nemesi: 'Rageborne', giocatori: 2, via: 'api', seme: 4, passi: 80, undo: [30, 31], uccidi: true, ripresa: 45 },
+  { id: 'Rageborne 2 giocatori, ripresa al passo Pesca', nemesi: 'Rageborne', giocatori: 2, via: 'api', seme: 11, passi: 50, undo: [], ripresaAlPesca: true, ripresa: 9999 }
 ];

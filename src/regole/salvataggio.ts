@@ -67,8 +67,9 @@ export function snapshotGame(g: Partita): Fotografia {
 // di creare qualcosa. Restituisce { game, view }:
 // - game: i campi della partita (da scrivere nello stato);
 // - view: cosa mostrare (VistaRipristino).
-// Nel turno nemesi currentIndex si limita all'ultima carta della coda (bug noto, in CONTESTO_SVILUPPO.md: al passo Pesca
-// con carte in coda si torna all'ultima carta da risolvere). Il caso (random) si usa solo per il mazzo dei turni.
+// Nel turno nemesi currentIndex si limita all'ultima carta della coda, tranne al passo Pesca (carte in coda tutte risolte,
+// mazzo non vuoto): lì resta la lunghezza della coda e si torna a pescare; a mazzo vuoto un salvataggio vecchio con
+// quell'indice torna sull'ultima carta. Il caso (random) si usa solo per il mazzo dei turni.
 export function restoreGame(s: FotografiaLetta, ctx: ContestoRipristino): { game: Partita; view: VistaRipristino } {
   const get = (id: string): Carta => {
     const card = ctx.cardsById.get(id);
@@ -102,6 +103,12 @@ export function restoreGame(s: FotografiaLetta, ctx: ContestoRipristino): { game
   if (s.resolving && queue.length === 0 && deck.length > 0) {
     resolving = true;
     currentIndex = 0;
+    newIndex = -1;
+    view.viewed = 'draw';
+  } else if (s.resolving && queue.length > 0 && s.newIndex < 0 && s.currentIndex >= queue.length && deck.length > 0) {
+    // Passo Pesca con carte in coda: tutte risolte, resta da pescare
+    resolving = true;
+    currentIndex = queue.length;
     newIndex = -1;
     view.viewed = 'draw';
   } else if (s.resolving && queue.length > 0) {

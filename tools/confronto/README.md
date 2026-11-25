@@ -21,7 +21,7 @@ uguali per le due build; le animazioni vanno alla fine.
 - `prove/`: una prova per file (`{ nome, esegui(ctx) }`), i casi nei file omonimi di `dati/`. `salvataggi/`: i `.json` della prova `salvataggi`.
 
 ## Le prove
-- `partite`: 8 partite (una con i minion portati a 0 dalla scheda, `uccidi`) come sequenze di azioni, con Undo e ripresa a metà, stato e vista a ogni passo. `scenari`: tutti quelli della Modalità test.
+- `partite`: 9 partite (una con i minion portati a 0 dalla scheda, `uccidi`; una con la ripresa al passo Pesca, `ripresaAlPesca`) come sequenze di azioni, con Undo e ripresa a metà (la pagina si ricarica e si riprende dal salvataggio, a collezione completa), stato e vista a ogni passo. `scenari`: tutti quelli della Modalità test.
 - `salvataggi`: i file di `salvataggi/` (main v228 dei test e uno scritto dal sito pubblicato v273), ripresi e giocati.
 - `schermate`: il giro delle schermate a 375×812 e 1280×800 (più 812×375 e riduzione del movimento per le voci con `anche`): `getComputedStyle` di
   tutti gli elementi visibili con `::before`/`::after`, posizione, testo e attributi, e i pulsanti principali con `:hover`/`:active`/`:focus-visible` forzati.

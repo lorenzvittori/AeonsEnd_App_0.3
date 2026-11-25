@@ -46,6 +46,9 @@ async function esegui(pg, azione, i, seme, uccidi) {
   else if (azione === 'ripresa') {
     await pg.page.reload({ waitUntil: 'load' });
     await pg.carica();
+    // Dopo il ricaricamento la collezione in memoria è quella di default: senza collezione completa Riprendi apre la finestra
+    // della nemesi mancante e la partita non riparte
+    await pg.c('collezioneCompleta');
     await pg.clic('button:has-text("Riprendi partita")');
     await pg.assesta(1500);
   } else az = await pg.c('passo', i, uccidi);
@@ -76,10 +79,16 @@ export default {
         ctx.reg(nuove(visti, d0));
         if (!d0.some(eStato)) {
           let ripresaFatta = false;
+          let ripresaPescaFatta = false;
           for (let i = 0; !diverge && i < p.passi + 80; i++) {
             if (await a.c('finita')) break;
             if (i >= p.passi && await a.c('inTurnoGiocatori')) break;
             await passo('passo', i);
+            // Ripresa al passo Pesca con carte in coda
+            if (p.ripresaAlPesca && !ripresaPescaFatta && !diverge && await a.c('alPassoPesca')) {
+              ripresaPescaFatta = true;
+              await passo('ripresa', i);
+            }
             for (let n = 0; n < p.undo.filter(u => u === i).length && !diverge; n++) await passo('undo', i);
             if (!ripresaFatta && i >= p.ripresa && !diverge && await a.c('inTurnoGiocatori')) {
               ripresaFatta = true;

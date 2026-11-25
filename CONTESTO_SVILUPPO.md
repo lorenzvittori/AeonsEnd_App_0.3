@@ -165,9 +165,6 @@ import, nessun `any`, nessun file sopra 500 righe. Dettagli in [src/ui/README.md
 
 ## 9. Bug noti (annotati, non corretti)
 
-- **Undo / ripresa al passo Pesca:** se la fotografia è al passo Pesca con carte in coda (`currentIndex` = lunghezza della coda), il
-  ripristino limita `currentIndex` all'ultima carta, che va quindi risolta di nuovo invece di pescare. Codice: `restoreGame` in
-  `src/regole/salvataggio.ts`; il test `tests/salvataggio.test.ts` (`afterRestore`) lo descrive.
 - **Rotella sulla fascia piccola:** sul desktop la rotella del mouse scorre la fascia delle carte piccole solo nel turno nemesi, non nel
   turno giocatori (quando le fasce erano due, solo quella del turno nemesi aveva l'ascoltatore). Il limite è tenuto apposta
   (`navigazione.ts`, ascoltatore `wheel`).
