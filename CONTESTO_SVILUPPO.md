@@ -110,7 +110,7 @@ Da lanciare dalla cartella del repo (PowerShell).
 | **Lampeggio rosso** (`.is-to-resolve`, `.is-attack-drawn`) | Turno nemesi: carta da risolvere (non i poteri con più di un token) e attacco appena pescato. |
 | **Box mazzo / box scarti** (`.ae-header-piles`, `.ae-pile`) | In testata, a sinistra, in entrambi i turni. |
 | **Bozza** (`ui.drafts`) | Turno giocatori: vita e costi pagati non ancora salvati. "Salva modifiche" / "Annulla modifiche". |
-| **Token automatico** (`.is-auto-token`) | Turno nemesi: sul potere da risolvere un token lampeggia e diventa grigio da solo (solo visivo: lo toglie il tocco sul pulsante). |
+| **Token automatico** (`.is-auto-token`) | Turno nemesi: sul potere da risolvere un token pulsa e diventa grigio da solo, su una copia sopra la pagina (`token-volo.ts`; solo visivo: lo toglie il tocco sul pulsante). |
 | **Crea mazzo** (`#deck-build`, `ui.deckBuilding`) | Schermata dei 9 mazzi dopo "Inizia partita", con lo slider (`deckSlider`). |
 | **Menu iniziale** (`startMode = 'home'`) | Partita in corso (Riprendi), Nuova partita, Opzioni. |
 | **Collezione** | Prodotti posseduti (wave e mini espansioni), scelti in "La mia collezione". |
@@ -168,13 +168,12 @@ import, nessun `any`, nessun file sopra 500 righe. Dettagli in [src/ui/README.md
 - **Rotella sulla fascia piccola:** sul desktop la rotella del mouse scorre la fascia delle carte piccole solo nel turno nemesi, non nel
   turno giocatori (quando le fasce erano due, solo quella del turno nemesi aveva l'ascoltatore). Il limite è tenuto apposta
   (`navigazione.ts`, ascoltatore `wheel`).
-- **Misure diverse tra i due turni:** risolto nella parte che contava. La zona 6 c'è sempre (vuota e invisibile nel turno nemesi), la misura della
-  carta grande è una sola regola senza riserve e la carta ha la stessa misura e posizione nei due turni (lo prova `npm run confronta -- <ref> --solo
-  misure`, a 375×812, 390×844 e 1280×800); ogni variabile di `partita-misure.css` è una misura vera. Restano due valori per turno
-  (`-giocatori` / `-nemesi`), oggi **uguali** tra loro: spazio tra le carte grandi 18px/18px, altezza della fascia piccola 106px/106px, margine
-  della fascia piccola 16px/16px. Unirle lo decide l'utente. La colonna su desktop (`sizeColumn`) usa lo spazio del carosello nemesi per tutti e due.
-  La carta da pescare / pescata è il 90% (`--carta-pescata-scala`) della carta piena: oggi è quindi un po' più piccola della carta normale
-  (prima era più grande, perché la normale lasciava libero lo spazio della zona 6); con scala 1 è uguale.
+- **Misure uguali nei due turni (risolto):** la zona 6 c'è sempre (spazio riservato, vuoto e invisibile; i comandi della carta stanno sotto ogni carta
+  grande), la misura della carta grande è una sola regola senza riserve e la carta ha la stessa misura e posizione nei due turni (lo prova `npm run
+  confronta -- <ref> --solo misure`, a 375×812, 390×844 e 1280×800); ogni variabile di `partita-misure.css` è una misura vera e per ogni cosa c'è una
+  variabile sola (`--carte-grandi-spazio`, `--carte-piccole-altezza`, `--carte-piccole-margine`). La carta da pescare / pescata è la più grande che ci
+  sta, con `--carta-pescata-spazio-sopra` e `--carta-pescata-margine-lati`. Dal passo Pesca alla carta pescata messa in gioco le carte piccole non si
+  toccano. Le animazioni dei token stanno su una copia sopra la pagina (`ui/componenti/token-volo.ts`).
 
 ## 10. Idee e cose aperte
 

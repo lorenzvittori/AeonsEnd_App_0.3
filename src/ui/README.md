@@ -22,7 +22,7 @@ L'interfaccia. I file qui sono il livello 2 (base) e il coordinatore (livello 6)
   supporto della stessa cartella (`<nome>.ts` con i suoi `<nome>-*.ts`). Il supporto non importa il file principale.
 - **Componente o finestra:** componente se serve a più schermate o finestre o c'è sempre nella partita; finestra se si apre al volo
   su una sola parte (o dal coordinatore). Niente import tra finestre: se serve, un aggancio.
-- **Il coordinatore** è l'unico che mostra e nasconde i blocchi fissi (`#start`, `#queue`, `#focus`, `#interattivi`, `data-turno`).
+- **Il coordinatore** è l'unico che mostra e nasconde i blocchi fissi (`#start`, `#queue`, `#focus`, `data-turno`).
   `schermataAttuale()` dice dove si è ('menu', 'nuova-partita', 'crea-mazzo', 'turno-giocatori', 'turno-nemesi', 'mazzo-turni';
   il mazzo dei turni lo segna la schermata con `impostaMazzoTurniAperto`). `render()` disegna testata, blocchi, comandi, pezzi
   comuni, poi `disegnaTurnoNemesi()` o `disegnaTurnoGiocatori()`; l'ordine conta (il nome della nemesi si misura dopo le classi).

@@ -22,7 +22,7 @@ chiama nel codice e dove si trova. Serve a tradurre tra quello che si dice al ta
 | turno nemesi | Nemesi / Nemesis | `resolving` vero; momento `nemesi`; `nemesisTurn()`; schermata `turno-nemesi` | `regole/turno-nemesi.ts`, `ui/schermate/turno-nemesi.ts` |
 | risolvere una carta | Effetto risolto, Vai avanti / Effect resolved | `resolveCurrent()`, `risolviCarta()`; azione `risolvi` | `regole/turno-nemesi.ts`, `stato/partita.ts` |
 | carta da risolvere | Risolvi / Resolve | la carta in posizione `currentIndex` della coda | `regole/turno-nemesi.ts` |
-| carta mostrata (anteprima) | Torna alla carta da risolvere / Back to the card to resolve | `ui.viewedUid`; azione `torna`; `inAnteprima()` | `ui/pagina.ts`, `ui/partita-variante.ts` |
+| carta mostrata (anteprima, solo mentre si risolvono le carte: non al passo Pesca) | Torna alla carta da risolvere / Back to the card to resolve | `ui.viewedUid`; azione `torna`; `inAnteprima()` | `ui/pagina.ts`, `ui/partita-variante.ts` |
 | pesca (passo del turno nemesi) | Pesca / Draw | `isDrawStep()`, `DRAW_UID` (-1); momento `pesca`; `pescaCarta()` | `regole/turno-nemesi.ts`, `stato/partita.ts` |
 | carta appena pescata | Nuova / New | `isNew`, `newIndex`, `ui.lastDrawnUid` | `tipi/partita.ts` |
 | mettere in gioco | Metti in gioco · Fine turno nemesi / ... | effetto `play` di `resolveCurrent()` | `regole/turno-nemesi.ts` |
@@ -86,7 +86,7 @@ chiama nel codice e dove si trova. Serve a tradurre tra quello che si dice al ta
 | il pulsante in basso | (il testo cambia) | `#pulsante-principale`, `data-azione` | `ui/componenti/pulsante-principale.ts` |
 | fascia delle carte piccole | Coda in gioco / Cards in play | `#rail`, `.ae-compact-rail` | `ui/schermate/turno-giocatori.ts` |
 | carosello (carte grandi del turno nemesi) | Coda della nemesi / Nemesis queue | `#focus`, `renderFocus()` | `ui/schermate/turno-nemesi-carosello.ts` |
-| comandi sotto la carta al centro | −5, −1, +1 | zona 6, `#interattivi`, `cardControls()` | `ui/schermate/turno-giocatori.ts` |
+| comandi sotto la carta | −5, −1, +1 | `.queue-slot > .queue-controls` (nello spazio riservato della zona 6, `#interattivi`), `cardControls()`, classe `is-centred` | `ui/schermate/turno-giocatori.ts` |
 | lingua | Lingua / Language | `lingua()`, `T`, chiave `aeonsend-app-0.2-language` | `stato/preferenze.ts`, `ui/testi.ts` |
 | un testo dell'app | - | `T.chiave`, `data-testo` | `ui/testi-it.ts`, `ui/testi-en.ts` |
 | ridisegnare | - | `render()`; aggancio `richiediRidisegno()` | `ui/navigazione.ts`, `ui/ridisegno.ts` |

@@ -21,7 +21,7 @@ flowchart TB
     Z3["3 · carte piccole<br/>id rail · data-zona carte-piccole<br/>le carte in gioco in piccolo"]
     Z4["4 · vite<br/>id vite · data-zona vite<br/>Gravehold e nemesi"]
     Z5["5 · carte grandi<br/>id queue oppure focus · data-zona carte-grandi<br/>coda o carosello"]
-    Z6["6 · interattivi<br/>id interattivi · data-zona interattivi<br/>comandi della carta al centro"]
+    Z6["6 · interattivi<br/>id interattivi · data-zona interattivi<br/>spazio riservato ai comandi (sempre vuoto)"]
     Z7["7 · principale<br/>id dock · data-zona principale<br/>il pulsante principale o il cursore"]
     Z1 --- Z2 --- Z3 --- Z4 --- Z5 --- Z6 --- Z7
 ```
@@ -35,7 +35,7 @@ Passo per passo (la tabella sotto dice chi disegna ogni zona):
 | 3 | carte piccole | tutte le carte in gioco in piccolo, in una fascia che scorre. Una sola fascia, uguale nei due turni | `renderQueue()` (turno giocatori) o `renderResolve()` (turno nemesi) |
 | 4 | vite | i due box: Gravehold e la nemesi. Si toccano per cambiarne la vita | `renderLives()` in `ui/componenti/vite.ts` |
 | 5 | carte grandi | **la coda** `#queue` (turno giocatori) oppure **il carosello** `#focus` (turno nemesi e Pesca): uno solo è visibile | `renderQueue()` o `renderFocus()` |
-| 6 | interattivi | i comandi della carta al centro (−5 −1 +1, "Rimuovi · costo pagato"). Solo nel turno giocatori (nel turno nemesi la zona c'è, vuota e invisibile) | `disegnaInterattivi()` in `ui/schermate/turno-giocatori.ts` |
+| 6 | interattivi | lo **spazio riservato** ai comandi: la zona c'è sempre, alta `--interattivi-altezza`, vuota e invisibile. I comandi (−5 −1 +1, "Rimuovi · costo pagato") stanno **sotto ogni carta grande** del turno giocatori, in questo spazio, e scorrono con la carta | `cardControls()` in `ui/schermate/turno-giocatori.ts` (dentro `renderQueue()`) |
 | 7 | principale | **un solo** pulsante, con accanto "Annulla modifiche" quando serve; in "Crea mazzo" al suo posto c'è il cursore | `disegnaPulsantePrincipale()` in `ui/componenti/pulsante-principale.ts` |
 
 Come sono messe le zone e quanto sono grandi:
@@ -43,8 +43,8 @@ Come sono messe le zone e quanto sono grandi:
 - **La disposizione** è in `ui/schermate/partita.css`: una griglia (`grid-template-areas`) con **una riga per zona**. Le zone da 2 a 6 stanno
   dentro `.ae-main`, che usa le righe della schermata ("sottogriglia"): così restano allineate con la testata e il pulsante.
 - **Le misure** (altezze, margini, spazi) sono tutte in `ui/schermate/partita-misure.css`, come variabili con un nome parlante
-  (`--turno-barra-altezza`, `--carte-piccole-altezza-giocatori`...). Dove i due turni hanno misure diverse ci sono due variabili
-  (`-giocatori` e `-nemesi`). Il codice le legge con `misura()` in `ui/componenti/misure.ts`: **nel codice non ci sono numeri di misura
+  (`--turno-barra-altezza`, `--carte-piccole-altezza`...). I due turni hanno le stesse misure: una variabile sola per cosa
+  (`--carte-grandi-spazio`, `--carte-piccole-altezza`, `--carte-piccole-margine`). Il codice le legge con `misura()` in `ui/componenti/misure.ts`: **nel codice non ci sono numeri di misura
   propri**.
 - Dalla larghezza di 768px in su (tablet e desktop) la partita sta in una **colonna al centro**; `sizeColumn()` ne calcola la larghezza.
 
@@ -58,11 +58,11 @@ compensazione). Il disegno è lo stesso che sta in cima a ogni zona nel file del
 flowchart TB
     Z1["1 · riga della testata<br/>--testata-altezza"]
     Z2["2 · barra dei turni<br/>caselle --turno-barra-altezza<br/>scritte --turno-scritte-altezza"]
-    Z3["3 · fascia carte piccole<br/>--carte-piccole-altezza-giocatori / -nemesi"]
+    Z3["3 · fascia carte piccole<br/>--carte-piccole-altezza"]
     Z4["4 · box delle vite<br/>--vite-box-altezza<br/>(--vite-sovrapposizione-zona-5 stanno già sulla zona 5)"]
     Z5a["5 · riga vita/token<br/>--carte-grandi-riga-stato-altezza"]
     Z5b["5 · carta grande<br/>alta quanto avanza"]
-    Z6["6 · comandi<br/>--interattivi-altezza<br/>(vuota e invisibile nel turno nemesi)"]
+    Z6["6 · spazio dei comandi<br/>--interattivi-altezza<br/>(sempre vuoto: i comandi stanno sotto ogni carta)"]
     Z7["7 · pulsante principale<br/>--principale-altezza"]
     Z1 -->|"--turno-spazio-sopra"| Z2
     Z2 -->|"--carte-piccole-distanza-sopra"| Z3
@@ -75,12 +75,18 @@ flowchart TB
 
 Passo per passo:
 
-1. **Zone 5 e 6 dal basso.** La zona 6 c'è sempre, alta `--interattivi-altezza`: nel turno nemesi e al passo Pesca è vuota e invisibile (classe
-   `is-vuota`, messa da `mostraTurno()`). Così la zona 5 è alta uguale nei due turni. Dentro la zona 5, dal basso: la carta grande, poi
+1. **Zone 5 e 6 dal basso.** La zona 6 c'è sempre, alta `--interattivi-altezza`, vuota e invisibile in tutti i momenti: è uno spazio riservato, così la
+   zona 5 è alta uguale nei due turni. I comandi non sono dentro la zona 6: ogni carta grande del turno giocatori ha **i suoi** sotto di sé
+   (`.queue-slot > .queue-controls`, a `--interattivi-distanza` dalla carta, larghi quanto la carta), nello spazio della zona 6; l'area delle carte
+   sporge fino in fondo alla zona 6 perché non vengano tagliati. Si vedono solo per la carta al centro (`.is-centred`, messa da `markQueueRail()`),
+   con una breve dissolvenza (.15s); scorrendo, ogni carta porta i suoi comandi. Dentro la zona 5, dal basso: la carta grande, poi
    `--carte-grandi-riga-stato-distanza`, poi la riga vita/token. Tra la zona 5 e la zona 6 c'è esattamente `--interattivi-distanza`.
 2. **La carta grande** ha una sola regola per i due turni (`sharedCardWidth()`): altezza dell'area meno la riga vita/token e il suo spazio, oppure la
    larghezza se questa limita. Non c'è nessuna riserva per la zona 6, perché la zona 6 ha già la sua riga: carta e posizione sono uguali nei due
-   turni (lo controlla la prova `misure`). La carta da pescare e quella pescata hanno il fondo sulla stessa linea e crescono verso l'alto.
+   turni (lo controlla la prova `misure`). La carta da pescare e quella pescata hanno il fondo sulla stessa linea e crescono verso l'alto: sono
+   **la più grande che ci sta** (`sizeFocus()`), lasciando libero `--carta-pescata-spazio-sopra` sopra la loro riga vita/token (in più di
+   `--carte-grandi-spazio-sopra`) e `--carta-pescata-margine-lati` ai lati (almeno quanto l'alone, che così non viene tagliato); non sborda mai
+   dall'area. Non ci sono più scala né crescita.
 3. **I due pesi dell'avanzo.** Quando la carta è limitata dalla larghezza, avanza altezza. Si divide tra due spaziatori (`::before` e `::after`
    dell'area delle carte, con `flex-grow`): `--carte-grandi-avanzo-sopra` (sopra la riga vita/token) e `--carte-grandi-avanzo-sotto` (tra la carta e la
    zona 6). Sono pesi, non pixel: 1 e 0 = tutto sopra (come oggi), 0 e 1 = tutto sotto, 1 e 1 = metà e metà, 3 e 1 = tre quarti sopra.
@@ -95,15 +101,15 @@ Passo per passo:
 
 Il **momento** è l'attributo `data-turno` di `#app`: `giocatori`, `nemesi`, `pesca` o `crea-mazzo`. Lo decide una funzione sola,
 `variantePartita()` in `ui/partita-variante.ts`. È una funzione **pura**: riceve la partita e lo stato dell'interfaccia e restituisce una
-descrizione (il momento, se c'è la zona 6, cosa fa il pulsante, cosa fanno le carte grandi...) senza toccare niente. Per questo si prova
+descrizione (il momento, cosa fa il pulsante, cosa fanno le carte grandi...) senza toccare niente. Per questo si prova
 con i test (`tests/partita-variante.test.ts`) in tutte e due le lingue.
 
 Il coordinatore `render()` prende quella descrizione e la applica (`mostraTurno()` in `ui/navigazione.ts`): scrive `data-turno`, mostra
-la coda o il carosello, rende vuota e invisibile la zona 6 (resta alta uguale).
+la coda o il carosello (la zona 6 è sempre lo stesso spazio vuoto).
 
 Ogni riga della tabella è una variante; la colonna "Azione" è il valore di `data-azione` sul pulsante, cioè cosa farà il tocco.
 
-| Momento (`data-turno`) | Quando | Zona 5 | Zona 6 | Azione (`data-azione`) | Testo del pulsante (italiano) |
+| Momento (`data-turno`) | Quando | Zona 5 | Comandi sotto le carte | Azione (`data-azione`) | Testo del pulsante (italiano) |
 |---|---|---|---|---|---|
 | `giocatori` | turno di un giocatore | coda | sì | `fine-turno` | "Fine turno · Pesca ordine turno" (ultimo turno del giro: "Fine turno · Mischia mazzo") |
 | `giocatori` | si aspetta la carta turno | coda | sì | `pesca-carta-turno` | "Pesca carta turno" (a inizio di un giro nuovo: "Pesca la prima carta turno") |
@@ -111,9 +117,10 @@ Ogni riga della tabella è una variante; la colonna "Azione" è il valore di `da
 | `nemesi` | si risolve la carta da risolvere | carosello | no | `risolvi` | secondo la carta: "Vai avanti" (potere con più token), "Effetto risolto e scarta" (ultimo token), "Effetto risolto" (minion, attacco), "Imposta la vita" (vita "?") |
 | `nemesi` | si guarda un'altra carta | carosello | no | `torna` | "Torna alla carta da risolvere" |
 | `pesca` | tutte risolte, si pesca | carta coperta | no | `pesca` | "Pesca" |
-| `pesca` | si guarda un'altra carta | carta coperta | no | `torna` | "Torna alla carta da pescare" |
 | `nemesi` | la carta appena pescata | carosello | no | `risolvi` | "Metti in gioco · Fine turno nemesi" (attacco: "Effetto risolto"; ultimo turno del giro: "· Mischia mazzo") |
 | `crea-mazzo` | i 9 mazzi | coda (nascosta) | sì (nascosta) | `cursore` | nessuno: al suo posto il cursore |
+
+Dal passo **Pesca** fino alla carta pescata messa in gioco le carte piccole **non si toccano**: un tocco sulla fascia non fa niente (`viewCard()` esce subito, cursore normale, classe `is-bloccata` sulla fascia), il carosello resta sulla carta da pescare o pescata e il pulsante non cambia. Per questo al passo Pesca non esiste un'anteprima né il pulsante "Torna alla carta da pescare": `inAnteprima()` è sempre falso in quei momenti. Nel turno nemesi, prima, l'anteprima delle altre carte c'è ancora ("Torna alla carta da risolvere").
 
 Altre cose che cambiano con il momento:
 

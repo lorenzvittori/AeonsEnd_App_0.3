@@ -101,7 +101,7 @@ Passo per passo:
 | 2 turno | si accende la casella del giocatore, l'altra si spegne | casella "Nemesi · Risolvi" |
 | 3 carte piccole | la fascia resta | la fascia con la carta da risolvere in rosso |
 | 5 carte grandi | la coda, `#queue` | il carosello, `#focus` |
-| 6 interattivi | i comandi della carta al centro | nascosta |
+| 6 interattivi | spazio riservato, vuoto (i comandi stanno sotto ogni carta grande, visibili per quella al centro) | spazio riservato, vuoto |
 | 7 principale | colore del nuovo giocatore | testo della prima carta (per esempio "Effetto risolto") |
 
 ## Caso (b) · Risolvere una carta nel turno nemesi
@@ -202,8 +202,8 @@ sequenceDiagram
 
 Passo per passo:
 
-1. **Primo tocco, la bozza.** I comandi "−5 −1 +1" della zona 6 (creati da `cardControls()` in
-   `ui/schermate/turno-giocatori.ts`) non toccano la partita. Chiamano `setDraft()` (in `ui/componenti/componenti.ts`), che scrive la
+1. **Primo tocco, la bozza.** I comandi "−5 −1 +1" sotto ogni carta grande (nello spazio della zona 6, creati da `cardControls()` in
+   `ui/schermate/turno-giocatori.ts`, visibili solo per la carta al centro) non toccano la partita. Chiamano `setDraft()` (in `ui/componenti/componenti.ts`), che scrive la
    modifica in `ui.drafts`, una mappa "carta → modifica" che vive in `ui/pagina.ts`. È **stato dell'interfaccia**, non della partita:
    non va nel salvataggio e non è un passo di Undo.
 2. **Il ridisegno.** `richiediRidisegno()`, e `render()` mostra la bozza: l'etichetta "HP: −1" sulla carta e il box della vita con "x/X"
@@ -228,7 +228,7 @@ Passo per passo:
 |---|---|---|
 | 3 carte piccole | etichetta "HP: −1" sulla carta; a 0 la carta diventa grigia (per i lettori di schermo "ucciso") | il numero nuovo di vita; la carta a 0 è già negli scarti e sparisce |
 | 5 carte grandi | stessa etichetta, box "x/X"; a 0 la carta è grigia | il box mostra solo la vita nuova |
-| 6 interattivi | i comandi si aggiornano (il +1 si accende; a 0 −5 e −1 sono spenti) | i comandi della carta che ora è al centro |
+| comandi sotto la carta (zona 6) | i comandi della carta si aggiornano (il +1 si accende; a 0 −5 e −1 sono spenti) | i comandi della carta che ora è al centro |
 | 7 principale | "Salva modifiche" dorato e "Annulla modifiche" | "Fine turno · Pesca ordine turno" |
 | 1 testata, pile | invariate | gli scarti salgono se una carta è uscita |
 

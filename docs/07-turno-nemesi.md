@@ -56,9 +56,11 @@ Passo per passo:
 
 1. **CartaDaRisolvere.** La carta mostrata è quella da risolvere. Il pulsante dice cosa succede ("Vai avanti", "Effetto risolto"...).
 2. **Anteprima.** Un tocco su una carta della fascia piccola (`viewCard()`) o uno scorrimento del carosello cambiano `ui.viewedUid`. Non
-   cambia **niente** della partita: né mazzo, né vite, né token, né Undo.
+   cambia **niente** della partita: né mazzo, né vite, né token, né Undo. Vale solo mentre si risolvono le carte: dal passo Pesca fino alla
+   carta pescata messa in gioco le carte piccole non si toccano (`viewCard()` non fa niente, la fascia ha la classe `is-bloccata`, cursore
+   normale) e il carosello resta sulla carta da pescare o pescata.
 3. `variantePartita()` (via `inAnteprima()`) vede che la carta mostrata non è quella da risolvere e cambia il pulsante: azione `torna`,
-   testo "Torna alla carta da risolvere" (al passo Pesca: "Torna alla carta da pescare"), aspetto secondario.
+   testo "Torna alla carta da risolvere", aspetto secondario (non esiste più "Torna alla carta da pescare").
 4. **Il ritorno.** Il tocco chiama `backToActive()`, che rimette `ui.viewedUid` sulla carta giusta e il carosello scorre lì.
 5. Con le frecce della tastiera sulla fascia piccola (`moveView()`) si cambia solo la carta mostrata.
 
@@ -92,7 +94,7 @@ Passo per passo:
    minion restano in gioco (`play`). In entrambi i casi la risoluzione finisce: il turno nemesi è concluso.
 2. **Potere con più di un token.** Perde un token (`tokens - 1`) e la carta da risolvere diventa la successiva. Il pulsante dice "Vai avanti".
    Un dettaglio visivo: sul potere da risolvere **un token lampeggia e diventa grigio da solo** (`.is-auto-token`, anche all'ultimo
-   token). È **solo visivo**: l'animazione (`ae-token-spend`) la dà il CSS all'ultimo token della riga, e finché non si tocca il pulsante
+   token). È **solo visivo**: l'animazione (`ae-token-spend`) la fa una **copia del token messa sopra tutta la pagina** (`ui/componenti/token-volo.ts`, perché il carosello e la fascia piccola scorrono di lato e taglierebbero quello che sborda): nella stessa posizione e misura del token vero, che resta invisibile; finita l'animazione la copia sparisce e il token vero resta grigio (`.is-spent`). Con la riduzione del movimento niente copia: il CSS fa grigio il token subito. L'animazione è sull'ultimo token della riga, e finché non si tocca il pulsante
    `tokens` nella partita non cambia (verificato giocando: 2 token a schermo e nello stato, con l'animazione già attiva). Chi toglie il
    token è il tocco sul pulsante: `resolveCurrent()` fa `tokens - 1` dentro l'azione `risolviCarta()`, e il ridisegno mostra un token in meno.
 3. **Potere all'ultimo token.** Va negli scarti, e viene contato nelle statistiche come "potere risolto". Il pulsante dice
@@ -153,12 +155,12 @@ stateDiagram-v2
 Passo per passo:
 
 1. **Pesca.** Al centro il dorso del mazzo (`drawSlide()`), con l'etichetta NUOVA, e il pulsante dorato "Pesca". Arriva dal mazzo in alto a
-   sinistra con una piccola animazione (`animateDrawIn()`). Toccare il dorso vale come il pulsante.
+   sinistra con una piccola animazione (`animateDrawIn()`). Toccare il dorso vale come il pulsante. Le carte piccole non si toccano (vedi sopra).
 2. **`pescaCarta()`** (`stato/partita.ts`) è un'azione con il suo passo di Undo: `drawNewCard()` toglie la carta in cima al mazzo (la fine
    dell'elenco), la mette **in fondo alla coda** come nuova (`isNew`, `newIndex` e `currentIndex` puntano a lei) e dice il Tier da
    annunciare.
-3. **La carta pescata** si gira: finché l'immagine non è caricata si vede il dorso con "Caricamento carta..."; poi ruota in 350 ms. Ha
-   l'etichetta NUOVA e un bagliore dorato; un **attacco** lampeggia di rosso. Se l'immagine non arriva si vede un segnaposto con nome e
+3. **La carta pescata** si gira: finché l'immagine non è caricata si vede il dorso con "Caricamento carta..."; poi ruota in 350 ms. È la carta **più grande che ci sta** (`sizeFocus()`: `--carta-pescata-spazio-sopra` sopra la riga vita/token, `--carta-pescata-margine-lati` ai lati, senza scala né crescita). Ha
+   l'etichetta NUOVA e un bagliore dorato; i token compaiono uno alla volta, ognuno su una copia sopra la pagina (`ui/componenti/token-volo.ts`); un **attacco** lampeggia di rosso. Se l'immagine non arriva si vede un segnaposto con nome e
    tipo e il tasto "Riprova immagine": il gioco può continuare.
 4. **Si risolve** con il pulsante: un attacco ("Effetto risolto") vola negli scarti, un potere o un minion ("Metti in gioco · Fine turno
    nemesi") restano in coda. In entrambi i casi il turno nemesi finisce e **la stessa azione** estrae la carta turno successiva

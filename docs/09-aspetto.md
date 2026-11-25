@@ -46,7 +46,7 @@ preferenza "riduci movimento" del telefono le durate scendono a zero o quasi.
 
 Le misure delle sette zone ([file 06](06-schermata-partita.md)) sono tutte in **un file**: `ui/schermate/partita-misure.css`. Sono variabili
 con un nome parlante e un commento (`--turno-barra-altezza: 8px; /* altezza della riga delle caselle */`), raggruppate per zona nello
-stesso ordine della mappa. Dove i due turni hanno misure diverse ci sono due variabili, `-giocatori` e `-nemesi`.
+stesso ordine della mappa. I due turni hanno le stesse misure: una variabile sola per cosa (le coppie `-giocatori` / `-nemesi` sono state unite).
 
 Il diagramma mostra chi legge quelle variabili.
 
@@ -66,14 +66,15 @@ Passo per passo:
 2. **Nel codice non ci sono numeri di misura propri.** `misura('--carte-grandi-margine-lato')` legge la variabile dalla pagina (quando serve,
    perché al caricamento del modulo il CSS non c'è ancora). Se la variabile manca, l'app si ferma con un errore chiaro.
 3. **Le carte grandi** hanno una larghezza calcolata (non fissa): `sharedCardWidth()` prende il minimo tra quanto starebbe per la larghezza
-   e per l'altezza (zona 5 meno la riga vita/token e il suo spazio). La zona 6 dei comandi c'è sempre, vuota nel turno nemesi, quindi non serve
+   e per l'altezza (zona 5 meno la riga vita/token e il suo spazio). La zona 6 dei comandi c'è sempre, vuota e invisibile (i comandi stanno sotto ogni carta, nel suo spazio), quindi non serve
    nessuna riserva: è **una sola regola per i due turni**, e una carta ha la stessa dimensione e posizione nel turno giocatori e nel turno nemesi.
    L'altezza che avanza si divide con i due pesi `--carte-grandi-avanzo-sopra` / `-sotto` (vedi [06](06-schermata-partita.md)). `sizeQueue()` e `sizeFocus()` la applicano alla coda e al carosello, e si rilanciano al ridimensionamento
    della finestra.
 4. **Tablet e desktop** (da 768px di larghezza): la partita sta in una colonna al centro, calcolata da `sizeColumn()` (la carta più due
    pezzi delle vicine, mai meno di una larghezza minima).
-5. Il valore `-giocatori` e `-nemesi` delle misure può **differire**: è una scelta nota (oggi sono uguali: spazio tra le carte grandi 18px e 18px,
-   altezza della fascia piccola 106px e 106px, margine 16px e 16px). Unirle o no lo decide chi usa l'app, provandole con le Regolazioni.
+5. Le misure dei due turni sono **le stesse**: spazio tra le carte grandi `--carte-grandi-spazio`, altezza e margine della fascia piccola
+   `--carte-piccole-altezza` e `--carte-piccole-margine`. Anche la riga vita/token ha le sue (`--carte-grandi-goccia-numero`, `--carte-grandi-numero`,
+   `--carte-piccole-goccia-numero`), e la carta da pescare/pescata la sua regola (`--carta-pescata-spazio-sopra`, `--carta-pescata-margine-lati`).
 6. **Ogni variabile è una misura vera** (l'altezza di una cosa o lo spazio tra due cose con un nome): la prova `misure` dello strumento di confronto
    la aumenta di 10px e controlla che lo spazio misurato cresca di 10px. Una variabile nuova ha il suo caso in `tools/confronto/dati/misure.mjs`.
 

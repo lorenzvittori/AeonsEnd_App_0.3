@@ -15,13 +15,13 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
 ## La schermata "partita" (turni, Pesca e "Crea mazzo": un solo `#app`, `data-schermata="partita"`)
 - 7 zone dall'alto, ognuna un blocco di `index.html` con `data-zona`: 1 `testata` (`#topbar`), 2 `turno` (`#fascia-turno`, barra dei
   turni), 3 `carte-piccole` (`#rail`, una sola fascia), 4 `vite` (`#vite`), 5 `carte-grandi` (`#queue` o `#focus`, uno alla volta),
-  6 `interattivi` (`#interattivi`, comandi della carta al centro, nel turno giocatori e in "Crea mazzo": `variantePartita()` dà `interattivi: true`;
-  nel turno nemesi e al passo Pesca la zona c'è, vuota e invisibile, classe `is-vuota` di `mostraTurno`), 7 `principale` (`#dock`, `#pulsante-principale`).
+  6 `interattivi` (`#interattivi`, spazio riservato sotto le carte grandi, alto `--interattivi-altezza`, sempre vuoto e invisibile; i comandi della carta stanno
+  dentro ogni carta grande del turno giocatori, `.queue-slot > .queue-controls`, e si vedono solo per quella al centro), 7 `principale` (`#dock`, `#pulsante-principale`).
 - Disposizione: `partita.css` (`grid-template-areas`, una riga per zona; le zone 2-6 stanno in `.ae-main`). Misure: `partita-misure.css`
-  (nome parlante e commento; `-giocatori` / `-nemesi` dove i turni differiscono; **ogni variabile è una misura vera**: l'altezza di una cosa o lo
+  (nome parlante e commento; i due turni hanno le stesse misure, una variabile sola; **ogni variabile è una misura vera**: l'altezza di una cosa o lo
   spazio tra due cose, con il disegno della zona in cima; la prova `misure` di `tools/confronto` lo controlla); il codice le legge con `misura()`.
   Zona 5 dal basso: carta, `--carte-grandi-riga-stato-distanza`, riga vita/token; l'avanzo si divide con i pesi `--carte-grandi-avanzo-sopra` / `-sotto`.
-- `data-turno` = `giocatori` | `nemesi` | `pesca` | `crea-mazzo`, deciso da `variantePartita` (`ui/partita-variante.ts`): presenza della zona 6,
+- `data-turno` = `giocatori` | `nemesi` | `pesca` | `crea-mazzo`, deciso da `variantePartita` (`ui/partita-variante.ts`):
   testo e azione (`data-azione`) del pulsante (`pesca-carta-turno`, `fine-turno`, `salva-modifiche`, `risolvi`, `pesca`, `torna`,
   `cursore`), contenuto della zona 5 (`coda`, `carosello`, `carta-coperta`), sfondo (nemesi e Pesca mostrano il lato destro).
 - **Crea mazzo** è un momento della stessa schermata (sfondo nero `is-deck-dark` fino al banner "Partita iniziata"): i 9 mazzi (Tier 1-3
@@ -29,12 +29,15 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
   (il mazzo si rifà). Il cursore (`buildDeckSlider`) pulsa finché non si tocca; `setDeckProgress` muove le carte seguendo il dito (prima il
   Tier 3); lasciando prima di `DECK_SLIDE_DONE` tutto torna indietro; da tastiera si completa subito. Poi banner e sfondo del turno.
 - **Turno giocatori:** fascia piccola con tutte le carte in gioco, carte grandi in orizzontale (tocco al centro = scheda, di lato = porta
-  al centro); zona 6 aggiornata da `markQueueRail` (`disegnaInterattivi`). *Fine turno · Pesca ordine turno* (`endPlayerTurn`) estrae il turno dopo: se
+  al centro); i comandi sotto la carta al centro li mostra `markQueueRail` (classe `is-centred`; durante uno scorrimento avviato dall'app l'evidenziazione resta sulla
+  carta scelta, col dito segue lo scorrimento). *Fine turno · Pesca ordine turno* (`endPlayerTurn`) estrae il turno dopo: se
   esce la nemesi, scossa e vibrazione e lo sfondo scorre a destra. Dopo "Crea mazzo" l'app attende "Pesca carta turno" (`drawFirstTurn`).
   A fine giro: "Fine turno · Mischia mazzo", animazione `playTurnShuffle`, poi "Pesca la prima carta turno".
 - **Turno nemesi:** carosello (`#focus`, scroll-snap nativo; `renderFocus` lo ricostruisce solo se cambia `focusStateSignature`,
   `scrollFocusTo`); carte risolte dalla più vecchia. Pulsante: potere "Vai avanti" / "Effetto risolto e scarta" all'ultimo token (un token si
-  spegne da solo, `.is-auto-token`), minion e attacco "Effetto risolto". **Passo Pesca**: dorso grande, pulsante dorato; la carta nuova ha il
+  spegne da solo, `.is-auto-token`: pulsa e diventa grigio su una copia sopra la pagina, `componenti/token-volo.ts`), minion e attacco "Effetto risolto". **Passo Pesca**: dorso
+  grande (la carta più grande che ci sta: `--carta-pescata-spazio-sopra`, `--carta-pescata-margine-lati`), pulsante dorato; **dal passo Pesca alla carta pescata messa in
+  gioco le carte piccole non si toccano** (`viewCard`, classe `is-bloccata`); la carta nuova ha il
   bagliore dorato (un attacco lampeggia di rosso e va negli scarti, le altre "Metti in gioco · Fine turno nemesi"). Alla prima carta di Tier
   2 e 3 il banner. Il mazzo non si rimescola. Dal turno nemesi `passaAlTurnoGiocatori`. Dopo ogni azione che può chiudere il turno nemesi (pulsante
   principale, minion a 0 dalla scheda) lo schermo fa lo stesso passaggio: `mostraDopoAzione` (`turno-nemesi.ts`), chiesta dalla scheda
