@@ -153,7 +153,8 @@ export function turnCardName(kind: CartaTurno, i: number | undefined, order: Pic
 
 // Bozza della finestra: copia di mazzo (left, left[0] = cima), carte note (known, parallelo a left), scarti (drawn),
 // giocatori delle carte 1/2 e 3/4 (picks), memoria delle coppie (pairNext), storia dei turni del giro (history) e
-// attesa (waiting). Niente act() finché non si salva.
+// attesa (waiting). Ogni modifica vale subito (applicaBozzaTurni scrive nella partita e salva, senza passo di undo); un solo
+// passo di undo si aggiunge alla chiusura della finestra (aggiungiPassoUndo).
 export function turnDraftFrom(order: MazzoTurni | BozzaTurni): BozzaTurni {
   return Turni.turnDraftFrom(order);
 }

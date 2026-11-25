@@ -15,7 +15,7 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
 ## La schermata "partita" (turni, Pesca e "Crea mazzo": un solo `#app`, `data-schermata="partita"`)
 - 7 zone dall'alto, ognuna un blocco di `index.html` con `data-zona`: 1 `testata` (`#topbar`), 2 `turno` (`#fascia-turno`, barra dei
   turni), 3 `carte-piccole` (`#rail`, una sola fascia), 4 `vite` (`#vite`), 5 `carte-grandi` (`#queue` o `#focus`, uno alla volta),
-  6 `interattivi` (`#interattivi`, comandi della carta al centro, solo turno giocatori), 7 `principale` (`#dock`, `#pulsante-principale`).
+  6 `interattivi` (`#interattivi`, comandi della carta al centro, nel turno giocatori e in "Crea mazzo": `variantePartita()` dà `interattivi: true`), 7 `principale` (`#dock`, `#pulsante-principale`).
 - Disposizione: `partita.css` (`grid-template-areas`, una riga per zona; le zone 2-6 stanno in `.ae-main`). Misure: `partita-misure.css`
   (nome parlante e commento; `-giocatori` / `-nemesi` dove i turni differiscono); il codice le legge con `misura()`.
 - `data-turno` = `giocatori` | `nemesi` | `pesca` | `crea-mazzo`, deciso da `variantePartita` (`ui/partita-variante.ts`): presenza della zona 6,

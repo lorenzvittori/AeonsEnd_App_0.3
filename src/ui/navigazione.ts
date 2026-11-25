@@ -70,7 +70,7 @@ function mostraInizio(aperta: boolean): void {
 
 // Il momento della schermata "partita" (data-turno su #app: le varianti di sfondo e zone stanno in partita.css) e i
 // blocchi che cambiano con lui: nella zona 5 la coda (#queue, turno giocatori) o il carosello (#focus, turno nemesi e
-// Pesca), la zona 6 solo nel turno giocatori
+// Pesca), la zona 6 nel turno giocatori e in "Crea mazzo"
 function mostraTurno(v: VariantePartita): void {
   app.dataset.turno = v.momento;
   queueViewport.hidden = v.carteGrandi !== 'coda';

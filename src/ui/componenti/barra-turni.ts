@@ -84,7 +84,7 @@ export function renderTurnTrack(): void {
   if (ui.deckBuilding) return;
   // Barra dei TURNI del giro, non delle carte: prima la storia (turni giocati e turno in corso, history), poi le carte
   // del mazzo dei turni (turni futuri, dalla cima). Una carta rimessa nel mazzo resta come turno passato e compare anche
-  // come turno futuro, quindi le caselle possono essere più di 6 (si stringono: eventi.css --ae-seg-n)
+  // come turno futuro, quindi le caselle possono essere più di 6 (si stringono: barra-turni.css --ae-seg-n)
   const history = partita.turnOrder.history || [];
   const left = partita.turnOrder.left || [];
   const total = Math.max(1, history.length + left.length);
@@ -125,7 +125,7 @@ export function renderTurnTrack(): void {
     const owner = kind === 'wild' ? info.player : null;
     if (owner) seg.dataset.owner = owner;
     else delete seg.dataset.owner;
-    // Carta 1/2 o 3/4: sfumatura dai due colori (eventi.css ::after), che svanisce quando si sceglie il giocatore
+    // Carta 1/2 o 3/4: sfumatura dai due colori (barra-turni.css ::after), che svanisce quando si sceglie il giocatore
     if (kind && isPairCard(kind)) seg.dataset.pair = kind;
     else delete seg.dataset.pair;
     seg.classList.toggle('is-current', !!info.current);
@@ -196,7 +196,7 @@ export function renderTurnTrack(): void {
   }
   // Sempre centrata sotto la sua casella, anche alle due estremità
   turnTrackLabel.classList.remove('is-start', 'is-end');
-  // Centro della casella accesa (eventi.css .ae-turn-seg.is-current): accesa = 122px
+  // Centro della casella accesa (barra-turni.css .ae-turn-seg.is-current): accesa = 122px
   turnTrackLabel.style.left = cur >= 0 ? `calc(${cur} * (${narrow} + 6px) + 61px)` : '0%';
   turnTrack.setAttribute('aria-label', [trackName(drawStep), cur >= 0 ? T.trackPosition(cur + 1, total) : '', T.turnDeckHint]
     .filter(Boolean).join(', '));

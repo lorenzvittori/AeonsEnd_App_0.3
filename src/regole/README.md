@@ -28,7 +28,10 @@ l'ora come `now()`, gli uid come `newUid()`) e restituiscono il risultato, oppur
 - **Risoluzione** (`resolveCurrent`): potere con più di 1 token: −1 token e avanti; minion: resta e avanti; attacco o
   potere all'ultimo token: negli scarti. **Pesca** (`drawNewCard`): solo con "Pesca"; il mazzo non si rimescola (vuoto = niente
   pesca); un attacco pescato va negli scarti, le altre carte si mettono in gioco. **Inizio turno nemesi** (`nemesisTurn`):
-  `turnHp` = vita attuale, le bozze si perdono, le carte grigie (`isGone`) vanno negli scarti. **Vittoria** (`isVictory`):
+  `turn` sale di uno e parte la risoluzione (`startResolution`). **Fine del turno di un giocatore** (`endPlayerTurnCards`):
+  `turnHp` = vita attuale e le carte grigie (`isGone`) vanno negli scarti; le bozze non salvate non arrivano qui (con bozze il
+  pulsante è "Salva modifiche"; `ui.drafts` è dell'interfaccia). **Fine del turno nemesi**: da `resolveCurrent`, `drawNewCard` e
+  `removeWhileResolving` (`endResolution`); poi `stato/partita.ts` estrae la carta turno dopo (`afterNemesisTurn`). **Vittoria** (`isVictory`):
   `turn > 0`, mazzo vuoto, nessun potere né minion in coda.
 - **Minion a vita variabile** (`hpVariable`): entra senza vita (`hp` 0, `hpSet` false), mostra "?" finché i giocatori non la
   impostano; quella vita diventa `hpMax` (tetto del +1, con la vita di inizio turno nel turno giocatori); la prima impostazione

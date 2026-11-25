@@ -25,7 +25,7 @@ export function spazioVicine(turno: TurnoCarte): number {
   return 2 * (misura('--carte-grandi-vicine-visibili') + misura(`--carte-grandi-spazio-${turno}`));
 }
 
-// Spazio della zona 6 (comandi della carta al centro, solo nel turno giocatori): distanza dalle carte grandi + altezza
+// Spazio della zona 6 (comandi della carta al centro, nel turno giocatori e in "Crea mazzo"): distanza dalle carte grandi + altezza
 export function spazioInterattivi(): number {
   return misura('--interattivi-distanza') + misura('--interattivi-altezza');
 }

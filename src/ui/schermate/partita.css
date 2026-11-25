@@ -12,7 +12,7 @@
    3 carte-piccole  (#rail)           le carte in gioco in piccolo
    4 vite           (#vite)           Gravehold e nemesi
    5 carte-grandi   (#queue / #focus) coda (turno giocatori) o carosello (turno nemesi, Pesca)
-   6 interattivi    (#interattivi)    comandi della carta al centro (solo turno giocatori)
+   6 interattivi    (#interattivi)    comandi della carta al centro (turno giocatori e Crea mazzo)
    7 principale     (#dock)           il pulsante principale (o il cursore di "Crea mazzo")
    Le zone 2-6 stanno in .ae-main, che usa le righe della schermata (sottogriglia). */
 .ae-shell[data-schermata="partita"] {
