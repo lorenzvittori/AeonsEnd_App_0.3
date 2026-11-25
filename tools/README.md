@@ -13,6 +13,10 @@ Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dall
   `ui/navigazione.ts`; **ogni file `.ts` di una cartella di `src/` citato nel `README.md` di quella cartella**. Stampa file, file più grande
   e import tra moduli di `ui/`; `--conta` stampa `any`, eccezioni ai tipi, file `.js`, usi di `G` (attesi 0). Un file nuovo di `src/` va
   messo in `levelOf` (livello) e nel README della sua cartella.
+- `check-docs.mjs`: controllo di `docs/` (`npm run docs`, lanciato anche da `npm run check`, esce con 1 se trova problemi): ogni percorso di file
+  citato tra backtick esiste (si cerca dalla radice, poi in `src/` e `public/`; `dist/`, `node_modules/`, `.confronto/` non si cercano), ogni link tra
+  file funziona, ogni blocco `mermaid` si disegna (Playwright senza finestra e `mermaid` come dipendenza di sviluppo). Non sa se un diagramma dice il
+  vero: lo verifica chi scrive. Un file `.md` passato come argomento controlla solo quello.
 - `import-db.py`: il ponte DataBase → app (Python con openpyxl e Pillow). Genera `cards.json`, `products.json`, `Data/Nemesis/`,
   `thumbs/Nemesis/` e le immagini delle nemesi (`Assets/nemesis/`: carta, retro, ritaglio, `nemesis-art.json`): **questi file non si
   modificano a mano**. Fonti in sola lettura: `Data/NEMESIS_CARDS.xlsx`, `Data/DataBase_*.xlsx` (foglio MAIN), `BOXES_NAMES` di `pipeline.py`.

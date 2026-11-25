@@ -83,7 +83,7 @@ Da lanciare dalla cartella del repo (PowerShell).
 | `npm run dev` | prova l'app su <http://localhost:5173/AeonsEnd_App_0.2/>, si aggiorna a ogni modifica |
 | `npm run build` | costruisce il sito in `dist/` (file con l'hash nel nome, codice in `dist/app/`) |
 | `npm run preview` | serve il sito costruito, come sarà pubblicato: <http://localhost:4173/AeonsEnd_App_0.2/> |
-| `npm run check` | `tsc` su `src/` e `tests/`, `tools/check-moduli.mjs` (livelli, cicli, `any`, testi, README...), Stylelint dei colori (`npm run colori`) |
+| `npm run check` | `tsc` su `src/` e `tests/`, `tools/check-moduli.mjs` (livelli, cicli, `any`, testi, README...), Stylelint dei colori (`npm run colori`), `tools/check-docs.mjs` (percorsi, link e diagrammi di `docs/`, `npm run docs`) |
 | `npm test` | i test con Vitest (`tests/`) |
 | `npm run confronta -- <tag o commit> [--solo prova,...]` | confronta la versione attuale con un tag o un commit nel browser senza finestra |
 | `node tools/check-moduli.mjs --conta` | quanti `any`, eccezioni ai tipi, file `.js`, usi di `G` (attesi 0) |
@@ -137,6 +137,7 @@ Ogni cartella di codice ha un `README.md`: a cosa serve, il livello, cosa può i
 | [`tests/`](tests/README.md) | i test (Vitest) |
 | [`tools/`](tools/README.md) | controllo dei moduli, ponte DataBase → app, icone, pubblicazione |
 | [`tools/confronto/`](tools/confronto/README.md) | lo strumento di confronto tra due versioni |
+| [`docs/`](docs/00-leggimi.md) | spiegazioni con diagrammi Mermaid, dal quadro generale al dettaglio (12 file, partenza `00-leggimi.md`) |
 | `public/` | file serviti così come sono: `Data/`, `thumbs/`, `Assets/`, JSON, `manifest.webmanifest`, `sw.js`, `scheletri/` |
 
 ## 7. Livelli in breve
@@ -157,6 +158,9 @@ import, nessun `any`, nessun file sopra 500 righe. Dettagli in [src/ui/README.md
   si dichiarano. Il confronto non prova animazioni, gesti a più dita, telefono vero, rete (elenco in `tools/confronto/README.md`).
 - **Documentazione:** cambia un comportamento visibile → si aggiorna il README della cartella; un file `.ts` nuovo va citato nel README
   della sua cartella (e messo in `levelOf` di `tools/check-moduli.mjs`). Nei commenti niente storia: solo il perché, al presente.
+- **Documentazione per capire (`docs/`):** chi cambia la struttura (file, flussi, zone, campi dello stato) aggiorna anche `docs/` (partenza:
+  [docs/00-leggimi.md](docs/00-leggimi.md)). `tools/check-docs.mjs`, lanciato da `npm run check`, controlla che i percorsi citati esistano, che
+  i link funzionino e che ogni diagramma Mermaid si disegni; che dicano il vero lo verifica chi scrive.
 - **Report finale** in italiano semplice e corto: cosa è cambiato, esito dei controlli e del confronto, cosa non è stato verificato.
 
 ## 9. Bug noti (annotati, non corretti)

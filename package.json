@@ -8,13 +8,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "colori": "stylelint \"src/**/*.css\"",
-    "check": "tsc --noEmit && tsc --noEmit -p tests && node tools/check-moduli.mjs && npm run colori",
+    "docs": "node tools/check-docs.mjs",
+    "check": "tsc --noEmit && tsc --noEmit -p tests && node tools/check-moduli.mjs && npm run colori && npm run docs",
     "test": "vitest run",
     "confronta": "node tools/confronto/confronta.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
     "acorn": "8.19.0",
+    "mermaid": "12.3.0",
     "playwright": "1.65.1",
     "stylelint": "18.1.0",
     "typescript": "7.0.2",
