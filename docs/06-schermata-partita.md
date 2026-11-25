@@ -131,6 +131,7 @@ stateDiagram-v2
     turnoNemesi --> mazzoTurni: tocco sulla barra dei turni
     mazzoTurni --> turnoGiocatori: X, Esc o Indietro
     mazzoTurni --> turnoNemesi: X, Esc o Indietro
+    creaMazzo --> menu: Esci dalla partita
     turnoGiocatori --> menu: Esci dalla partita
     turnoNemesi --> menu: Esci dalla partita
 ```
@@ -145,7 +146,10 @@ Passo per passo (i nomi in `camelCase` del diagramma corrispondono ai valori `'m
    schermata si ricava dalla partita.
 4. **`mazzoTurni`** è un foglio che scende sopra la partita; mentre è aperto, `schermataAttuale()` risponde `mazzo-turni`. Lo segna la
    schermata stessa con `impostaMazzoTurniAperto()`.
-5. **Esci dalla partita** (dal menu laterale) porta al menu iniziale; con la Modalità test in corso fa anche tornare le scelte di prima.
+5. **Esci dalla partita** (dal menu laterale, anche in "Crea mazzo") porta al menu iniziale; con la Modalità test in corso fa anche tornare le scelte di prima.
+   Da "Crea mazzo" (verificato giocando) il menu ha solo "Nuova partita", "Opzioni" e "Test": la partita appena iniziata non è salvata
+   (si salva dal primo turno nemesi), quindi non c'è "Riprendi partita" e la scelta del mazzo si perde; dietro il menu `ui.deckBuilding`
+   resta vero finché non parte una nuova partita.
 
 ## Il tasto Indietro
 

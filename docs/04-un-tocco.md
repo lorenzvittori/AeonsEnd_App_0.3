@@ -216,6 +216,9 @@ Passo per passo:
    le carte grigie (minion a 0, poteri pagati). **Tutte le bozze di un turno diventano un solo passo di Undo.**
 5. **Il salvataggio e il ridisegno.** `save()` scrive nel browser; poi `flyToDiscard()` fa volare le carte uscite verso la pila degli
    scarti e `richiediRidisegno()` ridisegna.
+   Un minion a 0 **non resta in coda** fino al turno nemesi: esce appena si preme "Salva modifiche". Nella bozza, prima di salvare, si
+   vede solo grigio (le parole "ucciso" sono nell'etichetta per i lettori di schermo). La nota visibile "Ucciso" di `cardControls()` c'è
+   solo se in coda resta un minion con vita già salvata a 0 (per esempio da un salvataggio vecchio): in una partita normale non succede.
 6. **L'Undo di una bozza.** Se invece si tocca il pulsante Annulla (`undo()` in `ui/componenti/ripristino.ts`) con bozze in sospeso, il
    primo tocco **scarta le bozze** e basta; solo il tocco successivo torna indietro di un'azione vera.
 
@@ -223,9 +226,9 @@ Passo per passo:
 
 | Zona | Dopo il primo tocco (bozza) | Dopo "Salva modifiche" |
 |---|---|---|
-| 3 carte piccole | etichetta "HP: −1" sulla carta | il numero nuovo di vita; la carta sparisce se è a 0 |
-| 5 carte grandi | stessa etichetta, box "x/X" | il box mostra solo la vita nuova |
-| 6 interattivi | i comandi si aggiornano (il +1 si accende) | i comandi della carta al centro (o la nota "Ucciso" se a 0, fino al prossimo turno nemesi) |
+| 3 carte piccole | etichetta "HP: −1" sulla carta; a 0 la carta diventa grigia (per i lettori di schermo "ucciso") | il numero nuovo di vita; la carta a 0 è già negli scarti e sparisce |
+| 5 carte grandi | stessa etichetta, box "x/X"; a 0 la carta è grigia | il box mostra solo la vita nuova |
+| 6 interattivi | i comandi si aggiornano (il +1 si accende; a 0 −5 e −1 sono spenti) | i comandi della carta che ora è al centro |
 | 7 principale | "Salva modifiche" dorato e "Annulla modifiche" | "Fine turno · Pesca ordine turno" |
 | 1 testata, pile | invariate | gli scarti salgono se una carta è uscita |
 

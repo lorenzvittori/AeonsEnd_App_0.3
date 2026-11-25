@@ -133,7 +133,9 @@ Passo per passo (i nomi in `CamelCase` sono i momenti; nel codice la schermata a
 3. **Risoluzione** e **PassoPesca** sono i due pezzi del turno nemesi (nel codice, entrambi con `resolving` vero; il passo Pesca è
    quello in cui `isDrawStep()` è vero).
 4. Dal turno nemesi si torna ai giocatori (o si riparte con la nemesi, o si va a fine giro) **sempre** passando per
-   `afterNemesisTurn()` in `stato/partita.ts`, che estrae la carta turno successiva.
+   `afterNemesisTurn()` in `stato/partita.ts`, che estrae la carta turno successiva (risolvere, pescare a mazzo vuoto, portare a 0 la vita
+   dell'ultimo minion dalla scheda: [file 07](07-turno-nemesi.md)). L'unica eccezione è il turno nemesi che finisce subito perché coda e
+   mazzo sono vuoti: lì è Vittoria.
 5. **Vittoria a mazzo vuoto:** quando si è nel turno giocatori, `isVictory()` (in `regole/turno-nemesi.ts`) è vero con
    `turn > 0`, mazzo vuoto e nessun potere né minion in coda. La finestra "Vittoria" la apre `checkVictory()` in `ui/navigazione.ts` una
    sola volta per ogni stato; se tocchi fuori dalla finestra torni alla partita, e con Undo puoi tornare indietro.

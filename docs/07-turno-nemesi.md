@@ -13,7 +13,9 @@ Il turno nemesi comincia quando dal mazzo dei turni esce la carta **nemesi**. Ne
 3. `resolving` diventa vero, e la carta da risolvere (`currentIndex`) è la **prima della coda**, cioè la più vecchia.
 
 Se la coda è vuota e il mazzo ha ancora carte, si va **subito al passo Pesca**. Se la coda è vuota e il mazzo è vuoto, il turno nemesi
-finisce subito. A schermo (`enterNemesisTurnView()` in `ui/schermate/turno-nemesi.ts`): una breve **scossa** dello schermo e vibrazione
+finisce subito: `startResolution()` chiama `endResolution()` dentro `nemesisTurn()` e **nessuna carta turno viene estratta** (la barra
+resta sulla nemesi). È sempre una Vittoria a mazzo vuoto (`isVictory()`: nessun potere né minion in coda): si apre la finestra
+"Vittoria" (verificato giocando). A schermo (`enterNemesisTurnView()` in `ui/schermate/turno-nemesi.ts`): una breve **scossa** dello schermo e vibrazione
 (urgenza!), lo sfondo scorre verso il lato della nemesi e le carte grandi partono da quella che si stava guardando fino alla prima da
 risolvere.
 
@@ -89,8 +91,10 @@ Passo per passo:
 1. **Appena pescata?** Dopo la Pesca la carta nuova è l'unica da "chiudere". Un **attacco** va negli scarti (`discard`); un potere o un
    minion restano in gioco (`play`). In entrambi i casi la risoluzione finisce: il turno nemesi è concluso.
 2. **Potere con più di un token.** Perde un token (`tokens - 1`) e la carta da risolvere diventa la successiva. Il pulsante dice "Vai avanti".
-   Un dettaglio visivo: sul potere da risolvere **un token lampeggia e diventa grigio da solo** (`.is-auto-token`); è solo l'indicazione
-   del token che il tocco toglierà.
+   Un dettaglio visivo: sul potere da risolvere **un token lampeggia e diventa grigio da solo** (`.is-auto-token`, anche all'ultimo
+   token). È **solo visivo**: l'animazione (`ae-token-spend`) la dà il CSS all'ultimo token della riga, e finché non si tocca il pulsante
+   `tokens` nella partita non cambia (verificato giocando: 2 token a schermo e nello stato, con l'animazione già attiva). Chi toglie il
+   token è il tocco sul pulsante: `resolveCurrent()` fa `tokens - 1` dentro l'azione `risolviCarta()`, e il ridisegno mostra un token in meno.
 3. **Potere all'ultimo token.** Va negli scarti, e viene contato nelle statistiche come "potere risolto". Il pulsante dice
    "Effetto risolto e scarta".
 4. **Minion.** Resta in gioco e si passa alla successiva ("Effetto risolto"). Il minion non viene toccato dalla risoluzione: la sua vita
@@ -127,6 +131,10 @@ Passo per passo:
 
 Per un minion normale, nel turno nemesi la scheda ha solo −1 e +1 (nel turno giocatori −5, −1 e +1). A 0 il minion esce subito:
 `removeWhileResolving()` lo conta come ucciso e lo manda negli scarti, e gli indici (`currentIndex`, `newIndex`) seguono la coda.
+Se era l'ultima carta del turno (la carta appena pescata, oppure l'ultima della coda senza niente da pescare) il turno nemesi finisce
+**come alla fine normale**: la stessa azione (`cambiaVitaMinion()`) chiama `afterNemesisTurn()` ed estrae la carta turno, e lo
+schermo fa lo stesso passaggio di `onResolveClick()` (aggancio `dopoAzioneNemesi`, che chiama `mostraDopoAzione()` in
+`ui/schermate/turno-nemesi.ts`: animazione, sfondo, pulsante).
 
 ## Il passo Pesca
 
@@ -157,6 +165,22 @@ Passo per passo:
    (`afterNemesisTurn()`): se è di nuovo la nemesi il turno riparte con una scossa.
 5. **Mazzo vuoto.** Se il mazzo non ha carte non si pesca: `drawNewCard()` restituisce niente, il turno finisce e si estrae la carta
    turno successiva. **Il mazzo nemesi non si rimescola mai.**
+
+## Come finisce il turno nemesi
+
+Il turno nemesi finisce quando `resolving` torna falso. Le strade sono quattro; le prime tre sono dentro un'azione e la stessa azione
+chiama `afterNemesisTurn()` (`stato/partita.ts`), che estrae la carta turno successiva (`nextTurnCard()`) e, se è di nuovo la nemesi,
+fa ripartire il turno con `nemesisTurn()`:
+
+| Strada | Quando | Azione | Estrae la carta turno |
+|---|---|---|---|
+| risolvere | ultima carta risolta senza niente da pescare, o la carta appena pescata | `risolviCarta()` (`resolveCurrent()`) | sì |
+| pescare | mazzo vuoto al passo Pesca (`drawNewCard()` restituisce niente) | `pescaCarta()` | sì |
+| minion a 0 dalla scheda | il minion era la carta appena pescata, o l'ultima senza niente da pescare (`removeWhileResolving()`) | `cambiaVitaMinion()` | sì |
+| inizio con coda e mazzo vuoti | `startResolution()` chiude subito il turno | `fineTurnoGiocatore()` o `pescaCartaTurno()` (`nemesisTurn()`) | no: è una Vittoria |
+
+Anche lo schermo fa lo stesso passaggio per le prime tre strade (`mostraDopoAzione()`): ritorno al turno giocatori con l'animazione, lo
+sfondo e il pulsante, oppure scossa e annuncio se la nemesi riparte.
 
 ## Il cambio di Tier
 

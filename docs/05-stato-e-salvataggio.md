@@ -307,6 +307,10 @@ Per non perdere le partite vecchie, `tipi/salvataggio.ts` distingue due forme:
 | il mazzo dei turni (`turnOrder`) | un giro nuovo con il turno in corso già pescato (`restoreTurnOrder()` in `regole/mazzo-turni.ts`) |
 | `history`, `known`, `pairNext` del mazzo dei turni | ricostruiti dagli scarti e dalle scelte |
 
+Al **passo Pesca con carte in coda** (turno nemesi, tutte le carte risolte, `currentIndex` uguale alla lunghezza della coda, mazzo non
+vuoto) `restoreGame()` lascia `currentIndex` com'è e dà la vista `'draw'`: Undo e ripresa tornano a pescare. A mazzo vuoto (un salvataggio
+vecchio in cui il passo Pesca non c'è) `currentIndex` si limita all'ultima carta, come prima.
+
 Il campo `version` serve a una decisione diversa: un salvataggio di **un'altra versione** del formato (per esempio quelli con gli id
 delle carte di prima del DataBase) non si prova nemmeno a leggere: si cancella. Si cambia `SAVE_VERSION` solo se i vecchi non si
 possono più leggere. Una prova con un salvataggio vero di una versione vecchia sta in `tests/dati/salvataggio-main-v228.json`

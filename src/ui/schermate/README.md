@@ -33,7 +33,9 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
   `scrollFocusTo`); carte risolte dalla più vecchia. Pulsante: potere "Vai avanti" / "Effetto risolto e scarta" all'ultimo token (un token si
   spegne da solo, `.is-auto-token`), minion e attacco "Effetto risolto". **Passo Pesca**: dorso grande, pulsante dorato; la carta nuova ha il
   bagliore dorato (un attacco lampeggia di rosso e va negli scarti, le altre "Metti in gioco · Fine turno nemesi"). Alla prima carta di Tier
-  2 e 3 il banner. Il mazzo non si rimescola. Dal turno nemesi `passaAlTurnoGiocatori`.
+  2 e 3 il banner. Il mazzo non si rimescola. Dal turno nemesi `passaAlTurnoGiocatori`. Dopo ogni azione che può chiudere il turno nemesi (pulsante
+  principale, minion a 0 dalla scheda) lo schermo fa lo stesso passaggio: `mostraDopoAzione` (`turno-nemesi.ts`), chiesta dalla scheda
+  con l'aggancio `dopoAzioneNemesi`; la carta turno la estrae sempre l'azione dello stato (`afterNemesisTurn`).
 - **Menu e Nuova partita:** menu con partita in corso (Riprendi), collezione vuota = "Inserisci collezione" e Nuova partita oscurata. Nuova
   partita: giocatori 2-4; opzioni del mazzo (*Modalità battaglia*, *Unisci le carte della collezione*, preferenze del browser
   `aeonsend-app-0.2-deck-options`, copiate in `settings`); wave multiple a cifre romane; nemesi con dado, freccia che apre la carta (il retro
