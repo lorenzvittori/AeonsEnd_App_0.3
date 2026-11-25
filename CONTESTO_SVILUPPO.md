@@ -26,41 +26,42 @@ framework, nessun dato personale: tutto resta nel browser (`localStorage`).
 | Sito | <https://lorenzvittori.github.io/AeonsEnd_App_0.2/> |
 | Versione vecchia (v1, non toccare se non richiesto) | `...\GiuHub Local Repository\AeonsEnd_APP` – GitHub `lorenzvittori/AeonsEnd_APP` – il sito vecchio ha anche il prototipo in `new_design_0.2/` |
 
-Il proprietario scrive in **italiano**: si risponde in italiano. Il branch di lavoro è `ts`; `main` è il sito pubblicato (senza build)
-finché `ts` non viene unito.
+Il proprietario scrive in **italiano**: si risponde in italiano. Si lavora sul branch `sviluppo`; `main` è il sito pubblicato (a ogni push GitHub Actions costruisce il sito con Vite e lo pubblica) e riceve il
+lavoro solo quando l'utente scrive "pubblica" (sezione 3). Il branch `ts` resta com'è, per riferimento; la v273 senza build (la vecchia `main`) è conservata nel branch e nel tag `main-v273`.
 
 ## 3. Regole di lavoro (concordate con l'utente)
 
 - **Accesso ai file:** solo dentro le cartelle dei due repository e nei file che l'utente allega. Non si legge né si
   scrive altrove sul PC; se serve, prima si chiede.
-- **Passaggio a Vite + TypeScript (branch `ts`, dalla fase A).** Sul branch `ts` l'app si costruisce con Vite: le regole
-  qui sotto su `version.json` e sul caricatore valgono solo per `main` finché `ts` non viene fuso. Su `ts`:
+- **Vite + TypeScript.** L'app si costruisce con Vite:
   - **`npm run dev`** per provare (http://localhost:5173/AeonsEnd_App_0.2/, si aggiorna da solo a ogni modifica);
     `npm run build` + `npm run preview` per provare il sito costruito come sarà pubblicato (porta 4173);
-  - **prima di ogni commit `npm run check` e `npm test`**, entrambi senza errori;
+  - **prima di ogni commit `npm run check`, `npm test` e `npm run build`**, tutti senza errori;
   - **niente `version.json`** e niente `?v=N`: Vite dà ai file costruiti un nome con l'hash (vedi sezione 8);
   - il codice è in `src/` (moduli ES: ogni file importa quello che usa, niente variabili globali tranne
     `window.app` per il debug), i file serviti così come sono in `public/` (sezione 9).
-  - **TypeScript (dalla fase C):** tutto `src/` e `tests/` è `.ts`, `strict`. Niente `any` (né scritto né implicito);
+  - **TypeScript:** tutto `src/` e `tests/` è `.ts`, `strict`. Niente `any` (né scritto né implicito);
     dove il tipo esatto costa troppo si usa `unknown` con un controllo. `// @ts-ignore` è vietato; un
     `// @ts-expect-error` deve avere il motivo sulla stessa riga (lo controlla `npm run check`). I tipi dei dati e dello
     stato sono in `src/tipi/` (sezione 6): quando un dato cambia si cambia prima il tipo e si segue il compilatore.
   - **Intestazione di ogni file di `src/`:** prima riga `// <percorso>: cosa contiene`, poi `Dipende da:` (o
     `Non dipende da niente`) e `Usato da:` (lo controlla un test). Nei commenti niente storia delle versioni: solo il
     perché, al presente.
-- **Commit e push:** dopo ogni richiesta si fa commit e push su `main` (sul branch `ts`: su `ts`).
+- **Branch di lavoro e pubblicazione.** Gli operatori lavorano e fanno push **solo sul branch `sviluppo`**. `main` è il sito
+  pubblicato (a ogni push su `main` GitHub Actions costruisce e pubblica) e riceve il lavoro **solo quando l'utente scrive
+  "pubblica"**, con `git push origin sviluppo:main`, **solo fast-forward** (se GitHub rifiuta ci si ferma e si chiede; mai
+  `--force`). Prima di "pubblica": `check`, `test` e `build` verdi. Il branch `ts` resta com'è, per riferimento; `main-v273` è la
+  versione senza build (sezione 4b).
+- **Commit e push:** dopo ogni richiesta si fa commit e push su `sviluppo`.
   - Gli autori dei commit sono `Claude` e `noreply@anthropic.com`, passati con i flag del singolo comando. Non vanno mai
     scritti nella config, e il nome dell'utente non va mai usato:
     ```
     git -c user.name=Claude -c user.email=noreply@anthropic.com commit -m "..."
     ```
   - Nei commit si aggiungono solo i file toccati, con percorsi espliciti: niente `git add -A` sui file dell'utente.
-- **`version.json`:** va aumentato (`{ "v": N }`) a **ogni** modifica di CSS o JS. È la cache-busting di tutti i file.
-- **Pubblicazione:**
-  - non si fa push mentre una pubblicazione di Pages è ancora in corso;
-  - dopo il push si fa **un solo** controllo ritardato (un'attesa in background di ~100 s, poi la lettura di
-    `https://lorenzvittori.github.io/AeonsEnd_App_0.2/version.json`).
-  - L'API `api.github.com` a volte non risponde: in quel caso basta il `version.json` del sito.
+- **Dopo "pubblica":** non si fa push su `main` mentre una pubblicazione è ancora in corso; dopo il push si fa **un solo**
+  controllo ritardato (attesa di qualche minuto, poi si legge `https://lorenzvittori.github.io/AeonsEnd_App_0.2/`: l'`index.html`
+  deve caricare i file `app/index-<hash>`). L'API `api.github.com` a volte non risponde: basta il sito.
 - **Verifiche:** **niente screenshot** per verificare (costano troppi token). Si verifica con JS e testo: misure con
   `getBoundingClientRect`, classi, stato.
 - **Fare solo ciò che è chiesto.** Se una richiesta è ambigua si chiede: l'utente non ama le interpretazioni
@@ -91,6 +92,24 @@ Da lanciare dalla cartella del repo (PowerShell).
 
 `check`, `test` e `build` devono essere verdi prima di ogni commit. Dettagli: [tools/README.md](tools/README.md),
 [tools/confronto/README.md](tools/confronto/README.md), [tests/README.md](tests/README.md).
+
+## 4b. Tornare alla v273 in emergenza
+
+La v273 (il sito senza build, com'era prima dell'unione) è conservata nel branch `main-v273` e nel tag `main-v273` (commit `d3b65b1`). Per
+rimetterla online bisogna riscrivere `main`: serve un **push forzato**, e si fa **SOLO con il sì esplicito dell'utente** (mai di propria iniziativa).
+Esistono un branch e un tag con lo stesso nome: nei comandi si usa sempre il nome completo `refs/tags/main-v273`. I comandi, da lanciare dalla cartella del repo (la cartella `AeonsEnd_App_0.2-main` ha `main-v273` in uso, non `main`):
+
+```powershell
+git fetch origin
+git tag -a main-prima-ripristino origin/main -m "main prima del ripristino della v273"
+git push origin refs/tags/main-prima-ripristino
+git push --force-with-lease=refs/heads/main:<hash di origin/main appena letto> origin refs/tags/main-v273^{}:refs/heads/main
+```
+
+Il tag `main-prima-ripristino` conserva la `main` che si sta sostituendo. Dopo il push il workflow della v273 (anche lui in
+`.github/workflows/pages.yml`, Source = "GitHub Actions" invariata) ripubblica il sito senza build. Poi `git fetch origin` e
+`git branch -f main origin/main`. Per tornare alla versione con la build si riporta il commit salvato nel tag
+`main-prima-ripristino` con un nuovo commit (`git checkout main-prima-ripristino -- .` e commit), senza altri push forzati.
 
 ## 5. Terminologia (usata con l'utente)
 
@@ -153,7 +172,7 @@ import, nessun `any`, nessun file sopra 500 righe. Dettagli in [src/ui/README.md
 - **Prima di ogni fase o modifica grande:** `git status` pulito (a parte `ToDo.md`), tag `ts-prima-<fase>` e push del tag, così si può tornare indietro.
 - **`ToDo.md` è dell'utente:** non si tocca e non entra nei commit. Nei commit solo i file toccati, con percorsi espliciti.
 - **Per ogni passo:** `npm run check`, `npm test`, `npm run build` verdi; poi commit con gli autori della sezione 3, `git show --stat HEAD` per
-  controllare che ci siano tutti i file (nuovi e spostati compresi), poi push su `ts`. `main` non si tocca.
+  controllare che ci siano tutti i file (nuovi e spostati compresi), poi push su `sviluppo`. `main` si aggiorna solo con "pubblica" (sezione 3).
 - **A fine lavoro:** `npm run confronta -- <tag della fase>`: deve dare TUTTO IDENTICO, salvo le differenze volute (un testo, un valore), che
   si dichiarano. Il confronto non prova animazioni, gesti a più dita, telefono vero, rete (elenco in `tools/confronto/README.md`).
 - **Documentazione:** cambia un comportamento visibile → si aggiorna il README della cartella; un file `.ts` nuovo va citato nel README
@@ -177,8 +196,8 @@ import, nessun `any`, nessun file sopra 500 righe. Dettagli in [src/ui/README.md
 
 ## 10. Idee e cose aperte
 
-- **Unire `ts` a `main`:** la pubblicazione (`.github/workflows/pages.yml`) si attiva solo allora; l'`index.html` del sito senza build è coperto
-  da `public/script.js`. Dopo l'unione i commenti del workflow che parlano del branch `ts` vanno aggiornati.
+- **Difese per l'`index.html` vecchio ancora in cache** (pagina della v273): `public/script.js` (ricarica la pagina) e
+  `tools/pubblicazione-precedente.mjs` (tiene in `dist/app/` i file delle ultime pubblicazioni). Si possono togliere quando non servono più.
 - Un solo modo di creare il DOM (tutto in `index.html` o tutto da JS), senza le difese per l'`index.html` vecchio ancora in cache.
 - Doppioni da unire: i due editor della vita del minion (comandi sotto la carta e finestra), le animazioni di volo (`flyToDiscard`, `animateDrawIn`).
 - Le immagini delle altre nemesi (wave diverse da The New Age e dalla 1) mancano: l'utente le fornisce come scansioni della carta nemesi, fronte e
@@ -191,6 +210,7 @@ import, nessun `any`, nessun file sopra 500 righe. Dettagli in [src/ui/README.md
 ## 11. Punti di ripristino (tag git)
 
 Per tornare a un tag si ripubblica quello stato con un nuovo commit, senza riscrivere la storia. Elenco (`git tag -l`):
+- Unione di `ts` in `main`: `main-v273` (branch e tag: la v273 senza build, com'era `main`), `ts-prima-unione` (`ts` un attimo prima).
 - Branch `ts`: `ts-prima-fase-B`, `ts-prima-fase-C`, `ts-prima-fase-D`, `ts-prima-porting-273`, `ts-prima-fase-E`, `ts-prima-fase-E2`,
   `ts-prima-fase-G`, `ts-prima-fase-H`, `ts-prima-confronto`, `ts-prima-inglese`, `ts-prima-fase-F`.
 - Prima del passaggio a Vite: `v268-prima-ts`, `v268-prima-mazzo-turni-fix`, `v266-prima-riga-equispaziata`, `v253-prima-vite`,

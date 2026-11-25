@@ -75,7 +75,7 @@ Un dettaglio: il sito vive sotto l'indirizzo `/AeonsEnd_App_0.2/` e non alla rad
 
 ## La pubblicazione, con più attenzione
 
-Il robot (`.github/workflows/pages.yml`) parte **solo con un push su `main`**; sul branch di lavoro `ts` il file c'è ma non scatta.
+Il robot (`.github/workflows/pages.yml`) parte **solo con un push su `main`**, il sito pubblicato; il lavoro si fa su `sviluppo`, che non lo fa scattare (come `ts` e `main-v273`). `main` riceve `sviluppo` solo quando l'utente scrive "pubblica": `git push origin sviluppo:main`, solo fast-forward.
 I suoi passi, in ordine, sono: installare i pacchetti (`npm ci`), `npm run check`, `npm test`, `npm run build`, poi
 `tools/pubblicazione-precedente.mjs` e infine la pubblicazione di `dist/`. Se un controllo fallisce, il sito non cambia.
 

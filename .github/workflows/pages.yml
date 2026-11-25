@@ -1,6 +1,7 @@
 # Pubblica il sito su GitHub Pages a ogni push su main (o a mano da Actions → "Pubblica il sito" → Run workflow, solo
-# su main). Dal passaggio a Vite (branch ts, fase A) il sito si COSTRUISCE: npm ci, controlli, test, npm run build, e si
-# pubblica dist/. Sul branch ts questo file c'è già ma non parte: si attiva quando ts viene fuso in main.
+# su main). Il sito si COSTRUISCE con Vite: npm ci, controlli, test, npm run build, e si pubblica dist/. Si lavora sul branch
+# sviluppo, che non pubblica; main riceve sviluppo solo quando l'utente scrive "pubblica" (git push origin sviluppo:main).
+# I branch ts e main-v273 (la v273 senza build) restano per riferimento.
 #
 # Cache di index.html: GitHub Pages lo tiene in cache circa 10 minuti, e i file di Vite hanno un hash nel nome che cambia
 # a ogni pubblicazione. Per non rompere un index.html vecchio, prima di pubblicare si portano in dist/app/ anche i

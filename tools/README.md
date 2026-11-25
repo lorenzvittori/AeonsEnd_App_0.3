@@ -31,7 +31,7 @@ Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dall
 ## Pubblicazione
 - `.github/workflows/pages.yml` parte solo con push su `main` (anche lanciato a mano pubblica solo `main`; Pages → Source = "GitHub Actions"). Passi:
   `npm ci`, `npm run check`, `npm test`, `npm run build`, `pubblicazione-precedente.mjs`, poi pubblica `dist/`. Ogni tentativo di deploy ha 3 minuti
-  e ce ne sono fino a 3 (GitHub ogni tanto si blocca fino al limite di 10 minuti). Sul branch `ts` il file c'è ma non parte: si attiva alla fusione in `main`.
+  e ce ne sono fino a 3 (GitHub ogni tanto si blocca fino al limite di 10 minuti). Parte solo da `main`; si lavora su `sviluppo` (e `ts`, `main-v273` restano per riferimento): non pubblicano.
 - **Cache di `index.html`:** GitHub Pages lo tiene circa 10 minuti, e i file costruiti (`dist/app/index-<hash>.js` e `.css`) cambiano nome a ogni
   pubblicazione: per questo `pubblicazione-precedente.mjs` conserva i file delle pubblicazioni di prima. Un `index.html` del sito senza build
   (fino alla v268) carica `public/script.js`, che ricarica la pagina una volta. La cartella del codice costruito si chiama `app/` e non `assets/`:

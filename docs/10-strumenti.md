@@ -141,7 +141,7 @@ Passo per passo:
 5. **Commit.** Gli autori sono `Claude` e `noreply@anthropic.com`, passati con i flag del singolo comando (mai scritti nella configurazione).
    Si aggiungono solo i file toccati, con i percorsi scritti per esteso, mai `git add -A`.
 6. **Verifica.** `git show --stat HEAD` elenca i file del commit: serve a notare un file nuovo dimenticato.
-7. **Push** sul branch `ts`. `main` è il sito pubblicato e non si tocca finché `ts` non viene unito.
+7. **Push** sul branch `sviluppo`. `main` è il sito pubblicato e si aggiorna solo quando l'utente scrive "pubblica", con `git push origin sviluppo:main` (solo fast-forward); se un controllo del workflow fallisce, il sito non cambia.
 8. **Confronto** a fine fase: deve dire "TUTTO IDENTICO", salvo le differenze volute dichiarate.
 9. **Report** in italiano semplice: cosa è cambiato, esito dei controlli e del confronto, cosa **non** è stato verificato (per esempio il telefono vero).
 
