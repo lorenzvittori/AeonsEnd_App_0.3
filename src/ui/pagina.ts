@@ -120,7 +120,6 @@ export interface AncoraCoda {
 // Stato solo dell'interfaccia (non entra nel salvataggio né nell'undo)
 export interface StatoUi {
   viewedUid: number | null;      // carta mostrata grande in VistaRisoluzione (DRAW_UID = passo Pesca)
-  holdUid: number | null;        // carta appena risolta ancora in primo piano mentre la sua animazione finisce
   isTransitioning: boolean;      // dopo un'azione, fino alla fine dell'animazione: niente secondo tocco
   transitionTimer: ReturnType<typeof setTimeout> | null; // timer della fine dell'animazione
   reveal: CartaDaGirare | null;  // carta pescata da girare
@@ -149,7 +148,6 @@ export interface StatoUi {
 
 export const ui: StatoUi = {
   viewedUid: null,
-  holdUid: null,
   isTransitioning: false,
   transitionTimer: null,
   reveal: null,

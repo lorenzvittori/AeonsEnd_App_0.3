@@ -183,7 +183,7 @@ export function enterNemesisTurnView(railScrollOf: () => number, centred: () => 
 // Mostra un'altra carta senza risolvere nulla (anteprima): non cambia mazzo, vita, token, scarti, turno, undo
 export function viewCard(uid: number): void {
   // Dal passo Pesca alla carta pescata messa in gioco le carte piccole non si toccano (tocco, frecce, carte grandi)
-  if (!partita.resolving || ui.holdUid || isDrawStep() || partita.newIndex >= 0) return;
+  if (!partita.resolving || isDrawStep() || partita.newIndex >= 0) return;
   if ((uid === DRAW_UID ? !isDrawStep() : !entryByUid(uid)) || ui.viewedUid === uid) return;
   ui.viewedUid = uid;
   renderResolve();
@@ -215,7 +215,7 @@ export function avvio(): void {
     // circa un controllo per fotogramma (setTimeout invece di requestAnimationFrame: funziona anche a pagina in background)
     focusScrollFrame = setTimeout(() => {
       focusScrollFrame = 0;
-      if (!partita.resolving || ui.holdUid || ui.isTransitioning || performance.now() < focusProgrammaticUntil) return;
+      if (!partita.resolving || ui.isTransitioning || performance.now() < focusProgrammaticUntil) return;
       const uid = centredFocusUid();
       if (uid === null || uid === ui.viewedUid) return;
       ui.viewedUid = uid;

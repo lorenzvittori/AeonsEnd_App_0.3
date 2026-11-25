@@ -160,7 +160,9 @@
   // Testo di un elemento per id (le versioni più vecchie possono non averlo: allora vuoto)
   const testo = id => { const e = document.getElementById(id); return e ? e.textContent.trim() : ''; };
   C.vista = () => ({ turno: app().app.dataset.turno || null, pulsante: testo('pulsante-principale'), fase: testo('phase-label'),
-    start: !app().startLayer.hidden, modali: app().modals.length });
+    start: !app().startLayer.hidden, modali: app().modals.length,
+    // carta mostrata e carta da risolvere (uid): se differiscono dopo un'azione, l'app mostra un'anteprima senza che nessuno l'abbia chiesta
+    carta: (() => { const p = app().partita; const act = p.queue[p.currentIndex]; return app().ui.viewedUid + '/' + (act ? act.uid : ''); })() });
   C.registro = () => JSON.stringify({ stato: app().snapshot(), vista: C.vista() });
 
   // Collezione completa e scelte, senza passare dalle schermate (per le partite scritte come sequenze di azioni)
@@ -189,21 +191,23 @@
     const a = app();
     const p = a.partita;
     let az;
-    if (a.awaitingTurnCard()) { a.pescaCartaTurno(); az = 'pesca carta turno'; }
+    // Il pulsante principale vero (come il tocco di chi gioca): così passano da dove passa l'app (la carta mostrata si aggiorna)
+    const clicca = () => { C.finisci(); document.getElementById('pulsante-principale').click(); };
+    if (a.awaitingTurnCard()) { clicca(); az = 'pesca carta turno'; }
     else if (!p.resolving) {
       const cur = a.currentTurn();
       const m = p.queue.find(e => e.data.type === 'Minion' && !a.hpUnset(e) && Number(e.hp) > 0);
       if (cur && a.isPairCard(cur.kind) && !cur.player) { a.scegliGiocatoreCoppia(a.pairOptions(cur.kind)[i % 2]); az = 'scelta'; }
       else if (i % 3 === 0 && m) { a.salvaModifiche(new Map([[m.uid, { hp: Number(m.hp) - 1 }]])); az = 'salva modifiche'; }
       else if (i % 7 === 0 && p.deck.length > 2) { a.scartaCimaDelMazzo(); az = 'scarta dal mazzo'; }
-      else { a.fineTurnoGiocatore(); az = 'fine turno'; }
-    } else if (a.isDrawStep(p)) { a.pescaCarta(); az = 'pesca'; }
+      else { clicca(); az = 'fine turno'; }
+    } else if (a.isDrawStep(p)) { clicca(); az = 'pesca'; }
     else {
       const c = must(p.queue[p.currentIndex], 'carta da risolvere');
       if (a.hpUnset(c)) { a.cambiaVitaMinion(c, 5, true); az = 'vita'; }
       else if (uccidi && c.data.type === 'Minion' && (p.newIndex >= 0 || i % 4 === 0)) { a.cambiaVitaMinion(c, 0, false); az = 'minion ucciso'; }
       else if (i % 5 === 0) { a.cambiaVita('nemesis', Math.max(0, p.nemesisLife - 2)); az = 'vita nemesi'; }
-      else { a.risolviCarta(); az = 'risolvi'; }
+      else { clicca(); az = 'risolvi'; }
     }
     a.render();
     return az;

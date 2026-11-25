@@ -43,13 +43,13 @@ export function renderResolve(): void {
   if (!active && !drawStep) return;
   // Dal passo Pesca alla carta pescata messa in gioco le carte piccole non si toccano: la carta mostrata è quella da
   // pescare o pescata, mai un'anteprima (anche se ui.viewedUid dice altro, per esempio dopo un undo)
-  const bloccata = !ui.holdUid && (drawStep || partita.newIndex >= 0);
-  const viewedUid = ui.holdUid || (bloccata ? (drawStep ? DRAW_UID : active && active.uid) : ui.viewedUid);
+  const bloccata = drawStep || partita.newIndex >= 0;
+  const viewedUid = bloccata ? (drawStep ? DRAW_UID : active && active.uid) : ui.viewedUid;
   // Nel passo da pescare la carta "da risolvere" è la carta coperta (DRAW_UID)
   const viewed = (viewedUid === DRAW_UID && drawStep) ? null : (entryByUid(viewedUid) || active);
   // (fuori dal passo Pesca c'è sempre una carta mostrata: la carta da risolvere esiste, vedi sopra)
   const viewingDraw = drawStep && !viewed;
-  if (!ui.holdUid) ui.viewedUid = viewed && !viewingDraw ? viewed.uid : DRAW_UID;
+  ui.viewedUid = viewed && !viewingDraw ? viewed.uid : DRAW_UID;
 
   // Fascia compatta: rosso = da risolvere, avorio = mostrata
   const railScroll = rail.scrollLeft;
@@ -174,7 +174,6 @@ export function focusSlide(entry: VoceInGioco): HTMLDivElement {
   }
   // Stato sopra la carta: la riga c'è sempre, anche vuota (attacchi), così ogni carta ha la stessa dimensione
   const status = focusStatus(entry);
-  if (ui.holdUid === entry.uid) status.classList.add('is-dropping', 'is-bumped');
   // Potere da risolvere: dopo 1 secondo un token sfuma da solo (il pulsante poi va solo avanti o scarta)
   if (partita.newIndex < 0 && entry === partita.queue[partita.currentIndex] && entry.data.type === 'Power') {
     status.classList.add('is-auto-token');
@@ -217,7 +216,7 @@ export function drawSlide(): HTMLDivElement {
 
 export function focusStateSignature(): string {
   return (isDrawStep() || partita.newIndex >= 0 ? 'solo' + partita.newIndex + ':' + ui.viewedUid + '|' : '') + 'c' + partita.currentIndex + '|' + partita.queue.map(e => [e.uid, e.hp, e.tokens, e.isNew ? 1 : 0].join(':')).join('|')
-    + '#' + (ui.reveal ? ui.reveal.uid + ':' + ui.reveal.status : '') + '#' + (ui.holdUid || '');
+    + '#' + (ui.reveal ? ui.reveal.uid + ':' + ui.reveal.status : '');
 }
 
 export function renderFocus(viewed: { uid: number }): void {

@@ -26,7 +26,7 @@ function fissa(seed: number): void {
 
 // Stato dell'interfaccia che conta per le varianti (come ui di src/ui/pagina.ts)
 function uiDi(cambi: Partial<UiPerVariante> = {}): UiPerVariante {
-  return { deckBuilding: false, drafts: new Map<number, BozzaCarta>(), trackShuffle: false, viewedUid: null, holdUid: null, ...cambi };
+  return { deckBuilding: false, drafts: new Map<number, BozzaCarta>(), trackShuffle: false, viewedUid: null, ...cambi };
 }
 
 // Modifiche non salvate su una carta (bozza della vita di un minion)
@@ -124,8 +124,6 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
     expect(v.momento).toBe('nemesi');
     expect(v.azione).toBe('torna');
     expect(v.testo).toBe(T.backToActive);
-    // Mentre la carta appena risolta resta in primo piano (holdUid) non è un'anteprima
-    expect(variante(partita, uiDi({ viewedUid: other.uid, holdUid: other.uid })).azione).toBe('risolvi');
   });
 
   it('passo Pesca: carta coperta e "Pesca", anche se un\'altra carta risulta guardata (le carte piccole non si toccano)', () => {

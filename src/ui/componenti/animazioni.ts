@@ -13,7 +13,6 @@ export function clearTransition(): void {
   if (ui.transitionTimer !== null) clearTimeout(ui.transitionTimer);
   ui.transitionTimer = null;
   ui.isTransitioning = false;
-  ui.holdUid = null;
 }
 
 // Blocca il pulsante principale per ms millisecondi, poi esegue then

@@ -48,7 +48,7 @@ export interface VariantePartita {
 
 // Cosa serve della partita e dell'interfaccia (solo lettura)
 export type PartitaPerVariante = Pick<Partita, 'resolving' | 'newIndex' | 'currentIndex' | 'queue' | 'turnOrder'>;
-export type UiPerVariante = Pick<StatoUi, 'deckBuilding' | 'drafts' | 'trackShuffle' | 'viewedUid' | 'holdUid'>;
+export type UiPerVariante = Pick<StatoUi, 'deckBuilding' | 'drafts' | 'trackShuffle' | 'viewedUid'>;
 
 // Testo del pulsante per la carta da risolvere. Anche sull'ultima carta si va solo avanti: la pesca è un passo a parte,
 // con il pulsante "Pesca". `t`: i testi (come in variantePartita).
@@ -69,7 +69,7 @@ export function actionText(entry: VoceInGioco, isNew: boolean, roundOver: boolea
 // (turno-nemesi-carosello.ts, renderResolve). Dal passo Pesca fino alla carta pescata messa in gioco (newIndex >= 0) le
 // carte piccole non si toccano: la carta mostrata è sempre quella da pescare o pescata, mai un'anteprima
 export function inAnteprima(p: PartitaPerVariante, u: UiPerVariante): boolean {
-  if (u.holdUid || isDrawStep(p) || p.newIndex >= 0) return false;
+  if (isDrawStep(p) || p.newIndex >= 0) return false;
   const active = p.queue[p.currentIndex] || null;
   const byUid = u.viewedUid === null ? null : p.queue.find(e => e.uid === u.viewedUid) || null;
   return (byUid || active) !== active;
