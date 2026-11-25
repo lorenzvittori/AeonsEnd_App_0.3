@@ -14,7 +14,7 @@
 .ae-next-slot .ae-card-art,
 .ae-compact-rail .ae-queue-item.ae-next-slot .ae-card-art {
   display: block; aspect-ratio: 5 / 7; box-sizing: border-box; background: none; box-shadow: none;
-  border: 1px dashed rgba(236, 232, 222, .35); border-radius: 5% / 3.58%;
+  border: 1px dashed color-mix(in srgb, var(--contorno-chiaro) 35%, transparent); border-radius: 5% / 3.58%;
 }
 /* Poteri con più di 3 token: token e spazi rimpiccioliti di 3/n (componenti.ts tokenIcons), il box resta quello da 3 */
 .ae-tokens.is-many .ae-token { zoom: var(--ae-token-zoom, 1); }

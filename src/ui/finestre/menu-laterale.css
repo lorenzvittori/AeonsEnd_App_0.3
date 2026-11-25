@@ -40,10 +40,10 @@
 }
 .ae-back-item img {
   display: block; width: 100%; aspect-ratio: 63 / 88; object-fit: cover; border-radius: 5% / 3.58%;
-  border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+  border: 2px solid transparent; box-shadow: 0 2px 8px color-mix(in srgb, var(--ombra) 60%, transparent);
 }
 .ae-back-item[aria-pressed='true'] { color: var(--ae-gold); }
-.ae-back-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px rgba(223, 174, 89, .6); }
+.ae-back-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px color-mix(in srgb, var(--ae-gold) 60%, transparent); }
 
 /* Menu laterale: si trascina verso destra per chiuderlo (menu-laterale.ts, swipeToClose) */
 .ae-modal.ae-side-menu { touch-action: pan-y; }
@@ -57,7 +57,7 @@
   transform: scaleX(0); transform-origin: left center; transition: transform .15s ease-out;
 }
 .ae-button.is-hold-action.is-holding::after { transform: scaleX(1); transition: transform .8s linear; }
-.ae-button.is-hold-action.is-holding { color: #20160B; text-shadow: none; }
+.ae-button.is-hold-action.is-holding { color: var(--testo-su-oro); text-shadow: none; }
 
 /* Menu: le tre linee diventano una X (la linea centrale sparisce, le altre ruotano di 45°) */
 .ae-menu-button .ae-menu-lines { transition: background-color .15s ease-out; }
@@ -73,15 +73,15 @@
 @media (prefers-reduced-motion: reduce) {
   .ae-menu-button .ae-menu-lines, .ae-menu-button .ae-menu-lines::before, .ae-menu-button .ae-menu-lines::after { transition: none; }
 }
-.ae-menu-toggle { position: fixed; z-index: 3; color: var(--ae-text); filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .9)); }
+.ae-menu-toggle { position: fixed; z-index: 3; color: var(--ae-text); filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--ombra) 90%, transparent)); }
 /* Nei menu laterali la X dell'intestazione non serve: c'è quella animata al posto del pulsante Menu */
 .ae-side-menu > .ae-modal-header > .ae-icon-button { visibility: hidden; }
 
 /* Esci dalla partita: rosso, da tenere premuto (si riempie di rosso da sinistra) */
-.ae-button.ae-hold-exit { background: rgba(217, 94, 92, .14); border-color: var(--ae-danger); color: #F08A88; font-weight: 700; }
+.ae-button.ae-hold-exit { background: color-mix(in srgb, var(--ae-danger) 14%, transparent); border-color: var(--ae-danger); color: var(--errore-testo); font-weight: 700; }
 .ae-button.is-hold-action.is-holding::after { transition-duration: var(--ae-hold-ms, .8s); }
 .ae-button.ae-hold-exit.is-hold-action::after { background: var(--ae-danger); }
-.ae-button.ae-hold-exit.is-holding { color: #fff; }
+.ae-button.ae-hold-exit.is-holding { color: var(--testo-su-colore); }
 .ae-back-choice.ae-back-choice--compact { min-height: 0; padding: 4px; gap: 0; }
 .ae-back-choice--compact .ae-back-choice-name { display: none; }
 .ae-bg-choice.ae-bg-choice--compact { min-height: 0; padding: 4px; gap: 0; }
@@ -102,7 +102,7 @@
 }
 .ae-bg-item img {
   display: block; width: 100%; aspect-ratio: 1672 / 941; object-fit: cover; border-radius: var(--ae-radius-md);
-  border: 2px solid transparent; box-shadow: 0 2px 8px rgba(0, 0, 0, .6);
+  border: 2px solid transparent; box-shadow: 0 2px 8px color-mix(in srgb, var(--ombra) 60%, transparent);
 }
 .ae-bg-item[aria-pressed='true'] { color: var(--ae-gold); }
-.ae-bg-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px rgba(223, 174, 89, .6); }
+.ae-bg-item[aria-pressed='true'] img { border-color: var(--ae-gold); box-shadow: 0 0 12px color-mix(in srgb, var(--ae-gold) 60%, transparent); }

@@ -4,7 +4,7 @@
 
 /* Schermata Vittoria: stesso fondo e stessa scritta del banner dei Tier (che qui resta ferma), sotto i pulsanti */
 .ae-modal-backdrop.ae-victory-backdrop {
-  background: radial-gradient(ellipse at center, rgba(60, 40, 10, .55) 0%, rgba(0, 0, 0, .82) 70%);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--velo-tier-caldo) 55%, transparent) 0%, color-mix(in srgb, var(--ombra) 82%, transparent) 70%);
   animation: ae-fade .3s linear; overflow: hidden;
 }
 .ae-victory-screen { width: min(340px, 100%); min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 48px; }
@@ -38,7 +38,7 @@
 .ae-stats-mages th, .ae-stats-mages td { padding: 6px 3px; text-align: center; vertical-align: middle; }
 .ae-stats-mages thead th { color: var(--ae-text-muted); font: 600 11px/14px var(--ae-font-ui); }
 .ae-stats-mages thead th:first-child, .ae-stats-mages tbody th { width: 36%; text-align: left; }
-.ae-stats-mages tbody tr { border-top: 1px solid rgba(236, 232, 222, .12); }
+.ae-stats-mages tbody tr { border-top: 1px solid color-mix(in srgb, var(--contorno-chiaro) 12%, transparent); }
 .ae-stats-mages tbody th { font-weight: 600; white-space: nowrap; }
 .ae-stats-mages td { font-weight: 700; font-variant-numeric: tabular-nums; }
 .ae-stats-mage-dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; vertical-align: 1px; background: var(--ae-turn-wild); }
@@ -60,8 +60,8 @@
 .ae-stats-card .ae-card-art { display: block; width: 100%; height: auto; aspect-ratio: 63 / 88; }
 .ae-stats-hp {
   position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 2px;
-  padding: 1px 5px; border-radius: 8px; border: 1px solid var(--ae-border); background: rgba(16, 17, 22, .92);
+  padding: 1px 5px; border-radius: 8px; border: 1px solid var(--ae-border); background: color-mix(in srgb, var(--ae-bg) 92%, transparent);
   font: 700 11px/14px var(--ae-font-ui); font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .ae-stats-hp .ae-icon { width: 11px; height: 11px; color: var(--ae-danger); }
-.ae-victory-screen.is-defeat .ae-tier-banner-text { color: #e06c5a; }
+.ae-victory-screen.is-defeat .ae-tier-banner-text { color: var(--esito-negativo); }

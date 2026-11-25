@@ -13,18 +13,18 @@
   position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 14px; padding: 8px 12px;
 }
-.deck-build-title { font: 600 20px/26px var(--ae-font-display); color: var(--ae-gold); letter-spacing: .06em; text-shadow: 0 1px 4px rgba(0, 0, 0, .9); }
+.deck-build-title { font: 600 20px/26px var(--ae-font-display); color: var(--ae-gold); letter-spacing: .06em; text-shadow: 0 1px 4px color-mix(in srgb, var(--ombra) 90%, transparent); }
 .deck-build-grid { display: grid; grid-template-columns: 28px repeat(3, auto); align-items: center; justify-items: center; gap: 12px 18px; }
-.deck-build-head { font: 600 14px/18px var(--ae-font-display); color: var(--ae-text); text-align: center; text-shadow: 0 1px 3px rgba(0, 0, 0, .9); }
+.deck-build-head { font: 600 14px/18px var(--ae-font-display); color: var(--ae-text); text-align: center; text-shadow: 0 1px 3px color-mix(in srgb, var(--ombra) 90%, transparent); }
 .deck-build-tier { font: 600 18px/1 var(--ae-font-display); color: var(--ae-text-muted); }
 .deck-build-pile { position: relative; height: min(17vh, 128px); aspect-ratio: 63 / 88; }
 .deck-build-pile img {
   display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 5% / 3.58%;
-  box-shadow: 2px 2px 0 -1px #2a2c34, 4px 4px 0 -1px #1b1d24, 6px 6px 0 -1px #14151b, 0 4px 12px rgba(0, 0, 0, .7);
+  box-shadow: 2px 2px 0 -1px var(--pila-carte-1), 4px 4px 0 -1px var(--pila-carte-2), 6px 6px 0 -1px var(--pila-carte-3), 0 4px 12px color-mix(in srgb, var(--ombra) 70%, transparent);
 }
 .deck-build-pile .ae-pile-count { min-width: 30px; height: 30px; font-size: 14px; }
 .deck-build-pile.is-empty img { opacity: .25; box-shadow: none; }
-.ae-deck-card { box-shadow: 0 8px 18px rgba(0, 0, 0, .6); }
+.ae-deck-card { box-shadow: 0 8px 18px color-mix(in srgb, var(--ombra) 60%, transparent); }
 
 /* Creazione del mazzo: mazzi più piccoli, etichette "Tier N", numero sotto il dorso, Specifiche a ventaglio */
 .deck-build-grid { grid-template-columns: auto repeat(3, auto); gap: 18px 14px; }
@@ -35,7 +35,7 @@
 .deck-build-fan-card {
   position: absolute; left: 50%; top: 0; height: 100%; aspect-ratio: 63 / 88; transform-origin: 50% 100%;
   transform: translateX(calc(-50% + var(--fan) * 16px)) rotate(calc(var(--fan) * 9deg));
-  border-radius: 5% / 3.58%; overflow: hidden; box-shadow: 0 3px 10px rgba(0, 0, 0, .7);
+  border-radius: 5% / 3.58%; overflow: hidden; box-shadow: 0 3px 10px color-mix(in srgb, var(--ombra) 70%, transparent);
 }
 .deck-build-fan-card img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .deck-build-fan-card.is-gone { visibility: hidden; }
@@ -55,7 +55,7 @@
 .deck-build-fan-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.3, 0, .2, 1); }
 .deck-build-fan-inner > img {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 5% / 3.58%;
-  backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 3px 10px rgba(0, 0, 0, .7);
+  backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 3px 10px color-mix(in srgb, var(--ombra) 70%, transparent);
 }
 .deck-build-fan-back { transform: rotateY(180deg); }
 .deck-build.is-flipping .deck-build-fan-inner { transform: rotateY(180deg); }
@@ -68,9 +68,9 @@
 /* Bordo dei dorsi (mazzi in alto e nella creazione del mazzo): più chiaro e un po' più evidente */
 /* Ordine: regola di testata.css; sta qui perché deve venire dopo ".deck-build-fan-inner>img" (stesso elemento, stessa specificità) */
 .ae-pile img, .deck-build-pile > img, .deck-build-fan-inner > img {
-  box-shadow: 0 0 0 1px rgba(236, 232, 222, .45), 2px 2px 0 -1px #555865, 4px 4px 0 -1px #3d404a, 0 2px 8px rgba(0, 0, 0, .7);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--contorno-chiaro) 45%, transparent), 2px 2px 0 -1px var(--pila-carte-chiara-1), 4px 4px 0 -1px var(--pila-carte-chiara-2), 0 2px 8px color-mix(in srgb, var(--ombra) 70%, transparent);
 }
-.deck-build-fan-inner > img { box-shadow: 0 0 0 1px rgba(236, 232, 222, .45), 0 3px 10px rgba(0, 0, 0, .7); }
+.deck-build-fan-inner > img { box-shadow: 0 0 0 1px color-mix(in srgb, var(--contorno-chiaro) 45%, transparent), 0 3px 10px color-mix(in srgb, var(--ombra) 70%, transparent); }
 .deck-build-fan-card { width: calc(min(13vh, 100px) * 63 / 88); }
 
 /* Creazione del mazzo: quando le Specifiche si girano si raccolgono in un mazzo dritto, come gli altri */
@@ -108,7 +108,7 @@
 /* Slider "Scorri per creare il mazzo": box con il quadratino dorato da trascinare a destra; pulsa finché non si tocca */
 .ae-deck-slider {
   position: relative; flex: 1 1 0; min-width: 0; height: 56px; overflow: hidden; isolation: isolate;
-  border: 1px solid rgba(223, 174, 89, .65); border-radius: var(--ae-radius-md); background: rgba(16, 17, 22, .8);
+  border: 1px solid color-mix(in srgb, var(--ae-gold) 65%, transparent); border-radius: var(--ae-radius-md); background: color-mix(in srgb, var(--ae-bg) 80%, transparent);
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab;
   animation: ae-slider-pulse 1.6s ease-in-out infinite;
 }
@@ -118,7 +118,7 @@
 .ae-deck-slider:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 2px; }
 .ae-deck-slider-fill {
   position: absolute; left: 0; top: 0; bottom: 0; width: 56px; z-index: 0;
-  background: linear-gradient(90deg, rgba(223, 174, 89, .08), rgba(223, 174, 89, .38));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ae-gold) 8%, transparent), color-mix(in srgb, var(--ae-gold) 38%, transparent));
 }
 .ae-deck-slider-label {
   position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: 0 12px 0 60px; pointer-events: none;
@@ -127,12 +127,12 @@
 }
 .ae-deck-slider-knob {
   position: absolute; left: 4px; top: 4px; bottom: 4px; z-index: 2; width: 48px; display: grid; place-items: center;
-  border-radius: 9px; background: var(--ae-gold); color: #20160B; box-shadow: 0 2px 8px rgba(0, 0, 0, .55);
+  border-radius: 9px; background: var(--ae-gold); color: var(--testo-su-oro); box-shadow: 0 2px 8px color-mix(in srgb, var(--ombra) 55%, transparent);
 }
 .ae-deck-slider:not(.is-started) .ae-deck-slider-knob svg { animation: ae-knob-nudge 1.6s ease-in-out infinite; }
 @keyframes ae-slider-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(223, 174, 89, .55); border-color: rgba(223, 174, 89, .65); }
-  50% { box-shadow: 0 0 0 7px rgba(223, 174, 89, 0), 0 0 18px rgba(223, 174, 89, .35); border-color: rgba(223, 174, 89, 1); }
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ae-gold) 55%, transparent); border-color: color-mix(in srgb, var(--ae-gold) 65%, transparent); }
+  50% { box-shadow: 0 0 0 7px transparent, 0 0 18px color-mix(in srgb, var(--ae-gold) 35%, transparent); border-color: var(--ae-gold); }
 }
 @keyframes ae-knob-nudge { 0%, 100% { transform: translateX(-2px); } 50% { transform: translateX(4px); } }
 @media (prefers-reduced-motion: reduce) {

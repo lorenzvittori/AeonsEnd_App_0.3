@@ -3,8 +3,21 @@
 // (CONTESTO_SVILUPPO.md sezione 9). "prima" è la versione di riferimento (<ref>), "dopo" quella attuale.
 // Dipende da: niente. Usato da: confronta.mjs e prove/*.mjs.
 
+// Un colore scritto in due modi (rgba(223, 174, 89, 0.6) oppure color(srgb 0.87 0.68 0.35 / 0.6), come lo dà color-mix) vale
+// uguale se i numeri finali a 8 bit sono uguali: lo riscrive nella stessa forma, #rrggbbaa (rgb(a) e color(srgb ...) soltanto)
+const a8 = x => Math.max(0, Math.min(255, Math.round(x)));
+const esa = n => a8(n).toString(16).padStart(2, '0');
+// Un colore del tutto trasparente è sempre "trasparente", qualunque sia il suo rosso, verde e blu: le sfumature si
+// calcolano con i colori premoltiplicati (CSS Color 4), quindi il tono nascosto non cambia ciò che si vede
+const colore8 = (r, g, b, a = 1) => a8(a * 255) === 0 ? '#00000000' : `#${esa(r)}${esa(g)}${esa(b)}${esa(a * 255)}`;
+const normalizzaColori = t => t
+  .replace(/rgba?\(\s*([\d.]+)[ ,]+([\d.]+)[ ,]+([\d.]+)(?:\s*[,/]\s*([\d.]+%?))?\s*\)/g,
+    (_, r, g, b, a) => colore8(+r, +g, +b, a === undefined ? 1 : a.endsWith('%') ? parseFloat(a) / 100 : +a))
+  .replace(/color\(srgb\s+([\d.e-]+)\s+([\d.e-]+)\s+([\d.e-]+)(?:\s*\/\s*([\d.e-]+%?))?\s*\)/g,
+    (_, r, g, b, a) => colore8(+r * 255, +g * 255, +b * 255, a === undefined ? 1 : a.endsWith('%') ? parseFloat(a) / 100 : +a));
+
 // Tolti i pezzi che dipendono dalla build o dalla porta: indirizzo del server e hash di Vite nei nomi dei file importati dal CSS
-const normalizza = t => String(t)
+const normalizza = t => normalizzaColori(String(t))
   .replace(/127\.0\.0\.1:\d+/g, 'HOST')
   .replace(/-[A-Za-z0-9_-]{8}\.(png|webp|svg|jpg|jpeg|woff2?|ttf|gif)/g, '.$1');
 

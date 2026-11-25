@@ -16,7 +16,7 @@
 .ae-compact-rail .ae-queue-item[aria-current='true'],
 .ae-compact-rail .ae-queue-item[data-viewed='true'] { opacity: 1; }
 /* Box vita / token sopra la carta, centrato in alto (sovrapposto all'immagine) */
-.ae-compact-rail .ae-queue-item > .ae-status-badge { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 3; max-width: calc(100% - 6px); background: rgba(16, 17, 22, .85); }
+.ae-compact-rail .ae-queue-item > .ae-status-badge { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); z-index: 3; max-width: calc(100% - 6px); background: color-mix(in srgb, var(--ae-bg) 85%, transparent); }
 .ae-compact-rail .ae-status-badge { height: 18px; min-width: 0; padding: 1px 4px; gap: 2px; font-size: 11px; line-height: 14px; border-radius: 5px; }
 .ae-compact-rail .ae-status-badge .ae-icon { width: 12px; height: 12px; }
 .ae-compact-rail .ae-token { width: 11px; height: 11px; }
@@ -41,7 +41,7 @@
 .ae-focus-slide .ae-focus-stage { width: var(--ae-focus-w, 280px); height: calc(var(--ae-focus-w, 280px) * var(--carta-altezza) / var(--carta-larghezza)); }
 .ae-focus-stage { position: relative; flex: 0 0 auto; border-radius: 5% / 3.58%; }
 /* Carta appena pescata: glow dorato come nella versione 1 (10% / 2% della larghezza della carta, al massimo 28px) */
-.ae-focus-stage.is-new { box-shadow: 0 0 min(calc(var(--cw, 300px) * .1), 28px) min(calc(var(--cw, 300px) * .02), 6px) rgba(255, 196, 60, .85); }
+.ae-focus-stage.is-new { box-shadow: 0 0 min(calc(var(--cw, 300px) * .1), 28px) min(calc(var(--cw, 300px) * .02), 6px) color-mix(in srgb, var(--bagliore-giallo) 85%, transparent); }
 .ae-focus-stage .ae-card-art { width: 100%; height: 100%; border: 0; background: transparent; }
 .ae-focus-stage .ae-new-tag { top: -10px; right: -10px; font-size: 12px; line-height: 16px; }
 .ae-focus-status { display: inline-flex; align-items: center; gap: 8px; min-height: 41px; font: 700 24px/30px var(--ae-font-ui); font-variant-numeric: tabular-nums; }
@@ -69,7 +69,7 @@
 /* "Caricamento carta…" e "Riprova immagine" stanno dentro la carta, in basso: non tolgono spazio alla carta */
 .ae-flip-loading {
   position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); z-index: 2; max-width: 90%;
-  padding: 4px 10px; border-radius: var(--ae-radius-sm); background: rgba(16, 17, 22, .85); color: var(--ae-text); text-align: center;
+  padding: 4px 10px; border-radius: var(--ae-radius-sm); background: color-mix(in srgb, var(--ae-bg) 85%, transparent); color: var(--ae-text); text-align: center;
 }
 @media (prefers-reduced-motion: reduce) {
   /* Niente rotazione: dissolvenza breve dal retro al fronte */
@@ -83,11 +83,11 @@
 /* Scritta "Tier N" alla prima carta del Tier 2 e 3: app oscurata del 60%, 1s ferma poi 0,5s di dissolvenza */
 .ae-tier-banner {
   position: fixed; inset: 0; z-index: 80; display: grid; place-items: center;
-  background: radial-gradient(ellipse at center, rgba(60, 40, 10, .55) 0%, rgba(0, 0, 0, .82) 70%); animation: ae-tier-banner 2.2s linear forwards;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--velo-tier-caldo) 55%, transparent) 0%, color-mix(in srgb, var(--ombra) 82%, transparent) 70%); animation: ae-tier-banner 2.2s linear forwards;
 }
 .ae-tier-banner-text {
   font: 600 48px/1.2 var(--ae-font-display); color: var(--ae-gold); letter-spacing: .06em;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, .8);
+  text-shadow: 0 2px 16px color-mix(in srgb, var(--ombra) 80%, transparent);
 }
 @keyframes ae-tier-banner { 0% { opacity: 0; } 8%, 75% { opacity: 1; } 100% { opacity: 0; } }
 
@@ -110,14 +110,14 @@
 /* Pulsante "Turno Nemesi" con l'illustrazione della nemesi scelta al posto del fondo avorio: velo scuro al 55% sopra
    l'immagine e scritta avorio con un'ombra, così si legge su qualsiasi illustrazione */
 .ae-button.has-nemesis-art {
-  background: linear-gradient(rgba(16, 17, 22, .55), rgba(16, 17, 22, .55)), var(--ae-nemesis-art) center 30% / cover no-repeat, var(--ae-surface-raised);
-  color: var(--ae-text); border: 1px solid rgba(244, 241, 233, .55);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .9), 0 0 10px rgba(0, 0, 0, .6); letter-spacing: .04em;
+  background: linear-gradient(color-mix(in srgb, var(--ae-bg) 55%, transparent), color-mix(in srgb, var(--ae-bg) 55%, transparent)), var(--ae-nemesis-art) center 30% / cover no-repeat, var(--ae-surface-raised);
+  color: var(--ae-text); border: 1px solid color-mix(in srgb, var(--ae-text) 55%, transparent);
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--ombra) 90%, transparent), 0 0 10px color-mix(in srgb, var(--ombra) 60%, transparent); letter-spacing: .04em;
 }
 .ae-button.has-nemesis-art:disabled { opacity: .55; }
 /* Fase di pesca: fascia con la linea dorata, pulsante "Pesca" dorato */
-[data-turno="pesca"] .ae-compact-rail { border-bottom-color: rgba(223, 174, 89, .6); }
-.ae-button.is-draw { background: var(--ae-gold); color: #20160B; letter-spacing: .08em; text-transform: uppercase; }
+[data-turno="pesca"] .ae-compact-rail { border-bottom-color: color-mix(in srgb, var(--ae-gold) 60%, transparent); }
+.ae-button.is-draw { background: var(--ae-gold); color: var(--testo-su-oro); letter-spacing: .08em; text-transform: uppercase; }
 
 /* Potere da risolvere: dopo 1 secondo un token sfuma fino a sparire (0,9 s) */
 .ae-focus-status.is-auto-token .ae-token:last-child { animation: ae-token-leave .9s ease-in 1s forwards; }
@@ -129,8 +129,8 @@
 .ae-focus-stage.is-to-resolve { animation: ae-attack-pulse 1s ease-in-out infinite; }
 .ae-focus-slide.is-drawing .ae-focus-stage.is-attack-drawn { animation-delay: .4s; }
 @keyframes ae-attack-pulse {
-  0%, 100% { box-shadow: 0 0 6px 1px rgba(217, 40, 40, .35); }
-  50% { box-shadow: 0 0 calc(var(--cw, 300px) * .12) calc(var(--cw, 300px) * .03) rgba(230, 40, 40, .95); }
+  0%, 100% { box-shadow: 0 0 6px 1px color-mix(in srgb, var(--attacco-alone-debole) 35%, transparent); }
+  50% { box-shadow: 0 0 calc(var(--cw, 300px) * .12) calc(var(--cw, 300px) * .03) color-mix(in srgb, var(--attacco-alone) 95%, transparent); }
 }
 
 /* Carta pescata: la riga sopra è nascosta mentre carica; dopo la rotazione compaiono i token uno alla volta o la vita */
@@ -145,15 +145,15 @@
 
 /* Scritta "Tier N" più marcata */
 .ae-tier-banner-text {
-  font-size: 64px; letter-spacing: .12em; color: #f3cf86;
-  text-shadow: 0 0 18px rgba(223, 174, 89, .9), 0 0 42px rgba(223, 120, 40, .6), 0 3px 10px rgba(0, 0, 0, .9);
-  padding: 8px 28px; border-top: 2px solid rgba(223, 174, 89, .7); border-bottom: 2px solid rgba(223, 174, 89, .7);
+  font-size: 64px; letter-spacing: .12em; color: var(--tier-titolo);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--ae-gold) 90%, transparent), 0 0 42px color-mix(in srgb, var(--tier-alone) 60%, transparent), 0 3px 10px color-mix(in srgb, var(--ombra) 90%, transparent);
+  padding: 8px 28px; border-top: 2px solid color-mix(in srgb, var(--ae-gold) 70%, transparent); border-bottom: 2px solid color-mix(in srgb, var(--ae-gold) 70%, transparent);
   animation: ae-tier-text 2.2s cubic-bezier(.2, .8, .2, 1) forwards;
 }
 @keyframes ae-tier-text { 0% { transform: scale(1.6); letter-spacing: .4em; } 25% { transform: scale(1); letter-spacing: .12em; } 100% { transform: scale(1.04); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .ae-focus-stage.is-attack-drawn, .ae-focus-stage.is-to-resolve { animation: none; box-shadow: 0 0 16px 4px rgba(230, 40, 40, .85); }
+  .ae-focus-stage.is-attack-drawn, .ae-focus-stage.is-to-resolve { animation: none; box-shadow: 0 0 16px 4px color-mix(in srgb, var(--attacco-alone) 85%, transparent); }
   .ae-focus-status.is-auto-token .ae-token:last-child { animation-duration: .01s; }
   .ae-tier-banner-text { animation: none; }
 }
@@ -164,7 +164,7 @@
   border-bottom: 1px solid var(--ae-border);
 }
 :is([data-turno="nemesi"], [data-turno="pesca"]) .ae-compact-rail { flex: 1 1 auto; min-width: 0; border-bottom: 0; padding: 0 var(--carte-piccole-margine-fascia-nemesi); }
-[data-turno="pesca"] [data-zona="carte-piccole"] { border-bottom-color: rgba(223, 174, 89, .6); }
+[data-turno="pesca"] [data-zona="carte-piccole"] { border-bottom-color: color-mix(in srgb, var(--ae-gold) 60%, transparent); }
 
 /* Carta pescata: token e vita compaiono dopo il banner Tier (--ae-tier-wait lo imposta turno-nemesi.ts) */
 .ae-focus-slide.is-drawing .ae-focus-status.is-hp > * { animation-delay: calc(var(--ae-tier-wait, 0ms) + .4s); }
@@ -184,11 +184,11 @@
 .ae-dock { background: none; border-top: 0; }
 /* Fascia piccola: senza box, a tutta larghezza; stessa posizione nei due turni (16px ai lati) */
 :is([data-turno="nemesi"], [data-turno="pesca"]) .ae-compact-rail { border: 0; }
-[data-turno="pesca"] [data-zona="carte-piccole"] { border-color: rgba(223, 174, 89, .6); }
+[data-turno="pesca"] [data-zona="carte-piccole"] { border-color: color-mix(in srgb, var(--ae-gold) 60%, transparent); }
 :is([data-turno="nemesi"], [data-turno="pesca"]) [data-zona="carte-piccole"] { padding: var(--carte-piccole-bordo-nemesi) var(--carte-piccole-margine-riga-nemesi); }
 
 /* Pulsante principale "Salva modifiche": dorato */
-.ae-button.is-save { background: var(--ae-gold); color: #20160B; border-color: var(--ae-gold); text-shadow: none; letter-spacing: .04em; }
+.ae-button.is-save { background: var(--ae-gold); color: var(--testo-su-oro); border-color: var(--ae-gold); text-shadow: none; letter-spacing: .04em; }
 
 /* Passo Pesca e carta pescata: un po' più grandi (fronte e retro); crescono verso il basso, nello spazio libero */
 .ae-focus-slide.is-big .ae-focus-stage { scale: 1.08; transform-origin: 50% 0; }
@@ -208,11 +208,11 @@
 /* Potere da risolvere: il token da togliere lampeggia subito con un bagliore dorato (due impulsi), poi diventa grigio
    in fretta. Nessuna attesa iniziale; uguale nella carta grande e nella fascia */
 @keyframes ae-token-spend {
-  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 200, 80, 0)); opacity: 1; }
-  15% { transform: scale(1.3); filter: drop-shadow(0 0 8px rgba(255, 200, 80, 1)) brightness(1.4); }
-  30% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 200, 80, .4)); }
-  45% { transform: scale(1.3); filter: drop-shadow(0 0 8px rgba(255, 200, 80, 1)) brightness(1.4); }
-  62% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 200, 80, .4)); opacity: 1; }
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); opacity: 1; }
+  15% { transform: scale(1.3); filter: drop-shadow(0 0 8px var(--token-bagliore)) brightness(1.4); }
+  30% { transform: scale(1); filter: drop-shadow(0 0 2px color-mix(in srgb, var(--token-bagliore) 40%, transparent)); }
+  45% { transform: scale(1.3); filter: drop-shadow(0 0 8px var(--token-bagliore)) brightness(1.4); }
+  62% { transform: scale(1); filter: drop-shadow(0 0 2px color-mix(in srgb, var(--token-bagliore) 40%, transparent)); opacity: 1; }
   100% { transform: scale(1); filter: grayscale(1) brightness(.6); opacity: .55; }
 }
 .ae-focus-status.is-auto-token .ae-token:last-child { animation: ae-token-spend 1.1s ease-in-out var(--ae-token-delay, 0s) both; }
@@ -299,7 +299,7 @@
 /* Pulsante "Fine turno" nel turno di un giocatore: fondo scuro velato del colore del giocatore, molto tenue */
 .ae-button.has-player-color {
   --ae-player: var(--ae-turn-wild);
-  background: color-mix(in srgb, var(--ae-player) 16%, #15161c); color: var(--ae-text);
+  background: color-mix(in srgb, var(--ae-player) 16%, var(--mescola-scuro-giocatore)); color: var(--ae-text);
   border: 1px solid color-mix(in srgb, var(--ae-player) 45%, transparent); letter-spacing: .04em; text-shadow: none;
 }
 .ae-button.has-player-color[data-kind="p1"] { --ae-player: var(--ae-turn-p1); }
@@ -309,26 +309,26 @@
 .ae-button.has-player-color:disabled { opacity: .55; }
 /* Carta 1/2 o 3/4 non ancora scelta: fondo sfumato dai due colori (Sfumatura, non più metà e metà) */
 .ae-button.has-player-color[data-kind="p12"], .ae-button.has-player-color[data-kind="p34"] {
-  background: linear-gradient(90deg, color-mix(in srgb, var(--ae-a) 16%, #15161c), color-mix(in srgb, var(--ae-b) 16%, #15161c));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ae-a) 16%, var(--mescola-scuro-giocatore)), color-mix(in srgb, var(--ae-b) 16%, var(--mescola-scuro-giocatore)));
   border-color: color-mix(in srgb, var(--ae-a) 45%, transparent) color-mix(in srgb, var(--ae-b) 45%, transparent)
     color-mix(in srgb, var(--ae-b) 45%, transparent) color-mix(in srgb, var(--ae-a) 45%, transparent);
 }
 .ae-button.has-player-color[data-kind="p12"] { --ae-a: var(--ae-turn-p1); --ae-b: var(--ae-turn-p2); }
 .ae-button.has-player-color[data-kind="p34"] { --ae-a: var(--ae-turn-p3); --ae-b: var(--ae-turn-p4); }
 /* Con modifiche non salvate resta il pulsante dorato "Salva modifiche" */
-.ae-button.has-player-color.is-save { background: var(--ae-gold); color: #20160B; border-color: var(--ae-gold); }
+.ae-button.has-player-color.is-save { background: var(--ae-gold); color: var(--testo-su-oro); border-color: var(--ae-gold); }
 /* Fascia piccola, potere non rimovibile: box con il simbolo di divieto in basso, simmetrico al box in alto */
 .ae-compact-rail .ae-queue-item > .ae-status-badge.ae-ban-badge {
-  top: auto; bottom: 4px; display: inline-flex; align-items: center; justify-content: center; color: hsl(356 70% 62%);
+  top: auto; bottom: 4px; display: inline-flex; align-items: center; justify-content: center; color: var(--rosso-segno);
 }
 .ae-compact-rail .ae-ban-badge svg { display: block; width: 12px; height: 12px; }
 /* Nella fascia piccola la carta da risolvere ha un bagliore rosso, come la carta grande (non il dorso da pescare,
    non la carta appena pescata, che ha il suo bagliore dorato) */
 .ae-compact-rail .ae-queue-item[aria-current='true']:not(.ae-next-card):not(.is-new) .ae-card-art {
-  --ae-glow: 0 0 9px 2px rgba(230, 40, 40, .7);
+  --ae-glow: 0 0 9px 2px color-mix(in srgb, var(--attacco-alone) 70%, transparent);
 }
 /* Box NUOVA come sul dorso al passo Pesca (.ae-compact-rail .ae-next-card .ae-new-tag) */
 .ae-compact-rail .ae-next-slot .ae-new-tag { display: block; top: 3px; right: 3px; padding: 1px 3px; font-size: 10px; line-height: 12px; border-radius: 4px; }
 /* Durante la risoluzione NUOVA è grigia (diventa dorata al passo Pesca, sul dorso) */
-.ae-compact-rail .ae-next-slot .ae-new-tag { background: #8a8780; color: #15161c; }
+.ae-compact-rail .ae-next-slot .ae-new-tag { background: var(--etichetta-nuova-grigia); color: var(--mescola-scuro-giocatore); }
 .ae-compact-rail .ae-status-badge.has-many-tokens { --ae-badge-px: 4px; }

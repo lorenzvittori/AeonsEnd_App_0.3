@@ -5,7 +5,7 @@
 /* Finestra "Chi gioca questo turno?": oscura tutto tranne la testata (z-index 10), dove resta attivo solo il Menu */
 .ae-pair-choice {
   position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; padding: 16px;
-  background: rgba(8, 9, 12, .72);
+  background: color-mix(in srgb, var(--velo-finestra) 72%, transparent);
 }
 .ae-pair-choice[hidden] { display: none; }
 /* Oscurato tutto tranne la barra della fase: lo sfondo con il velo ::before della shell (sotto .ae-main), testata,
@@ -15,16 +15,16 @@
 .ae-shell.is-pair-choice::before { opacity: .72; transition: opacity .25s ease-out; }
 .ae-pair-choice-panel {
   display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px 24px 24px;
-  border-radius: 16px; background: rgba(21, 22, 28, .96); border: 1px solid rgba(236, 232, 222, .14);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, .6);
+  border-radius: 16px; background: color-mix(in srgb, var(--finestra-sfondo) 96%, transparent); border: 1px solid color-mix(in srgb, var(--contorno-chiaro) 14%, transparent);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--ombra) 60%, transparent);
 }
 .ae-pair-choice-title { margin: 0; color: var(--ae-text); font: 600 16px/22px var(--ae-font-ui); text-align: center; }
 .ae-pair-choice-cards { display: flex; gap: 20px; }
 .ae-pair-pick {
   --ae-player: var(--ae-turn-wild);
   width: var(--ae-pick-w, 52px); aspect-ratio: 63 / 88; display: grid; place-items: center; padding: 0; cursor: pointer;
-  border: 2px solid #000; border-radius: 6px; color: #000; font: 800 26px/1 var(--ae-font-ui);
-  background: color-mix(in srgb, var(--ae-player) 70%, #000);
+  border: 2px solid var(--nero-giocatore); border-radius: 6px; color: var(--nero-giocatore); font: 800 26px/1 var(--ae-font-ui);
+  background: color-mix(in srgb, var(--ae-player) 70%, var(--nero-giocatore));
   box-shadow: 0 0 14px color-mix(in srgb, var(--ae-player) 45%, transparent);
 }
 .ae-pair-pick[data-kind="p1"] { --ae-player: var(--ae-turn-p1); }
@@ -35,21 +35,21 @@
 .ae-turn-card {
   --ae-player: var(--ae-turn-wild);
   width: 40px; aspect-ratio: 63 / 88; flex: 0 0 auto; display: grid; place-items: center; padding: 0; box-sizing: border-box;
-  border: 2px solid #000; border-radius: 5px; color: #000; font: 800 15px/1 var(--ae-font-ui);
-  background: color-mix(in srgb, var(--ae-player) 70%, #000);
+  border: 2px solid var(--nero-giocatore); border-radius: 5px; color: var(--nero-giocatore); font: 800 15px/1 var(--ae-font-ui);
+  background: color-mix(in srgb, var(--ae-player) 70%, var(--nero-giocatore));
 }
 .ae-turn-card[data-kind="p1"] { --ae-player: var(--ae-turn-p1); }
 .ae-turn-card[data-kind="p2"] { --ae-player: var(--ae-turn-p2); }
 .ae-turn-card[data-kind="p3"] { --ae-player: var(--ae-turn-p3); }
 .ae-turn-card[data-kind="p4"] { --ae-player: var(--ae-turn-p4); }
-.ae-turn-card[data-kind="nemesis"] { --ae-player: hsl(356 58% 52%); }
-.ae-turn-card[data-kind="p12"] { background: linear-gradient(90deg, color-mix(in srgb, var(--ae-turn-p1) 70%, #000), color-mix(in srgb, var(--ae-turn-p2) 70%, #000)); font-size: 12px; }
-.ae-turn-card[data-kind="p34"] { background: linear-gradient(90deg, color-mix(in srgb, var(--ae-turn-p3) 70%, #000), color-mix(in srgb, var(--ae-turn-p4) 70%, #000)); font-size: 12px; }
+.ae-turn-card[data-kind="nemesis"] { --ae-player: var(--carta-turno-nemesi); }
+.ae-turn-card[data-kind="p12"] { background: linear-gradient(90deg, color-mix(in srgb, var(--ae-turn-p1) 70%, var(--nero-giocatore)), color-mix(in srgb, var(--ae-turn-p2) 70%, var(--nero-giocatore))); font-size: 12px; }
+.ae-turn-card[data-kind="p34"] { background: linear-gradient(90deg, color-mix(in srgb, var(--ae-turn-p3) 70%, var(--nero-giocatore)), color-mix(in srgb, var(--ae-turn-p4) 70%, var(--nero-giocatore))); font-size: 12px; }
 /* Carte turno con l'immagine della carta vera (Assets/ui/turn-cards/, 252 x 352); il tondino dice chi ha giocato
    una carta 1/2, 3/4 o Wild */
 .ae-turn-card[data-card] {
   border: 0; border-radius: 8% / 6%; color: transparent;
-  background: #1b1d24 var(--ae-turn-face) center / cover no-repeat;
+  background: var(--ae-surface) var(--ae-turn-face) center / cover no-repeat;
 }
 .ae-turn-card[data-card="p1"] { --ae-turn-face: url('/Assets/ui/turn-cards/p1.webp'); }
 .ae-turn-card[data-card="p2"] { --ae-turn-face: url('/Assets/ui/turn-cards/p2.webp'); }
@@ -62,8 +62,8 @@
 .ae-turn-card-who {
   --ae-player: var(--ae-turn-wild);
   position: absolute; right: -5px; bottom: -5px; min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box;
-  display: grid; place-items: center; border-radius: 10px; border: 2px solid #111218; background: var(--ae-player);
-  color: #000; font: 800 11px/1 var(--ae-font-ui);
+  display: grid; place-items: center; border-radius: 10px; border: 2px solid var(--bordo-pallino-giocatore); background: var(--ae-player);
+  color: var(--nero-giocatore); font: 800 11px/1 var(--ae-font-ui);
 }
 .ae-turn-card-who[data-kind="p1"] { --ae-player: var(--ae-turn-p1); }
 .ae-turn-card-who[data-kind="p2"] { --ae-player: var(--ae-turn-p2); }
@@ -93,7 +93,7 @@
 }
 .ae-turn-eye {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 12px;
-  border: 1px solid rgba(223, 174, 89, .5); border-radius: 999px; background: rgba(223, 174, 89, .08); color: var(--ae-gold);
+  border: 1px solid color-mix(in srgb, var(--ae-gold) 50%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--ae-gold) 8%, transparent); color: var(--ae-gold);
   font: 600 13px/1 var(--ae-font-ui); cursor: pointer;
 }
 .ae-turn-eye .ae-icon { width: 20px; height: 20px; background: currentColor; }
@@ -101,7 +101,7 @@
 .ae-turn-eye[hidden] { display: none; }
 /* Occhio sopra la carta in cima, al suo centro; ruota attorno allo stesso punto della carta (130% della sua altezza) */
 .ae-turn-eye--top {
-  position: absolute; padding: 0; width: 44px; height: 44px; background: rgba(16, 17, 22, .78);
+  position: absolute; padding: 0; width: 44px; height: 44px; background: color-mix(in srgb, var(--ae-bg) 78%, transparent);
   transform: translateY(var(--ae-fan-y, 0px)) rotate(var(--ae-fan-rot, 0deg));
   transform-origin: 50% calc(22px + var(--ae-fan-h, 78px) * .8);
   transition: left .18s ease, transform .18s ease;
@@ -110,17 +110,17 @@
 /* Dorso vero delle carte turno ("Turn Order Deck", Assets/ui/turn-cards/back.webp, 252 x 352) */
 .ae-turn-card.is-back {
   border: 0; border-radius: 8% / 6%;
-  background: #1b1d24 url('/Assets/ui/turn-cards/back.webp') center / cover no-repeat;
+  background: var(--ae-surface) url('/Assets/ui/turn-cards/back.webp') center / cover no-repeat;
 }
 .ae-turn-zone {
-  display: flex; align-items: center; justify-content: center; padding: 0; border: 1px dashed rgba(255, 255, 255, .14);
+  display: flex; align-items: center; justify-content: center; padding: 0; border: 1px dashed color-mix(in srgb, var(--contorno-bianco) 14%, transparent);
   border-radius: 12px; background: transparent; color: var(--ae-text-muted); font: 700 11px/1 var(--ae-font-ui);
   letter-spacing: .08em; text-transform: uppercase; writing-mode: vertical-rl; cursor: default;
 }
 .ae-turn-zone--bottom { transform: rotate(180deg); }
 .ae-turn-zone:disabled { opacity: 1; }
-.ae-turn-zone.is-target { border-color: var(--ae-gold); background: rgba(223, 174, 89, .12); color: var(--ae-gold); cursor: pointer; }
-.ae-turn-zone.is-over { border-style: solid; background: rgba(223, 174, 89, .3); color: var(--ae-text); }
+.ae-turn-zone.is-target { border-color: var(--ae-gold); background: color-mix(in srgb, var(--ae-gold) 12%, transparent); color: var(--ae-gold); cursor: pointer; }
+.ae-turn-zone.is-over { border-style: solid; background: color-mix(in srgb, var(--ae-gold) 30%, transparent); color: var(--ae-text); }
 /* Scarti dei turni: in fila da sinistra a destra, l'ultima è il turno in corso */
 .ae-turn-pile-row { display: flex; gap: 6px; min-height: 92px; }
 .ae-turn-pile-slot { flex: 0 0 auto; width: min(64px, calc((100% - 30px) / 6)); display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
@@ -129,14 +129,14 @@
 .ae-turn-pile-note { color: var(--ae-gold); font: 700 10px/12px var(--ae-font-ui); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .ae-turn-pile-slot.is-locked::after {
   content: ''; position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%;
-  background: hsl(356 70% 62%) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'><circle cx='12' cy='12' r='8'/><path d='M6.3 6.3l11.4 11.4'/></svg>") center / 14px no-repeat;
+  background: var(--rosso-segno) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'><circle cx='12' cy='12' r='8'/><path d='M6.3 6.3l11.4 11.4'/></svg>") center / 14px no-repeat;
 }
 /* Carte che si spostano: tenere premuto per trascinare, oppure tocco per selezionare */
 .ae-turn-card.is-movable { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .ae-turn-card.is-selected { outline: 3px solid var(--ae-gold); outline-offset: 2px; }
 .ae-turn-ghost {
   position: fixed; z-index: 1000; margin: 0; pointer-events: none; transition: none; transform-origin: center;
-  box-shadow: 0 0 0 3px var(--ae-gold), 0 12px 28px rgba(0, 0, 0, .55); outline: none;
+  box-shadow: 0 0 0 3px var(--ae-gold), 0 12px 28px color-mix(in srgb, var(--ombra) 55%, transparent); outline: none;
 }
 .ae-turn-hint { margin: 0; color: var(--ae-text-muted); font: 400 13px/18px var(--ae-font-ui); }
 /* Mentre si trascina la finestra non scorre (la carta si porta ovunque nello schermo) */
@@ -180,24 +180,24 @@
 /* Segmento verticale dove cadrà la carta trascinata dagli scarti (anche ai due capi del mazzo) */
 .ae-turn-insert {
   position: absolute; z-index: 100; width: 4px; border-radius: 2px; pointer-events: none;
-  background: var(--ae-gold); box-shadow: 0 0 10px rgba(223, 174, 89, .8);
+  background: var(--ae-gold); box-shadow: 0 0 10px color-mix(in srgb, var(--ae-gold) 80%, transparent);
 }
 .ae-turn-insert[hidden] { display: none; }
 /* Contorno chiaro attorno alle carte turno (immagini e dorso), per staccarle dallo sfondo scuro */
 .ae-turn-card[data-card], .ae-turn-card.is-back {
-  box-shadow: 0 0 0 1.5px rgba(236, 232, 222, .75), 0 2px 6px rgba(0, 0, 0, .6);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--contorno-chiaro) 75%, transparent), 0 2px 6px color-mix(in srgb, var(--ombra) 60%, transparent);
 }
-.ae-turn-pile-slot.is-current .ae-turn-card { box-shadow: 0 0 0 2px var(--ae-gold), 0 2px 6px rgba(0, 0, 0, .6); }
-.ae-turn-card.ae-turn-ghost { box-shadow: 0 0 0 3px var(--ae-gold), 0 12px 28px rgba(0, 0, 0, .55); }
+.ae-turn-pile-slot.is-current .ae-turn-card { box-shadow: 0 0 0 2px var(--ae-gold), 0 2px 6px color-mix(in srgb, var(--ombra) 60%, transparent); }
+.ae-turn-card.ae-turn-ghost { box-shadow: 0 0 0 3px var(--ae-gold), 0 12px 28px color-mix(in srgb, var(--ombra) 55%, transparent); }
 /* Scarti con il contorno più scuro delle carte del mazzo ancora da giocare (la carta del turno in corso resta dorata) */
 .ae-turn-pile-slot .ae-turn-card[data-card], .ae-turn-pile-slot .ae-turn-card.is-back {
-  box-shadow: 0 0 0 1.5px rgba(236, 232, 222, .28), 0 2px 6px rgba(0, 0, 0, .6);
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--contorno-chiaro) 28%, transparent), 0 2px 6px color-mix(in srgb, var(--ombra) 60%, transparent);
 }
-.ae-turn-pile-slot.is-current .ae-turn-card { box-shadow: 0 0 0 2px var(--ae-gold), 0 2px 6px rgba(0, 0, 0, .6); }
+.ae-turn-pile-slot.is-current .ae-turn-card { box-shadow: 0 0 0 2px var(--ae-gold), 0 2px 6px color-mix(in srgb, var(--ombra) 60%, transparent); }
 /* La carta che si sta spostando (scarti o mazzo) lascia al suo posto un segnaposto grigio chiaro, senza immagine,
    piccolo come le altre carte (85%, nel mazzo la scala della corsia) */
 .ae-turn-card.is-dragging, .ae-turn-pile-slot .ae-turn-card.is-dragging, .ae-turn-lane .ae-turn-card.is-dragging {
-  background: #d4d4d8 !important; box-shadow: none !important; filter: none !important; outline: none !important;
+  background: var(--segnaposto-trascinata) !important; box-shadow: none !important; filter: none !important; outline: none !important;
   border-color: transparent; color: transparent;
 }
 .ae-turn-card.is-dragging > * { visibility: hidden; }
@@ -208,8 +208,8 @@
 .ae-pair-dock .ae-pair-half {
   --ae-player: var(--ae-turn-wild);
   /* Fondo più chiaro */
-  flex: 1 1 0; min-width: 0; color: #fff; font-weight: 700; letter-spacing: .04em; text-shadow: 0 1px 3px rgba(0, 0, 0, .8);
-  background: color-mix(in srgb, var(--ae-player) 55%, #15161c);
+  flex: 1 1 0; min-width: 0; color: var(--testo-su-colore); font-weight: 700; letter-spacing: .04em; text-shadow: 0 1px 3px color-mix(in srgb, var(--ombra) 80%, transparent);
+  background: color-mix(in srgb, var(--ae-player) 55%, var(--mescola-scuro-giocatore));
   border: 1px solid color-mix(in srgb, var(--ae-player) 85%, transparent);
 }
 /* Copia della finestra che scende fino al pulsante */
@@ -230,7 +230,7 @@
 /* Il segmento è lungo quanto le carte più il 10% sopra e sotto */
 .ae-turn-divider {
   flex: 0 0 1px; margin: calc(var(--ae-turn-h, 67px) * -.1) 8px 0; align-self: flex-start;
-  height: calc(var(--ae-turn-h, 67px) * 1.2); background: rgba(236, 232, 222, .35); border-radius: 1px;
+  height: calc(var(--ae-turn-h, 67px) * 1.2); background: color-mix(in srgb, var(--contorno-chiaro) 35%, transparent); border-radius: 1px;
 }
 /* Scritte in una riga sopra le carte, ai due lati del segmento verticale (--ae-split = sua posizione, da JS);
    non toccano la larghezza delle carte. Mescola in fondo a destra della riga */
@@ -254,7 +254,7 @@
 .ae-turn-pile-note { font-size: 9px; }
 .ae-turn-pile-empty {
   display: block; width: var(--ae-turn-w, 48px); height: var(--ae-turn-h, 67px); box-sizing: border-box;
-  border: 1px dashed rgba(236, 232, 222, .25); border-radius: 8% / 6%;
+  border: 1px dashed color-mix(in srgb, var(--contorno-chiaro) 25%, transparent); border-radius: 8% / 6%;
 }
 /* Mazzo: la cima è la prima carta a sinistra; carte dritte in fila (posizioni assolute, si spostano con una transizione) */
 .ae-turn-lane { position: relative; height: var(--ae-turn-h, 67px); border-radius: 8px; }
@@ -264,8 +264,8 @@
 }
 .ae-turn-lane .ae-turn-card.is-old { filter: brightness(.4); }
 .ae-turn-lane .ae-turn-card.is-lifted { outline: 2px dashed var(--ae-gold); outline-offset: 2px; }
-.ae-turn-lane.is-target { box-shadow: 0 0 0 1px rgba(223, 174, 89, .35); }
-.ae-turn-lane.is-over { box-shadow: 0 0 0 2px var(--ae-gold); background: rgba(223, 174, 89, .08); }
+.ae-turn-lane.is-target { box-shadow: 0 0 0 1px color-mix(in srgb, var(--ae-gold) 35%, transparent); }
+.ae-turn-lane.is-over { box-shadow: 0 0 0 2px var(--ae-gold); background: color-mix(in srgb, var(--ae-gold) 8%, transparent); }
 .ae-turn-lane .ae-turn-fan-empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
 .ae-turn-lane .ae-turn-eye--top { position: absolute; transform: none; transition: left .2s ease; }
 /* Carta degli scarti presa o selezionata: il mazzo si stringe al centro, ai lati "Cima" (sinistra) e "Fondo" (destra),
@@ -286,7 +286,7 @@
   height: 36px; min-height: 36px; padding: 0; border-radius: 8px; box-sizing: border-box; transition: width .2s ease;
 }
 .ae-turn-reveal-row .ae-turn-eye--all .ae-icon { width: 22px; height: 22px; }
-.ae-turn-reveal-row .ae-turn-eye--all.is-cover { color: var(--ae-text-muted); border-color: rgba(236, 232, 222, .25); background: transparent; }
+.ae-turn-reveal-row .ae-turn-eye--all.is-cover { color: var(--ae-text-muted); border-color: color-mix(in srgb, var(--contorno-chiaro) 25%, transparent); background: transparent; }
 .ae-turn-area--deck { position: relative; }
 .ae-turn-lane { z-index: 1; }
 /* La carta del mazzo che si trascina lascia la fila (la sua copia segue il dito, le altre si stringono) */
@@ -301,7 +301,7 @@
   writing-mode: horizontal-tb; text-orientation: mixed; border: 0; border-radius: 0; background: transparent;
   font-size: var(--ae-zone-fs, 10px); letter-spacing: .04em; white-space: nowrap; color: var(--ae-gold);
 }
-.ae-turn-lane .ae-turn-zone.is-over { color: #ffe2a6; text-shadow: 0 0 8px rgba(223, 174, 89, .8); }
+.ae-turn-lane .ae-turn-zone.is-over { color: var(--zona-testo-acceso); text-shadow: 0 0 8px color-mix(in srgb, var(--ae-gold) 80%, transparent); }
 .ae-turn-lane.is-target, .ae-turn-lane.is-over { box-shadow: none; background: transparent; }
 /* Carta rivelata del mazzo portata negli scarti: il segmento dorato in fondo a destra degli scarti */
 .ae-turn-area--pile { position: relative; }
@@ -311,7 +311,7 @@
 .ae-turn-card-who {
   min-width: 0; width: 20px; padding: 0; border: 0; border-radius: 0; color: transparent; font-size: 0;
   background: var(--ae-who-img) center / contain no-repeat; left: 50%; right: auto; transform: translateX(-50%);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--ombra) 60%, transparent));
 }
 .ae-turn-card-who[data-kind="p1"] { --ae-who-img: url('/Assets/ui/turn-tokens/p1.webp'); }
 .ae-turn-card-who[data-kind="p2"] { --ae-who-img: url('/Assets/ui/turn-tokens/p2.webp'); }
@@ -328,24 +328,24 @@
 }
 .ae-turn-lane .ae-turn-zone::before {
   content: ''; position: absolute; left: 50%; top: 50%; width: var(--ae-zone-d, 26px); height: var(--ae-zone-d, 26px);
-  transform: translate(-50%, -50%); border-radius: 50%; box-sizing: border-box; border: 1.5px solid rgba(240, 190, 105, .8);
-  background: radial-gradient(circle, rgba(255, 224, 130, .95) 0%, rgba(255, 176, 64, .6) 30%, rgba(255, 150, 40, 0) 68%);
-  box-shadow: 0 0 8px rgba(255, 176, 64, .35); transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  transform: translate(-50%, -50%); border-radius: 50%; box-sizing: border-box; border: 1.5px solid color-mix(in srgb, var(--zona-cerchio-contorno) 80%, transparent);
+  background: radial-gradient(circle, color-mix(in srgb, var(--zona-cerchio-centro) 95%, transparent) 0%, color-mix(in srgb, var(--zona-cerchio-riempimento) 60%, transparent) 30%, transparent 68%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--zona-cerchio-riempimento) 35%, transparent); transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
 .ae-turn-lane .ae-turn-zone.is-over::before {
-  transform: translate(-50%, -50%) scale(1.15); border-color: #ffd98a;
-  background: radial-gradient(circle, rgba(255, 238, 170, 1) 0%, rgba(255, 186, 72, .8) 36%, rgba(255, 150, 40, 0) 72%);
-  box-shadow: 0 0 16px rgba(255, 186, 72, .75);
+  transform: translate(-50%, -50%) scale(1.15); border-color: var(--zona-contorno-acceso);
+  background: radial-gradient(circle, var(--zona-cerchio-acceso) 0%, color-mix(in srgb, var(--zona-alone) 80%, transparent) 36%, transparent 72%);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--zona-alone) 75%, transparent);
 }
 /* Cerchi di Cima e Fondo grandi la metà (--ae-zone-d al massimo 14px) e spenti: solo il contorno; il bagliore
    giallo-arancio compare solo sul posto dove la carta sta per andare (.is-over) */
 .ae-turn-lane .ae-turn-zone::before {
-  border: 1.5px solid rgba(240, 190, 105, .65); background: transparent; box-shadow: none;
+  border: 1.5px solid color-mix(in srgb, var(--zona-cerchio-contorno) 65%, transparent); background: transparent; box-shadow: none;
 }
 .ae-turn-lane .ae-turn-zone.is-over::before {
-  transform: translate(-50%, -50%) scale(1.3); border-color: #ffd98a;
-  background: radial-gradient(circle, rgba(255, 238, 170, 1) 0%, rgba(255, 186, 72, .85) 40%, rgba(255, 150, 40, 0) 75%);
-  box-shadow: 0 0 10px 2px rgba(255, 186, 72, .75);
+  transform: translate(-50%, -50%) scale(1.3); border-color: var(--zona-contorno-acceso);
+  background: radial-gradient(circle, var(--zona-cerchio-acceso) 0%, color-mix(in srgb, var(--zona-alone) 85%, transparent) 40%, transparent 75%);
+  box-shadow: 0 0 10px 2px color-mix(in srgb, var(--zona-alone) 75%, transparent);
 }
 /* Con una carta in mano (trascinata o selezionata, .is-holding da mazzo-turni.ts layoutFan) tutte le altre carte del
    mazzo e degli scarti scendono all'85% (proprietà scale, che si somma alle rotazioni); quella in mano resta al 100% */
@@ -356,7 +356,7 @@
    lasciano un po' di spazio attorno al cerchio */
 .ae-turn-insert, .ae-turn-lane .ae-turn-insert, .ae-turn-area--pile .ae-turn-insert {
   width: var(--ae-zone-d, 14px); background: none; box-shadow: none; border-radius: 0;
-  filter: drop-shadow(0 0 4px rgba(255, 186, 72, .7));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--zona-alone) 70%, transparent));
 }
 .ae-turn-insert::before {
   content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); border-radius: 1px;
@@ -366,19 +366,19 @@
 }
 .ae-turn-insert::after, .ae-turn-pile-zone.is-over {
   /* cerchio acceso, come quello di Cima e Fondo quando la carta sta per andare lì */
-  border-color: #ffd98a;
-  background: radial-gradient(circle, rgba(255, 238, 170, 1) 0%, rgba(255, 186, 72, .85) 40%, rgba(255, 150, 40, 0) 75%);
-  box-shadow: 0 0 10px 2px rgba(255, 186, 72, .75);
+  border-color: var(--zona-contorno-acceso);
+  background: radial-gradient(circle, var(--zona-cerchio-acceso) 0%, color-mix(in srgb, var(--zona-alone) 85%, transparent) 40%, transparent 75%);
+  box-shadow: 0 0 10px 2px color-mix(in srgb, var(--zona-alone) 75%, transparent);
 }
 .ae-turn-insert::after {
   content: ''; position: absolute; left: 50%; top: 50%; width: var(--ae-zone-d, 14px); height: var(--ae-zone-d, 14px);
-  transform: translate(-50%, -50%) scale(1.3); border-radius: 50%; box-sizing: border-box; border: 1.5px solid #ffd98a;
+  transform: translate(-50%, -50%) scale(1.3); border-radius: 50%; box-sizing: border-box; border: 1.5px solid var(--zona-contorno-acceso);
 }
 /* Cerchio del posto d'arrivo in fondo a destra degli scarti (carta del mazzo in mano), spento finché la carta non
    ci sta per andare */
 .ae-turn-pile-zone {
   position: absolute; z-index: 30; width: var(--ae-zone-d, 14px); height: var(--ae-zone-d, 14px); border-radius: 50%;
-  box-sizing: border-box; border: 1.5px solid rgba(240, 190, 105, .65); background: transparent; pointer-events: none;
+  box-sizing: border-box; border: 1.5px solid color-mix(in srgb, var(--zona-cerchio-contorno) 65%, transparent); background: transparent; pointer-events: none;
   transition: transform .15s ease, box-shadow .15s ease;
 }
 .ae-turn-pile-zone.is-over { transform: scale(1.3); }
@@ -387,19 +387,19 @@
    arancione pieno (sempre uguale, non il cerchio-luogo), a metà altezza come i cerchi-luogo: quando la carta va in cima,
    in fondo o negli scarti il pallino entra nel cerchio-luogo, che si accende (contorno chiaro e alone, senza riempirsi) */
 .ae-turn-insert, .ae-turn-lane .ae-turn-insert, .ae-turn-area--pile .ae-turn-insert {
-  filter: drop-shadow(0 0 3px rgba(255, 160, 50, .6));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--guida-alone) 60%, transparent));
 }
 .ae-turn-insert::before {
-  background: linear-gradient(to bottom, #f5a23a 0, #f5a23a calc(50% - 6px), transparent calc(50% - 6px),
-    transparent calc(50% + 6px), #f5a23a calc(50% + 6px), #f5a23a 100%);
+  background: linear-gradient(to bottom, var(--guida-linea) 0, var(--guida-linea) calc(50% - 6px), transparent calc(50% - 6px),
+    transparent calc(50% + 6px), var(--guida-linea) calc(50% + 6px), var(--guida-linea) 100%);
 }
 .ae-turn-insert::after {
-  width: 6px; height: 6px; transform: translate(-50%, -50%); border: 0; border-radius: 50%; background: #ff9f2e;
-  box-shadow: 0 0 6px 1px rgba(255, 159, 46, .8);
+  width: 6px; height: 6px; transform: translate(-50%, -50%); border: 0; border-radius: 50%; background: var(--guida-pallino);
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--guida-pallino) 80%, transparent);
 }
 .ae-turn-lane .ae-turn-zone.is-over::before, .ae-turn-pile-zone.is-over {
-  transform: translate(-50%, -50%) scale(1.15); border-color: #ffd98a; background: transparent;
-  box-shadow: 0 0 8px 1px rgba(255, 186, 72, .7);
+  transform: translate(-50%, -50%) scale(1.15); border-color: var(--zona-contorno-acceso); background: transparent;
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--zona-alone) 70%, transparent);
 }
 .ae-turn-pile-zone.is-over { transform: scale(1.15); }
 /* (la scritta "in corso" sotto la carta stava sotto il token del giocatore: un po' più in basso) */
@@ -463,7 +463,7 @@
   background: url('/Assets/ui/icons/place-circle.webp') center / contain no-repeat;
 }
 .ae-turn-lane .ae-turn-zone.is-over::before, .ae-turn-pile-zone.is-over {
-  border: 0; box-shadow: none; opacity: 1; filter: drop-shadow(0 0 4px rgba(255, 186, 72, .85));
+  border: 0; box-shadow: none; opacity: 1; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--zona-alone) 85%, transparent));
   background: url('/Assets/ui/icons/place-circle.webp') center / contain no-repeat;
 }
 /* Cuspide a due curve, 14px; l'altezza la dà lo svg, con la coda fino al segmento verticale */
@@ -514,15 +514,15 @@
 /* Segnaposto della carta presa: grigio scuro a righe oblique (due grigi) con un contorno tratteggiato dorato spento, il
    "buco" da cui è uscita la carta */
 .ae-turn-card.is-dragging, .ae-turn-pile-slot .ae-turn-card.is-dragging, .ae-turn-lane .ae-turn-card.is-dragging {
-  background: repeating-linear-gradient(135deg, #26262b 0 5px, #34343b 5px 10px) !important;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, .55) !important;
-  outline: 1.5px dashed rgba(223, 174, 89, .55) !important; outline-offset: -1.5px;
+  background: repeating-linear-gradient(135deg, var(--segnaposto-carta-1) 0 5px, var(--segnaposto-carta-2) 5px 10px) !important;
+  box-shadow: inset 0 0 10px color-mix(in srgb, var(--ombra) 55%, transparent) !important;
+  outline: 1.5px dashed color-mix(in srgb, var(--ae-gold) 55%, transparent) !important; outline-offset: -1.5px;
 }
 /* Posti vuoti (scarti e mazzo) tratteggiati, larghi e alti come una carta, con il simbolo ∅ al centro (mazzo-turni.ts,
    emptySetIcon); il simbolo sparisce quando al centro c'è il cerchio d'arrivo o la guida */
 .ae-turn-pile-empty, .ae-turn-lane .ae-turn-fan-empty {
   display: grid; place-items: center; box-sizing: border-box; color: var(--ae-text-muted);
-  border: 1px dashed rgba(236, 232, 222, .25); border-radius: 8% / 6%;
+  border: 1px dashed color-mix(in srgb, var(--contorno-chiaro) 25%, transparent); border-radius: 8% / 6%;
 }
 .ae-turn-lane .ae-turn-fan-empty { inset: 0 auto auto 0; }
 .ae-turn-empty-icon { display: block; width: min(26px, calc(var(--ae-turn-w, 48px) * .42)); aspect-ratio: 1; opacity: .8; transition: opacity .15s ease; }

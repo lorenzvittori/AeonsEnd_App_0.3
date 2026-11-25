@@ -1,4 +1,4 @@
-/* barra-turni.css: barra dei turni sotto la testata (zona 2 della schermata "partita", partita.css: caselle, sigle, scritte) e i colori dei giocatori (--ae-turn-*)
+/* barra-turni.css: barra dei turni sotto la testata (zona 2 della schermata "partita", partita.css: caselle, sigle, scritte) (i colori dei giocatori, --ae-turn-*, stanno in stili/palette.css)
    Elementi creati da: index.html (#fascia-turno), ui/componenti/barra-turni.ts (contenuto).
    Misure: partita-misure.css (gruppo "2 fascia turno").
    Ordine: nessuna dipendenza dagli altri file (non ritoccano gli stessi elementi a pari specificità). Si importa da src/stili/indice.ts. */
@@ -7,13 +7,6 @@
    nell'ordine di estrazione. Accesa (8px, colore e bagliore) la casella del turno in corso; velate le caselle dei turni
    già giocati nel giro; grigie quelle da estrarre. Colori: giocatori 1-4 verde, giallo, blu, viola; jolly grigio
    chiaro; nemesi rosso scuro. Sotto la casella accesa, solo nel turno nemesi, "Nemesi · Risolvi" / "Nemesi · Pesca" */
-:root {
-  /* Palette dell'utente (giocatori 1-4: lime, arancio, blu, viola); Nuovi colori dell'utente, presi dalle
-     carte turno vere */
-  --ae-turn-p1: #86811D; --ae-turn-p2: #CF892B; --ae-turn-p3: #007591;
-  --ae-turn-p4: #773067; --ae-turn-wild: hsl(40 14% 84%); --ae-turn-red: hsl(356 58% 42%);
-  --ae-turn-red-text: hsl(356 62% 70%); --ae-turn-off: rgba(236, 232, 222, .14);
-}
 .ae-turn-track { flex: 0 0 auto; padding: var(--turno-spazio-sopra) var(--turno-margine-lati) 0; }
 .ae-turn-track[hidden] { display: none; }
 .ae-turn-track-bar { display: flex; gap: var(--turno-caselle-spazio); align-items: center; height: var(--turno-barra-altezza); }
@@ -44,7 +37,7 @@
 .ae-turn-seg[data-kind="wild"][data-owner].is-past,
 .ae-turn-seg[data-kind="wild"][data-owner].is-current {
   /* Strisce bianche spesse la metà di quelle colorate (3px e 6px) */
-  background: repeating-linear-gradient(135deg, #fff 0 3px, var(--ae-seg) 3px 9px);
+  background: repeating-linear-gradient(135deg, var(--striscia-chiara) 0 3px, var(--ae-seg) 3px 9px);
 }
 /* Carte turno 1/2 e 3/4 (wave 4). Finché non si sceglie chi gioca la casella è una sfumatura dai due
    colori (strato ::after sopra il colore pieno); scelto il giocatore lo strato svanisce e resta il suo colore */
@@ -82,7 +75,7 @@
 }
 .ae-turn-label.is-start { left: 0 !important; transform: none; }
 .ae-turn-label.is-end { left: auto !important; right: 0; transform: none; }
-.ae-turn-label-wild { color: #fff; }
+.ae-turn-label-wild { color: var(--testo-su-colore); }
 /* Carta x/y senza giocatore: sotto la casella "1 / 2" (la scelta è nella finestra al centro) */
 .ae-turn-label.is-choice { color: var(--ae-text); }
 /* Mazzo dei turni. La barra della fase si tocca (apre il menu); le carte turno sono piccole carte colorate */
@@ -92,10 +85,10 @@
 .ae-turn-mark { position: absolute; top: 0; transform: translateX(-50%); opacity: .7; color: var(--ae-text-muted); }
 .ae-turn-mark[data-kind="nemesis"] { color: var(--ae-turn-red-text); }
 .ae-turn-mark[data-kind="p1"] { color: var(--ae-turn-p1); }
-.ae-turn-mark[data-kind="p2"] { color: color-mix(in srgb, var(--ae-turn-p2) 85%, white); }
-.ae-turn-mark[data-kind="p3"] { color: color-mix(in srgb, var(--ae-turn-p3) 45%, white); }
-.ae-turn-mark[data-kind="p4"] { color: color-mix(in srgb, var(--ae-turn-p4) 50%, white); }
-.ae-turn-mark.is-wild { color: #fff; }
+.ae-turn-mark[data-kind="p2"] { color: color-mix(in srgb, var(--ae-turn-p2) 85%, var(--schiarisci)); }
+.ae-turn-mark[data-kind="p3"] { color: color-mix(in srgb, var(--ae-turn-p3) 45%, var(--schiarisci)); }
+.ae-turn-mark[data-kind="p4"] { color: color-mix(in srgb, var(--ae-turn-p4) 50%, var(--schiarisci)); }
+.ae-turn-mark.is-wild { color: var(--testo-su-colore); }
 .ae-turn-mark.is-known { opacity: .4; }
 .ae-turn-label-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 @media (prefers-reduced-motion: reduce) {
@@ -105,9 +98,9 @@
 /* Scritta "Giocatore N" / "Jolly" nel colore del giocatore */
 /* Testo schiarito quanto basta per leggersi sul fondo scuro (blu e viola sono scuri) */
 .ae-turn-label[data-kind="p1"] { color: var(--ae-turn-p1); }
-.ae-turn-label[data-kind="p2"] { color: color-mix(in srgb, var(--ae-turn-p2) 85%, white); }
-.ae-turn-label[data-kind="p3"] { color: color-mix(in srgb, var(--ae-turn-p3) 45%, white); }
-.ae-turn-label[data-kind="p4"] { color: color-mix(in srgb, var(--ae-turn-p4) 50%, white); }
+.ae-turn-label[data-kind="p2"] { color: color-mix(in srgb, var(--ae-turn-p2) 85%, var(--schiarisci)); }
+.ae-turn-label[data-kind="p3"] { color: color-mix(in srgb, var(--ae-turn-p3) 45%, var(--schiarisci)); }
+.ae-turn-label[data-kind="p4"] { color: color-mix(in srgb, var(--ae-turn-p4) 50%, var(--schiarisci)); }
 .ae-turn-label[data-kind="wild"] { color: var(--ae-turn-wild); }
 /* Barra dei turni, carte 1/2 e 3/4 ancora da scegliere: la sfumatura si calcola in oklab (in sRGB il colore a metà
    tra blu e viola veniva un blu spento e il centro sembrava spostato a destra) e il bagliore della casella accesa ha i

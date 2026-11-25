@@ -26,14 +26,14 @@
 }
 /* "Non rimovibile" con il simbolo di divieto (lo stesso del box nella fascia piccola) al posto del "!" */
 .queue-note.is-locked::before {
-  width: 13px; height: 13px; background: hsl(356 70% 62%);
+  width: 13px; height: 13px; background: var(--rosso-segno);
   -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M5.6 5.6l12.8 12.8'/></svg>") center / contain no-repeat;
   mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'><circle cx='12' cy='12' r='9'/><path d='M5.6 5.6l12.8 12.8'/></svg>") center / contain no-repeat;
 }
 /* Danno (rosso) o cura (verde) del minion in questo turno, in alto a destra sulla carta grande */
 .queue-hp-tag {
   position: absolute; top: 4%; right: 5%; z-index: 2; padding: 2px 7px; border-radius: 6px;
-  background: rgba(16, 17, 22, .85); font: 700 13px/18px var(--ae-font-ui); font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--ae-bg) 85%, transparent); font: 700 13px/18px var(--ae-font-ui); font-variant-numeric: tabular-nums;
 }
 .queue-hp-tag.is-loss { color: var(--ae-danger); }
 .queue-hp-tag.is-gain { color: var(--ae-heal); }

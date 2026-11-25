@@ -11,18 +11,18 @@
 .ae-lives[hidden] { display: none; }
 .ae-life-box {
   display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: calc(50% - var(--vite-spazio) / 2); height: var(--vite-box-altezza); padding: 0 10px;
-  border: 1px solid var(--ae-border); border-radius: 8px; background: rgba(16, 17, 22, .85); color: inherit; cursor: pointer;
+  border: 1px solid var(--ae-border); border-radius: 8px; background: color-mix(in srgb, var(--ae-bg) 85%, transparent); color: inherit; cursor: pointer;
   font: 700 20px/24px var(--ae-font-ui); font-variant-numeric: tabular-nums;
 }
 .ae-life-box .ae-life-value { flex: 0 0 auto; }
-.ae-life-box.is-zero .ae-life-value { color: #e06c5a; }
+.ae-life-box.is-zero .ae-life-value { color: var(--esito-negativo); }
 /* Box delle vite = solo il numero, a pillola (angoli tondi quanto metà altezza: i lati sono mezzi cerchi) */
 .ae-life-box { justify-content: center; min-width: var(--vite-box-larghezza-minima); padding: 0 var(--vite-box-margine-interno); border-radius: var(--vite-box-raggio); }
 /* Sfondo dei box (Gravehold: immagine scelta nel Menu; nemesi: il suo ritratto), velato per leggere il numero */
 .ae-life-box.has-bg {
-  min-width: var(--vite-box-larghezza-minima-sfondo); background: linear-gradient(rgba(10, 11, 14, .42), rgba(10, 11, 14, .42)), var(--ae-life-bg) center / cover no-repeat;
+  min-width: var(--vite-box-larghezza-minima-sfondo); background: linear-gradient(color-mix(in srgb, var(--velo-vita-sfondo) 42%, transparent), color-mix(in srgb, var(--velo-vita-sfondo) 42%, transparent)), var(--ae-life-bg) center / cover no-repeat;
 }
-.ae-life-box.has-bg .ae-life-value { text-shadow: 0 1px 3px rgba(0, 0, 0, .9), 0 0 2px rgba(0, 0, 0, .9); }
+.ae-life-box.has-bg .ae-life-value { text-shadow: 0 1px 3px color-mix(in srgb, var(--ombra) 90%, transparent), 0 0 2px color-mix(in srgb, var(--ombra) 90%, transparent); }
 /* Sopra ogni box "GRAVEHOLD" / "NEMESIS" alto 7px. I box scendono di 3.8px (padding sopra) e la riga resta alta
    uguale (margine sotto negativo, le carte grandi non cambiano): così fascia piccola → box e box → riga vita/token
    sono lo stesso spazio (scheletro: spazi 5 e 6, 24.5px) */
@@ -41,15 +41,15 @@
 .ae-life-modal {
   width: min(340px, 100%); min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;
   padding: 14px 40px 22px; border: 1px solid var(--ae-border); border-radius: 999px; background: var(--ae-surface);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, .4); color: var(--ae-text, #f3efe6);
+  box-shadow: 0 12px 36px color-mix(in srgb, var(--ombra) 40%, transparent); color: var(--ae-text);
   animation: ae-dialog-in var(--ae-duration-dialog) var(--ae-ease-decelerate);
 }
 .ae-life-modal.has-bg {
-  background: linear-gradient(rgba(10, 11, 14, .5), rgba(10, 11, 14, .5)), var(--ae-life-bg) center / cover no-repeat;
+  background: linear-gradient(color-mix(in srgb, var(--velo-vita-sfondo) 50%, transparent), color-mix(in srgb, var(--velo-vita-sfondo) 50%, transparent)), var(--ae-life-bg) center / cover no-repeat;
 }
 .ae-life-modal-number {
   margin: 0; font: 700 64px/72px var(--ae-font-ui); font-variant-numeric: tabular-nums;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, .9); transition: color .15s;
+  text-shadow: 0 2px 6px color-mix(in srgb, var(--ombra) 90%, transparent); transition: color .15s;
 }
 /* Delta in basso a destra del numero, fuori dal flusso (il numero resta centrato) */
 .ae-life-modal-number { position: relative; }
@@ -60,7 +60,7 @@
 .ae-life-modal-number { color: var(--ae-text); }
 .ae-life-modal-value {
   display: inline-block; padding: 0 22px; border-radius: 999px;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .62) 0%, rgba(0, 0, 0, .42) 48%, rgba(0, 0, 0, 0) 72%);
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--ombra) 62%, transparent) 0%, color-mix(in srgb, var(--ombra) 42%, transparent) 48%, transparent 72%);
 }
 .ae-life-modal-delta { margin-left: 2px; }
 /* Niente velo dietro il numero: contorno attorno alle cifre della vita. Il delta sta a destra delle
@@ -70,8 +70,8 @@
 /* (contorno grigio scuro, solo sulle cifre della vita: il delta non ha contorno) */
 .ae-life-modal-number { text-shadow: none; }
 .ae-life-modal-value {
-  text-shadow: -2px -2px 0 #2b2b2e, 0 -2px 0 #2b2b2e, 2px -2px 0 #2b2b2e, 2px 0 0 #2b2b2e, 2px 2px 0 #2b2b2e,
-    0 2px 0 #2b2b2e, -2px 2px 0 #2b2b2e, -2px 0 0 #2b2b2e;
+  text-shadow: -2px -2px 0 var(--cifre-vita-contorno), 0 -2px 0 var(--cifre-vita-contorno), 2px -2px 0 var(--cifre-vita-contorno), 2px 0 0 var(--cifre-vita-contorno), 2px 2px 0 var(--cifre-vita-contorno),
+    0 2px 0 var(--cifre-vita-contorno), -2px 2px 0 var(--cifre-vita-contorno), -2px 0 0 var(--cifre-vita-contorno);
 }
 .ae-life-modal-delta { text-shadow: none; }
 .ae-life-modal-delta { top: 7px; bottom: auto; margin-left: 10px; }
@@ -87,9 +87,9 @@
    diventa rosso (vita scesa) o verde (salita). Sul box la pagina non scorre (touch-action: none) */
 .ae-life-box { touch-action: none; -webkit-user-select: none; user-select: none; transition: scale .15s ease, border-color .15s ease, box-shadow .15s ease; }
 .ae-life-box .ae-life-value { display: inline-flex; clip-path: inset(0 -6px); }
-.ae-life-box.is-scrubbing { scale: 1.08; border-color: var(--ae-gold); box-shadow: 0 0 10px rgba(223, 174, 89, .45); cursor: ns-resize; }
-.ae-life-box.is-scrubbing.is-loss { border-color: #f08a78; box-shadow: 0 0 10px rgba(240, 138, 120, .5); }
-.ae-life-box.is-scrubbing.is-gain { border-color: #8fd39a; box-shadow: 0 0 10px rgba(143, 211, 154, .5); }
+.ae-life-box.is-scrubbing { scale: 1.08; border-color: var(--ae-gold); box-shadow: 0 0 10px color-mix(in srgb, var(--ae-gold) 45%, transparent); cursor: ns-resize; }
+.ae-life-box.is-scrubbing.is-loss { border-color: var(--vita-perdita); box-shadow: 0 0 10px color-mix(in srgb, var(--vita-perdita) 50%, transparent); }
+.ae-life-box.is-scrubbing.is-gain { border-color: var(--vita-guadagno); box-shadow: 0 0 10px color-mix(in srgb, var(--vita-guadagno) 50%, transparent); }
 @media (prefers-reduced-motion: reduce) {
   .ae-life-box { transition: none; }
 }
@@ -98,30 +98,30 @@
 .ae-life-num { position: relative; display: inline-flex; }
 .ae-life-box-delta {
   position: absolute; left: 100%; top: 2.75px; margin-left: 3px; font-size: 11px; line-height: 13px; white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .9); pointer-events: none;
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--ombra) 90%, transparent); pointer-events: none;
 }
 .ae-life-box-delta:empty { display: none; }
-.ae-life-box.is-loss .ae-life-box-delta { color: #f08a78; }
-.ae-life-box.is-gain .ae-life-box-delta { color: #8fd39a; }
+.ae-life-box.is-loss .ae-life-box-delta { color: var(--vita-perdita); }
+.ae-life-box.is-gain .ae-life-box-delta { color: var(--vita-guadagno); }
 /* Titolo in Cinzel sopra la pillola (fuori dalla forma, ma dentro la finestra per l'animazione) */
 .ae-life-modal { position: relative; }
 .ae-life-modal-title {
   position: absolute; left: 0; right: 0; bottom: calc(100% + 12px); margin: 0; text-align: center;
   font: 600 26px/32px var(--ae-font-display); letter-spacing: .04em; color: var(--ae-text);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, .85); pointer-events: none;
+  text-shadow: 0 2px 8px color-mix(in srgb, var(--ombra) 85%, transparent); pointer-events: none;
 }
 /* Ingrandimento dal box (animato da JS): niente animazione d'entrata standard */
 .ae-life-modal.is-zooming { animation: none; }
-.ae-life-modal-number.is-loss .ae-life-modal-delta { color: #f08a78; }
-.ae-life-modal-number.is-gain .ae-life-modal-delta { color: #8fd39a; }
+.ae-life-modal-number.is-loss .ae-life-modal-delta { color: var(--vita-perdita); }
+.ae-life-modal-number.is-gain .ae-life-modal-delta { color: var(--vita-guadagno); }
 .ae-life-modal-controls { display: flex; align-items: center; gap: 8px; }
 .ae-life-step-gap { width: 18px; flex: 0 0 auto; }
 .ae-life-step {
-  width: 52px; height: 44px; padding: 0; border: 1px solid rgba(243, 239, 230, .55); border-radius: 12px;
-  background: rgba(16, 17, 22, .72); color: inherit; font: 700 19px/1 var(--ae-font-ui); cursor: pointer;
+  width: 52px; height: 44px; padding: 0; border: 1px solid color-mix(in srgb, var(--contorno-passo-vita) 55%, transparent); border-radius: 12px;
+  background: color-mix(in srgb, var(--ae-bg) 72%, transparent); color: inherit; font: 700 19px/1 var(--ae-font-ui); cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
-.ae-life-step:active { background: rgba(223, 174, 89, .35); }
+.ae-life-step:active { background: color-mix(in srgb, var(--ae-gold) 35%, transparent); }
 .ae-life-step:disabled { opacity: .35; cursor: default; }
 @media (max-width: 359px) {
   .ae-life-modal { padding-inline: 28px; }

@@ -28,7 +28,7 @@ body { overflow: hidden; }
    Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro
    (partita.css, in base a data-turno). Velo scuro al 50%. Stato precedente (due sfondi): tag git v123-prima-sfondo-unico */
 .ae-shell {
-  background: linear-gradient(rgba(16, 17, 22, .5), rgba(16, 17, 22, .5)), var(--ae-battle-bg, url('/Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
+  background: linear-gradient(color-mix(in srgb, var(--ae-bg) 50%, transparent), color-mix(in srgb, var(--ae-bg) 50%, transparent)), var(--ae-battle-bg, url('/Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
   transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
 }
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,185 @@
+/* palette.css: TUTTI i colori dell'app, in un solo file. Fuori da qui nessun CSS scrive un colore (npm run check lo
+   controlla con Stylelint): le regole usano solo i ruoli.
+   Due strati:
+   - colori base (--colore-*): un nome che dice il colore e un valore. Sono quelli che si cambiano (anche dal pannello
+     "Regolazioni" della Modalità test, che li legge da qui: il commento a destra è l'etichetta, la riga di commento "--- titolo ---" il gruppo).
+     Un valore di 8 cifre (#rrggbbaa) ha una trasparenza propria;
+   - ruoli: dicono a cosa serve il colore e puntano a un colore base. Il commento dice dove si vede.
+   Le trasparenze di un ruolo nei CSS si scrivono color-mix(in srgb, var(--ruolo) 60%, transparent). Per un colore nuovo:
+   prima il colore base qui sotto, poi un ruolo (vedi CONTESTO_SVILUPPO.md, sezione 6 "Colori").
+   Elementi: nessuno (solo variabili su :root). Usato da: tutti i CSS di src/.
+   Ordine: nessuna dipendenza. Va importato per primo tra i CSS con variabili (src/stili/indice.ts). */
+
+:root {
+  /* --- Neutri: nero e bianco --- */
+  --colore-nero: #000000;               /* Nero puro: ombre, velature e scritte scure sopra i colori dei giocatori */
+  --colore-bianco: #ffffff;             /* Bianco puro: scritte sopra i colori, righe chiare, schiariture */
+
+  /* --- Blu-notte: sfondi e superfici (dal più scuro al più chiaro) --- */
+  --colore-notte-2: #08090c;            /* Notte 2: velo dietro la finestra del mazzo dei turni */
+  --colore-notte-3: #0a0b0e;            /* Notte 3: velo sullo sfondo dei box della vita */
+  --colore-notte: #101116;              /* Notte: sfondo dell'app e velo scuro dei pannelli */
+  --colore-notte-4: #111218;            /* Notte 4: bordo dei pallini giocatore nel mazzo dei turni */
+  --colore-notte-5: #14151b;            /* Notte 5: testo sul pulsante pieno, terzo bordo della pila di carte */
+  --colore-notte-6: #15161c;            /* Notte 6: fondo della finestra del mazzo dei turni e fondo dei pulsanti con il colore del giocatore */
+  --colore-grafite: #1b1d24;            /* Grafite: pannelli, menu, finestre */
+  --colore-ardesia-scura: #242630;      /* Ardesia scura: mezzo del dorso della carta senza immagine */
+  --colore-ardesia: #252831;            /* Ardesia: pulsanti, campi, carte senza immagine */
+  --colore-ardesia-media: #2a2c34;      /* Ardesia media: primo bordo della pila di carte */
+  --colore-grigio-notte: #3a3d48;       /* Grigio notte: bordi */
+  --colore-grigio-notte-2: #3d404a;     /* Grigio notte 2: secondo bordo chiaro della pila di carte */
+  --colore-acciaio: #49516b;            /* Acciaio: centro del dorso della carta senza immagine */
+  --colore-grigio-ardesia: #555865;     /* Grigio ardesia: primo bordo chiaro della pila di carte */
+
+  /* --- Grigi e bruni --- */
+  --colore-carbone: #26262b;            /* Carbone: primo grigio a righe del segnaposto della carta presa */
+  --colore-carbone-2: #2b2b2e;          /* Carbone 2: contorno delle cifre grandi della vita */
+  --colore-carbone-3: #34343b;          /* Carbone 3: secondo grigio a righe del segnaposto della carta presa */
+  --colore-grigio-caldo: #8a8780;       /* Grigio caldo: etichetta NUOVA grigia sulla fascia piccola */
+  --colore-grigio-chiaro: #d4d4d8;      /* Grigio chiaro: segnaposto della carta che si sta trascinando */
+  --colore-bronzo: #20160b;             /* Bronzo scuro: scritte sopra l'oro */
+  --colore-bruno: #3a1405;              /* Bruno: numero sopra la fiamma in testata */
+  --colore-bruno-oro: #3c280a;          /* Bruno dorato: centro del velo del titolo Tier */
+
+  /* --- Chiari: testi --- */
+  --colore-avorio: #ece8de;             /* Avorio: contorni e linee chiare, caselle spente */
+  --colore-perla: #f4f1e9;              /* Perla: testo principale */
+  --colore-perla-2: #f3efe6;            /* Perla 2: bordo dei pulsanti della finestra della vita */
+  --colore-nebbia: #bdc1cd;             /* Nebbia: testo secondario */
+  --colore-nebbia-scura: #9297a4;       /* Nebbia scura: testo discreto */
+  --colore-sabbia-grigia: #dcd8d0;      /* Sabbia grigia: colore delle carte jolly */
+
+  /* --- Ori, ambra e arancio --- */
+  --colore-oro: #dfae59;                /* Oro: colore di accento dell'app */
+  --colore-oro-vivo: #ffce73;           /* Oro vivo: selezione da tastiera */
+  --colore-oro-pallido: #ffd98a;        /* Oro pallido: contorno acceso dei cerchi del mazzo dei turni */
+  --colore-oro-crema: #ffe2a6;          /* Oro crema: scritta della zona su cui si rilascia la carta */
+  --colore-oro-sabbia: #f3cf86;         /* Oro sabbia: titolo "Tier" */
+  --colore-ambra: #e9a23b;              /* Ambra: scritta TEST in testata */
+  --colore-arancio-oro: #f5a23a;        /* Arancio oro: linea della guida di posizionamento */
+  --colore-arancio: #ff9f2e;            /* Arancio: pallino della guida di posizionamento */
+  --colore-giallo-fiamma: #ffc43c;      /* Giallo fiamma: bagliore della carta nuova e lampo delle pile */
+  --colore-ambra-viva: #ffba48;         /* Ambra viva: alone dei cerchi di posizione del mazzo dei turni */
+  --colore-giallo-lampo: #ffc850;       /* Giallo lampo: bagliore dei token che si tolgono */
+  --colore-arancio-chiaro: #ffb040;     /* Arancio chiaro: riempimento dei cerchi di posizione */
+  --colore-arancio-vivo: #ffa032;       /* Arancio vivo: alone della guida di posizionamento */
+  --colore-giallo-chiaro: #ffe082;      /* Giallo chiaro: centro dei cerchi di posizione */
+  --colore-giallo-crema: #ffeeaa;       /* Giallo crema: centro del cerchio di posizione acceso */
+  --colore-crema: #fff0b4;              /* Crema: alone del numero sulla fiamma */
+  --colore-oro-rosato: #f0be69;         /* Oro rosato: contorno dei cerchi di posizione */
+  --colore-rame: #df7828;               /* Rame: alone esterno del titolo "Tier" */
+
+  /* --- Rossi --- */
+  --colore-rosso: #d95e5c;              /* Rosso: pericolo */
+  --colore-rosso-corallo: #e06c5a;      /* Rosso corallo: vita a zero, sconfitta */
+  --colore-salmone: #f08a78;            /* Salmone: vita persa */
+  --colore-rosa-rosso: #f08a88;         /* Rosa rosso: scritte di errore e di uscita */
+  --colore-rosso-vivo: #d92828;         /* Rosso vivo: inizio del lampeggio della carta d'attacco */
+  --colore-rosso-allarme: #e62828;      /* Rosso allarme: bagliore della carta d'attacco da risolvere */
+  --colore-rosso-turno-scuro: #a92d35;  /* Rosso turno scuro: carta turno della nemesi */
+  --colore-rosso-turno-chiaro: #e28389;  /* Rosso turno chiaro: scritta della nemesi nella barra dei turni */
+  --colore-rosso-nemesi: #cc3e47;       /* Rosso nemesi: carta turno della nemesi nel mazzo dei turni */
+  --colore-rosso-segno: #e25a63;        /* Rosso segno: segno di divieto e icona rossa */
+
+  /* --- Verdi --- */
+  --colore-verde: #59c98c;              /* Verde: cura */
+  --colore-verde-chiaro: #8fd39a;       /* Verde chiaro: vita guadagnata */
+
+  /* --- Colori dei giocatori --- */
+  --colore-oliva: #86811d;              /* Oliva: giocatore 1 */
+  --colore-ocra: #cf892b;               /* Ocra: giocatore 2 */
+  --colore-petrolio: #007591;           /* Petrolio: giocatore 3 */
+  --colore-viola: #773067;              /* Viola: giocatore 4 */
+
+  /* --- Con trasparenza --- */
+  --colore-velo: #040508d1;             /* Velo: dietro finestre e menu aperti (82% di opacità) */
+}
+
+:root {
+  /* --- Ruoli generali (nomi del kit di design) --- */
+  --ae-bg: var(--colore-notte);                         /* sfondo dell'app, velo scuro dei pannelli, sfumature in alto e in basso della pagina iniziale */
+  --ae-surface: var(--colore-grafite);                  /* pannelli, menu e finestre; fondo del dorso nel mazzo dei turni */
+  --ae-surface-raised: var(--colore-ardesia);           /* pulsanti, campi e carte senza immagine */
+  --ae-border: var(--colore-grigio-notte);              /* bordi di pannelli, pulsanti e caselle */
+  --ae-text: var(--colore-perla);                       /* testo normale; bordo della carta della nemesi */
+  --ae-text-muted: var(--colore-nebbia);                /* testo secondario (descrizioni, simboli sbiaditi) */
+  --ae-text-quiet: var(--colore-nebbia-scura);          /* testo discreto (indicazioni, etichette) */
+  --ae-gold: var(--colore-oro);                         /* accento: pulsanti principali, evidenziazioni, bordi attivi, bagliori */
+  --ae-danger: var(--colore-rosso);                     /* pericolo: Esci, Rimuovi, bordi rossi */
+  --ae-heal: var(--colore-verde);                       /* cura */
+  --ae-focus: var(--colore-oro-vivo);                   /* anello di selezione da tastiera (focus) */
+  --ae-on-primary: var(--colore-notte-5);               /* scritta sopra il pulsante pieno */
+  --ae-scrim: var(--colore-velo);                       /* velo scuro dietro finestre e menu aperti */
+
+  /* --- Colori dei giocatori e della nemesi (barra dei turni, carte turno, pulsanti) --- */
+  --ae-turn-p1: var(--colore-oliva);                    /* giocatore 1: casella della barra, carta turno, pulsante di fine turno */
+  --ae-turn-p2: var(--colore-ocra);                     /* giocatore 2: come sopra */
+  --ae-turn-p3: var(--colore-petrolio);                 /* giocatore 3: come sopra */
+  --ae-turn-p4: var(--colore-viola);                    /* giocatore 4: come sopra */
+  --ae-turn-wild: var(--colore-sabbia-grigia);          /* carta jolly: casella, carta turno, pulsante */
+  --ae-turn-red: var(--colore-rosso-turno-scuro);       /* nemesi: casella della barra dei turni */
+  --ae-turn-red-text: var(--colore-rosso-turno-chiaro);  /* nemesi: scritta sotto la casella accesa della barra */
+  --ae-turn-off: color-mix(in srgb, var(--colore-avorio) 14%, transparent);  /* caselle della barra dei turni spente o da estrarre */
+  --carta-turno-nemesi: var(--colore-rosso-nemesi);     /* carta della nemesi nella finestra del mazzo dei turni */
+  --nero-giocatore: var(--colore-nero);                 /* numeri, scritte e bordi sopra le carte turno colorate; scurisce il colore del giocatore */
+  --bordo-pallino-giocatore: var(--colore-notte-4);     /* bordo del pallino con il numero del giocatore */
+  --mescola-scuro-giocatore: var(--colore-notte-6);     /* scurisce i pulsanti con il colore del giocatore */
+  --finestra-sfondo: var(--colore-notte-6);             /* fondo della finestra del mazzo dei turni */
+  --testo-su-colore: var(--colore-bianco);              /* scritta bianca sopra un colore pieno (carta jolly, pulsante in pressione) */
+  --schiarisci: var(--colore-bianco);                   /* bianco mescolato per schiarire i colori dei giocatori nelle sigle */
+  --striscia-chiara: var(--colore-bianco);              /* righe chiare della casella jolly della barra dei turni */
+
+  /* --- Ombre e veli --- */
+  --ombra: var(--colore-nero);                          /* ombre di carte, pulsanti e finestre; veli scuri sulle immagini; contorno scuro dei testi */
+  --maschera: var(--colore-nero);                       /* sfumatura dell'immagine nel menu iniziale (conta solo la trasparenza) */
+  --velo-finestra: var(--colore-notte-2);               /* velo dietro la finestra del mazzo dei turni */
+  --velo-vita-sfondo: var(--colore-notte-3);            /* velo sull'immagine di sfondo dei box della vita */
+  --velo-tier-caldo: var(--colore-bruno-oro);           /* centro caldo del velo con il titolo Tier */
+
+  /* --- Contorni e linee --- */
+  --contorno-chiaro: var(--colore-avorio);              /* linee chiare: bordo delle carte, caselle vuote tratteggiate, anelli intorno alle carte */
+  --contorno-bianco: var(--colore-bianco);              /* tratteggio delle zone di rilascio del mazzo dei turni */
+  --contorno-passo-vita: var(--colore-perla-2);         /* bordo dei pulsanti -5 -1 +1 della finestra della vita */
+  --pila-carte-1: var(--colore-ardesia-media);          /* primo bordo della pila di carte (mazzo, scarti, Crea mazzo) */
+  --pila-carte-2: var(--colore-grafite);                /* secondo bordo della pila di carte */
+  --pila-carte-3: var(--colore-notte-5);                /* terzo bordo della pila di carte in Crea mazzo */
+  --pila-carte-chiara-1: var(--colore-grigio-ardesia);  /* primo bordo chiaro del ventaglio di Crea mazzo */
+  --pila-carte-chiara-2: var(--colore-grigio-notte-2);  /* secondo bordo chiaro del ventaglio di Crea mazzo */
+  --carta-dorso-centro: var(--colore-acciaio);          /* centro della carta senza immagine */
+  --carta-dorso-medio: var(--colore-ardesia-scura);     /* zona intermedia della carta senza immagine */
+  --carta-dorso-bordo: var(--colore-notte);             /* bordo scuro della carta senza immagine */
+  --cifre-vita-contorno: var(--colore-carbone-2);       /* contorno delle cifre grandi della vita */
+  --segnaposto-carta-1: var(--colore-carbone);          /* primo grigio del segnaposto a righe della carta presa */
+  --segnaposto-carta-2: var(--colore-carbone-3);        /* secondo grigio del segnaposto a righe della carta presa */
+  --segnaposto-trascinata: var(--colore-grigio-chiaro);  /* segnaposto chiaro della carta che si sta trascinando */
+  --etichetta-nuova-grigia: var(--colore-grigio-caldo);  /* etichetta NUOVA sulla fascia piccola durante la risoluzione */
+
+  /* --- Testi particolari --- */
+  --testo-su-oro: var(--colore-bronzo);                 /* scritta e segno di spunta sopra l'oro (pulsanti dorati) */
+  --fiamma-numero: var(--colore-bruno);                 /* numero sopra la fiamma della testata */
+  --fiamma-alone: var(--colore-crema);                  /* alone del numero sopra la fiamma */
+  --etichetta-test: var(--colore-ambra);                /* scritta TEST in testata */
+  --errore-testo: var(--colore-rosa-rosso);             /* scritte di errore e di uscita (Esci, errore dello scenario) */
+  --esito-negativo: var(--colore-rosso-corallo);        /* vita a zero e titolo della sconfitta */
+  --vita-perdita: var(--colore-salmone);                /* cifre e bordo quando la vita scende */
+  --vita-guadagno: var(--colore-verde-chiaro);          /* cifre e bordo quando la vita sale */
+  --rosso-segno: var(--colore-rosso-segno);             /* icona rossa di divieto e della nemesi */
+  --tier-titolo: var(--colore-oro-sabbia);              /* titolo "Tier" del banner */
+  --tier-alone: var(--colore-rame);                     /* alone esterno del titolo "Tier" */
+
+  /* --- Bagliori e guide di posizionamento --- */
+  --bagliore-giallo: var(--colore-giallo-fiamma);       /* alone giallo della carta nuova e lampo delle pile */
+  --token-bagliore: var(--colore-giallo-lampo);         /* bagliore dei token da togliere */
+  --attacco-alone-debole: var(--colore-rosso-vivo);     /* lampeggio rosso della carta d'attacco (inizio) */
+  --attacco-alone: var(--colore-rosso-allarme);         /* lampeggio rosso della carta d'attacco da risolvere */
+  --zona-contorno-acceso: var(--colore-oro-pallido);    /* contorno acceso dei cerchi di posizione e delle zone di rilascio */
+  --zona-testo-acceso: var(--colore-oro-crema);         /* scritta della zona su cui si rilascia la carta */
+  --zona-cerchio-contorno: var(--colore-oro-rosato);    /* contorno dei cerchi Cima e Fondo */
+  --zona-cerchio-centro: var(--colore-giallo-chiaro);   /* centro dei cerchi di posizione */
+  --zona-cerchio-riempimento: var(--colore-arancio-chiaro);  /* zona intermedia dei cerchi di posizione */
+  --zona-cerchio-acceso: var(--colore-giallo-crema);    /* centro del cerchio di posizione acceso */
+  --zona-alone: var(--colore-ambra-viva);               /* alone dei cerchi di posizione accesi */
+  --guida-linea: var(--colore-arancio-oro);             /* linea verticale della guida di posizionamento */
+  --guida-pallino: var(--colore-arancio);               /* pallino della guida di posizionamento */
+  --guida-alone: var(--colore-arancio-vivo);            /* alone della guida di posizionamento */
+}

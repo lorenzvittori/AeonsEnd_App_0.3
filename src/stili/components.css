@@ -111,16 +111,16 @@ button:disabled { cursor: not-allowed; }
 .ae-card-art {
   display: block; position: relative; aspect-ratio: 63 / 88; width: 100%;
   /* bordo chiaro, tendente al bianco */
-  border: 2px solid rgba(236, 232, 222, .85); border-radius: 5% / 3.58%; overflow: hidden; background: var(--ae-surface-raised);
+  border: 2px solid color-mix(in srgb, var(--contorno-chiaro) 85%, transparent); border-radius: 5% / 3.58%; overflow: hidden; background: var(--ae-surface-raised);
 }
 .ae-card-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .ae-card-art--placeholder {
-  background: radial-gradient(ellipse at 50% 28%, #49516b 0%, #242630 46%, #101116 100%);
+  background: radial-gradient(ellipse at 50% 28%, var(--carta-dorso-centro) 0%, var(--carta-dorso-medio) 46%, var(--carta-dorso-bordo) 100%);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px;
   color: var(--ae-gold); text-align: center;
 }
 .ae-card-art--placeholder::before {
-  content: ''; position: absolute; inset: 7px; border: 1px solid rgba(223,174,89,.55); border-radius: 4px; pointer-events: none;
+  content: ''; position: absolute; inset: 7px; border: 1px solid color-mix(in srgb, var(--ae-gold) 55%, transparent); border-radius: 4px; pointer-events: none;
 }
 .ae-card-art--placeholder strong { font: 600 15px/1.3 var(--ae-font-display); max-width: 96%; overflow-wrap: anywhere; }
 .ae-card-art--placeholder small { font: 600 12px/1.3 var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; }
@@ -129,7 +129,7 @@ button:disabled { cursor: not-allowed; }
 /* Etichetta NUOVA: oro, fuori dalla scansione, accanto all'angolo in alto a destra */
 .ae-new-tag {
   position: absolute; top: 33px; right: -2px; z-index: 2;
-  border-radius: 7px; padding: 4px 6px; background: var(--ae-gold); color: #20160B;
+  border-radius: 7px; padding: 4px 6px; background: var(--ae-gold); color: var(--testo-su-oro);
   font: 700 11px/14px var(--ae-font-ui); letter-spacing: .05em; text-transform: uppercase; pointer-events: none;
 }
 
@@ -145,7 +145,7 @@ button:disabled { cursor: not-allowed; }
 .ae-queue-item .ae-card-art { box-shadow: var(--ae-ring, 0 0 0 transparent), var(--ae-glow, 0 0 0 transparent); }
 .ae-queue-item.is-new .ae-card-art {
   border-color: var(--ae-gold);
-  --ae-glow: 0 0 calc(var(--cw) * .1) calc(var(--cw) * .02) rgba(255, 196, 60, .85);
+  --ae-glow: 0 0 calc(var(--cw) * .1) calc(var(--cw) * .02) color-mix(in srgb, var(--bagliore-giallo) 85%, transparent);
 }
 .ae-queue-item[aria-current='true'] .ae-card-art { border-color: var(--ae-danger); --ae-ring: 0 0 0 1px var(--ae-danger); }
 .ae-queue-item[data-viewed='true'] .ae-card-art { border-color: var(--ae-text); --ae-ring: 0 0 0 1px var(--ae-text); }
@@ -172,7 +172,7 @@ button:disabled { cursor: not-allowed; }
   width: min(560px, 100%); max-height: calc(100dvh - 24px - var(--ae-safe-top) - var(--ae-safe-bottom)); overflow: auto;
   display: flex; flex-direction: column; gap: 12px;
   border-radius: var(--ae-radius-lg); border: 1px solid var(--ae-border); background: var(--ae-surface);
-  padding: 16px; box-shadow: 0 12px 36px rgba(0,0,0,.30);
+  padding: 16px; box-shadow: 0 12px 36px color-mix(in srgb, var(--ombra) 30%, transparent);
   animation: ae-dialog-in var(--ae-duration-dialog) var(--ae-ease-decelerate);
 }
 .ae-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
@@ -231,7 +231,7 @@ button:disabled { cursor: not-allowed; }
 @keyframes ae-drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (max-width: 359px) { .ae-discard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 900px) {
-  .ae-drawer { left: auto; width: 420px; border-left: 1px solid var(--ae-border); box-shadow: 0 12px 36px rgba(0,0,0,.30); }
+  .ae-drawer { left: auto; width: 420px; border-left: 1px solid var(--ae-border); box-shadow: 0 12px 36px color-mix(in srgb, var(--ombra) 30%, transparent); }
 }
 
 /* --- Toast di conferma --- */
@@ -239,7 +239,7 @@ button:disabled { cursor: not-allowed; }
   position: fixed; left: 50%; bottom: calc(150px + var(--ae-safe-bottom)); z-index: 70;
   max-width: min(480px, calc(100vw - 32px)); padding: 12px 16px;
   border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md); background: var(--ae-surface-raised);
-  box-shadow: 0 12px 36px rgba(0,0,0,.30); font: 500 14px/20px var(--ae-font-ui); text-align: center;
+  box-shadow: 0 12px 36px color-mix(in srgb, var(--ombra) 30%, transparent); font: 500 14px/20px var(--ae-font-ui); text-align: center;
   transform: translateX(-50%); animation: ae-toast-in var(--ae-duration-value) ease-out;
 }
 .ae-toast.is-leaving { animation: ae-toast-out var(--ae-duration-value) ease-out forwards; }

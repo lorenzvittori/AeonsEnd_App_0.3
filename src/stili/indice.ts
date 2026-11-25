@@ -2,7 +2,7 @@
 // ordine fisso. Nel CSS a parità di specificità vince la regola che viene dopo: l'ordine qui sotto è quello della
 // cascata e non dipende dall'ordine in cui i moduli .ts si importano a vicenda.
 // L'ordine:
-// - token (design-tokens.css), componenti di base (components.css), struttura della pagina (base.css) e regole comuni
+// - palette (palette.css: tutti i colori, per prima), token (design-tokens.css), componenti di base (components.css), struttura della pagina (base.css) e regole comuni
 //   (comuni.css): prima di tutto, le schermate li ritoccano;
 // - le misure e la mappa delle 7 zone della schermata "partita" (partita-misure.css, partita.css): subito dopo la
 //   struttura della pagina, prima dei pezzi che stanno nelle zone;
@@ -11,6 +11,7 @@
 //   file di un altro pezzo per l'ordine lo dicono nel loro commento ("Ordine: regola di ...").
 // Dipende da: i file .css di src/stili/ e di src/ui/. Usato da: main.ts (primo import).
 
+import './palette.css';
 import './design-tokens.css';
 import './components.css';
 import './base.css';
