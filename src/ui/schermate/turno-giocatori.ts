@@ -23,7 +23,7 @@ import { el, query, queryAll } from '../dom.ts';
 import { passaAlTurnoNemesi, richiediRidisegno } from '../ridisegno.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { playTurnShuffle, SHUFFLE_FADE_MS, turnTrack } from '../componenti/barra-turni.ts';
-import { sharedCardWidth, sizeColumn, spazioInterattivi, spazioVicine } from '../componenti/misure.ts';
+import { sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
 
 // Turno giocatori: in alto la fascia piccola con tutta la coda (#rail, la stessa del turno nemesi), sotto le carte
@@ -151,16 +151,13 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
 // Carte grandi: alte quanto lo spazio disponibile, ma mai così larghe da nascondere del tutto la carta successiva
 export function sizeQueue(): void {
   if (queueViewport.hidden) return;
-  // I comandi sono nella zona 6, sotto: qui si lascia libero lo stesso spazio sopra la carta, come il turno nemesi
-  // (sizeFocus) fa sopra e sotto, così la carta ha la stessa posizione e dimensione nei due turni
-  const riserva = spazioInterattivi();
-  sizeColumn(queueViewport, riserva);
-  const style = getComputedStyle(queueViewport);
-  const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  // I comandi sono nella zona 6, sotto (c'è sempre, anche nel turno nemesi): la zona 5 è alta uguale nei due turni e la
+  // carta ha la stessa misura e posizione (sharedCardWidth)
+  sizeColumn(queueViewport);
   // Stessa regola del carosello del turno nemesi (sizeFocus): la carta riempie l'altezza, ai lati si vede un pezzo delle
   // vicine (stessa larghezza della carta)
   const peekRoom = partita.queue.length > 1 ? spazioVicine('giocatori') : 0;
-  const width = Math.max(100, sharedCardWidth(queueViewport.clientWidth, queueViewport.clientHeight, padY, peekRoom, riserva));
+  const width = Math.max(100, sharedCardWidth(queueViewport.clientWidth, queueViewport.clientHeight, peekRoom));
   queueViewport.style.setProperty('--ae-queue-card', width + 'px');
   // I comandi della zona 6 sono larghi quanto la carta
   zonaInterattivi.style.setProperty('--ae-queue-card', width + 'px');

@@ -25,34 +25,31 @@ export function spazioVicine(turno: TurnoCarte): number {
   return 2 * (misura('--carte-grandi-vicine-visibili') + misura(`--carte-grandi-spazio-${turno}`));
 }
 
-// Spazio della zona 6 (comandi della carta al centro, nel turno giocatori e in "Crea mazzo"): distanza dalle carte grandi + altezza
-export function spazioInterattivi(): number {
-  return misura('--interattivi-distanza') + misura('--interattivi-altezza');
+// Altezza dell'area delle carte (coda o carosello) senza il padding in basso (nel carosello è lo spazio per l'alone)
+export function altezzaArea(box: HTMLElement): number {
+  return box.clientHeight - parseFloat(getComputedStyle(box).paddingBottom);
 }
 
-// Larghezza della carta grande: UNA sola regola per turno giocatori e turno nemesi, così sono sempre uguali.
-// Sopra la carta la riga vita/token (con il suo spazio); il blocco è centrato in verticale. riserva: spazio da lasciare
-// libero nell'area misurata (turno nemesi: lo spazio dei comandi sopra e sotto la carta; turno giocatori: solo sopra,
-// sotto c'è la zona 6), così le carte hanno la stessa misura nei due turni
-export function sharedCardWidth(boxW: number, boxH: number, padY: number, peekRoom: number, riserva = 0): number {
+// Larghezza della carta grande: UNA sola regola per turno giocatori e turno nemesi (la zona 6 c'è sempre, quindi la zona 5
+// è alta uguale nei due turni). boxH è l'altezza dell'area delle carte, già senza lo spazio sopra della zona
+// (--carte-grandi-spazio-sopra, che è il padding della zona 5): la carta riempie quello che resta dopo la riga vita/token
+// e il suo spazio. Se è la larghezza a limitare, l'altezza che avanza si divide con i due pesi --carte-grandi-avanzo-...
+export function sharedCardWidth(boxW: number, boxH: number, peekRoom: number): number {
   const ratio = rapportoCarta();
   const statusH = misura('--carte-grandi-riga-stato-altezza');
   const statusGap = misura('--carte-grandi-riga-stato-distanza');
   const byWidth = boxW - 2 * misura('--carte-grandi-margine-lato') - peekRoom;
-  const byHeight = (boxH - padY - statusH - statusGap) / ratio;
-  const byReserve = (boxH - riserva - statusH - statusGap) / ratio;
-  return Math.floor(Math.min(byWidth, byHeight, byReserve));
+  const byHeight = (boxH - statusH - statusGap) / ratio;
+  return Math.floor(Math.min(byWidth, byHeight));
 }
 
 // Tablet e desktop (da 768px): la partita sta in una colonna al centro (--ae-col su .ae-shell, base.css). La colonna
 // è larga quanto la carta grande (misurata solo dall'altezza: in larghezza c'è spazio) più un pezzo delle vicine
 // (--colonna-vicine-visibili per lato), mai meno di --colonna-larghezza-minima né più dello schermo. Sotto i 768px la
 // colonna è lo schermo intero.
-export function sizeColumn(box: HTMLElement, riserva = 0): void {
+export function sizeColumn(box: HTMLElement): void {
   if (window.innerWidth < 768) { app.style.removeProperty('--ae-col'); return; }
-  const style = getComputedStyle(box);
-  const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-  const card = sharedCardWidth(Infinity, box.clientHeight, padY, 0, riserva);
+  const card = sharedCardWidth(Infinity, altezzaArea(box), 0);
   if (!isFinite(card) || card <= 0) return;
   // La colonna è una sola per i due turni: sempre con lo spazio del carosello nemesi (così non cambia da un turno all'altro)
   const peek = misura('--colonna-vicine-visibili') + misura('--carte-grandi-spazio-nemesi');

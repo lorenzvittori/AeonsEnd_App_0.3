@@ -12,7 +12,7 @@ import { cancelFastScroll, FAST_SCROLL_MS, fastScrollTo, lockFor, scrollItemInto
 import { cardArt, hasHp, nextCardItem, nextSlotItem, placeholderArt, queueItem, statusText,
   tokenIcons } from '../componenti/componenti.ts';
 import { button, loadImage } from '../componenti/dialoghi.ts';
-import { misura, rapportoCarta, sharedCardWidth, sizeColumn, spazioInterattivi, spazioVicine } from '../componenti/misure.ts';
+import { altezzaArea, misura, rapportoCarta, sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
 import { disegnaPulsantePrincipale } from '../componenti/pulsante-principale.ts';
 import { dockDeck } from '../componenti/testata.ts';
 import { el, icon, query } from '../dom.ts';
@@ -268,22 +268,18 @@ export function sizeFocus(recentre = true): void {
   if (focusEl.hidden || !track) return;
   const slide = track.querySelector('.ae-focus-slide');
   if (!slide) return;
-  // Il turno nemesi non ha la zona 6: il carosello è più alto e lascia libero lo spazio dei comandi sotto la carta e,
-  // per centrarla, sopra; nel turno giocatori uno dei due è la zona 6 (sizeQueue): le carte hanno la stessa misura
-  const riserva = 2 * spazioInterattivi();
-  sizeColumn(focusEl, riserva);
-  const style = getComputedStyle(focusEl);
-  const padY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  // La zona 6 c'è anche nel turno nemesi (vuota e invisibile): la zona 5 è alta uguale e la carta ha la stessa misura
+  // del turno giocatori (sizeQueue)
+  sizeColumn(focusEl);
   const peekRoom = partita.queue.length > 1 ? spazioVicine('nemesi') : 0;
-  const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, focusEl.clientHeight, padY, peekRoom, riserva));
+  const width = Math.max(40, sharedCardWidth(focusEl.clientWidth, altezzaArea(focusEl), peekRoom));
   focusEl.style.setProperty('--ae-focus-w', width + 'px');
   focusEl.style.setProperty('--cw', width + 'px');
   track.style.paddingInline = Math.max(0, (focusEl.clientWidth - width) / 2) + 'px';
   // Carta da pescare e carta pescata: più grandi (fino a --carta-pescata-crescita), stessa misura per dorso e fronte.
-  // Cresce solo la carta: la riga vita/token resta grande come nelle altre carte. Il blocco (riga + carta) è centrato in
-  // verticale tra la fascia piccola e il pulsante (turno-nemesi.css .ae-focus-slide.is-big), con --carta-pescata-margine
-  // in tutto sopra e sotto.
-  const byHeight = (focusEl.clientHeight - misura('--carta-pescata-margine') - misura('--carte-grandi-riga-stato-altezza')
+  // Cresce solo la carta: la riga vita/token resta grande come nelle altre carte. Il blocco (riga + carta) ha il fondo
+  // dove l'hanno le altre carte (la carta cresce verso l'alto) e lascia libero --carta-pescata-margine sopra.
+  const byHeight = (altezzaArea(focusEl) - misura('--carta-pescata-margine') - misura('--carte-grandi-riga-stato-altezza')
     - misura('--carte-grandi-riga-stato-distanza')) / rapportoCarta();
   // ... ridotta a --carta-pescata-scala (90%) della misura massima: a tutta grandezza è troppo grande
   const bigW = Math.floor(Math.max(width, Math.min(width * misura('--carta-pescata-crescita'), byHeight,

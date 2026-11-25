@@ -6,12 +6,13 @@
 
 /* --- Zona 5, coda del turno giocatori --- */
 .ae-queue-viewport {
-  flex: 1; min-height: 0; display: flex; align-items: center;
+  flex: 1; min-height: 0;
   overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
   scroll-snap-type: x proximity; scroll-padding-inline: 16px;
-  padding: 20px 16px; scrollbar-width: thin;
+  padding-inline: 16px; scrollbar-width: thin;
 }
-.ae-queue-list { display: flex; gap: 12px; min-width: max-content; align-items: flex-end; margin: auto; }
+/* (la colonna con gli spaziatori sopra e sotto e il padding verticale: partita.css) */
+.ae-queue-list { display: flex; gap: 12px; width: max-content; min-width: max-content; align-items: flex-end; margin: 0 auto; flex: 0 0 auto; }
 .ae-queue-list:empty { display: none; }
 /* Carte grandi, alte quanto lo spazio (--ae-queue-card calcolata da sizeQueue in turno-giocatori.ts) */
 .ae-queue-list > .queue-slot { width: var(--ae-queue-card, 132px); flex: 0 0 var(--ae-queue-card, 132px); display: flex; flex-direction: column; gap: 8px; scroll-snap-align: center; }
@@ -79,10 +80,8 @@
 /* Turno giocatori: carte senza il bordo bianco */
 :is([data-turno="giocatori"], [data-turno="crea-mazzo"]) .ae-queue-item .ae-card-art { border: 0; }
 
-/* Carte grandi: spazio sopra e sotto; il blocco vita/token + carta + comandi (questi fuori dal flusso, sotto la carta)
-   è centrato tra la fascia in alto e il pulsante principale, poi sale (--carte-grandi-spostamento) */
-[data-zona="carte-grandi"] .ae-queue-viewport { padding-top: var(--carte-grandi-spazio-sopra-sotto); padding-bottom: var(--carte-grandi-spazio-sopra-sotto); }
-[data-zona="carte-grandi"] .ae-queue-list { transform: translateY(var(--carte-grandi-spostamento-giocatori)); }
+/* Carte grandi: il blocco vita/token + carta sta nella zona 5 come dice partita.css (spazio sopra, avanzo sopra e sotto);
+   i comandi sono nella zona 6 */
 
 /* Turno giocatori: barra di scorrimento delle carte grandi nascosta (come nel turno nemesi); si scorre col dito */
 .ae-queue-viewport { scrollbar-width: none; }

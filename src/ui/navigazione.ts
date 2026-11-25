@@ -75,7 +75,8 @@ function mostraTurno(v: VariantePartita): void {
   app.dataset.turno = v.momento;
   queueViewport.hidden = v.carteGrandi !== 'coda';
   focusEl.hidden = v.carteGrandi === 'coda';
-  zonaInterattivi.hidden = !v.interattivi;
+  // La zona 6 c'è sempre (alta uguale, così la zona 5 è alta uguale nei due turni): senza comandi è vuota e invisibile
+  zonaInterattivi.classList.toggle('is-vuota', !v.interattivi);
   // Per i lettori di schermo: di quali carte si tratta
   const nemesi = v.momento === 'nemesi' || v.momento === 'pesca';
   zonaCarteGrandi.setAttribute('aria-label', nemesi ? T.zonaCarteGrandiNemesi : T.zonaCarteGrandiGiocatori);

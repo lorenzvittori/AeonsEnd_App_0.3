@@ -28,14 +28,15 @@
 
 /* --- Zona 5, carosello del turno nemesi: scorre in orizzontale e si ferma su ogni carta (scroll-snap); la barra non si vede --- */
 .ae-focus {
-  flex: 1; min-height: 0; display: block; padding: var(--carte-grandi-spazio-sopra-sotto) 0;
+  flex: 1; min-height: 0;
   overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
   scrollbar-width: none; touch-action: pan-x;
 }
 .ae-focus::-webkit-scrollbar { display: none; }
-.ae-focus-track { display: flex; gap: var(--carte-grandi-spazio-nemesi); height: 100%; width: max-content; }
+/* Il blocco di ogni carta ha il fondo sulla stessa linea (la carta pescata, più grande, cresce verso l'alto) */
+.ae-focus-track { display: flex; gap: var(--carte-grandi-spazio-nemesi); flex: 0 0 auto; align-items: flex-end; width: max-content; }
 .ae-focus-slide {
-  flex: 0 0 var(--ae-focus-w, 280px); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: var(--carte-grandi-riga-stato-distanza);
+  flex: 0 0 var(--ae-focus-w, 280px); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: var(--carte-grandi-riga-stato-distanza);
   scroll-snap-align: center; scroll-snap-stop: always; --ae-slide: 24px;
 }
 .ae-focus-slide .ae-focus-stage { width: var(--ae-focus-w, 280px); height: calc(var(--ae-focus-w, 280px) * var(--carta-altezza) / var(--carta-larghezza)); }
@@ -102,7 +103,6 @@
   .ae-compact-rail { flex-basis: 72px; height: 72px; }
   .ae-compact-rail .ae-queue-item { width: 36px; flex-basis: 36px; }
   .ae-compact-rail .ae-status-badge { display: none; }
-  .ae-focus { padding: 4px 0; }
   .ae-dock { padding-top: 4px; gap: 4px; }
   .ae-dock .ae-button { min-height: 44px; }
 }
@@ -185,6 +185,7 @@
 /* Fascia piccola: senza box, a tutta larghezza; stessa posizione nei due turni (16px ai lati) */
 :is([data-turno="nemesi"], [data-turno="pesca"]) .ae-compact-rail { border: 0; }
 [data-turno="pesca"] [data-zona="carte-piccole"] { border-color: color-mix(in srgb, var(--ae-gold) 60%, transparent); }
+
 :is([data-turno="nemesi"], [data-turno="pesca"]) [data-zona="carte-piccole"] { padding: var(--carte-piccole-bordo-nemesi) var(--carte-piccole-margine-riga-nemesi); }
 
 /* Pulsante principale "Salva modifiche": dorato */
@@ -225,15 +226,11 @@
 /* Fascia piccola: NUOVA sulla carta da pescare (dorso) in alto a destra, dentro la carta */
 .ae-compact-rail .ae-next-card .ae-new-tag { top: 3px; right: 3px; }
 .ae-dock { padding-top: var(--principale-spazio-sopra); }
-.ae-focus { padding-top: var(--carte-grandi-spazio-sopra-sotto); padding-bottom: var(--carte-grandi-spazio-sopra-sotto); }
 /* Carta da pescare e carta pescata: scala calcolata da sizeFocus (fino a 1,15) */
 .ae-focus-slide.is-big .ae-focus-stage { scale: var(--ae-big-scale, 1.08); }
 
 /* Retro della faccia anteriore della carta che si gira: se l'immagine non fosse ancora disegnata si vede il dorso, non lo sfondo */
 .ae-flip-face--front { background: var(--ae-card-back, url('/Assets/ui/decor/card-back-logo.webp')) center / cover no-repeat; }
-/* Anche nel turno nemesi il blocco sale (--carte-grandi-spostamento), così box vita/token e carta sono alla stessa
-   altezza del turno giocatori. La carta da pescare / pescata (.is-big) annulla lo spostamento */
-.ae-focus-track { transform: translateY(var(--carte-grandi-spostamento)); }
 /* Fascia piccola: il box della vita con due numeri lunghi (13/17) può essere più largo della carta, senza tagli */
 .ae-compact-rail .ae-queue-item > .ae-status-badge { max-width: none; overflow: visible; }
 .ae-compact-rail .ae-status-badge.is-long { gap: 1px; padding: 1px 3px; font-size: 10px; letter-spacing: -.02em; }
@@ -250,9 +247,8 @@
 .ae-focus-status .ae-token { width: var(--carte-grandi-token); height: var(--carte-grandi-token); }
 
 /* Carta da pescare e carta pescata: cresce solo la carta (larghezza --ae-big-w da sizeFocus), la riga vita/token resta
-   come nelle altre carte. Il blocco è centrato in verticale (annulla lo spostamento in su di 14px del carosello) */
-/* Carta da pescare / pescata, annulla lo spostamento in su del carosello (24px, vedi .ae-focus-track sotto) */
-.ae-focus-slide.is-big { scale: none; translate: 0 calc(-1 * var(--carte-grandi-spostamento)); flex-basis: var(--ae-big-w, var(--ae-focus-w, 280px)); --cw: var(--ae-big-w, 300px); }
+   come nelle altre carte. Il fondo del blocco è sulla stessa linea delle altre carte (la carta cresce verso l'alto) */
+.ae-focus-slide.is-big { scale: none; flex-basis: var(--ae-big-w, var(--ae-focus-w, 280px)); --cw: var(--ae-big-w, 300px); }
 .ae-focus-slide.is-big .ae-focus-stage {
   scale: none; width: var(--ae-big-w, var(--ae-focus-w, 280px)); height: calc(var(--ae-big-w, var(--ae-focus-w, 280px)) * var(--carta-altezza) / var(--carta-larghezza));
 }

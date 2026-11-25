@@ -46,15 +46,30 @@
 }
 /* Le vite stanno sopra le carte grandi (i box scendono accanto alla riga vita/token della carta, e si toccano) */
 .ae-main > [data-zona="vite"] { position: relative; z-index: 4; }
-.ae-main > [data-zona="interattivi"][hidden] { display: none; }
 /* Zona 6: una fascia fissa sotto le carte grandi con i comandi della carta al centro (larghi quanto la carta, al
-   centro); vuota se la carta non ne ha, ma sempre alta uguale (le carte grandi non cambiano misura scorrendo) */
+   centro). C'è sempre e sempre alta uguale (--interattivi-altezza): senza comandi (la carta non ne ha, turno nemesi, passo
+   Pesca) è vuota e invisibile, così la zona 5 è alta uguale nei due turni. Dalla zona 5 dista --interattivi-distanza */
 .ae-main > [data-zona="interattivi"] {
-  margin-top: var(--interattivi-distanza); min-height: var(--interattivi-altezza); align-items: center;
+  margin-top: var(--interattivi-distanza); height: var(--interattivi-altezza); align-items: center;
 }
+.ae-main > [data-zona="interattivi"].is-vuota { visibility: hidden; }
 #interattivi > .queue-controls { width: var(--ae-queue-card, 100%); max-width: 100%; }
-/* Zona 5: la coda o il carosello, uno visibile per momento */
-.ae-main .ae-queue-viewport[hidden], .ae-main .ae-focus[hidden] { display: none; }
+/* Zona 5: dall'alto lo spazio sopra (--carte-grandi-spazio-sopra, il padding della zona), poi l'avanzo, il blocco riga
+   vita/token + carta e l'avanzo sotto. L'altezza che la carta non usa (limitata dalla larghezza) si divide tra i due
+   spaziatori, con i pesi --carte-grandi-avanzo-sopra e --carte-grandi-avanzo-sotto. Il blocco è alto quanto serve: il suo
+   fondo è la carta, a --interattivi-distanza (più l'avanzo sotto) dalla zona 6 */
+.ae-main > [data-zona="carte-grandi"] { padding-top: var(--carte-grandi-spazio-sopra); }
+.ae-main :is(.ae-queue-viewport, .ae-focus) { display: flex; flex-direction: column; padding-block: 0; }
+.ae-main :is(.ae-queue-viewport, .ae-focus)::before { content: ''; flex: 0 1 0px; flex-grow: var(--carte-grandi-avanzo-sopra); }
+.ae-main :is(.ae-queue-viewport, .ae-focus)::after { content: ''; flex: 0 1 0px; flex-grow: var(--carte-grandi-avanzo-sotto); }
+/* Il carosello è alto quanto la zona più --carte-grandi-alone-sotto (positiva): esce sotto la carta, sulla zona 6, così
+   l'alone della carta (da pescare, pescata, da risolvere) non è tagliato. L'altezza per la carta resta quella della zona
+   (padding-bottom uguale): sizeFocus la legge con altezzaArea() */
+.ae-main .ae-focus { flex: 0 0 calc(100% + var(--carte-grandi-alone-sotto)); padding-bottom: var(--carte-grandi-alone-sotto); }
+/* Coda vuota (messaggio al posto delle carte): resta al centro dell'area, senza spaziatori */
+.ae-main .ae-queue-viewport:has(> .ae-empty:not([hidden]))::before, .ae-main .ae-queue-viewport:has(> .ae-empty:not([hidden]))::after { flex-grow: 0; }
+.ae-main :is(.ae-queue-viewport, .ae-focus)[hidden] { display: none; }
+/* Zona 5: la coda o il carosello, uno visibile per momento (misure e spaziatori: sopra) */
 /* Zona 3: la fascia senza carte (turno giocatori, coda vuota) non c'è */
 .ae-compact-rail[hidden] { display: none; }
 

@@ -1,6 +1,9 @@
 /* partita-misure.css: tutte le misure delle 7 zone della schermata "partita", come variabili con un nome parlante,
    raggruppate per zona nello stesso ordine della mappa (partita.css). Per cambiare una misura si cambia qui: il CSS delle
    zone usa solo queste variabili e il codice le legge da qui (ui/componenti/misure.ts, misura()).
+   Regola: ogni variabile è una misura VERA: l'altezza di una cosa oppure lo spazio tra due cose con un nome. Cambiarla di
+   N px sposta di N px esattamente quello che dice il suo commento, e niente altro (la prova "misure" dello strumento di
+   confronto lo controlla: tools/confronto/prove/misure.mjs). Niente spostamenti di compensazione né margini negativi.
    Dove i due turni hanno oggi valori diversi per la stessa cosa ci sono due variabili (-giocatori / -nemesi).
    Elementi: nessuno (solo variabili su :root). Usato da: partita.css, i CSS delle zone, ui/componenti/misure.ts.
    Ordine: nessuna dipendenza (solo variabili). Si importa da src/stili/indice.ts. */
@@ -55,31 +58,50 @@
   --vite-scritta-distanza: 2px;                   /* spazio tra la scritta GRAVEHOLD / NEMESIS e il box */
 
   /* --- 5 fascia carte grandi --- */
-  --carte-grandi-spazio-sopra-sotto: 2px;         /* spazio sopra e sotto dentro la fascia (tutti e due i turni) */
-  --carte-grandi-spostamento: -24px;              /* turno nemesi: il blocco vita/token + carta sale di tanto */
-  /* turno giocatori: il blocco si sposta di tanto (la zona 6 sotto toglie spazio: così la carta è dov'è nel turno nemesi) */
-  --carte-grandi-spostamento-giocatori: calc(var(--carte-grandi-spostamento) + (var(--interattivi-distanza) + var(--interattivi-altezza)) / 2);
-  --carte-grandi-spazio-giocatori: 18px;          /* spazio tra le carte grandi, turno giocatori (anche nel calcolo della loro misura) */
+  /*      [zona 4: vite]
+        | --carte-grandi-spazio-sopra
+        |  avanzo (peso --carte-grandi-avanzo-sopra): lo spazio che la carta, limitata dalla larghezza, lascia libero
+     [riga vita/token: --carte-grandi-riga-stato-altezza]
+        | --carte-grandi-riga-stato-distanza
+     [carta grande: alta quanto serve, a --carte-grandi-spazio-... dalle vicine]
+        |  avanzo (peso --carte-grandi-avanzo-sotto)
+     [zona 6]  (--interattivi-distanza)
+     Uguale nei due turni (la zona 6 c'è sempre, vuota nel turno nemesi). Altezza della carta = altezza della zona − spazio
+     sopra − riga vita/token − la sua distanza. */
+  --carte-grandi-spazio-sopra: 2px;               /* spazio minimo tra le vite (zona 4) e la riga vita/token, dentro la zona */
+  --carte-grandi-avanzo-sopra: 1;                 /* peso dello spazio che avanza SOPRA la riga vita/token (con l'altro: 1 e 0 = tutto sopra) */
+  --carte-grandi-avanzo-sotto: 0;                 /* peso dello spazio che avanza TRA la carta e la zona 6 (1 e 1 = metà sopra e metà sotto) */
+  --carte-grandi-alone-sotto: 32px;               /* carosello: di quanto l'area delle carte sporge sotto la carta (sulla zona 6, vuota) perché l'alone non sia tagliato */
+  --carte-grandi-spazio-giocatori: 18px;         /* spazio tra le carte grandi, turno giocatori (anche nel calcolo della loro misura) */
   --carte-grandi-spazio-nemesi: 18px;             /* spazio tra le carte grandi, turno nemesi (anche nel calcolo della loro misura e della colonna su desktop) */
   --carte-grandi-margine-lato: 8px;               /* margine minimo a destra e a sinistra della carta, nel calcolo della misura */
-  --carte-grandi-vicine-visibili: 8px;           /* quanto si vede delle carte vicine, nel calcolo della misura */
+  --carte-grandi-vicine-visibili: 8px;            /* quanto si vede delle carte vicine, nel calcolo della misura */
   --carte-grandi-riga-stato-altezza: 35px;        /* altezza della riga vita/token sopra la carta */
   --carte-grandi-riga-stato-distanza: 5px;        /* spazio tra la riga vita/token e la carta */
   --carte-grandi-token: 35px;                     /* misura di un token nella riga sopra la carta */
   --carte-grandi-icona: 25px;                     /* misura della goccia della vita nella riga sopra la carta */
   --carta-pescata-scala: 0.9;                     /* carta da pescare e pescata: frazione della misura massima */
   --carta-pescata-crescita: 1.3;                  /* ... che è al massimo tante volte la carta normale */
-  --carta-pescata-margine: 8px;                   /* ... con questo spazio in tutto sopra e sotto (4px + 4px) */
+  --carta-pescata-margine: 8px;                   /* ... lasciando libero questo spazio sopra, in più dello spazio sopra la zona */
   --colonna-larghezza-minima: 440px;              /* tablet e desktop: larghezza minima della colonna della partita */
   --colonna-vicine-visibili: 42px;                /* tablet e desktop: quanto si vede delle carte vicine ai lati */
 
   /* --- 6 pulsanti interattivi --- */
+  /*      [zona 5: carta grande]
+        | --interattivi-distanza
+     [comandi: --interattivi-altezza]   −5 −1 +1, Rimuovi, Imposta la vita (a --interattivi-spazio l'uno dall'altro)
+        | --principale-spazio-sopra  (zona 7)
+     Nel turno nemesi e al passo Pesca la zona c'è, vuota e invisibile (la carta grande non cambia). */
   --interattivi-altezza: 45px;                    /* altezza della fascia dei comandi (−5 −1 +1, Rimuovi, Imposta la vita) */
-  --interattivi-distanza: 0px;                    /* spazio tra la fascia delle carte grandi e quella dei comandi */
+  --interattivi-distanza: 0px;                    /* spazio tra la carta grande e la fascia dei comandi */
   --interattivi-spazio: 10px;                     /* spazio tra un comando e l'altro */
 
   /* --- 7 pulsante principale --- */
-  --principale-spazio-sopra: 12px;                 /* spazio sopra il pulsante */
+  /*      [zona 6]
+        | --principale-spazio-sopra
+     [pulsante: --principale-altezza]   a --principale-margine-lati dai bordi (con "Annulla modifiche" a --principale-spazio)
+        | --principale-spazio-sotto  (più la zona sicura in basso) */
+  --principale-spazio-sopra: 12px;                /* spazio sopra il pulsante */
   --principale-spazio-sotto: 12px;                /* spazio sotto il pulsante (più la zona sicura in basso) */
   --principale-margine-lati: 16px;                /* margine a destra e a sinistra */
   --principale-spazio: 8px;                       /* spazio tra pulsante e "Annulla modifiche" e tra le righe */

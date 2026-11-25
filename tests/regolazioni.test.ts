@@ -93,12 +93,12 @@ describe('lettura delle misure', () => {
       '4 vite', '5 fascia carte grandi', '6 pulsanti interattivi', '7 pulsante principale']);
   });
 
-  it('partita-misure.css vero: tutte le variabili numeriche sono lette, con etichetta; solo i calc() restano fuori', () => {
+  it('partita-misure.css vero: tutte le variabili sono lette, con etichetta; nessuna è un calc() (ogni variabile è una misura vera)', () => {
     const tutte = [...misure.matchAll(/^\s*(--[\w-]+):\s*([^;]+);/gm)].map(m => ({ nome: m[1], valore: m[2].trim() }));
     const numeriche = tutte.filter(v => !v.valore.startsWith('calc(')).map(v => v.nome);
     const lette = MISURE.flatMap(g => g.voci.map(v => v.nome));
     expect(lette).toEqual(numeriche);
-    expect(tutte.length - numeriche.length).toBe(1);
+    expect(tutte.length - numeriche.length).toBe(0);
     MISURE.forEach(g => g.voci.forEach(v => expect(v.etichetta, v.nome).not.toBe(v.nome)));
   });
 });
