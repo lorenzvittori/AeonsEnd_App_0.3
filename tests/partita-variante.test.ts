@@ -79,7 +79,6 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
       const v = variante(partita, uiDi({ deckBuilding: true, drafts }));
       expect(v.momento).toBe('crea-mazzo');
       expect(v.azione).toBe('cursore');
-      expect(v.interattivi).toBe(true);
       expect(v.carteGrandi).toBe('coda');
       expect(v.annullaModifiche).toBe(false);
     }
@@ -87,7 +86,7 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
 
   it('turno giocatori senza modifiche: "Pesca carta turno", poi "Fine turno"', () => {
     let v = variante(partita, uiDi());
-    expect(v).toEqual({ momento: 'giocatori', interattivi: true, carteGrandi: 'coda', azione: 'pesca-carta-turno',
+    expect(v).toEqual({ momento: 'giocatori', carteGrandi: 'coda', azione: 'pesca-carta-turno',
       testo: T.drawTurnCard, annullaModifiche: false });
     // Esce un giocatore: si resta nel turno giocatori
     finoA(() => !partita.resolving && !P.awaitingTurnCard());
@@ -101,7 +100,7 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
 
   it('turno giocatori con modifiche non salvate: "Salva modifiche" e "Annulla modifiche"', () => {
     const v = variante(partita, uiDi({ drafts: conModifiche() }));
-    expect(v).toEqual({ momento: 'giocatori', interattivi: true, carteGrandi: 'coda', azione: 'salva-modifiche',
+    expect(v).toEqual({ momento: 'giocatori', carteGrandi: 'coda', azione: 'salva-modifiche',
       testo: T.saveChanges, annullaModifiche: true });
   });
 
@@ -110,7 +109,7 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
     const active = must(partita.queue[partita.currentIndex], 'carta da risolvere');
     for (const drafts of [new Map<number, BozzaCarta>(), conModifiche()]) {
       const v = variante(partita, uiDi({ drafts, viewedUid: active.uid }));
-      expect(v).toEqual({ momento: 'nemesi', interattivi: false, carteGrandi: 'carosello', azione: 'risolvi',
+      expect(v).toEqual({ momento: 'nemesi', carteGrandi: 'carosello', azione: 'risolvi',
         testo: actionText(active, false, P.turnRoundOver(), T), annullaModifiche: false });
     }
     // Nessuna carta guardata ancora: si mostra quella da risolvere
@@ -131,7 +130,7 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
   it('passo Pesca: carta coperta, "Pesca" o "Torna alla carta da pescare"', () => {
     finoA(() => isDrawStep(partita) && partita.queue.length > 0);
     let v = variante(partita, uiDi({ viewedUid: DRAW_UID }));
-    expect(v).toEqual({ momento: 'pesca', interattivi: false, carteGrandi: 'carta-coperta', azione: 'pesca',
+    expect(v).toEqual({ momento: 'pesca', carteGrandi: 'carta-coperta', azione: 'pesca',
       testo: T.ctaDraw, annullaModifiche: false });
     v = variante(partita, uiDi({ viewedUid: partita.queue[0].uid, drafts: conModifiche() }));
     expect(v.momento).toBe('pesca');

@@ -40,7 +40,6 @@ export type CarteGrandi = 'coda' | 'carosello' | 'carta-coperta';
 // Il momento e le sue varianti
 export interface VariantePartita {
   momento: MomentoPartita;
-  interattivi: boolean;          // zona 6 presente (comandi della carta al centro): solo turno giocatori e crea-mazzo
   carteGrandi: CarteGrandi;      // comportamento della zona 5
   azione: AzionePrincipale;      // azione del pulsante della zona 7
   testo: string;                 // testo del pulsante della zona 7
@@ -88,11 +87,11 @@ export function variantePartita(p: PartitaPerVariante, u: UiPerVariante, t: Test
     const momento: MomentoPartita = drawStep ? 'pesca' : 'nemesi';
     const carteGrandi: CarteGrandi = drawStep ? 'carta-coperta' : 'carosello';
     if (inAnteprima(p, u)) {
-      return { momento, interattivi: false, carteGrandi, azione: 'torna',
+      return { momento, carteGrandi, azione: 'torna',
         testo: drawStep ? t.backToDraw : t.backToActive, annullaModifiche: false };
     }
     const testo = drawStep || !active ? t.ctaDraw : actionText(active, p.newIndex >= 0, turnRoundOver(p.turnOrder), t);
-    return { momento, interattivi: false, carteGrandi, azione: drawStep ? 'pesca' : 'risolvi', testo, annullaModifiche: false };
+    return { momento, carteGrandi, azione: drawStep ? 'pesca' : 'risolvi', testo, annullaModifiche: false };
   }
   // Turno giocatori (e "Crea mazzo", che ha la stessa disposizione con il cursore al posto del pulsante)
   const saving = u.drafts.size > 0;
@@ -104,8 +103,8 @@ export function variantePartita(p: PartitaPerVariante, u: UiPerVariante, t: Test
     : awaiting ? (p.turnOrder.round >= 1 && !(p.turnOrder.history || []).length ? t.drawFirstTurnCard : t.drawTurnCard)
     : turnRoundOver(p.turnOrder) ? t.endTurnShuffle : t.endTurn;
   if (u.deckBuilding) {
-    return { momento: 'crea-mazzo', interattivi: true, carteGrandi: 'coda', azione: 'cursore', testo, annullaModifiche: false };
+    return { momento: 'crea-mazzo', carteGrandi: 'coda', azione: 'cursore', testo, annullaModifiche: false };
   }
   const azione: AzionePrincipale = saving ? 'salva-modifiche' : awaiting ? 'pesca-carta-turno' : 'fine-turno';
-  return { momento: 'giocatori', interattivi: true, carteGrandi: 'coda', azione, testo, annullaModifiche: saving };
+  return { momento: 'giocatori', carteGrandi: 'coda', azione, testo, annullaModifiche: saving };
 }

@@ -17,7 +17,7 @@
 /* Carte grandi, alte quanto lo spazio (--ae-queue-card calcolata da sizeQueue in turno-giocatori.ts) */
 .ae-queue-list > .queue-slot { width: var(--ae-queue-card, 132px); flex: 0 0 var(--ae-queue-card, 132px); display: flex; flex-direction: column; gap: 8px; scroll-snap-align: center; }
 .queue-slot > .ae-queue-item { width: 100%; flex-basis: auto; }
-/* --- Zona 6, comandi della carta al centro (la fascia è in partita.css): vita del minion (−5 −1 +1, Elimina a 0) o rimozione del potere --- */
+/* --- Comandi di ogni carta grande, nello spazio riservato della zona 6 (partita.css): vita del minion (−5 −1 +1, Elimina a 0) o rimozione del potere --- */
 .queue-controls { min-height: var(--interattivi-altezza); display: flex; gap: 6px; }
 /* Potere non rimovibile: nota piccola con il punto esclamativo rosso */
 .queue-note { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--ae-text-muted); font: 600 12px/16px var(--ae-font-ui); }
@@ -66,9 +66,13 @@
 /* +1 oscurato e non cliccabile se non c'è vita tolta in questo turno */
 .ae-button.is-dimmed, .ae-button.is-dimmed:disabled { opacity: .35; cursor: not-allowed; }
 
-/* Turno giocatori: stessa posizione e dimensione della carta del turno nemesi. I comandi sono nella zona 6 (partita.css) */
+/* Turno giocatori: stessa posizione e dimensione della carta del turno nemesi. I comandi sono sotto la carta (più sotto) */
 .queue-slot { gap: 0; }
 .queue-slot > .ae-queue-item { gap: var(--carte-grandi-riga-stato-distanza); }
+/* Comandi della carta: sotto di lei, a --interattivi-distanza, larghi quanto la carta; scorrono con lei. Si vedono solo
+   per la carta al centro (.is-centred, messa da markQueueRail), con una breve dissolvenza */
+.queue-slot > .queue-controls { position: absolute; left: 0; right: 0; top: 100%; margin-top: var(--interattivi-distanza); transition: opacity .15s ease-out; }
+.queue-slot:not(.is-centred) > .queue-controls { opacity: 0; visibility: hidden; pointer-events: none; }
 
 /* --- Zona 3 nel turno giocatori: la fascia piccola senza riga intorno, un po' più alta (turno nemesi: turno-nemesi.css) --- */
 :is([data-turno="giocatori"], [data-turno="crea-mazzo"]) .ae-compact-rail {
@@ -82,7 +86,7 @@
 :is([data-turno="giocatori"], [data-turno="crea-mazzo"]) .ae-queue-item .ae-card-art { border: 0; }
 
 /* Carte grandi: il blocco vita/token + carta sta nella zona 5 come dice partita.css (spazio sopra, avanzo sopra e sotto);
-   i comandi sono nella zona 6 */
+   i comandi stanno sotto ogni carta */
 
 /* Turno giocatori: barra di scorrimento delle carte grandi nascosta (come nel turno nemesi); si scorre col dito */
 .ae-queue-viewport { scrollbar-width: none; }

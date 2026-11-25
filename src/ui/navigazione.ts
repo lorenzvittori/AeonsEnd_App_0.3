@@ -20,7 +20,7 @@ import { catalogo } from '../stato/catalogo.ts';
 import { loadDeckOptions, preferenze } from '../stato/preferenze.ts';
 import type { SalvataggioValido } from '../tipi/salvataggio.ts';
 import { app, CARD_BACK, discardLayer, focusEl, mainEl, pulsantePrincipale, queueViewport, rail, reducedMotion,
-  resumeBtn, startBtn, startError, startLayer, ui, undoBtn, zonaCarteGrandi, zonaInterattivi } from './pagina.ts';
+  resumeBtn, startBtn, startError, startLayer, ui, undoBtn, zonaCarteGrandi } from './pagina.ts';
 import { need } from './dom.ts';
 import { registraAgganci } from './ridisegno.ts';
 import { variantePartita } from './partita-variante.ts';
@@ -70,13 +70,11 @@ function mostraInizio(aperta: boolean): void {
 
 // Il momento della schermata "partita" (data-turno su #app: le varianti di sfondo e zone stanno in partita.css) e i
 // blocchi che cambiano con lui: nella zona 5 la coda (#queue, turno giocatori) o il carosello (#focus, turno nemesi e
-// Pesca), la zona 6 nel turno giocatori e in "Crea mazzo"
+// Pesca). La zona 6 è uno spazio riservato, sempre vuoto: i comandi stanno sotto ogni carta grande
 function mostraTurno(v: VariantePartita): void {
   app.dataset.turno = v.momento;
   queueViewport.hidden = v.carteGrandi !== 'coda';
   focusEl.hidden = v.carteGrandi === 'coda';
-  // La zona 6 c'è sempre (alta uguale, così la zona 5 è alta uguale nei due turni): senza comandi è vuota e invisibile
-  zonaInterattivi.classList.toggle('is-vuota', !v.interattivi);
   // Per i lettori di schermo: di quali carte si tratta
   const nemesi = v.momento === 'nemesi' || v.momento === 'pesca';
   zonaCarteGrandi.setAttribute('aria-label', nemesi ? T.zonaCarteGrandiNemesi : T.zonaCarteGrandiGiocatori);

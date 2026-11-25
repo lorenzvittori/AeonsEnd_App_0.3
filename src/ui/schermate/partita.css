@@ -46,14 +46,13 @@
 }
 /* Le vite stanno sopra le carte grandi (i box scendono accanto alla riga vita/token della carta, e si toccano) */
 .ae-main > [data-zona="vite"] { position: relative; z-index: 4; }
-/* Zona 6: una fascia fissa sotto le carte grandi con i comandi della carta al centro (larghi quanto la carta, al
-   centro). C'è sempre e sempre alta uguale (--interattivi-altezza): senza comandi (la carta non ne ha, turno nemesi, passo
-   Pesca) è vuota e invisibile, così la zona 5 è alta uguale nei due turni. Dalla zona 5 dista --interattivi-distanza */
+/* Zona 6: lo spazio riservato sotto le carte grandi per i comandi della carta. C'è sempre e sempre alta uguale
+   (--interattivi-altezza), vuota e invisibile: così la zona 5 è alta uguale nei due turni. Dalla zona 5 dista
+   --interattivi-distanza. I comandi stanno dentro ogni carta grande (turno-giocatori.css, .queue-slot > .queue-controls),
+   che sporge su questo spazio (area delle carte più alta, sotto) */
 .ae-main > [data-zona="interattivi"] {
-  margin-top: var(--interattivi-distanza); height: var(--interattivi-altezza); align-items: center;
+  margin-top: var(--interattivi-distanza); height: var(--interattivi-altezza); visibility: hidden; pointer-events: none;
 }
-.ae-main > [data-zona="interattivi"].is-vuota { visibility: hidden; }
-#interattivi > .queue-controls { width: var(--ae-queue-card, 100%); max-width: 100%; }
 /* Zona 5: dall'alto lo spazio sopra (--carte-grandi-spazio-sopra, il padding della zona), poi l'avanzo, il blocco riga
    vita/token + carta e l'avanzo sotto. L'altezza che la carta non usa (limitata dalla larghezza) si divide tra i due
    spaziatori, con i pesi --carte-grandi-avanzo-sopra e --carte-grandi-avanzo-sotto. Il blocco è alto quanto serve: il suo
@@ -66,6 +65,12 @@
    l'alone della carta (da pescare, pescata, da risolvere) non è tagliato. L'altezza per la carta resta quella della zona
    (padding-bottom uguale): sizeFocus la legge con altezzaArea() */
 .ae-main .ae-focus { flex: 0 0 calc(100% + var(--carte-grandi-alone-sotto)); padding-bottom: var(--carte-grandi-alone-sotto); }
+/* Anche la coda del turno giocatori sporge sotto la carta, fino in fondo alla zona 6: ci stanno i comandi di ogni carta
+   (--interattivi-distanza sotto la carta, alti --interattivi-altezza). Altezza per la carta: sempre quella della zona */
+.ae-main .ae-queue-viewport {
+  flex: 0 0 calc(100% + var(--interattivi-distanza) + var(--interattivi-altezza));
+  padding-bottom: calc(var(--interattivi-distanza) + var(--interattivi-altezza));
+}
 /* Coda vuota (messaggio al posto delle carte): resta al centro dell'area, senza spaziatori */
 .ae-main .ae-queue-viewport:has(> .ae-empty:not([hidden]))::before, .ae-main .ae-queue-viewport:has(> .ae-empty:not([hidden]))::after { flex-grow: 0; }
 .ae-main :is(.ae-queue-viewport, .ae-focus)[hidden] { display: none; }

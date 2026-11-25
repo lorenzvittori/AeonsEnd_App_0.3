@@ -1,5 +1,5 @@
 // ui/schermate/turno-giocatori.ts: il turno giocatori nella schermata "partita": carte grandi della coda in fila (zona 5)
-// con i comandi sotto la carta al centro (zona 6), fascia piccola nel turno giocatori (zona 3), "Annulla modifiche" e
+// ognuna con i suoi comandi sotto (nello spazio riservato della zona 6), fascia piccola nel turno giocatori (zona 3), "Annulla modifiche" e
 // l'azione del pulsante principale (onPulsanteTurnoGiocatori: "Fine turno", "Pesca carta turno", "Salva modifiche"), passaggio
 // animato dal turno nemesi (toPlayersTurn). Il pulsante lo disegna ui/componenti/pulsante-principale.ts. L'inizio del
 // turno nemesi a schermo lo chiede con l'aggancio passaAlTurnoNemesi.
@@ -16,14 +16,14 @@ import { announce, button } from '../componenti/dialoghi.ts';
 import { flyToDiscard } from '../componenti/testata.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
 import { annullaModificheBtn, mainEl, pulsantePrincipale, queueEmpty, queueList, queueViewport, rail, reducedMotion,
-  ui, zonaInterattivi } from '../pagina.ts';
+  ui } from '../pagina.ts';
 import type { AncoraCoda } from '../pagina.ts';
-import { ENTER_MS, fastScrollTo, MORPH_MS, scrollItemInto, trackDrag } from '../componenti/animazioni.ts';
+import { ENTER_MS, fastScrollTo, MORPH_MS, scrollItemInto, scrollJobs, trackDrag } from '../componenti/animazioni.ts';
 import { el, query, queryAll } from '../dom.ts';
 import { passaAlTurnoNemesi, richiediRidisegno } from '../ridisegno.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { playTurnShuffle, SHUFFLE_FADE_MS, turnTrack } from '../componenti/barra-turni.ts';
-import { sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
+import { altezzaArea, sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
 
 // Turno giocatori: in alto la fascia piccola con tutta la coda (#rail, la stessa del turno nemesi), sotto le carte
@@ -31,7 +31,12 @@ import { openCardDialog } from '../finestre/scheda-carta.ts';
 // quella evidenziata.
 export let queueRailFrame = 0;
 
-export function scrollQueueTo(item: HTMLElement): void {
+// Carta scelta con un tocco (fascia piccola o carta grande non al centro): finché le carte grandi scorrono fino a lei,
+// l'evidenziazione resta su di lei (come il carosello del turno nemesi); con il dito segue lo scorrimento
+let queueTargetUid: number | null = null;
+
+export function scrollQueueTo(item: HTMLElement, uid: number): void {
+  queueTargetUid = uid;
   const cRect = queueViewport.getBoundingClientRect();
   const iRect = item.getBoundingClientRect();
   const left = iRect.left - cRect.left + queueViewport.scrollLeft + iRect.width / 2 - queueViewport.clientWidth / 2;
@@ -51,9 +56,9 @@ export function centredQueueUid(): number | null {
   return best;
 }
 
-// La carta al centro: i suoi comandi nella zona 6 e la carta evidenziata nella fascia piccola
+// La carta al centro: la sua carta grande è quella con i comandi visibili (is-centred) e la sua carta piccola nella fascia
+// è quella evidenziata
 export function markQueueRail(uid: number | null): void {
-  disegnaInterattivi(uid);
   queueList.querySelectorAll('.queue-slot').forEach(slot => {
     const item = query(slot, '.ae-queue-item', HTMLElement);
     slot.classList.toggle('is-centred', !!item && Number(item.dataset.uid) === uid);
@@ -65,28 +70,15 @@ export function markQueueRail(uid: number | null): void {
   });
 }
 
-// Zona 6 (#interattivi, una fascia fissa sotto le carte grandi): i comandi della carta al centro. Si ridisegnano quando
-// cambia la carta al centro (anche mentre si scorre) e a ogni disegno della coda (forza: le bozze possono essere
-// cambiate). Senza carta o senza comandi la fascia resta vuota, alta uguale (partita.css)
-let interattiviUid: number | null | undefined;
-
-export function disegnaInterattivi(uid: number | null, forza = false): void {
-  if (!forza && uid === interattiviUid) return;
-  interattiviUid = uid;
-  const entry = uid === null ? null : entryByUid(uid);
-  if (!entry) { zonaInterattivi.replaceChildren(); return; }
-  const box = cardControls(entry);
+// Comandi di una carta grande, sotto di lei (nello spazio riservato della zona 6, a --interattivi-distanza dalla carta):
+//   minion: −5 −1 +1 (ogni tocco cambia la vita in bozza); a 0 il minion è ucciso con "Salva modifiche"
+//   potere rimovibile (TO DISCARD): "Rimuovi · costo pagato"; gli altri poteri non hanno comandi
+// Ogni carta ha i suoi, che scorrono con lei; si vedono solo quelli della carta al centro (.queue-slot.is-centred, CSS).
+export function cardControls(entry: VoceInGioco): HTMLDivElement {
+  const box = el('div', 'queue-controls');
   // Per i lettori di schermo: di quale carta sono i comandi
   box.setAttribute('role', 'group');
   box.setAttribute('aria-label', T.comandiCarta(entry.data.name, hasHp(entry)));
-  zonaInterattivi.replaceChildren(box);
-}
-
-// Comandi della carta al centro della coda (zona 6), legati a quella carta:
-//   minion: −5 −1 +1 (ogni tocco cambia la vita in bozza); a 0 il minion è ucciso con "Salva modifiche"
-//   potere rimovibile (TO DISCARD): "Rimuovi · costo pagato"; gli altri poteri non hanno comandi
-export function cardControls(entry: VoceInGioco): HTMLDivElement {
-  const box = el('div', 'queue-controls');
   const uid = entry.uid;
   const ctl = (label: string, variant: string, key: string, aria: string | null, handler: () => void) => {
     const b = button(label, variant, e => {
@@ -101,8 +93,8 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
     return b;
   };
   const refocus = (key: string) => {
-    const target = query(zonaInterattivi, `.queue-controls [data-uid="${uid}"][data-ctl="${key}"]`, HTMLElement)
-      || query(zonaInterattivi, `.queue-controls [data-uid="${uid}"]`, HTMLElement);
+    const target = query(queueList, `.queue-controls [data-uid="${uid}"][data-ctl="${key}"]`, HTMLElement)
+      || query(queueList, `.queue-controls [data-uid="${uid}"]`, HTMLElement);
     if (target) target.focus({ preventScroll: true });
   };
   // (Number: vita e tetto come nei confronti di JavaScript, null vale 0)
@@ -151,16 +143,15 @@ export function cardControls(entry: VoceInGioco): HTMLDivElement {
 // Carte grandi: alte quanto lo spazio disponibile, ma mai così larghe da nascondere del tutto la carta successiva
 export function sizeQueue(): void {
   if (queueViewport.hidden) return;
-  // I comandi sono nella zona 6, sotto (c'è sempre, anche nel turno nemesi): la zona 5 è alta uguale nei due turni e la
-  // carta ha la stessa misura e posizione (sharedCardWidth)
+  // I comandi stanno sotto ogni carta, nello spazio riservato della zona 6 (c'è sempre, anche nel turno nemesi): la zona 5
+  // è alta uguale nei due turni e la carta ha la stessa misura e posizione (sharedCardWidth). L'area delle carte sporge
+  // sulla zona 6 (padding-bottom, come il carosello): altezzaArea() la toglie
   sizeColumn(queueViewport);
   // Stessa regola del carosello del turno nemesi (sizeFocus): la carta riempie l'altezza, ai lati si vede un pezzo delle
   // vicine (stessa larghezza della carta)
   const peekRoom = partita.queue.length > 1 ? spazioVicine() : 0;
-  const width = Math.max(100, sharedCardWidth(queueViewport.clientWidth, queueViewport.clientHeight, peekRoom));
+  const width = Math.max(100, sharedCardWidth(queueViewport.clientWidth, altezzaArea(queueViewport), peekRoom));
   queueViewport.style.setProperty('--ae-queue-card', width + 'px');
-  // I comandi della zona 6 sono larghi quanto la carta
-  zonaInterattivi.style.setProperty('--ae-queue-card', width + 'px');
   // Margini ai lati: la prima e l'ultima carta si centrano come le altre
   const side = Math.max(0, (queueViewport.clientWidth - width) / 2) + 'px';
   queueViewport.style.paddingLeft = side;
@@ -191,7 +182,7 @@ export function renderQueue(): void {
   railEl.scrollLeft = railScroll;
   railEl.hidden = partita.queue.length === 0;
   queueList.replaceChildren(...partita.queue.map((entry, i) => {
-    // Ogni carta grande (i comandi di quella al centro sono nella zona 6)
+    // Ogni carta grande, con i suoi comandi sotto (si vedono solo per la carta al centro)
     const slot = el('div', 'queue-slot');
     slot.setAttribute('role', 'listitem');
     const card = queueItem(displayEntry(entry), { full: true, index: i, total: partita.queue.length, lazy: i > 3 });
@@ -200,6 +191,8 @@ export function renderQueue(): void {
     // Danno in bozza (non ancora salvato), in alto a destra sulla carta: sparisce con "Salva"
     if (d && d.hp !== undefined) addHpTag(card, 'queue-hp-tag', d.hp - Number(entry.hp));
     slot.append(card);
+    const controls = cardControls(entry);
+    if (controls.childElementCount) slot.append(controls);
     // Le modifiche si salvano tutte insieme con "Salva modifiche" (il pulsante principale)
     return slot;
   }));
@@ -223,8 +216,6 @@ export function renderQueue(): void {
     queueViewport.scrollLeft = previous;
     queueViewport.scrollTop = previousTop;
   }
-  // Comandi della zona 6 sempre ridisegnati (bozze, vita, costo pagato possono essere cambiati)
-  disegnaInterattivi(centredQueueUid(), true);
   markQueueRail(centredQueueUid());
 }
 
@@ -320,12 +311,9 @@ export function toPlayersTurn(morphUid: number | null, fromNode?: HTMLElement | 
   // A metà della trasformazione: le altre carte della coda entrano da sinistra; comandi, NUOVA (e il box, se non
   // scivola) della carta che si trasforma compaiono con una breve dissolvenza
   const delay = art ? MORPH_MS / 2 : 0;
-  // I comandi della zona 6 compaiono con la stessa breve dissolvenza
-  zonaInterattivi.querySelectorAll('.queue-controls').forEach(node => node.animate([{ opacity: 0 }, { opacity: 1 }],
-    { duration: 220, delay, easing: 'ease-out', fill: 'backwards' }));
   queueAll(queueList, '.queue-slot').forEach(slot => {
     if (art && slot.contains(art)) {
-      const parts = [...slot.querySelectorAll('.ae-new-tag')]
+      const parts = [...slot.querySelectorAll('.ae-new-tag, .queue-controls')]
         .concat(badge && fromStatus ? [] : [...slot.querySelectorAll('.ae-status-badge')]);
       parts.forEach(node => node.animate([{ opacity: 0 }, { opacity: 1 }],
         { duration: 220, delay, easing: 'ease-out', fill: 'backwards' }));
@@ -357,14 +345,16 @@ export function avvio(): void {
     const item = target instanceof Element ? target.closest('.ae-queue-item') : null;
     if (!(item instanceof HTMLElement) || rail.dataset.dragged === '1') return;
     const big = query(queueList, `[data-uid="${item.dataset.uid}"]`, HTMLElement);
-    if (big) scrollQueueTo(big);
+    if (big) scrollQueueTo(big, Number(item.dataset.uid));
     markQueueRail(Number(item.dataset.uid));
   });
   queueViewport.addEventListener('scroll', () => {
     if (queueRailFrame) return;
     queueRailFrame = requestAnimationFrame(() => {
       queueRailFrame = 0;
-      if (!partita.resolving) markQueueRail(centredQueueUid());
+      if (partita.resolving) return;
+      // Scorrimento avviato dall'app ancora in corso (il dito lo interrompe): la carta scelta resta quella evidenziata
+      markQueueRail(scrollJobs.has(queueViewport) && queueTargetUid !== null ? queueTargetUid : centredQueueUid());
     });
   }, { passive: true });
 
@@ -387,7 +377,7 @@ export function avvio(): void {
     const uid = Number(item.dataset.uid);
     if (uid !== centredQueueUid()) {
       const slot = item.closest('.queue-slot');
-      scrollQueueTo(slot instanceof HTMLElement ? slot : item);
+      scrollQueueTo(slot instanceof HTMLElement ? slot : item, uid);
       markQueueRail(uid);
       return;
     }

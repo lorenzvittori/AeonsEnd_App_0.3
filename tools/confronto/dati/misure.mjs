@@ -31,6 +31,7 @@ const CARTA = '.queue-slot .ae-card-art, .ae-focus-stage';
 const SLOT = '.queue-slot, .ae-focus-slide';
 const ZONA5 = '[data-zona="carte-grandi"]';
 const ZONA6 = '[data-zona="interattivi"]';
+const COMANDI = '.queue-slot.is-centred > .queue-controls';
 const PILA = '.ae-header-piles .ae-pile';
 const CASELLA = '.ae-turn-seg';
 const PICCOLA = '.ae-compact-rail .ae-queue-item';
@@ -91,8 +92,9 @@ export const CASI = [
 
   // --- 6 pulsanti interattivi ---
   { v: '--interattivi-altezza', a: [ZONA6, 'top'], b: [ZONA6, 'bottom'] },
-  { v: '--interattivi-distanza', a: [CARTA, 'bottom'], b: [ZONA6, 'top'] },
-  { v: '--interattivi-spazio', a: ['#interattivi .queue-controls .ae-button:nth-child(1)', 'right'], b: ['#interattivi .queue-controls .ae-button:nth-child(2)', 'left'], turni: ['giocatori'] },
+  { v: '--interattivi-distanza', a: [CARTA, 'bottom'], b: [COMANDI, 'top'], turni: ['giocatori'], nota: 'tra la carta e i suoi comandi' },
+  { v: '--interattivi-distanza', a: [CARTA, 'bottom'], b: [ZONA6, 'top'], turni: ['nemesi'], nota: 'tra la carta e lo spazio riservato (vuoto nel turno nemesi)' },
+  { v: '--interattivi-spazio', a: [COMANDI + ' .ae-button:nth-child(1)', 'right'], b: [COMANDI + ' .ae-button:nth-child(2)', 'left'], turni: ['giocatori'] },
 
   // --- 7 pulsante principale ---
   { v: '--principale-spazio-sopra', a: [ZONA6, 'bottom'], b: ['#pulsante-principale', 'top'] },

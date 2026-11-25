@@ -28,7 +28,6 @@ export let queueEmpty: HTMLDivElement;
 export let rail: HTMLDivElement;
 export let focusEl: HTMLDivElement;
 export let zonaCarteGrandi: HTMLElement;
-export let zonaInterattivi: HTMLDivElement;
 export let menuBtn: HTMLButtonElement;
 export let pulsantePrincipale: HTMLButtonElement;
 export let annullaModificheBtn: HTMLButtonElement;
@@ -202,7 +201,6 @@ export function avvio(): void {
   rail = byId('rail', HTMLDivElement);
   focusEl = byId('focus', HTMLDivElement);
   zonaCarteGrandi = byId('carte-grandi', HTMLElement);
-  zonaInterattivi = byId('interattivi', HTMLDivElement);
   menuBtn = byId('menu-btn', HTMLButtonElement);
   pulsantePrincipale = byId('pulsante-principale', HTMLButtonElement);
   annullaModificheBtn = byId('annulla-modifiche', HTMLButtonElement);
