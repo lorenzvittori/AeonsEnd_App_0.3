@@ -12,6 +12,7 @@ import type { Partita, VoceInGioco } from '../tipi/partita.ts';
 import { DRAW_UID } from './pagina.ts';
 import type { StatoUi } from './pagina.ts';
 import { T } from './testi.ts';
+import type { Testi } from './testi.ts';
 
 // Momento della partita (attributo data-turno della schermata, #app):
 //   giocatori:  turno dei giocatori (coda delle carte grandi, comandi sotto la carta al centro);
@@ -51,18 +52,18 @@ export type PartitaPerVariante = Pick<Partita, 'resolving' | 'newIndex' | 'curre
 export type UiPerVariante = Pick<StatoUi, 'deckBuilding' | 'drafts' | 'trackShuffle' | 'viewedUid' | 'holdUid'>;
 
 // Testo del pulsante per la carta da risolvere. Anche sull'ultima carta si va solo avanti: la pesca è un passo a parte,
-// con il pulsante "Pesca".
-export function actionText(entry: VoceInGioco, isNew: boolean, roundOver: boolean): string {
+// con il pulsante "Pesca". `t`: i testi (come in variantePartita).
+export function actionText(entry: VoceInGioco, isNew: boolean, roundOver: boolean, t: Testi = T): string {
   const { data, tokens } = entry;
   // Minion con vita "?": non si mette in gioco finché non si imposta la vita; il pulsante apre la sua scheda
-  if (hpUnset(entry)) return T.ctaSetHp;
+  if (hpUnset(entry)) return t.ctaSetHp;
   // Ultima carta del giro dei turni: "Metti in gioco · Mischia mazzo"
-  if (isNew) return data.type === 'Attack' ? T.ctaResolved
-    : roundOver ? T.ctaPutInPlayShuffle : T.ctaPutInPlayEnd;
+  if (isNew) return data.type === 'Attack' ? t.ctaResolved
+    : roundOver ? t.ctaPutInPlayShuffle : t.ctaPutInPlayEnd;
   // Potere: il token se ne va da solo; il pulsante dice solo cosa succede dopo (Number: null vale 0)
-  if (data.type === 'Power') return Number(tokens) > 1 ? T.ctaPowerNext : T.ctaPowerLast;
+  if (data.type === 'Power') return Number(tokens) > 1 ? t.ctaPowerNext : t.ctaPowerLast;
   // Minion (resta in gioco) e attacco (va negli scarti)
-  return T.ctaResolved;
+  return t.ctaResolved;
 }
 
 // Turno nemesi: si sta guardando una carta diversa da quella da risolvere (o da pescare)? Stessa scelta della carta
@@ -78,8 +79,9 @@ export function inAnteprima(p: PartitaPerVariante, u: UiPerVariante): boolean {
   return drawStep ? !viewingDraw : viewed !== active;
 }
 
-// Il momento della partita e le sue varianti
-export function variantePartita(p: PartitaPerVariante, u: UiPerVariante): VariantePartita {
+// Il momento della partita e le sue varianti. `t` sono i testi (di norma quelli in uso, T): i test lo passano per provare
+// le altre lingue
+export function variantePartita(p: PartitaPerVariante, u: UiPerVariante, t: Testi = T): VariantePartita {
   if (p.resolving) {
     const drawStep = isDrawStep(p);
     const active = p.queue[p.currentIndex] || null;
@@ -87,9 +89,9 @@ export function variantePartita(p: PartitaPerVariante, u: UiPerVariante): Varian
     const carteGrandi: CarteGrandi = drawStep ? 'carta-coperta' : 'carosello';
     if (inAnteprima(p, u)) {
       return { momento, interattivi: false, carteGrandi, azione: 'torna',
-        testo: drawStep ? T.backToDraw : T.backToActive, annullaModifiche: false };
+        testo: drawStep ? t.backToDraw : t.backToActive, annullaModifiche: false };
     }
-    const testo = drawStep || !active ? T.ctaDraw : actionText(active, p.newIndex >= 0, turnRoundOver(p.turnOrder));
+    const testo = drawStep || !active ? t.ctaDraw : actionText(active, p.newIndex >= 0, turnRoundOver(p.turnOrder), t);
     return { momento, interattivi: false, carteGrandi, azione: drawStep ? 'pesca' : 'risolvi', testo, annullaModifiche: false };
   }
   // Turno giocatori (e "Crea mazzo", che ha la stessa disposizione con il cursore al posto del pulsante)
@@ -97,10 +99,10 @@ export function variantePartita(p: PartitaPerVariante, u: UiPerVariante): Varian
   const awaiting = awaitingTurnCard(p.turnOrder, p.resolving);
   // A inizio giro (dopo il primo) "Pesca la prima carta turno"; all'ultimo turno del giro "Fine turno · Mischia mazzo"
   // (anche durante l'animazione del mazzo mischiato)
-  const testo = saving ? T.saveChanges
-    : u.trackShuffle ? T.endTurnShuffle
-    : awaiting ? (p.turnOrder.round >= 1 && !(p.turnOrder.history || []).length ? T.drawFirstTurnCard : T.drawTurnCard)
-    : turnRoundOver(p.turnOrder) ? T.endTurnShuffle : T.endTurn;
+  const testo = saving ? t.saveChanges
+    : u.trackShuffle ? t.endTurnShuffle
+    : awaiting ? (p.turnOrder.round >= 1 && !(p.turnOrder.history || []).length ? t.drawFirstTurnCard : t.drawTurnCard)
+    : turnRoundOver(p.turnOrder) ? t.endTurnShuffle : t.endTurn;
   if (u.deckBuilding) {
     return { momento: 'crea-mazzo', interattivi: true, carteGrandi: 'coda', azione: 'cursore', testo, annullaModifiche: false };
   }

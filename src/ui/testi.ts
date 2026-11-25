@@ -4,14 +4,23 @@
 //   data-testo="chiave"        il testo dell'elemento
 //   data-testo-aria="chiave"   l'attributo aria-label
 //   data-testo-title="chiave"  l'attributo title
-// Livello 2 (ui/ base). Dipende da: ui/testi-it.ts. Usato da: quasi tutti i moduli di ui/ e avvio.ts.
+// La lingua si sceglie una volta sola, all'avvio, dalla preferenza (stato/preferenze.ts); cambiandola l'app si ricarica.
+// Livello 2 (ui/ base). Dipende da: stato/preferenze.ts, ui/testi-it.ts, ui/testi-en.ts. Usato da: quasi tutti i moduli di ui/ e avvio.ts.
 
+import { lingua } from '../stato/preferenze.ts';
+import type { Lingua } from '../stato/preferenze.ts';
 import { I18N_IT } from './testi-it.ts';
+import type { Testi } from './testi-it.ts';
+import { I18N_EN } from './testi-en.ts';
 
-export type Testi = typeof I18N_IT;
+export type { Testi };
 
-// I testi in uso
-export const T: Testi = I18N_IT;
+// I dizionari, per lingua (anche i test li usano, per provare tutte le lingue)
+export const DIZIONARI: Record<Lingua, Testi> = { it: I18N_IT, en: I18N_EN };
+
+// La lingua in uso e i suoi testi
+export const LINGUA: Lingua = lingua();
+export const T: Testi = DIZIONARI[LINGUA];
 
 // Il testo di una chiave del dizionario che sia una scritta fissa (non una funzione né un gruppo); null se non lo è
 export function testoDi(testi: Testi, chiave: string): string | null {
@@ -37,5 +46,6 @@ export function applicaTestiFissi(radice: ParentNode, testi: Testi): void {
 
 // Codice eseguito all'avvio (main.ts chiama avvio() di ogni modulo, testi per primo dopo compatibilita)
 export function avvio(): void {
+  document.documentElement.lang = LINGUA;
   applicaTestiFissi(document, T);
 }

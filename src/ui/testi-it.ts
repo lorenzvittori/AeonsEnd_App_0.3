@@ -294,6 +294,9 @@ export const I18N_IT = {
   queueViewedNote: 'in anteprima',
   lifeStepAria: (step: number) => (step > 0 ? 'Aggiungi ' : 'Togli ') + Math.abs(step) + ' punti vita',
   lifeStepAriaOf: (step: number, name: string) => (step > 0 ? 'Rimetti ' : 'Togli ') + Math.abs(step) + ' punti vita a ' + name,
+  // Scelta della lingua nelle Opzioni: la scritta è uguale in tutte le lingue, così si trova anche senza capire quella attuale
+  language: 'Lingua / Language',
+  languageNames: { it: 'Italiano', en: 'English' },
   // Scenari della Modalità test (nome e riga di descrizione)
   testScenari: {
     turnDeck: { name: 'Carte sul mazzo dei turni',
@@ -320,3 +323,6 @@ export const I18N_IT = {
       desc: 'Nemesi e Gravehold a 3 di vita: togli 3 alla nemesi per la Vittoria, a Gravehold per la Sconfitta (Undo torna indietro)' }
   }
 };
+
+// La forma di un dizionario: ogni lingua ha tutte queste chiavi (le funzioni con gli stessi parametri)
+export type Testi = typeof I18N_IT;
