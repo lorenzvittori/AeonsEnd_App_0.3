@@ -12,6 +12,7 @@ import { chromium } from 'playwright';
 const LIB = readFileSync(join(import.meta.dirname, 'pagina-lib.js'), 'utf8');
 export const ORA = 1700000000000;
 export const SAVE_KEY = 'aeonsend-app-0.2-save';
+export const LANGUAGE_KEY = 'aeonsend-app-0.2-language';
 
 export const VISTE = {
   tel: { width: 375, height: 812 },
@@ -29,7 +30,8 @@ const senzaPorta = t => String(t).replace(/127\.0\.0\.1:\d+/g, 'HOST');
 // Pausa vera (non quella finta dell'orologio di Playwright)
 const pausa = ms => new Promise(r => setTimeout(r, ms));
 
-// Una pagina dell'app di una build. opz: { vista: 'tel'|'desk'|'orizz', ridotto, salvataggio (testo JSON), nome }
+// Una pagina dell'app di una build. opz: { vista: 'tel'|'desk'|'orizz', ridotto, salvataggio (testo JSON), lingua ('it'|'en':
+// la scelta salvata; senza, il browser è italiano e vale l'italiano), nome }
 export async function apri(browser, build, opz = {}) {
   const ctx = await browser.newContext({ viewport: VISTE[opz.vista || 'tel'], serviceWorkers: 'block',
     reducedMotion: opz.ridotto ? 'reduce' : 'no-preference', deviceScaleFactor: 1, hasTouch: false, locale: 'it-IT', timezoneId: 'Europe/Rome' });
@@ -39,6 +41,7 @@ export async function apri(browser, build, opz = {}) {
   await ctx.clock.pauseAt(ORA);
   await ctx.addInitScript(LIB);
   if (opz.salvataggio) await ctx.addInitScript(`try { if (!sessionStorage.getItem('__salv')) { localStorage.setItem(${JSON.stringify(SAVE_KEY)}, ${JSON.stringify(opz.salvataggio)}); sessionStorage.setItem('__salv', '1'); } } catch {}`);
+  if (opz.lingua) await ctx.addInitScript(`try { localStorage.setItem(${JSON.stringify(LANGUAGE_KEY)}, ${JSON.stringify(opz.lingua)}); } catch {}`);
   const page = await ctx.newPage();
   const errori = [];
   page.on('console', m => { if (m.type() === 'error' && !IGNORA.test(m.text())) errori.push(senzaPorta(m.text())); });

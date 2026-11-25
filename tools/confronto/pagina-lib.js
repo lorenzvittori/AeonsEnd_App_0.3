@@ -113,6 +113,47 @@
     }
     return out;
   };
+  // --- Lingua (prova "lingua") ---
+  // Per ogni elemento visibile con del testo: il testo, quante righe occupa, se esce dal suo box (scrollWidth > clientWidth,
+  // senza scorrimento previsto) o dallo schermo; gli attributi di testo (aria-label, title, alt, placeholder); e i testi
+  // sbagliati ("undefined", "NaN", "[object", "null"). La prova li confronta tra italiano e inglese.
+  const ATTR_TESTO = ['aria-label', 'title', 'alt', 'placeholder'];
+  const SBAGLIATO = /\bundefined\b|\bNaN\b|\[object|\bnull\b/;
+  const righe = e => {
+    const cime = new Set();
+    for (const n of e.childNodes) {
+      if (n.nodeType !== 3 || !n.textContent.trim()) continue;
+      const r = document.createRange();
+      r.selectNodeContents(n);
+      for (const q of r.getClientRects()) if (q.width > 0) cime.add(Math.round(q.top / 4));
+    }
+    return cime.size;
+  };
+  C.lingua = () => {
+    C.finisci();
+    const out = { viewport: [innerWidth, innerHeight], voci: {}, brutti: [] };
+    for (const e of document.documentElement.querySelectorAll('*')) {
+      if (SALTA.has(e.tagName) || e.closest('svg')) continue;
+      const cs = getComputedStyle(e);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || e.getClientRects().length === 0) continue;
+      const { chiave, lab } = percorso(e);
+      const t = testoProprio(e);
+      const a = {};
+      for (const n of ATTR_TESTO) if (e.hasAttribute(n)) a[n] = e.getAttribute(n);
+      const voce = { l: lab, t, a };
+      if (t) {
+        voce.righe = righe(e);
+        voce.bottone = !!e.closest('button, [role=button], .ae-button, .ae-text-button');
+        const r = e.getBoundingClientRect();
+        const scorre = /auto|scroll/.test(cs.overflowX);
+        if (cs.display !== 'inline' && !scorre && e.scrollWidth > e.clientWidth + 1) voce.esce = e.scrollWidth + ' > ' + e.clientWidth;
+        if (r.right > innerWidth + 1 || r.left < -1) voce.fuori = Math.round(r.left) + '..' + Math.round(r.right);
+      }
+      if (SBAGLIATO.test([t, ...Object.values(a)].join(' '))) out.brutti.push(lab + ': ' + [t, ...Object.values(a)].join(' | '));
+      out.voci[chiave] = voce;
+    }
+    return out;
+  };
   // --- Partite ---
   const app = () => window.app;
   const must = (v, che) => { if (v == null) throw new Error('manca: ' + che); return v; };

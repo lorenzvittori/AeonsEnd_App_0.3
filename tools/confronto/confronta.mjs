@@ -17,8 +17,9 @@ import salvataggi from './prove/salvataggi.mjs';
 import schermate from './prove/schermate.mjs';
 import indietro from './prove/indietro.mjs';
 import scheletri from './prove/scheletri.mjs';
+import lingua from './prove/lingua.mjs';
 
-const PROVE = [partite, scenari, salvataggi, schermate, indietro, scheletri];
+const PROVE = [partite, scenari, salvataggi, schermate, indietro, scheletri, lingua];
 const DISPONIBILI = PROVE.map(p => p.nome);
 
 function leggiArgomenti(argv) {
