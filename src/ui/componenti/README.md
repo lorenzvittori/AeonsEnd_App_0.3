@@ -17,7 +17,8 @@ componenti. Ogni pezzo con stile ha il suo `.css` accanto (importato da `stili/i
 - `pesca-turno.ts` + `.css`: la finestra "Pesca nuovo turno" (`openDrawTurn`): si apre a ogni fine turno e da "Pesca carta turno"; il dorso delle
   carte turno (`Assets/ui/turn-cards/back.webp`) si gira come la carta nemesi pescata (`.ae-flip`) e pesca il turno (`pescaCartaTurno`); sotto, di chi è
   il turno o, con le carte 1/2 e 3/4, "Chi gioca questo turno?" con i due token. Si esce toccando fuori. Quando esce la nemesi il turno nemesi parte a
-  schermo alla chiusura (`passaAlTurnoNemesi`). `ui.pescaTurnoAperta` spegne la vecchia finestra della scelta 1/2 e 3/4 (`renderPairChoice`).
+  schermo alla chiusura (`passaAlTurnoNemesi`). Finestra aperta, la shell ha la classe `is-draw-turn`: tutto è oscurato (filtro) tranne la barra dei
+  turni, come nella scelta 1/2 e 3/4. `ui.pescaTurnoAperta` spegne la vecchia finestra della scelta 1/2 e 3/4 (`renderPairChoice`).
 - `pesca-undo.ts` + `.css`: "Pesca carta" dal mazzo in alto (Rimetti nel mazzo / Scarta), Annulla sospeso, conferma di uscita.
 - `pulsante-principale.ts`: zona 7, l'unico pulsante e "Annulla modifiche"; disegnato dal coordinatore e dal carosello.
 - `ripristino.ts`: `restore`/`undo` lato interfaccia (animazioni ferme, finestre chiuse, carta da mostrare, `chiudiCreaMazzo`).

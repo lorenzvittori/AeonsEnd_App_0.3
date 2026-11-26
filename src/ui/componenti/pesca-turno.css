@@ -4,8 +4,12 @@
    Ordine: deve venire dopo dialoghi.css, mazzo-turni.css e turno-nemesi.css (ritocca gli stessi elementi con la stessa specificità).
    Si importa da src/stili/indice.ts. */
 
-/* Velo leggero: dietro la finestra si vede lo sfondo dell'app che si sposta */
-.ae-modal-backdrop.ae-draw-turn-backdrop { background: color-mix(in srgb, var(--velo-finestra) 55%, transparent); }
+/* Dietro la finestra lo sfondo dell'app si sposta. Come nella scelta "Chi gioca questo turno?" (mazzo-turni.css), tutto è
+   oscurato tranne la barra dei turni (.ae-turn-track): il velo non sta sulla finestra ma sulla shell (classe is-draw-turn) */
+.ae-modal-backdrop.ae-draw-turn-backdrop { background: transparent; }
+.ae-shell.is-draw-turn::before { opacity: .55; transition: opacity .25s ease-out; }
+.ae-shell.is-draw-turn > .ae-header, .ae-shell.is-draw-turn > .ae-dock,
+.ae-shell.is-draw-turn > .ae-main > :not(.ae-turn-track) { filter: brightness(.45); }
 .ae-draw-turn {
   width: min(260px, 100%); display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 22px 20px 24px;
   border-radius: 16px; background: color-mix(in srgb, var(--finestra-sfondo) 96%, transparent);
@@ -13,7 +17,7 @@
   box-shadow: 0 12px 40px color-mix(in srgb, var(--ombra) 60%, transparent);
   animation: ae-dialog-in var(--ae-duration-dialog) var(--ae-ease-decelerate);
 }
-.ae-draw-turn-title { margin: 0; color: var(--ae-gold); font: 600 20px/26px var(--ae-font-display); letter-spacing: .06em; text-align: center; }
+.ae-draw-turn-title { margin: 0; color: var(--ae-gold); font: 600 16px/22px var(--ae-font-display); letter-spacing: .04em; text-align: center; white-space: nowrap; }
 
 /* Il dorso (252 x 352, come le carte turno): bagliore dorato finché non si pesca */
 .ae-draw-turn-stage {
@@ -34,6 +38,8 @@
 }
 .ae-draw-turn-info:empty { display: none; }
 .ae-draw-turn-who { margin: 0; color: var(--ae-text); font: 600 17px/24px var(--ae-font-ui); text-align: center; }
+/* "Chi gioca questo turno?" un po' più piccola della scritta del turno */
+.ae-draw-turn-who.ae-draw-turn-ask { font-size: 14px; line-height: 20px; }
 /* Token del giocatore di turno (non si tocca), stessa misura dei due token della scelta */
 .ae-draw-turn-token { width: calc(var(--ae-pick-w, 52px) * 1.4); aspect-ratio: 1; background: transparent var(--ae-turn-face) center / contain no-repeat; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ae-player) 55%, transparent)); }
 .ae-draw-turn-token[data-kind="p1"] { --ae-player: var(--ae-turn-p1); --ae-turn-face: url('/Assets/ui/turn-tokens/p1.webp'); }

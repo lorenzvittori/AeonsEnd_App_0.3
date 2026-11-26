@@ -12,6 +12,11 @@
   overflow-x: auto; overflow-y: hidden; padding: 0 var(--carte-piccole-margine);
   border-bottom: 1px solid var(--ae-border); overscroll-behavior-x: contain; scroll-snap-type: x proximity;
 }
+/* Barra di scorrimento della fascia (con tante carte): metà dell'altezza di quella di sistema, con i bordi arrotondati */
+.ae-compact-rail::-webkit-scrollbar { height: 7px; }
+.ae-compact-rail::-webkit-scrollbar-track { background: transparent; border-radius: 999px; }
+.ae-compact-rail::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ae-text-muted) 55%, transparent); border-radius: 999px; }
+@supports not selector(::-webkit-scrollbar) { .ae-compact-rail { scrollbar-width: thin; } }
 .ae-compact-rail .ae-queue-item { --cw: var(--carta-piccola-larghezza); width: var(--carta-piccola-larghezza); flex-basis: var(--carta-piccola-larghezza); gap: 4px; opacity: .7; }
 /* Dal passo Pesca alla carta pescata messa in gioco le carte piccole non si toccano: nessun cambio di aspetto, cursore normale */
 .ae-compact-rail.is-bloccata .ae-queue-item { cursor: default; }

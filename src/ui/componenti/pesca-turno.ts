@@ -35,6 +35,7 @@ function whoText(kind: CartaTurno | null): string {
 export function openDrawTurn(): void {
   if (ui.pescaTurnoAperta || modals.length || ui.deckBuilding || partita.resolving || !awaitingTurnCard()) return;
   ui.pescaTurnoAperta = true;
+  app.classList.add('is-draw-turn');
   let drawn = false;
   let closed = false;
 
@@ -93,7 +94,7 @@ export function openDrawTurn(): void {
         b.addEventListener('click', () => choose(p));
         picks.appendChild(b);
       });
-      info.append(el('p', 'ae-draw-turn-who', T.pairChoiceTitle), picks);
+      info.append(el('p', 'ae-draw-turn-who ae-draw-turn-ask', T.pairChoiceTitle), picks);
       return;
     }
     // Turno già deciso: la scritta in bianco e, se gioca un giocatore, il suo token (sempre, anche senza scelta)
@@ -165,7 +166,7 @@ export function openDrawTurn(): void {
     pulsantePrincipale.focus({ preventScroll: true });
   }
   // (chiusa da un'altra strada, per esempio closeAllModals a una partita nuova: niente seguito, solo il segno "aperta" si spegne)
-  closeModalFn = openModal(dialog, { onCancel: finish, initialFocus: stage, closeOnScrim: false, onClosed: () => { closed = true; ui.pescaTurnoAperta = false; } });
+  closeModalFn = openModal(dialog, { onCancel: finish, initialFocus: stage, closeOnScrim: false, onClosed: () => { closed = true; ui.pescaTurnoAperta = false; app.classList.remove('is-draw-turn'); } });
   const backdrop = dialog.parentElement;
   if (backdrop) {
     backdrop.classList.add('ae-draw-turn-backdrop');
