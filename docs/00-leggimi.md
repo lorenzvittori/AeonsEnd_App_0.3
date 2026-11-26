@@ -32,7 +32,7 @@ chi gioca.
 
 Si va dal generale al particolare. Chi vuole solo il quadro può fermarsi al terzo file.
 
-1. [01 · Il progetto](01-il-progetto.md): da dove arrivano i file, cosa sono `src/`, `public/` e `dist/`, come l'app arriva sul telefono.
+1. [01 · Il progetto](01-il-progetto.md): da dove arrivano i file, cosa sono `src/`, `public/` e dist/, come l'app arriva sul telefono.
 2. [02 · La partita](02-la-partita.md): la partita vista da chi gioca, senza codice.
 3. [03 · L'architettura](03-architettura.md): come è organizzato il codice e chi può "parlare" con chi.
 4. [04 · Dal tocco al disegno](04-un-tocco.md): tre casi reali seguiti passo per passo, dal dito sullo schermo fino a quello che si vede.

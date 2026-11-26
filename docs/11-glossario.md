@@ -101,7 +101,7 @@ chiama nel codice e dove si trova. Serve a tradurre tra quello che si dice al ta
 | stato | l'insieme dei dati che descrivono la partita adesso | [05](05-stato-e-salvataggio.md) |
 | render | ridisegnare le zone dello schermo a partire dallo stato | [04](04-un-tocco.md) |
 | funzione pura | una funzione che con gli stessi argomenti dà sempre lo stesso risultato e non tocca niente fuori da sé | [03](03-architettura.md) |
-| build | la costruzione del sito finito in `dist/` | [01](01-il-progetto.md) |
+| build | la costruzione del sito finito in dist/ | [01](01-il-progetto.md) |
 | tag | un'etichetta fissa su un punto della storia del codice, per poterci tornare | [10](10-strumenti.md) |
 | test | un controllo automatico di una parte della logica | [10](10-strumenti.md) |
 | service worker | il programma del browser che permette all'app di funzionare senza rete | [01](01-il-progetto.md) |

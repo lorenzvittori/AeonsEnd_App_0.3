@@ -1,7 +1,7 @@
 # 01 · Il progetto, dal DataBase al telefono
 
 **Cosa trovi qui.** Il percorso completo di un file: dal DataBase delle carte fino allo schermo del telefono. Si spiega cosa sono
-`src/`, `public/` e `dist/`, cosa fa la "build" e perché l'app funziona anche senza rete.
+`src/`, `public/` e dist/, cosa fa la "build" e perché l'app funziona anche senza rete.
 
 ## L'idea in due righe
 
@@ -39,20 +39,20 @@ Passo per passo:
    il `manifest.webmanifest` (la "carta d'identità" dell'app installata: nome, icona, a tutto schermo).
 4. **`src/`** è il codice vero e proprio: tutto quello che si scrive e si modifica. È spiegato nel [file 03](03-architettura.md).
 5. **`npm run build`** è il comando che "costruisce" il sito (la build, vedi più sotto). Ha come ingressi `index.html`, `src/` e `public/`.
-6. **`dist/`** è il risultato della build: la cartella con il sito finito. È **generata**: non si scrive a mano e non va su GitHub
+6. **dist/** è il risultato della build: la cartella con il sito finito. È **generata**: non si scrive a mano e non va su GitHub
    (è nel `.gitignore`).
 7. **GitHub Actions** è il robot di GitHub che, quando il codice viene unito al branch `main`, esegue i controlli, costruisce il sito e lo
    pubblica. Il file che gli dice cosa fare è `.github/workflows/pages.yml`.
 8. **Il sito** è su GitHub Pages: la parte di GitHub che pubblica pagine web statiche, cioè senza un computer che "pensa" dietro.
 
-## Cosa sono `src/`, `public/` e `dist/`
+## Cosa sono `src/`, `public/` e dist/
 
 | Cartella | Chi la scrive | Cosa contiene | Va su GitHub? |
 |---|---|---|---|
 | `src/` | una persona (o Claude) | codice TypeScript e CSS, diviso in cartelle per livello | sì |
 | `public/` | in gran parte lo script `tools/import-db.py` | JSON, immagini, `sw.js`, `manifest.webmanifest` | sì |
 | `scheletri/` | a mano | la pagina di sviluppo con le misure dell'app (seconda pagina di Vite) | sì |
-| `dist/` | il comando `npm run build` | il sito finito: `index.html`, la cartella `dist/app/` con codice e CSS, una copia di `public/` | no |
+| dist/ | il comando `npm run build` | il sito finito: `index.html`, la cartella dist/app/ con codice e CSS, una copia di `public/` | no |
 
 ## Cosa fa la build, e perché "unisce e traduce"
 
@@ -62,8 +62,8 @@ La **build** è la fabbrica che trasforma il codice scritto per le persone in un
 codice è moderno: lo si lascia moderno (i telefoni di oggi lo capiscono).
 
 **Unisce.** In `src/` ci sono una sessantina di file `.ts`, ognuno con un compito piccolo (per esempio `regole/vite.ts` per le vite).
-Caricarli uno a uno costerebbe troppe richieste di rete. La build li **impacchetta** in pochi file: un JavaScript e un CSS dentro `dist/app/`
-(la cartella si chiama `dist/app/` e non assets perché su Windows si confonderebbe con `public/Assets/`). I CSS di tutte le schermate
+Caricarli uno a uno costerebbe troppe richieste di rete. La build li **impacchetta** in pochi file: un JavaScript e un CSS dentro dist/app/
+(la cartella si chiama dist/app/ e non assets perché su Windows si confonderebbe con `public/Assets/`). I CSS di tutte le schermate
 diventano un solo foglio, nell'ordine deciso da `stili/indice.ts` (vedi [file 09](09-aspetto.md)).
 
 **Dà un nome con l'hash.** I file costruiti hanno un nome come `index-<hash>.js`: la parte finale (l'**hash**) cambia a ogni modifica
@@ -78,11 +78,11 @@ Un dettaglio: il sito vive sotto l'indirizzo `/AeonsEnd_App_0.3/` e non alla rad
 
 Il robot (`.github/workflows/pages.yml`) parte **solo con un push su `main`**, il sito pubblicato; il lavoro si fa su `sviluppo`, che non lo fa scattare (come `ts` e `main-v273`). `main` riceve `sviluppo` solo quando l'utente scrive "pubblica": `git push origin sviluppo:main`, solo fast-forward.
 I suoi passi, in ordine, sono: installare i pacchetti (`npm ci`), `npm run check`, `npm test`, `npm run build`, poi
-`tools/pubblicazione-precedente.mjs` e infine la pubblicazione di `dist/`. Se un controllo fallisce, il sito non cambia.
+`tools/pubblicazione-precedente.mjs` e infine la pubblicazione di dist/. Se un controllo fallisce, il sito non cambia.
 
 `tools/pubblicazione-precedente.mjs` serve per un problema pratico: GitHub Pages tiene in memoria `index.html` per circa dieci
 minuti, ma i file con l'hash cambiano nome a ogni pubblicazione. Chi riceve ancora il vecchio `index.html` chiederebbe file che non
-esistono più. Lo script riporta quindi in `dist/app/` anche i file delle ultime pubblicazioni.
+esistono più. Lo script riporta quindi in dist/app/ anche i file delle ultime pubblicazioni.
 
 ## Dal sito al telefono, e senza rete
 

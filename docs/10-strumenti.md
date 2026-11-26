@@ -7,19 +7,19 @@ a cosa servono i "tag di ripristino" e come si svolge, passo per passo, una fase
 
 I comandi si scrivono in un **terminale** (in Windows, PowerShell) dalla cartella del repository. `npm` è il programma che li esegue: i nomi
 come `npm run check` sono "scorciatoie" definite nel file `package.json`, alla voce `scripts`. La prima volta, in una cartella nuova, serve
-`npm install` (o `npm ci`), che scarica le librerie di cui gli strumenti hanno bisogno in `node_modules/`.
+`npm install` (o `npm ci`), che scarica le librerie di cui gli strumenti hanno bisogno in node_modules/.
 
 ## I comandi, uno per uno
 
 | Comando | Cosa fa | Quando usarlo |
 |---|---|---|
 | `npm run dev` | avvia l'app in locale su `http://localhost:5173/AeonsEnd_App_0.3/`; ogni modifica ai file si vede da sola | mentre si lavora |
-| `npm run build` | costruisce il sito finito in `dist/` ([file 01](01-il-progetto.md)) | prima di un commit, e per provare che la costruzione riesce |
-| `npm run preview` | serve il contenuto di `dist/` su `http://localhost:4173/AeonsEnd_App_0.3/`, come sarà pubblicato | per provare il sito costruito, con il service worker vero |
+| `npm run build` | costruisce il sito finito in dist/ ([file 01](01-il-progetto.md)) | prima di un commit, e per provare che la costruzione riesce |
+| `npm run preview` | serve il contenuto di dist/ su `http://localhost:4173/AeonsEnd_App_0.3/`, come sarà pubblicato | per provare il sito costruito, con il service worker vero |
 | `npm run check` | tutti i controlli statici, vedi sotto | **prima di ogni commit** |
 | `npm test` | i test automatici (Vitest) | **prima di ogni commit** |
 | `npm run confronta -- <tag o commit>` | confronta la versione attuale con un'altra nel browser | a fine fase, dopo modifiche che non devono cambiare l'app |
-| `npm run screenshot` | gli screenshot dell'app in tutte le fasi (360×720, 720×1440 pixel) in `screenshot/360x720/`, con un indice da aprire nel browser; `-- --scala 1` per 360×720 pixel, `-- --lingua en` per l'inglese | quando servono immagini dell'interfaccia (Figma, Google Stitch); non cambia l'app |
+| `npm run screenshot` | gli screenshot dell'app in tutte le fasi (360×720, 720×1440 pixel) in screenshot/360x720/, con un indice da aprire nel browser; `-- --scala 1` per 360×720 pixel, `-- --lingua en` per l'inglese | quando servono immagini dell'interfaccia (Figma, Google Stitch); non cambia l'app |
 | `npm run colori` | solo il controllo Stylelint dei colori | dopo aver toccato un CSS |
 | `npm run docs` | solo il controllo di `docs/` | dopo aver toccato la documentazione |
 | `node tools/check-moduli.mjs --conta` | quanti `any`, eccezioni ai tipi, file `.js` (attesi 0) | per una verifica rapida della pulizia |
@@ -56,9 +56,9 @@ Passo per passo:
 
 Una documentazione si rovina quando il codice cambia e lei no. Questo controllo ne cattura i segni più chiari. Per ogni file di `docs/`:
 
-1. **I percorsi.** Ogni percorso di file scritto tra apici inversi (`stato/partita.ts`) deve esistere. Si cerca dalla radice del repository, poi in
-   `src/` e in `public/`. Non contano i testi con spazi o segnaposto (`<nome>`), né le cartelle che esistono solo dopo un comando (`dist/`,
-   `node_modules/`, `.confronto/`).
+1. **I percorsi.** Ogni percorso di file scritto tra apici inversi (`stato/partita.ts`) deve esistere **nel repository**, cioè essere salvato in Git (`git ls-files`): non basta che sia sul disco, perché
+   sul server di pubblicazione le cartelle generate o escluse da `.gitignore` non ci sono. Si cerca dalla radice, poi in `src/` e in `public/`. Non contano i testi con
+   spazi o segnaposto (`<nome>`). Le cartelle generate (dist/, node_modules/, .confronto/, screenshot/) si scrivono **senza apici inversi**.
 2. **I link.** Ogni link tra file (`[testo](altro.md)`) deve portare a un file che esiste.
 3. **I diagrammi.** Ogni blocco ` ```mermaid ` si **disegna davvero**: lo script apre Chromium senza finestra con Playwright (lo stesso strumento
    usato dal confronto), carica la libreria `mermaid` e prova a disegnare ogni blocco. Un errore di scrittura in un diagramma fa fallire il controllo.
@@ -94,7 +94,7 @@ flowchart TD
 
 Passo per passo:
 
-1. Si costruisce il riferimento (`<tag>`) in una **worktree** temporanea (una seconda copia di lavoro del repository, in `.confronto/`) e la
+1. Si costruisce il riferimento (`<tag>`) in una **worktree** temporanea (una seconda copia di lavoro del repository, in .confronto/) e la
    versione attuale. La build del riferimento si riusa se il commit non cambia.
 2. Le due versioni si servono su due porte (così i `localStorage` non si mischiano) e si aprono in un Chromium senza finestra.
 3. **Caso e orologio sono finti e uguali** per le due: così le stesse azioni danno gli stessi risultati. Le animazioni vanno subito alla fine.
@@ -104,7 +104,7 @@ Passo per passo:
    cerca testi che escono dal loro riquadro), `misure` (non confronta due versioni: per ogni variabile di `src/ui/schermate/partita-misure.css` la aumenta di 10px e
    controlla che lo spazio tra le due cose del suo commento cresca di 10px, a tre formati di schermo e nei due turni) e `console` (errori dell'app, solo nella versione attuale).
 5. L'esito è una riga per prova. Si legge con attenzione: **una differenza voluta** (un testo, un valore cambiato) si dichiara nel report;
-   **le altre sono errori**. Tutti i dettagli sono in `.confronto/esito.json`. L'uscita è 0 se tutto è identico, 1 se ci sono differenze, 2 se lo
+   **le altre sono errori**. Tutti i dettagli sono in .confronto/esito.json. L'uscita è 0 se tutto è identico, 1 se ci sono differenze, 2 se lo
    strumento non riesce a lavorare. Un giro completo dura circa tre minuti.
 6. Cosa il confronto **non** prova: animazioni vere, gesti con più dita, scorrimento inerziale, il telefono vero, le immagini come pixel, la rete
    lenta o assente e il service worker (è spento).
@@ -115,7 +115,7 @@ Costruisce la versione attuale e la percorre con lo stesso browser senza finestr
 `tools/confronto/dati/schermate.mjs`: per ogni stato (menu, Nuova partita, Crea mazzo, i due turni, Vittoria, Modalità test...) aspetta che animazioni e immagini
 delle carte siano finite e fa lo screenshot a 360×720 (telefono, schermo a tocco, 720×1440 pixel; un frame 360×720 in Figma). Nelle foto della partita nasconde il
 pulsante Regolazioni e la scritta TEST. Controlla che lo stato sia quello giusto (per esempio il testo del pulsante principale) e che nessuna immagine sia vuota o nera.
-Le immagini sono in `screenshot/360x720/` (l'inglese in `screenshot/360x720-en/`) con un indice (una pagina html) per vederle tutte insieme; la cartella non va su GitHub.
+Le immagini sono in screenshot/360x720/ (l'inglese in screenshot/360x720-en/) con un indice (una pagina html) per vederle tutte insieme; la cartella non va su GitHub.
 Come aggiungere uno stato: [tools/screenshot/README.md](../tools/screenshot/README.md).
 
 ## I tag di ripristino

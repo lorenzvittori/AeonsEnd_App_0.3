@@ -6,11 +6,14 @@
 // 2. ogni link tra file ([testo](altro.md), [testo](../src/ui/README.md)) porta a un file che esiste;
 // 3. ogni blocco ```mermaid si disegna senza errori: si usa Playwright (già installato, senza finestra) con mermaid come
 //    dipendenza di sviluppo, in una pagina vuota.
-// Cartelle e file che esistono solo dopo un comando (dist/, node_modules/, .confronto/) sono in GENERATI: si citano, ma
-// non si cercano. Esce con 1 se trova problemi.
-// Dipende da: playwright, mermaid. Usato da: package.json (script check).
+// "Esiste" vuol dire SALVATO nel repository (git ls-files), non presente sul disco: una cartella generata o esclusa da .gitignore
+// (dist/, node_modules/, .confronto/, screenshot/) c'è sul PC ma non sul server di pubblicazione, e il controllo deve fallire
+// qui come là. Nei documenti queste cartelle si scrivono senza backtick (sono "cartelle generate, non nel repository").
+// Esce con 1 se trova problemi.
+// Dipende da: git, playwright, mermaid. Usato da: package.json (script check).
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -20,8 +23,6 @@ const DOCS = join(ROOT, 'docs');
 const MERMAID = join(ROOT, 'node_modules', 'mermaid', 'dist', 'mermaid.min.js');
 // Dove si cerca un percorso scritto in modo breve (come nei README: `stato/partita.ts` sta in src/)
 const BASI = ['', 'src/', 'public/'];
-// Percorsi che esistono solo dopo un comando (build, installazione, confronto): si citano ma non si cercano
-const GENERATI = ['dist', 'node_modules', '.confronto'];
 const ESTENSIONI = /\.(ts|js|mjs|css|json|md|html|py|yml|webmanifest|webp|png|svg)$/;
 
 const problemi = [];
@@ -65,25 +66,23 @@ function ePercorso(t) {
   return t.includes('/') || ESTENSIONI.test(t);
 }
 
-// Il file o la cartella esiste, con le maiuscole e le minuscole esatte (come su Linux, anche se si lavora su Windows, dove
-// existsSync ignora la differenza): ogni pezzo del percorso si confronta con i nomi veri della cartella.
+// File salvati nel repository e le loro cartelle (git ls-files: solo quello che c'è anche sul server, con le maiuscole e le
+// minuscole esatte, come su Linux anche se si lavora su Windows)
+const SALVATI = new Set();
+for (const f of execFileSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28 }).split('\0').filter(Boolean)) {
+  const pezzi = f.split('/');
+  for (let i = 1; i <= pezzi.length; i++) SALVATI.add(pezzi.slice(0, i).join('/'));
+}
+
+// Il file o la cartella è salvato nel repository
 function esisteEsatto(assoluto) {
   const rel = relative(ROOT, assoluto);
   if (rel.startsWith('..')) return existsSync(assoluto);
-  let cartella = ROOT;
-  for (const pezzo of rel.split(sep).filter(Boolean)) {
-    let nomi;
-    try { nomi = readdirSync(cartella); } catch { return false; }
-    if (!nomi.includes(pezzo)) return false;
-    cartella = join(cartella, pezzo);
-  }
-  return true;
+  return SALVATI.has(rel.split(sep).filter(Boolean).join('/'));
 }
 
 function esiste(percorso) {
   const pulito = percorso.replace(/^\.?\//, '');
-  const primo = pulito.split('/')[0];
-  if (GENERATI.includes(primo)) return true;
   return BASI.some(base => esisteEsatto(join(ROOT, base + pulito)));
 }
 

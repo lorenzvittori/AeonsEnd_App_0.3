@@ -14,7 +14,8 @@ Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dall
   e import tra moduli di `ui/`; `--conta` stampa `any`, eccezioni ai tipi, file `.js`, usi di `G` (attesi 0). Un file nuovo di `src/` va
   messo in `levelOf` (livello) e nel README della sua cartella.
 - `check-docs.mjs`: controllo di `docs/` (`npm run docs`, lanciato anche da `npm run check`, esce con 1 se trova problemi): ogni percorso di file
-  citato tra backtick esiste (si cerca dalla radice, poi in `src/` e `public/`; `dist/`, `node_modules/`, `.confronto/` non si cercano), ogni link tra
+  citato tra backtick è **salvato nel repository** (`git ls-files`, non basta che sia sul disco: si cerca dalla radice, poi in `src/` e `public/`; le cartelle generate o
+  in `.gitignore`, come dist/ e screenshot/, si scrivono senza backtick), ogni link tra
   file funziona, ogni blocco `mermaid` si disegna (Playwright senza finestra e `mermaid` come dipendenza di sviluppo). Non sa se un diagramma dice il
   vero: lo verifica chi scrive. Un file `.md` passato come argomento controlla solo quello.
 - `import-db.py`: il ponte DataBase → app (Python con openpyxl e Pillow). Genera `cards.json`, `products.json`, `Data/Nemesis/`,
