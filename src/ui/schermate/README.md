@@ -10,7 +10,7 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
   `turno-nemesi.ts` + `turno-nemesi-carosello.ts` + `.css`: i due turni. `crea-mazzo.ts` + `crea-mazzo-cursore.ts` + `.css`: "Crea mazzo".
 - `mazzo-turni.ts` + `.css` (apertura, foglio, chiusura, Esc), `mazzo-turni-bozza.ts` (bozza e stato `Finestra`), `mazzo-turni-disegno.ts`
   (disegno della riga: `draw`, `layoutFan`, `layoutHeads`), `mazzo-turni-trascina.ts` (tocchi, trascinamento, `runShuffle`),
-  `mazzo-turni-riga.ts` (conti puri della riga, provati in `tests/mazzo-turni-riga.test.ts`).
+  `mazzo-turni-tempo.ts` (linea del tempo sotto le carte), `mazzo-turni-riga.ts` (conti puri della riga, provati in `tests/mazzo-turni-riga.test.ts`).
 
 ## La schermata "partita" (turni, Pesca e "Crea mazzo": un solo `#app`, `data-schermata="partita"`)
 - 7 zone dall'alto, ognuna un blocco di `index.html` con `data-zona`: 1 `testata` (`#topbar`), 2 `turno` (`#fascia-turno`, barra dei

@@ -68,6 +68,8 @@ export function openTurnScreen(): void {
   copyShell.appendChild(viewOnlyCopy(byId('topbar', HTMLElement)));
   const trackHolder = el('div', 'ae-turn-copy-track');
   copyShell.appendChild(trackHolder);
+  // Un tocco sulla barra dei turni chiude la finestra (come la X; la barra dentro è inerte, il tocco arriva al contenitore)
+  trackHolder.addEventListener('click', () => tryClose(f));
   // Nella copia funziona solo il pulsante Menu (il menu si apre sopra la finestra); il resto è solo da guardare
   const copyMenu = query(copyShell, '.ae-menu-button', HTMLElement);
   (function inertExcept(node: Element) {
@@ -77,6 +79,11 @@ export function openTurnScreen(): void {
       else { if (c instanceof HTMLElement) c.inert = true; c.setAttribute('aria-hidden', 'true'); }
     });
   })(copyShell);
+  // La barra dei turni della copia chiude la finestra: il contenitore non è inerte (la barra dentro è solo da guardare)
+  trackHolder.inert = false;
+  trackHolder.removeAttribute('aria-hidden');
+  trackHolder.setAttribute('role', 'button');
+  trackHolder.setAttribute('aria-label', T.close);
   if (copyMenu) {
     copyMenu.setAttribute('aria-label', T.menu);
     copyMenu.setAttribute('aria-haspopup', 'dialog');
@@ -196,7 +203,10 @@ export function openTurnScreen(): void {
   const revealRow = el('div', 'ae-turn-reveal-row');
   revealRow.appendChild(revealAll);
   deckArea.append(lane, revealRow);
-  row.append(pileArea, divider, deckArea);
+  // Linea del tempo sotto le carte (nodi e segmenti, solo da guardare; li dispone layoutTime)
+  const time = el('div', 'ae-turn-time');
+  time.setAttribute('aria-hidden', 'true');
+  row.append(pileArea, divider, deckArea, time);
   board.append(heads, row);
   // Mazzo vuoto: niente Cima e Fondo; con una carta degli scarti selezionata, un tocco sul mazzo la mette lì
   lane.addEventListener('click', e => {
@@ -230,7 +240,7 @@ export function openTurnScreen(): void {
     fanEls: [], pileEls: [], rowGeo: null, headsGrowTimer: undefined, headsGrowing: false, lastHeadsCx: 0,
     dialog, sheet, copyShell, trackHolder, copyMenu, row, pileArea, pileRow, divider, deckArea, shuffleBtn, heads, pileHead,
     deckHead, headLines, cusp, board, lane, zoneTop, zoneBottom, revealTop, insertBar, pileInsert, pileZone, revealAll,
-    revealAllEye, revealRow, hint, footer, resetBtn,
+    revealAllEye, revealRow, time, hint, footer, resetBtn,
     h: {
       onCardClick: e => onCardClick(f, e),
       onPointerDown: e => onPointerDown(f, e),

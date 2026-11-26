@@ -99,6 +99,7 @@ export interface Finestra {
   revealAll: HTMLButtonElement;  // Rivela tutto / Copri tutto
   revealAllEye: HTMLSpanElement;
   revealRow: HTMLDivElement;
+  time: HTMLDivElement;          // linea del tempo sotto le carte (solo da guardare)
   hint: HTMLParagraphElement;    // suggerimento sotto la riga
   footer: HTMLDivElement;
   resetBtn: HTMLButtonElement;   // Ripristina tutto
@@ -166,6 +167,11 @@ export function turnDraftKey(d: BozzaTurni): string {
 // Posizione negli scarti della carta del turno in corso (-1 = nessuna, anche se la sua carta è tornata nel mazzo)
 export function turnDraftCurrent(d: BozzaTurni): number {
   return Turni.turnDraftCurrent(d);
+}
+
+// Stato di ogni carta degli scarti per la linea del tempo (giocata, in corso, saltata)
+export function turnPileStates(d: BozzaTurni): Turni.StatoCartaScarti[] {
+  return Turni.turnPileStates(d);
 }
 
 // Azioni sulla bozza (regole/mazzo-turni.ts); "Mescola" usa il caso di Math.random

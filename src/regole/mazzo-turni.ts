@@ -265,9 +265,19 @@ export function turnDraftKey(d: BozzaTurni): string {
 }
 
 // Posizione negli scarti della carta del turno in corso (-1 = nessuna, anche se la sua carta è tornata nel mazzo)
-export function turnDraftCurrent(d: BozzaTurni): number {
+export function turnDraftCurrent(d: Pick<BozzaTurni, 'history' | 'waiting'>): number {
   const cur = currentTurn(d);
   return cur && cur.pos !== null && cur.pos !== undefined ? cur.pos : -1;
+}
+
+// Stato di ogni carta degli scarti per la linea del tempo, dalla storia (la posizione fisica non conta): 'current' = carta
+// del turno in corso, 'done' = carta di un turno già giocato, 'skipped' = carta senza turno nella storia (portata a mano
+// dal mazzo). Con la carta del turno in corso tornata nel mazzo nessuna carta degli scarti è 'current'
+export type StatoCartaScarti = 'done' | 'current' | 'skipped';
+export function turnPileStates(d: Pick<BozzaTurni, 'drawn' | 'history' | 'waiting'>): StatoCartaScarti[] {
+  const cur = turnDraftCurrent(d);
+  const played = new Set((d.history || []).map(e => e.pos).filter((p): p is number => typeof p === 'number'));
+  return d.drawn.map((kind, i) => i === cur ? 'current' : played.has(i) ? 'done' : 'skipped');
 }
 
 // Carta del mazzo che si può spostare: nota e, se era già nota all'apertura (d.old), solo quando è in cima

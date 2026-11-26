@@ -2,7 +2,7 @@
 // disposizione della riga (misura delle carte, Cima e Fondo, guida, cerchi), riga dei titoli con la cuspide, carte che
 // si girano rivelandole. File di supporto di mazzo-turni.ts.
 // Livello 5 (ui/schermate/). Dipende da: ui/ base (testi, pagina, dom), ui/componenti/animazioni.ts, mazzo-turni-bozza.ts
-// e mazzo-turni-riga.ts (supporto). Usato da: mazzo-turni.ts, mazzo-turni-trascina.ts.
+// mazzo-turni-riga.ts e mazzo-turni-tempo.ts (supporto). Usato da: mazzo-turni.ts, mazzo-turni-trascina.ts.
 
 import { animDone } from '../componenti/animazioni.ts';
 import { el, need, query } from '../dom.ts';
@@ -11,6 +11,7 @@ import { emptySetIcon, saveTurnDraft, trackPreviewCopy, turnCardFace, turnCardNa
 import type { Destinazione, Finestra, Selezione } from './mazzo-turni-bozza.ts';
 import { inCardBand, spaceItems, TURN_SPREAD } from './mazzo-turni-riga.ts';
 import type { OggettoRiga } from './mazzo-turni-riga.ts';
+import { layoutTime } from './mazzo-turni-tempo.ts';
 import { reducedMotion } from '../pagina.ts';
 import { T } from '../testi.ts';
 
@@ -131,7 +132,6 @@ export function draw(f: Finestra, still = false) {
     face.classList.toggle('is-selected', !!f.sel && f.sel.source === 'pile' && f.sel.index === i);
     const slot = el('div', 'ae-turn-pile-slot' + (i === cur ? ' is-current' : ''));
     slot.appendChild(face);
-    if (i === cur) slot.appendChild(el('span', 'ae-turn-pile-note', T.turnCurrent));
     faces.push(face);
     return slot;
   });
@@ -326,6 +326,7 @@ export function layoutFan(f: Finestra, order: number[] = displayOrder(f), lifted
   if (pz) Object.assign(f.pileZone.style, { left: pz.left + 'px', top: (h / 2 - zd / 2) + 'px' });
   f.pileInsert.hidden = !(toPile && pz);
   if (toPile && pz) Object.assign(f.pileInsert.style, { left: (pz.left + zd / 2 - 3) + 'px', width: '6px', top: '0px', height: h + 'px' });
+  layoutTime(f, items, h);
   const mReal = g.n - (st.dragDeck ? 1 : 0);
   f.lane.classList.toggle('is-empty-target', tight && !mReal);
   // Titoli: la cuspide sul centro del segmento, "Scarti" a sinistra, "Mazzo turno" a destra

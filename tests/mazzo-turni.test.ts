@@ -300,6 +300,29 @@ describe('scarti dei turni e finestra del mazzo dei turni', () => {
     expect(T.turnCardPlayer('p12', 1, order, null)).toBe(null);
     expect(order.pairNext).toEqual({ p12: null, p34: null });
   });
+
+  it('linea del tempo: giocata, in corso, saltata; il turno in corso segue la carta, non la posizione', () => {
+    const order = orderWith(['p1', 'p2', 'nemesis'], { known: [true, true, true], drawn: ['p3', 'p4'],
+      history: [{ kind: 'p3', player: null, forced: false, pos: 0 }, { kind: 'p4', player: null, forced: false, pos: 1 }] });
+    const d = T.turnDraftFrom(order);
+    expect(T.turnPileStates(d)).toEqual(['done', 'current']);
+    // carta del mazzo portata negli scarti: saltata, l'anello resta dov'è
+    T.turnDraftOps.deckToPile(d, 0);
+    expect(T.turnPileStates(d)).toEqual(['done', 'current', 'skipped']);
+    // carta del turno in corso nel mazzo: nessun anello; un'altra carta portata negli scarti non lo eredita
+    T.turnDraftOps.pileToDeck(d, 1, 'top');
+    expect(T.turnPileStates(d)).toEqual(['done', 'skipped']);
+    T.turnDraftOps.deckToPile(d, 1);
+    expect(T.turnPileStates(d), 'altra carta').toEqual(['done', 'skipped', 'skipped']);
+    // la carta del turno in corso torna negli scarti: X, l'anello non ricompare; il turno in corso resta nella storia
+    T.turnDraftOps.deckToPile(d, 0);
+    expect(T.turnPileStates(d)).toEqual(['done', 'skipped', 'skipped', 'skipped']);
+    expect(d.history[1]).toEqual({ kind: 'p4', player: null, forced: false, pos: null });
+    expect(T.currentTurn(d)).toEqual(d.history[1]);
+    // togliere una carta giocata sposta i simboli insieme alle carte
+    T.turnDraftOps.pileToDeck(d, 0, 'bottom');
+    expect(T.turnPileStates(d)).toEqual(['skipped', 'skipped', 'skipped']);
+  });
 });
 
 describe('salvataggi del mazzo dei turni', () => {

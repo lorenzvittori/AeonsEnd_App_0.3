@@ -96,6 +96,9 @@ Passo per passo:
    di 6 pixel (`TURN_DRAG_PX`) e cade dove la si lascia (`onPointerMove()`, `endDrag()`). Una guida verticale mostra dove cadrà.
 2. **Dal mazzo agli scarti** (`deckToPile`): la carta va **in fondo agli scarti**. Non è un turno giocato: la storia non cambia, il
    turno di quella carta è perso.
+   La **linea del tempo** sotto le carte (`layoutTime`, `turnPileStates`) legge la storia, non la posizione: pallino pieno = turno
+   giocato, anello dorato = turno in corso, X grigia = carta negli scarti senza turno, anello grigio = carta nel mazzo. Spostata nel mazzo, la carta del turno in corso perde l'anello per sempre: se torna negli scarti è una X,
+   e un anello nuovo arriva solo dalla pesca di un turno (il turno in corso della partita non cambia).
 3. **Dagli scarti al mazzo** (`pileToDeck`, con `takeFromTurnPile()`): la carta torna in cima, in fondo o in una posizione scelta, resta
    rivelata e **senza giocatore**. Il turno giocato con quella carta **resta nella storia** della barra (e se era il turno in corso,
    continua). La memoria delle coppie non cambia.

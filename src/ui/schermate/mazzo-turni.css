@@ -167,6 +167,11 @@
 @media (min-width: 768px) {
   .ae-turn-sheet { border: solid var(--ae-border); border-width: 0 1px; }
 }
+/* Titolo "Mazzo dei turni" alla stessa altezza della X; la X ha l'icona a filo del margine destro dell'app (16px) */
+.ae-turn-sheet > .ae-modal-header { align-items: center; }
+.ae-turn-sheet > .ae-modal-header > .ae-icon-button { margin-right: -12px; }
+/* Un tocco sulla barra dei turni (la copia in cima) chiude la finestra come la X */
+.ae-turn-copy .ae-turn-copy-track { pointer-events: auto; cursor: pointer; }
 .ae-modal-backdrop.ae-turn-screen-backdrop.is-closing { background: transparent; transition: background .2s; }
 /* Nella copia funziona solo il pulsante Menu */
 .ae-turn-copy .ae-menu-button { pointer-events: auto; cursor: pointer; }
@@ -532,3 +537,33 @@
 .ae-turn-empty-icon { display: block; width: min(26px, calc(var(--ae-turn-w, 48px) * .42)); aspect-ratio: 1; opacity: .8; transition: opacity .15s ease; }
 .ae-turn-empty-icon svg { display: block; width: 100%; height: 100%; }
 .ae-turn-area--pile.has-zone .ae-turn-empty-icon, .ae-turn-lane.is-empty-target .ae-turn-empty-icon { opacity: 0; }
+
+/* Linea del tempo sotto le carte (mazzo-turni-disegno.ts layoutTime), solo da guardare. Nodi e segmenti sullo stesso asse.
+   Giocato: pallino dorato 8px; in corso: anello dorato 10px (bordo 2px); nel mazzo: anello grigio 6px (bordo 1px); carta
+   saltata: X grigia 5x5px (tratto 1px). Segmenti di 1px a estremita' arrotondate: dorato, grigio o sfumato; passano sotto le X */
+.ae-turn-row { position: relative; min-height: calc(var(--ae-turn-h, 67px) + 18px); }
+.ae-turn-time { position: absolute; left: 0; right: 0; height: 10px; pointer-events: none; --ae-time-grey: color-mix(in srgb, var(--ae-text-muted) 60%, transparent); }
+.ae-turn-time-segs, .ae-turn-time-nodes { position: absolute; inset: 0; }
+.ae-turn-time-nodes { z-index: 1; }
+.ae-turn-time-node, .ae-turn-time-seg { position: absolute; box-sizing: border-box; transition: left .2s ease, width .2s ease; }
+.ae-turn-time-node { top: 50%; border-radius: 50%; }
+.ae-turn-time-node.is-done { width: 8px; height: 8px; margin-top: -4px; background: var(--ae-gold); }
+.ae-turn-time-node.is-current { width: 10px; height: 10px; margin-top: -5px; border: 2px solid var(--ae-gold); }
+.ae-turn-time-node.is-todo { width: 6px; height: 6px; margin-top: -3px; border: 1px solid var(--ae-time-grey); }
+.ae-turn-time-node.is-skipped { width: 5px; height: 5px; margin-top: -2.5px; border-radius: 0; }
+.ae-turn-time-node.is-skipped::before, .ae-turn-time-node.is-skipped::after {
+  content: ''; position: absolute; left: -1px; top: 2px; width: 7px; height: 1px; border-radius: 1px; background: var(--ae-time-grey);
+}
+.ae-turn-time-node.is-skipped::before { transform: rotate(45deg); }
+.ae-turn-time-node.is-skipped::after { transform: rotate(-45deg); }
+.ae-turn-time-seg { top: 50%; height: 1px; margin-top: -.5px; border-radius: 1px; }
+.ae-turn-time-seg.is-gold { background: var(--ae-gold); }
+.ae-turn-time-seg.is-grey { background: var(--ae-time-grey); }
+.ae-turn-time-seg.is-gold-grey { background: linear-gradient(to right, var(--ae-gold), var(--ae-time-grey)); }
+.ae-turn-time-seg.is-grey-gold { background: linear-gradient(to right, var(--ae-time-grey), var(--ae-gold)); }
+/* "Rivela tutto" resta sotto la linea del tempo: 8px sotto le carte, 10px di linea, 8px di spazio */
+.ae-turn-reveal-row { margin-top: 18px; }
+.ae-turn-heads.is-settling ~ .ae-turn-row .ae-turn-time-node, .ae-turn-heads.is-settling ~ .ae-turn-row .ae-turn-time-seg { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ae-turn-time-node, .ae-turn-time-seg { transition: none; }
+}
