@@ -19,7 +19,7 @@ Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dall
   file funziona, ogni blocco `mermaid` si disegna (Playwright senza finestra e `mermaid` come dipendenza di sviluppo). Non sa se un diagramma dice il
   vero: lo verifica chi scrive. Un file `.md` passato come argomento controlla solo quello.
 - `import-db.py`: il ponte DataBase → app (Python con openpyxl e Pillow). Genera `cards_nemesis.json`, `cards_supply.json`,
-  `cards_treasure.json`, `products.json`, `Data/Nemesis/`, `Data/Supply/`, `Data/Treasure/` con le miniature in `thumbs/` e le immagini
+  `cards_treasure.json`, `mechanics.json` (meccaniche delle supply e dei tesori, con i conteggi dal DataBase), `products.json`, `Data/Nemesis/`, `Data/Supply/`, `Data/Treasure/` con le miniature in `thumbs/` e le immagini
   delle nemesi (`Assets/nemesis/`: carta, retro, ritaglio, `nemesis-art.json`): **questi file non si modificano a mano**. Fonti in sola
   lettura: `Data/NEMESIS_CARDS.xlsx`, `Data/SUPPLY_CARDS.xlsx`, `Data/TREASURE_CARDS.xlsx`, `Data/DataBase_*.xlsx` (foglio MAIN, immagini
   per UID), `BOXES_NAMES` di `pipeline.py`.

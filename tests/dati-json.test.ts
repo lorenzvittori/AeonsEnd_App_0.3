@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkCards, checkDeckSetup, checkNemesisArt, checkNemeses, checkProducts, checkSupplyCards,
+import { checkCards, checkDeckSetup, checkMechanics, checkNemesisArt, checkNemeses, checkProducts, checkSupplyCards,
   checkTreasureCards } from '../src/dati/controllo.ts';
 import { isRecord, parseJson } from '../src/regole/json.ts';
 
@@ -124,7 +124,44 @@ describe('carte della biblioteca (supply e tesori)', () => {
   });
 
   it('non si leggono all\'avvio', () => {
-    expect(readFileSync(join(ROOT, 'src', 'avvio.ts'), 'utf8')).not.toMatch(/cards_(supply|treasure)/);
+    expect(readFileSync(join(ROOT, 'src', 'avvio.ts'), 'utf8')).not.toMatch(/cards_(supply|treasure)|mechanics\.json/);
+  });
+
+  it('mechanics.json: ogni meccanica delle carte c\'è, con nomi unici e ordinati, e i conteggi tornano', () => {
+    const r = checkMechanics(file('mechanics.json'));
+    expect(r.problems).toEqual([]);
+    const names = r.value.map(m => m.name);
+    expect(new Set(names).size).toBe(names.length);
+    expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })));
+    const byName = new Map(r.value.map(m => [m.name, m]));
+    // ogni meccanica elencata compare in almeno un Excel (supply + tesori > 0)
+    r.value.forEach(m => expect(m.supply + m.treasure, m.name).toBeGreaterThan(0));
+    // le carte nei file: ogni loro meccanica è nell'elenco, e il conteggio dei file non supera quello del DataBase
+    const found = new Map<string, { supply: number; treasure: number }>();
+    const add = (list: string[], kind: 'supply' | 'treasure') => list.forEach(m => {
+      const e = found.get(m) ?? { supply: 0, treasure: 0 };
+      e[kind] += 1;
+      found.set(m, e);
+    });
+    checkSupplyCards(file('cards_supply.json')).value.forEach(c => add(c.mechanics, 'supply'));
+    checkTreasureCards(file('cards_treasure.json')).value.forEach(c => add(c.mechanics, 'treasure'));
+    found.forEach((n, name) => {
+      const m = byName.get(name);
+      expect(m, `${name}: manca in mechanics.json`).toBeDefined();
+      expect(m!.supply >= n.supply && m!.treasure >= n.treasure, `${name}: conteggi`).toBe(true);
+    });
+  });
+
+  it('box, miniExpansion e boxCode dicono la stessa scatola (products.json); le nemesi non hanno meccaniche', () => {
+    const products = checkProducts(file('products.json')).value;
+    const cardsNem = checkCards(file('cards_nemesis.json')).value;
+    const all = [...cardsNem, ...checkSupplyCards(file('cards_supply.json')).value,
+      ...checkTreasureCards(file('cards_treasure.json')).value];
+    all.forEach(c => {
+      const expected = (c.miniExpansion ?? c.box ?? '').toLowerCase();
+      expect(String(products[c.boxCode] ?? '').toLowerCase(), `${c.id}: boxCode ${c.boxCode}`).toBe(expected);
+    });
+    cardsNem.forEach(c => expect(c.mechanics, `${c.id}: meccaniche`).toEqual([]));
   });
 
   it('id unici in ciascun file', () => {

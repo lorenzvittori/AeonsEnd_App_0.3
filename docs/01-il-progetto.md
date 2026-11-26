@@ -18,7 +18,7 @@ Il diagramma mostra cosa succede ai dati e al codice, dalla sorgente fino al sit
 ```mermaid
 flowchart LR
     A["DataBase<br/>Excel e scansioni delle carte<br/>cartella fuori dal repository"] --> B["tools/import-db.py<br/>il ponte DataBase → app"]
-    B --> C["public/<br/>cards_nemesis.json, nemesis.json, products.json<br/>cards_supply.json, cards_treasure.json (per la biblioteca)<br/>Data/ e thumbs/ con le immagini"]
+    B --> C["public/<br/>cards_nemesis.json, nemesis.json, products.json<br/>cards_supply.json, cards_treasure.json, mechanics.json (per la biblioteca)<br/>Data/ e thumbs/ con le immagini"]
     D["src/<br/>il codice TypeScript e i CSS"] --> E["npm run build<br/>Vite unisce e traduce"]
     F["index.html<br/>la pagina di partenza"] --> E
     C --> E

@@ -23,11 +23,20 @@ Caricamento dei dati e uso della rete. Livello 1: importa da `tipi/`, `regole/` 
   `quantity`, `removalCost` (Æ per scartare il potere), `removable`, `image` (`Data/Nemesis/<Box>_<Prodotto>/.../Tier_N/<Nome>.webp`).
   `effect`, `toDiscard`, `immediately`, `persistent`, `powerEffect` sono testi non usati dall'app.
 - `cards_supply.json` e `cards_treasure.json` (per la biblioteca: **non si leggono all'avvio**, li controlla `controllo.ts` nei
-  test): `id` (copiato dal DataBase così com'è, es. `"[AE055, AE061]"`), `name`, `boxCode`, `type` (supply: Gem | Relic | Spell;
-  tesori: Treasured Gem | Treasured Spell | Treasured Relic | Treasure Level 1-3), `level` (solo tesori: 1 per i Treasured, N per
-  "Treasure Level N"), `cost` (numero in Æ; nei tesori può essere null), `mechanics` (parole chiave, o null), `effect` (testo, a capo
-  con `\n`), `image` (`Data/Supply/<codice>/<Gem | Relic | Spell>/<Nome>.webp`, tesori: `Data/Treasure/<codice>/Level_N/<Nome>.webp`),
-  `thumb` (stesso percorso sotto `thumbs/`). Entrano solo le carte con l'immagine.
+  test): `id` (copiato dal DataBase così com'è, es. `"[AE055, AE061]"`), `name`, `boxCode`, `box` (scatola grande, colonna Box,
+  es. `"The New Age"`), `miniExpansion` (colonna MiniExpansion, es. `"Shattered Dreams"`; null se è della scatola grande), `type`
+  (supply: Gem | Relic | Spell; tesori: Treasured Gem | Treasured Spell | Treasured Relic | Treasure Level 1-3), `level` (solo tesori:
+  1 per i Treasured, N per "Treasure Level N"), `cost` (numero in Æ; nei tesori può essere null), `mechanics` (elenco di testi: la
+  colonna Mechanics divisa su `;`, es. `["Pulse Token", "Recall"]`; `[]` se nessuna), `effect` (testo, a capo con `\n`), `image`
+  (`Data/Supply/<codice>/<Gem | Relic | Spell>/<Nome>.webp`, tesori: `Data/Treasure/<codice>/Level_N/<Nome>.webp`), `thumb` (stesso
+  percorso sotto `thumbs/`). Entrano solo le carte con l'immagine.
+- Tutti e tre i file delle carte hanno `box`, `miniExpansion`, `boxCode` coerenti con `products.json` (la mini espansione, o la
+  scatola grande, dà il nome del prodotto di `boxCode`); le incoerenze del DataBase vanno nelle segnalazioni dello script.
+  Le nemesi non hanno la colonna Mechanics: `mechanics` è sempre `[]` in `cards_nemesis.json`.
+- `mechanics.json`: tutte le meccaniche delle carte supply e tesori del DataBase (tutte le righe, anche senza immagine), in ordine
+  alfabetico: `name` (nome com'è nel DataBase), `it` (nome italiano, ancora `null`), `supply` e `treasure` (quante carte di ciascun
+  Excel la hanno, es. `{"name": "Pulse Token", "it": null, "supply": 8, "treasure": 0}`). Non letto all'avvio. Alcuni nomi non sono
+  meccaniche ma descrizioni (es. "Cards that Interact with Trinket"): si lasciano così, il DataBase è dell'utente.
 - `products.json`: `{ codice: nome }` (`"4": "The New Age"`, `"4.1": "Shattered Dreams"`). Il codice senza punto è la
   scatola base della wave; la wave è la parte prima del punto (`waveOfCode`).
 - `nemesis.json`: `name`, `boxCode` (null per le Promo, mai giocabili), `waveOrder`, `battle`, `flagBattle5`, `life` (vita

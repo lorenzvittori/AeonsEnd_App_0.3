@@ -9,7 +9,7 @@
 
 import { isRecord } from '../regole/json.ts';
 import type { ArteNemesi, ArteNemesiTutte, BattagliaDeckSetup, Carta, CartaSupply, CartaTesoro, Categoria, CartePerTier, DeckSetup,
-  Nemesi, Prodotti, RigaDeckSetup, TipoCarta, TipoSupply, TipoTesoro } from '../tipi/dati.ts';
+  Meccanica, Nemesi, Prodotti, RigaDeckSetup, TipoCarta, TipoSupply, TipoTesoro } from '../tipi/dati.ts';
 
 // Valori ammessi
 const CATEGORIE: readonly Categoria[] = ['Basic', 'Upgraded', 'Specific'];
@@ -28,12 +28,13 @@ const strOrNull: Regola = v => (v === null || typeof v === 'string' ? null : 'de
 const num: Regola = v => (typeof v === 'number' && Number.isFinite(v) ? null : 'deve essere un numero');
 const numOrNull: Regola = v => (v === null || (typeof v === 'number' && Number.isFinite(v)) ? null : 'deve essere un numero o null');
 const bool: Regola = v => (typeof v === 'boolean' ? null : 'deve essere true o false');
+const listaDiTesti: Regola = v => (Array.isArray(v) && v.every(x => typeof x === 'string') ? null : 'deve essere un elenco di testi');
 const oneOf = (allowed: readonly string[]): Regola => v => (typeof v === 'string' && allowed.includes(v) ? null : `deve essere uno di ${allowed.join(', ')}`);
 const tier: Regola = v => (v === null || v === '9+' || (typeof v === 'number' && Number.isInteger(v)) ? null : "deve essere un numero intero, '9+' o null");
 
 const REGOLE_CARTA: Record<keyof Omit<Carta, 'thumb'>, Regola> = {
   id: v => (typeof v === 'string' && v.length > 0 ? null : 'deve essere un testo non vuoto'),
-  name: str, boxCode: str, category: oneOf(CATEGORIE), nemesis: strOrNull, tier, type: oneOf(TIPI), subType: strOrNull,
+  name: str, boxCode: str, box: strOrNull, miniExpansion: strOrNull, mechanics: listaDiTesti, category: oneOf(CATEGORIE), nemesis: strOrNull, tier, type: oneOf(TIPI), subType: strOrNull,
   hp: numOrNull, hpVariable: bool, shield: numOrNull, powerTokens: numOrNull, removalCost: numOrNull, removable: bool,
   inNemesisDeck: bool, quantity: num, effect: str, toDiscard: strOrNull, immediately: strOrNull, persistent: strOrNull,
   powerEffect: strOrNull, image: str
@@ -98,14 +99,34 @@ const testoNonVuoto: Regola = v => (typeof v === 'string' && v.length > 0 ? null
 const livello: Regola = v => (v === 1 || v === 2 || v === 3 ? null : 'deve essere 1, 2 o 3');
 
 const REGOLE_SUPPLY: Record<keyof CartaSupply, Regola> = {
-  id: testoNonVuoto, name: testoNonVuoto, boxCode: str, type: oneOf(TIPI_SUPPLY), cost: num, mechanics: strOrNull,
+  id: testoNonVuoto, name: testoNonVuoto, boxCode: str, box: strOrNull, miniExpansion: strOrNull, type: oneOf(TIPI_SUPPLY),
+  cost: num, mechanics: listaDiTesti,
   effect: strOrNull, image: str, thumb: str
 };
 
 const REGOLE_TESORO: Record<keyof CartaTesoro, Regola> = {
-  id: testoNonVuoto, name: testoNonVuoto, boxCode: str, type: oneOf(TIPI_TESORO), level: livello, cost: numOrNull,
-  mechanics: strOrNull, effect: strOrNull, image: str, thumb: str
+  id: testoNonVuoto, name: testoNonVuoto, boxCode: str, box: strOrNull, miniExpansion: strOrNull, type: oneOf(TIPI_TESORO),
+  level: livello, cost: numOrNull, mechanics: listaDiTesti, effect: strOrNull, image: str, thumb: str
 };
+
+// public/mechanics.json (per la biblioteca, non letto all'avvio): elenco delle meccaniche. Quella sbagliata si scarta
+const REGOLE_MECCANICA: Record<keyof Meccanica, Regola> = {
+  name: testoNonVuoto, it: strOrNull, supply: num, treasure: num
+};
+
+export function checkMechanics(data: unknown): Controllato<Meccanica[]> {
+  if (!Array.isArray(data)) throw new Error('mechanics.json non è un elenco di meccaniche');
+  const value: Meccanica[] = [];
+  const problems: string[] = [];
+  data.forEach((item: unknown, i) => {
+    if (!isRecord(item)) { problems.push(`mechanics.json, posizione ${i}: non è un oggetto`); return; }
+    const name = typeof item.name === 'string' ? item.name : `(posizione ${i})`;
+    const own = problemsOf(item, REGOLE_MECCANICA);
+    if (!own.length && hasShape<Meccanica>(item, REGOLE_MECCANICA)) { value.push(item); return; }
+    problems.push(...own.map(p => `mechanics.json, meccanica ${name}: ${p}`));
+  });
+  return { value, problems };
+}
 
 // Livello del tesoro dal suo Type: "Treasure Level N" -> N; "Treasured ..." -> 1; altro -> null
 function livelloDi(tipo: string): number | null {

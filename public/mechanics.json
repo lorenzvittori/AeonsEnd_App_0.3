@@ -1,0 +1,80 @@
+[
+    {
+        "name":  "Aether Token",
+        "it":  null,
+        "supply":  11,
+        "treasure":  6
+    },
+    {
+        "name":  "Attach",
+        "it":  null,
+        "supply":  11,
+        "treasure":  0
+    },
+    {
+        "name":  "Cards that Interact with Trinket",
+        "it":  null,
+        "supply":  5,
+        "treasure":  0
+    },
+    {
+        "name":  "Conjure",
+        "it":  null,
+        "supply":  6,
+        "treasure":  0
+    },
+    {
+        "name":  "Develop",
+        "it":  null,
+        "supply":  3,
+        "treasure":  3
+    },
+    {
+        "name":  "Dual Breach Spell",
+        "it":  null,
+        "supply":  4,
+        "treasure":  0
+    },
+    {
+        "name":  "Echo",
+        "it":  null,
+        "supply":  6,
+        "treasure":  0
+    },
+    {
+        "name":  "Elemental Token",
+        "it":  null,
+        "supply":  11,
+        "treasure":  7
+    },
+    {
+        "name":  "Link",
+        "it":  null,
+        "supply":  5,
+        "treasure":  0
+    },
+    {
+        "name":  "Pulse Token",
+        "it":  null,
+        "supply":  8,
+        "treasure":  0
+    },
+    {
+        "name":  "Recall",
+        "it":  null,
+        "supply":  7,
+        "treasure":  0
+    },
+    {
+        "name":  "Shield Token",
+        "it":  null,
+        "supply":  1,
+        "treasure":  0
+    },
+    {
+        "name":  "Silence",
+        "it":  null,
+        "supply":  0,
+        "treasure":  3
+    }
+]

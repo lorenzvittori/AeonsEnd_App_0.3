@@ -23,6 +23,9 @@ export interface Carta {
   id: string;                    // identificativo unico ("AE204", "NA-1c-26"; più copie: "[D55, D58]")
   name: string;                  // nome inglese stampato sulla carta
   boxCode: CodiceProdotto;       // prodotto in cui è la carta
+  box: string | null;            // scatola grande (colonna Box del DataBase, es. "The New Age")
+  miniExpansion: string | null;  // mini espansione (null se la carta è della scatola grande)
+  mechanics: string[];           // meccaniche: sempre [] per le nemesi (il DataBase non le ha)
   category: Categoria;           // Basic / Upgraded / Specific
   nemesis: string | null;        // nemesi della carta Specific (null per Basic e Upgraded)
   tier: Tier;                    // Tier del mazzo nemesi
@@ -50,9 +53,11 @@ export interface CartaSupply {
   id: string;                    // identificativo copiato dal DataBase così com'è ("[AE055, AE061]": più copie)
   name: string;                  // nome inglese stampato sulla carta
   boxCode: CodiceProdotto;       // prodotto in cui è la carta (la mini espansione se c'è, altrimenti la scatola base)
+  box: string | null;            // scatola grande (colonna Box, es. "The New Age")
+  miniExpansion: string | null;  // mini espansione (null se non c'è)
   type: TipoSupply;              // Gem, Relic, Spell
   cost: number;                  // costo in Æ
-  mechanics: string | null;      // parole chiave (Attach, Silence...), null se nessuna
+  mechanics: string[];           // meccaniche (colonna Mechanics divisa su ";"), [] se nessuna
   effect: string | null;         // testo dell'effetto, a capo con \n
   image: string;                 // scansione della carta (Data/Supply/...)
   thumb: string;                 // miniatura (thumbs/Supply/...)
@@ -63,6 +68,15 @@ export interface CartaTesoro extends Omit<CartaSupply, 'type' | 'cost'> {
   type: TipoTesoro;              // "Treasured Gem" | "Treasured Spell" | "Treasured Relic" | "Treasure Level 1-3"
   level: number;                 // livello del tesoro (ricavato dal Type)
   cost: number | null;           // costo in Æ (i tesori spesso non ce l'hanno)
+}
+
+// Una meccanica di public/mechanics.json: il nome del DataBase, quante carte supply e tesori (nel file) la hanno,
+// e il nome italiano (null finché non c'è)
+export interface Meccanica {
+  name: string;
+  it: string | null;
+  supply: number;
+  treasure: number;
 }
 
 // Una nemesi di nemesis.json

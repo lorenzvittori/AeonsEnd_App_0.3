@@ -116,6 +116,14 @@ def tier_value(v):
     return number_or_text(v)
 
 
+def mechanics_list(v):
+    """Colonna Mechanics ("Pulse Token;Recall") -> elenco di testi, senza spazi ai bordi; vuota -> []."""
+    text = text_or_none(v)
+    if text is None:
+        return []
+    return [m.strip() for m in text.split(';') if m.strip()]
+
+
 def natural_key(s):
     return [int(p) if p.isdigit() else p.lower() for p in re.split(r'(\d+)', str(s or ''))]
 
@@ -376,6 +384,41 @@ def treasure_level(kind_type):
     return 1 if t.startswith('Treasured ') else None
 
 
+def check_box(label, code, box, mini, products, issues):
+    """Box (scatola grande), MiniExpansion (espansione, se c'e') e boxCode devono dire la stessa scatola: il nome del
+    prodotto di boxCode (products.json) e' la mini espansione o, se manca, la scatola grande; la scatola grande deve
+    essere quella della wave di boxCode. Le incoerenze vanno nelle segnalazioni (il dato non si corregge da solo)."""
+    expected = mini or box
+    if code is None or expected is None:
+        return
+    name = products.get(code)
+    if name is None or box_key(name) != box_key(expected):
+        issues.append(f'{label}: boxCode "{code}" ({name or "non in products.json"}) non corrisponde a "{expected}"')
+        return
+    base = box_code_of(box, products) if box else None
+    if box and (base is None or base.split('.')[0] != code.split('.')[0]):
+        issues.append(f'{label}: Box "{box}" non e\' la scatola grande di boxCode "{code}"')
+
+
+def scrivi_mechanics(data: Path, issues):
+    """public/mechanics.json: tutte le meccaniche delle carte supply e tesori del DataBase (colonna Mechanics, tutte
+    le righe, anche quelle senza immagine), in ordine alfabetico, con il nome del DataBase, quante carte di ciascun
+    Excel la hanno e il campo "it" (nome italiano, ancora vuoto). Legge gli Excel in sola lettura (copia temporanea)."""
+    counts = {}
+    with tempfile.TemporaryDirectory(prefix='import-db-') as tmp:
+        tmp = Path(tmp)
+        for kind, cfg in EXTRA.items():
+            shutil.copy2(data / cfg['excel'], tmp / cfg['excel'])
+            for r in read_sheet(tmp / cfg['excel']):
+                for m in mechanics_list(r.get('Mechanics')):
+                    counts.setdefault(m, {'supply': 0, 'treasure': 0})[kind] += 1
+    out = [{'name': name, 'it': None, 'supply': counts[name]['supply'], 'treasure': counts[name]['treasure']}
+           for name in sorted(counts, key=lambda s: (s.casefold(), s))]
+    text = json.dumps(out, indent=4, ensure_ascii=False, separators=(',', ':  '))
+    (SITE / 'mechanics.json').write_text(text + '\n', encoding='utf-8', newline='\n')
+    print(f'mechanics.json: {len(out)} meccaniche')
+
+
 def importa_extra(data: Path, main_rows, products, args, issues, kinds):
     """Supply e/o tesori: cards_supply.json / cards_treasure.json, le immagini in Data/ e le miniature in thumbs/.
     Entrano solo le carte con l'immagine; le altre si elencano per scatola nelle segnalazioni."""
@@ -399,8 +442,10 @@ def importa_extra(data: Path, main_rows, products, args, issues, kinds):
                 issues.append(f'{label}: scatola "{product}" non e\' in BOXES_NAMES, saltata')
                 continue
             card = {'id': str(r['ID']), 'name': str(r['Name']).strip(), 'boxCode': code,
-                    'type': str(r['Type']).strip(), 'mechanics': text_or_none(r.get('Mechanics')),
+                    'box': text_or_none(r.get('Box')), 'miniExpansion': text_or_none(r.get('MiniExpansion')),
+                    'type': str(r['Type']).strip(), 'mechanics': mechanics_list(r.get('Mechanics')),
                     'effect': text_or_none(r.get('Effect'))}
+            check_box(label, code, card['box'], card['miniExpansion'], products, issues)
             cost = number_or_text(r.get('Cost'))
             if kind == 'supply':
                 if card['type'] not in SUPPLY_TYPES:
@@ -467,7 +512,8 @@ def importa_extra(data: Path, main_rows, products, args, issues, kinds):
 
         out = []
         for c in kept:
-            item = {'id': c['id'], 'name': c['name'], 'boxCode': c['boxCode'], 'type': c['type']}
+            item = {'id': c['id'], 'name': c['name'], 'boxCode': c['boxCode'], 'box': c['box'],
+                    'miniExpansion': c['miniExpansion'], 'type': c['type']}
             if kind == 'treasure':
                 item['level'] = c['level']
             item.update({'cost': c['cost'], 'mechanics': c['mechanics'], 'effect': c['effect'],
@@ -483,6 +529,7 @@ def importa_extra(data: Path, main_rows, products, args, issues, kinds):
         for c in kept:
             by[c['boxCode']] += 1
         print('  per scatola: ' + ', '.join(f'{k} {v}' for k, v in sorted(by.items(), key=lambda kv: code_key(kv[0]))))
+    scrivi_mechanics(data, issues)
 
 
 def stampa_segnalazioni(issues):
@@ -708,13 +755,17 @@ def main():
     # ---- cards_nemesis.json e products.json
     out_cards = []
     for c in cards:
+        box, mini = text_or_none(c['_row'].get('Box')), text_or_none(c['_row'].get('MiniExpansion'))
+        check_box(c['id'], c['boxCode'], box, mini, products, issues)
         out_cards.append({
-            'id': c['id'], 'name': c['name'], 'boxCode': c['boxCode'], 'category': c['category'],
+            'id': c['id'], 'name': c['name'], 'boxCode': c['boxCode'], 'box': box, 'miniExpansion': mini,
+            'category': c['category'],
             'nemesis': c['nemesis'], 'tier': c['tier'], 'type': c['type'], 'subType': c['subType'],
             'hp': c['hp'], 'hpVariable': c['hpVariable'], 'shield': c['shield'], 'powerTokens': c['powerTokens'],
             'removalCost': c['removalCost'], 'removable': c['removable'], 'inNemesisDeck': c['inNemesisDeck'],
             'quantity': c['quantity'], 'effect': c['effect'], 'toDiscard': c['toDiscard'],
             'immediately': c['immediately'], 'persistent': c['persistent'], 'powerEffect': c['powerEffect'],
+            'mechanics': [],  # le nemesi non hanno la colonna Mechanics
             'image': c['image'],
         })
     # 4 spazi e due spazi dopo i due punti, come il vecchio file (PowerShell)
