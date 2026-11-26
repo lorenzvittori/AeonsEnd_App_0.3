@@ -57,7 +57,7 @@ compensazione). Il disegno è lo stesso che sta in cima a ogni zona nel file del
 **Vederle accanto a quelle vere.** La pagina `scheletri/` (una seconda pagina di Vite, di sviluppo: non è una schermata dell'app) ha la stessa struttura del
 file: un blocco per zona, nello stesso ordine, con il disegno del commento e, per ogni variabile, il nome, il commento, il valore nel file, la misura vera presa
 dall'app e la differenza (in rosso se non è 0; le variabili che non si possono misurare hanno il motivo). A destra lo schermo in scala (360×720 e gli altri formati,
-turno giocatori o nemesi): toccando una riga si evidenzia la cosa o lo spazio che misura. Si apre con `npm run dev` su <http://localhost:5173/AeonsEnd_App_0.3/scheletri/>,
+turno giocatori o nemesi): toccando una riga si evidenzia la cosa o lo spazio che misura. Il disegno ha tre livelli (fasce delle zone, oggetti veri misurati dal vivo, spazi tra gli oggetti come quote) e l'app vera dietro, con un cursore di trasparenza per controllare che coincidano. Si apre con `npm run dev` su <http://localhost:5173/AeonsEnd_App_0.3/scheletri/>,
 con `npm run preview` su <http://localhost:4173/AeonsEnd_App_0.3/scheletri/> e, dopo la pubblicazione, nell'indirizzo del sito seguito da `scheletri/`. Misura con le stesse coppie
 "tra X e Y" della prova `misure` (`tools/confronto/dati/misure.mjs`), quindi pagina e prova dicono la stessa cosa. Dettagli in [scheletri/README.md](../scheletri/README.md).
 

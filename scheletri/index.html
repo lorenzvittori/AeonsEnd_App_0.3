@@ -16,11 +16,17 @@
   <div class="gruppo" role="group" aria-label="Turno" id="scelta-turno"><span>Turno:</span></div>
   <div class="gruppo" role="group" aria-label="Unità di misura" id="scelta-unita"><span>Unità di misura:</span></div>
   <div class="gruppo" role="group" aria-label="Scala del disegno" id="scelta-scala"><span>Scala del disegno:</span></div>
+  <div class="gruppo" role="group" aria-label="Livelli del disegno" id="scelta-livelli"><span>Livelli:</span></div>
+  <div class="gruppo" role="group" aria-label="Trasparenza dello scheletro sull'app">
+    <label for="trasparenza">Scheletro</label>
+    <input type="range" id="trasparenza" min="0" max="100" value="0" aria-describedby="trasp-valore">
+    <label for="trasparenza">App</label> <output id="trasp-valore">0%</output>
+  </div>
 </div>
 <p class="stato" id="stato" role="status"></p>
 <div class="pagina">
   <main id="zone"></main>
-  <aside class="disegno" aria-label="Disegno dello schermo"><div id="schermo-posto"></div></aside>
+  <aside class="disegno" aria-label="Disegno dello schermo"><div id="schermo-posto"></div><p class="info" id="info" aria-live="polite"></p></aside>
 </div>
 <script type="module" src="./scheletri.ts"></script>
 </body>

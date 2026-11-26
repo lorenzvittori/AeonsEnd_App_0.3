@@ -47,24 +47,43 @@ tr[data-var].is-on td { background: var(--evidenza); }
 tr.is-diff.is-on td { background: #f9d2cb; }
 tr.is-scelta td:first-child { box-shadow: inset 4px 0 0 var(--rosso); }
 
-/* Il disegno dello schermo, in scala; le misure arrivano da scheletri.ts */
+/* Il disegno dello schermo, in scala; le misure arrivano da scheletri.ts. Dentro, in ordine: l'app vera (iframe, scalata), lo
+   scheletro (.fisso: zone, oggetti, quote; si sfuma con il cursore) e l'evidenziazione (.evid: non si sfuma) */
 .schermo { position: relative; flex: 0 0 auto; background: var(--schermo); border-radius: 8px; overflow: hidden; outline: 1px solid #000; }
+.app-dietro { position: absolute; left: 0; top: 0; width: 360px; border: 0; transform-origin: 0 0; pointer-events: none; background: #000; opacity: 0; }
+.sovra, .fisso, .evid { position: absolute; inset: 0; }
+.evid { pointer-events: none; }
 .dz { position: absolute; left: 0; border: 1px dashed rgba(var(--blu), .8); background: rgba(var(--blu), .08); }
 .dz.is-on { background: rgba(var(--blu), .22); border-style: solid; }
 .dz .zn { position: absolute; left: 3px; top: 2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: rgb(var(--blu)); color: #111;
   font: 700 10px/16px system-ui, sans-serif; text-align: center; }
 .dz .zt { position: absolute; right: 4px; top: 2px; color: rgba(255, 255, 255, .7); font: 10px/16px system-ui, sans-serif; }
+.og { position: absolute; border: 1px solid rgba(var(--oro), .85); background: rgba(var(--oro), .08); color: #f3e3c0; font: 600 8px/9px system-ui, sans-serif;
+  overflow: hidden; padding: 0 1px; cursor: pointer; }
+.og.is-on { background: rgba(var(--oro), .45); border-color: #fff; z-index: 4; }
+.qt { position: absolute; cursor: pointer; }
+.qt .ln { position: absolute; background: var(--rosso); }
+.qt.v .ln { left: 3.5px; top: 0; bottom: 0; width: 1px; }
+.qt.h .ln { top: 3.5px; left: 0; right: 0; height: 1px; }
+.qt.v::before, .qt.v::after { content: ''; position: absolute; left: 0; width: 8px; border-top: 1px solid var(--rosso); }
+.qt.v::before { top: 0; } .qt.v::after { bottom: 0; }
+.qt.h::before, .qt.h::after { content: ''; position: absolute; top: 0; height: 8px; border-left: 1px solid var(--rosso); }
+.qt.h::before { left: 0; } .qt.h::after { right: 0; }
+.qt .nm { position: absolute; padding: 0 3px; border-radius: 6px; background: var(--rosso); color: #fff; font: 700 8px/12px system-ui, sans-serif; white-space: nowrap; z-index: 2; }
+.qt.v .nm { left: 11px; top: 50%; transform: translateY(-50%); }
+.qt.h .nm { left: 50%; top: -14px; transform: translateX(-50%); }
+.qt.is-on { z-index: 5; }
+.qt.is-on .ln { background: #fff; }
+.qt.is-on .nm { background: #fff; color: var(--rosso); }
 .caso { position: absolute; inset: 0; pointer-events: none; }
 .caso .ab { display: none; position: absolute; border: 1px solid rgba(var(--oro), .95); background: rgba(var(--oro), .18); }
-.caso .ev { position: absolute; pointer-events: auto; cursor: pointer; background: transparent; }
-.caso.is-on .ab { display: block; }
+.caso .ev { position: absolute; background: transparent; pointer-events: none; }
+.caso.is-on .ab { display: block; z-index: 2; }
 .caso.is-on .ev { background: rgba(192, 57, 43, .75); outline: 1px solid #fff; z-index: 3; }
-.caso.is-on .ab { z-index: 2; }
-.vuoto { position: absolute; left: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, .45); font: 11px/14px system-ui, sans-serif; pointer-events: none; }
-
-/* App vera, misurata dal vivo: fuori dallo schermo ma con le sue misure (display: none non darebbe le misure) */
-.misuratore { position: absolute; left: -10000px; top: 0; width: 360px; border: 0; visibility: hidden; }
-
+.vuoto { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, .45); font: 11px/14px system-ui, sans-serif; pointer-events: none; }
+.info { margin: 8px 0 0; padding: 8px 10px; max-width: 380px; min-height: 60px; background: var(--carta); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; line-height: 17px; color: var(--muted); }
+.info b, .info code { color: var(--ink); }
+.gruppo input[type="range"] { width: 160px; }
 @media (max-width: 1000px) {
   .pagina { grid-template-columns: minmax(0, 1fr); }
   .disegno { position: static; order: -1; max-height: none; }

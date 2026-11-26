@@ -26,7 +26,7 @@ uguali per le due build; le animazioni vanno alla fine.
 - `salvataggi`: i file di `salvataggi/` (main v228 dei test e uno scritto dal sito pubblicato v273), ripresi e giocati.
 - `schermate`: il giro delle schermate a 375×812 e 1280×800 (più 812×375 e riduzione del movimento per le voci con `anche`): `getComputedStyle` di
   tutti gli elementi visibili con `::before`/`::after`, posizione, testo e attributi, e i pulsanti principali con `:hover`/`:active`/`:focus-visible` forzati.
-- `indietro`: il giro fino al tasto Indietro. `scheletri`: la pagina `scheletri/` (le misure di `partita-misure.css` accanto a quelle vere): nei 4 formati e nei due turni ogni variabile ha la sua riga e ogni differenza è 0 o spiegata (`diffSpiegata`, `nonUguale` in `dati/misure.mjs`); se anche la versione di confronto ha la pagina nuova, ne confronta il testo.
+- `indietro`: il giro fino al tasto Indietro. `scheletri`: la pagina `scheletri/` (le misure di `partita-misure.css` accanto a quelle vere): nei 4 formati e nei due turni ogni variabile ha la sua riga, gli oggetti del disegno (`scheletri/oggetti.ts`) ci sono tutti quelli attesi e ogni differenza è 0 o spiegata (`diffSpiegata`, `nonUguale` in `dati/misure.mjs`); se anche la versione di confronto ha la pagina nuova, ne confronta il testo.
 - `lingua`: non confronta due build: apre la versione attuale in italiano e in inglese (375×812 e 1280×800), percorre il giro di `dati/schermate.mjs`
   più le finestre di `dati/lingua.mjs` e riapre i salvataggi; segnala in inglese un testo che esce dal suo box (`scrollWidth > clientWidth`) o dallo
   schermo, un pulsante su più righe dove in italiano ha meno righe, un testo o `aria-label` vuoto, "undefined"/"NaN"/"[object"/"null" visibili e testo

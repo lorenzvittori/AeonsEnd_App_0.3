@@ -39,6 +39,11 @@ const RIGHE = () => [...document.querySelectorAll('tr[data-var]')].map(r => ({
   v: r.dataset.var, esito: r.dataset.esito, diff: r.dataset.diff === undefined ? null : Number(r.dataset.diff), spiegata: r.dataset.spiegata === '1'
 }));
 
+// Gli oggetti che il disegno deve avere (scheletri/oggetti.ts, id): in tutti i momenti, e solo nel turno giocatori / solo nel nemesi
+const OGGETTI_ATTESI = ['testata', 'nome-nemesi', 'riga-turno', 'mazzo', 'scarti', 'menu', 'barra-turni', 'casella', 'scritta-turno', 'carta-piccola', 'stato-piccola',
+  'vita-gravehold', 'vita-nemesi', 'scritta-gravehold', 'scritta-nemesis', 'riga-stato', 'goccia', 'numero', 'carta-grande', 'carta-vicina', 'principale'];
+const OGGETTI_TURNO = { giocatori: ['comandi', 'comando'], nemesi: [] };
+
 export default {
   nome: 'scheletri',
   async esegui(ctx) {
@@ -64,6 +69,8 @@ export default {
             segnala(nome, '(misura dal vivo)', 'stato', 'pronta', await b.page.evaluate(() => document.getElementById('stato').textContent));
             continue;
           }
+          const presenti = await b.page.evaluate(() => [...document.querySelectorAll('[data-og]')].map(e => e.dataset.og.replace(/-\d+$/, '')));
+          [...OGGETTI_ATTESI, ...OGGETTI_TURNO[t]].filter(o => !presenti.includes(o)).forEach(o => segnala(nome, o, 'oggetto del disegno', 'presente', 'manca'));
           const nomi = dopo.map(r => r.v);
           nelFile.filter(v => !nomi.includes(v)).forEach(v => segnala(nome, v, 'riga', 'una riga', 'manca'));
           nomi.filter((v, i) => nomi.indexOf(v) !== i).forEach(v => segnala(nome, v, 'riga', 'una sola', 'doppia'));

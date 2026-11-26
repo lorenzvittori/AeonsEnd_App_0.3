@@ -1,18 +1,20 @@
 // scheletri/scheletri.ts: la pagina scheletri/ (pagina di sviluppo, non una schermata dell'app: seconda pagina di Vite, vite.config.ts).
 // Ha la struttura di src/ui/schermate/partita-misure.css: un blocco per zona (nell'ordine del file) con il disegno del commento e,
 // per ogni variabile, il nome, il commento, il valore nel file, la misura vera presa dall'app e la differenza. A fianco il disegno
-// in scala dello schermo con le 7 zone; una riga toccata (o sfiorata) evidenzia nel disegno la cosa o lo spazio misurato, e il
+// in scala dello schermo, a livelli accendibili: fasce delle 7 zone, oggetti veri (oggetti.ts, misurati dal vivo), spazi tra gli oggetti (quote);\n// dietro l'app vera alla stessa scala, con un cursore di trasparenza. Una riga o un oggetto toccato (o sfiorato) evidenzia nel disegno la cosa o lo spazio misurato, e il
 // contrario. Due turni (giocatori / nemesi) e i formati 18:9-20:9, tutti a 360 px di larghezza.
 // La misura dal vivo: l'app vera in un iframe nascosto (app.noSave = true: la partita salvata non cambia), portata nei momenti
 // della prova "misure" di tools/confronto (MOMENTI) e misurata con le sue coppie "tra X e Y" (CASI, LEGGI): pagina e prova non
 // possono dire cose diverse. Le variabili e i commenti vengono dal file CSS, letto dal lettore del pannello Regolazioni.
-// Dipende da: src/ui/finestre/test-regolazioni-lettura.ts, tools/confronto/dati/misure.mjs, scheletri.css. Usato da: index.html.
+// Dipende da: src/ui/finestre/test-regolazioni-lettura.ts, tools/confronto/dati/misure.mjs, oggetti.ts, scheletri.css. Usato da: index.html.
 
 import './scheletri.css';
 import { DISEGNI, MISURE } from '../src/ui/finestre/test-regolazioni-lettura.ts';
 import type { Misura } from '../src/ui/finestre/test-regolazioni-lettura.ts';
 import { CASI, IMPOSTA, LEGGI, MOMENTI, NON_PROVABILI } from '../tools/confronto/dati/misure.mjs';
 import type { Bordi, Caso, Lettura } from '../tools/confronto/dati/misure.mjs';
+import { OGGETTI } from './oggetti.ts';
+import type { OggettoDef } from './oggetti.ts';
 
 type Finestra = Window & typeof globalThis;
 
@@ -43,6 +45,14 @@ let formato = leggiScelta('scheletri-formato', FORMATI.map(f => f.nome), FORMATI
 let turno = leggiScelta('scheletri-turno', TURNI.map(t => t[0]), 'giocatori');
 let unita: 'px' | 'mm' = leggiScelta<'px' | 'mm'>('scheletri-unita', ['px', 'mm'], 'px');
 let scala = leggiScelta('scheletri-scala', SCALE, 1);
+// I livelli del disegno (si accendono e si spengono) e la trasparenza dello scheletro sull'app dietro
+const livelli = {
+  zone: leggiScelta('scheletri-l-zone', ['1', '0'], '1') === '1',
+  oggetti: leggiScelta('scheletri-l-oggetti', ['1', '0'], '1') === '1',
+  spazi: leggiScelta('scheletri-l-spazi', ['1', '0'], '0') === '1'
+};
+let trasparenza = 0;                  // 0 = solo scheletro, 100 = solo app (non si ricorda: si riparte da 0)
+let sopraOgg: string | null = null;   // l'oggetto sfiorato dal puntatore
 let sopra: string | null = null;      // la variabile sfiorata dal puntatore
 let scelta: string | null = null;     // la variabile toccata (resta)
 
@@ -52,7 +62,9 @@ const misureDelFile = new Map<string, Misura>(MISURE.flatMap(g => g.voci.map(v =
 const motivoNonMisurabile = new Map(NON_PROVABILI.map(n => [n.v, n.motivo] as const));
 
 // --- Misura dal vivo -----------------------------------------------------------------------------------------------
+interface OggettoMisurato { def: OggettoDef; nome: string; chiave: string; rett: Bordi }
 interface Misurazione {
+  oggetti: OggettoMisurato[];
   letture: Map<Caso, Lettura | null>;
   zone: (Bordi | null)[];
   turnoVero: string;
@@ -78,12 +90,12 @@ async function assesta(win: Finestra, ms = 500): Promise<void> {
 async function apriApp(): Promise<Finestra> {
   if (finestraApp) return finestraApp;
   const frame = document.createElement('iframe');
-  frame.className = 'misuratore';
+  frame.className = 'app-dietro';
   frame.setAttribute('aria-hidden', 'true');
   frame.tabIndex = -1;
   frame.style.height = FORMATI[0].h + 'px';
   frame.src = import.meta.env.BASE_URL + 'index.html?scheletro=1';
-  document.body.appendChild(frame);
+  schermo.prepend(frame);
   await new Promise<void>((ok, no) => { frame.onload = () => ok(); frame.onerror = () => no(new Error('iframe non caricato')); });
   const win = frame.contentWindow as Finestra;
   const pronta = () => { try { return win.eval('typeof app !== "undefined" && !!app.deckSetup && app.allCards.length > 0 && typeof app.makeEntry === "function"') as boolean; } catch { return false; } };
@@ -148,20 +160,39 @@ async function misura(f: { nome: string; h: number }, t: string): Promise<Misura
     nellApp(win, IMPOSTA, { valori: Object.fromEntries(Object.keys(prima).map(n => [n, null])) });
   }
   const zone = ZONE.map(z => rettangolo(win.document.querySelector(`[data-zona="${z}"]`)));
-  return { letture, zone, turnoVero };
+  return { oggetti: misuraOggetti(win), letture, zone, turnoVero };
+}
+
+// Gli oggetti veri (oggetti.ts), misurati dal vivo: ogni elemento che si vede, tagliato ai bordi dello schermo. 'tutti': numerati;
+// 'centro': quello che contiene il centro dello schermo (la carta grande); 'vicine': gli altri (il pezzo che si vede)
+function misuraOggetti(win: Finestra): OggettoMisurato[] {
+  const W = win.innerWidth;
+  const H = win.innerHeight;
+  const visibile = (e: Element) => e.getClientRects().length > 0 && win.getComputedStyle(e).display !== 'none' && win.getComputedStyle(e).visibility !== 'hidden';
+  const centro = (r: Bordi) => r.left <= W / 2 && r.right >= W / 2;
+  const out: OggettoMisurato[] = [];
+  for (const def of OGGETTI) {
+    const pezzi = [...win.document.querySelectorAll(def.sel)].filter(visibile).map(rettangolo).filter((r): r is Bordi => !!r)
+      .map(r => ({ top: Math.max(0, r.top), bottom: Math.min(H, r.bottom), left: Math.max(0, r.left), right: Math.min(W, r.right) }))
+      .filter(r => r.right - r.left >= 1 && r.bottom - r.top >= 1);
+    const scelti = def.modo === 'centro' ? pezzi.filter(centro).slice(0, 1) : def.modo === 'vicine' ? pezzi.filter(r => !centro(r))
+      : def.modo === 'tutti' ? pezzi : pezzi.slice(0, 1);
+    scelti.forEach((rett, i) => out.push({ def, nome: scelti.length > 1 ? `${def.nome} ${i + 1}` : def.nome, chiave: `${def.id}-${i}`, rett }));
+  }
+  return out;
 }
 
 // Le richieste una dopo l'altra (l'iframe è uno solo)
 let coda: Promise<void> = Promise.resolve();
 function richiediMisura(): void {
   const chiave = `${formato}|${turno}`;
-  if (risultati.has(chiave)) { stato = 'pronta'; ridisegna(); return; }
+  // Si rimisura sempre: l'app dietro il disegno deve essere nello stato del formato e del turno scelti
   stato = 'in-corso';
   const f = FORMATI.find(x => x.nome === formato) ?? FORMATI[0];
   const t = turno;
   ridisegna();
   coda = coda.then(async () => {
-    if (risultati.has(chiave)) { if (chiave === `${formato}|${turno}`) { stato = 'pronta'; ridisegna(); } return; }
+    if (chiave !== `${formato}|${turno}`) return;   // nel frattempo si è scelto altro: la misura giusta è già in coda
     try {
       risultati.set(chiave, await misura(f, t));
       messaggioErrore = '';
@@ -296,67 +327,131 @@ function ridisegna(): void {
   evidenzia();
 }
 
-// Il disegno dello schermo: le 7 zone e, per ogni variabile misurata, la cosa o lo spazio (invisibile finché non si sceglie la riga)
+// --- Il disegno dello schermo --------------------------------------------------------------------------------------
+// Lo schermo è uno solo, creato una volta: l'iframe dell'app sta dentro (dietro) e non si ricarica mai; a ogni ridisegno cambiano
+// la misura dello schermo e gli strati sopra (zone, oggetti, quote; più, non sfumato, l'evidenziazione).
+const schermo = document.createElement('div');
+schermo.className = 'schermo';
+schermo.setAttribute('role', 'img');
+posto.replaceChildren(schermo);
+let corrente: Misurazione | undefined;
+
+const scalaPx = () => MM_PER_PX * PX_PER_MM * scala;   // pixel di CSS per ogni pixel dell'app
+
+// Opacità dei due strati: l'app (0 = niente) e lo scheletro (1 = tutto); a 100 resta solo l'app
+function applicaTrasparenza(): void {
+  const app = schermo.querySelector<HTMLElement>('.app-dietro');
+  if (app) app.style.opacity = String(trasparenza / 100);
+  const fisso = schermo.querySelector<HTMLElement>('.fisso');
+  if (fisso) fisso.style.opacity = String(1 - trasparenza / 100);
+  el('trasp-valore').textContent = `${trasparenza}%`;
+}
+
 function disegnaSchermo(ris: Misurazione | undefined, altezza: number): void {
-  const k = MM_PER_PX * PX_PER_MM * scala;
-  const px = (n: number) => `${arrotonda(n * k, 2)}px`;
-  const schermo = document.createElement('div');
-  schermo.className = 'schermo';
-  schermo.style.width = px(LARGHEZZA_PX);
-  schermo.style.height = px(altezza);
-  schermo.setAttribute('role', 'img');
-  schermo.setAttribute('aria-label', `Schermo ${formato}, ${LARGHEZZA_PX} per ${altezza} px, con le 7 zone`);
+  corrente = ris;
+  const k = scalaPx();
+  const S = (n: number) => `${arrotonda(n * k, 2)}px`;
+  schermo.style.width = S(LARGHEZZA_PX);
+  schermo.style.height = S(altezza);
+  schermo.setAttribute('aria-label', `Schermo ${formato}, ${LARGHEZZA_PX} per ${altezza} px, con le 7 zone e gli oggetti`);
+  const app = schermo.querySelector<HTMLElement>('.app-dietro');
+  if (app) { app.style.height = `${altezza}px`; app.style.transform = `scale(${arrotonda(k, 4)})`; }
+  schermo.querySelectorAll('.sovra').forEach(e => e.remove());
+  const sovra = document.createElement('div');
+  sovra.className = 'sovra';
+  const fisso = document.createElement('div');
+  fisso.className = 'fisso';
+  const evid = document.createElement('div');
+  evid.className = 'evid';
+  sovra.append(fisso, evid);
+  schermo.appendChild(sovra);
+  if (!ris) {
+    const v = document.createElement('div');
+    v.className = 'vuoto';
+    v.textContent = 'misura in corso…';
+    fisso.appendChild(v);
+    applicaTrasparenza();
+    return;
+  }
+  const posiziona = (d: HTMLElement, r: { left: number; top: number; width: number; height: number }) =>
+    Object.assign(d.style, { left: S(r.left), top: S(r.top), width: S(r.width), height: S(r.height) });
+
+  // Livello 1: le fasce delle 7 zone
   const nomiZone = MISURE.filter(g => numeroZona(g.titolo)).map(g => g.titolo.replace(/^\d\s/, ''));
-  ris?.zone.forEach((z, i) => {
-    if (!z) return;
-    const d = document.createElement('div');
-    d.className = 'dz';
-    d.dataset.z = String(i + 1);
-    d.style.top = px(Math.max(0, z.top));
-    d.style.height = px(Math.max(0, Math.min(altezza, z.bottom) - Math.max(0, z.top)));
-    d.style.width = px(LARGHEZZA_PX);
-    const vuota = i === 5 && ris.turnoVero !== 'giocatori';
-    d.innerHTML = `<span class="zn">${i + 1}</span><span class="zt">${esc(nomiZone[i] ?? '')}${vuota ? ' · vuota nel turno nemesi' : ''}</span>`;
-    schermo.appendChild(d);
-  });
-  // Cose e spazi: i più grandi sotto, i più piccoli sopra (si sfiorano meglio)
-  const pezzi: { v: string; area: number; nodo: HTMLElement }[] = [];
+  if (livelli.zone) {
+    ris.zone.forEach((z, i) => {
+      if (!z) return;
+      const d = document.createElement('div');
+      d.className = 'dz';
+      d.dataset.z = String(i + 1);
+      const alto = Math.max(0, z.top);
+      posiziona(d, { left: 0, top: alto, width: LARGHEZZA_PX, height: Math.max(0, Math.min(altezza, z.bottom) - alto) });
+      const vuota = i === 5 && ris.turnoVero !== 'giocatori';
+      d.innerHTML = `<span class="zn">${i + 1}</span><span class="zt">${esc(nomiZone[i] ?? '')}${vuota ? ' · vuota nel turno nemesi' : ''}</span>`;
+      fisso.appendChild(d);
+    });
+  }
+
+  // Livello 2: gli oggetti veri (i più grandi sotto, i più piccoli sopra: si sfiorano meglio)
+  if (livelli.oggetti) {
+    const area = (o: OggettoMisurato) => (o.rett.right - o.rett.left) * (o.rett.bottom - o.rett.top);
+    [...ris.oggetti].sort((a, b) => area(b) - area(a)).forEach(o => {
+      const d = document.createElement('div');
+      d.className = 'og';
+      d.dataset.og = o.chiave;
+      d.dataset.vars = o.def.vars.join(' ');
+      d.title = o.nome;
+      posiziona(d, { left: o.rett.left, top: o.rett.top, width: o.rett.right - o.rett.left, height: o.rett.bottom - o.rett.top });
+      if ((o.rett.right - o.rett.left) * k >= 30 && (o.rett.bottom - o.rett.top) * k >= 10) d.textContent = o.nome;
+      fisso.appendChild(d);
+    });
+  }
+
+  // Livello 3: gli spazi tra gli oggetti, le coppie "tra X e Y" della prova misure, come quote con il numero
+  if (livelli.spazi) {
+    CASI.filter(c => (!c.turni || c.turni.includes(turno)) && c.a[0] !== c.b[0]).forEach(c => {
+      const l = ris.letture.get(c);
+      const r = l ? rettangoloCaso(c, l) : null;
+      if (!l || !r) return;
+      const verticale = c.a[1] === 'top' || c.a[1] === 'bottom';
+      const lunghezza = verticale ? r.h : r.w;
+      if (lunghezza < 0.5) return;
+      const q = document.createElement('div');
+      q.className = `qt ${verticale ? 'v' : 'h'}`;
+      q.dataset.var = c.v;
+      q.title = `${c.v}: ${inUnita(l.misura)} ${unita}`;
+      if (verticale) Object.assign(q.style, { left: `${arrotonda((r.x + r.w / 2) * k - 4, 2)}px`, top: S(r.y), width: '8px', height: S(r.h) });
+      else Object.assign(q.style, { left: S(r.x), top: `${arrotonda((r.y + r.h / 2) * k - 4, 2)}px`, width: S(r.w), height: '8px' });
+      q.innerHTML = `<span class="ln"></span><span class="nm">${inUnita(Math.abs(l.misura))}</span>`;
+      fisso.appendChild(q);
+    });
+  }
+
+  // Strato dell'evidenziazione (non sfumato): la cosa o lo spazio di una riga scelta
   CASI.filter(c => !c.turni || c.turni.includes(turno)).forEach(c => {
-    const l = ris?.letture.get(c);
-    if (!l) return;
-    const rett = rettangoloCaso(c, l);
-    if (!rett) return;
+    const l = ris.letture.get(c);
+    const rett = l ? rettangoloCaso(c, l) : null;
+    if (!l || !rett) return;
     const caso = document.createElement('div');
     caso.className = 'caso';
     caso.dataset.var = c.v;
     for (const b of [l.a, l.b]) {
       const ab = document.createElement('div');
       ab.className = 'ab';
-      Object.assign(ab.style, { left: px(b.left), top: px(b.top), width: px(b.right - b.left), height: px(b.bottom - b.top) });
+      posiziona(ab, { left: b.left, top: b.top, width: b.right - b.left, height: b.bottom - b.top });
       caso.appendChild(ab);
     }
     const ev = document.createElement('div');
     ev.className = 'ev';
-    const sottile = Math.max(rett.w * k, 0) < 4 || Math.max(rett.h * k, 0) < 4;
+    const sottile = rett.w * k < 4 ? 'w' : rett.h * k < 4 ? 'h' : '';
     Object.assign(ev.style, {
-      left: px(rett.x - (rett.w * k < 4 ? 2 / k : 0)), top: px(rett.y - (rett.h * k < 4 ? 2 / k : 0)),
-      width: sottile && rett.w * k < 4 ? '4px' : px(rett.w), height: sottile && rett.h * k < 4 ? '4px' : px(rett.h)
+      left: S(rett.x - (sottile === 'w' ? 2 / k : 0)), top: S(rett.y - (sottile === 'h' ? 2 / k : 0)),
+      width: sottile === 'w' ? '4px' : S(rett.w), height: sottile === 'h' ? '4px' : S(rett.h)
     });
-    ev.title = `${c.v}: ${inUnita(l.misura)} ${unita}`;
     caso.appendChild(ev);
-    pezzi.push({ v: c.v, area: rett.w * rett.h, nodo: caso });
+    evid.appendChild(caso);
   });
-  pezzi.sort((a, b) => b.area - a.area).forEach(p => schermo.appendChild(p.nodo));
-  if (!ris) {
-    const v = document.createElement('div');
-    v.className = 'vuoto';
-    v.style.top = '0';
-    v.style.width = px(LARGHEZZA_PX);
-    v.style.height = px(altezza);
-    v.textContent = 'misura in corso…';
-    schermo.appendChild(v);
-  }
-  posto.replaceChildren(schermo);
+  applicaTrasparenza();
 }
 
 // Il rettangolo da evidenziare per un caso: la cosa stessa (altezza o larghezza di una cosa sola) o lo spazio tra i due bordi
@@ -377,26 +472,70 @@ function rettangoloCaso(c: Caso, l: Lettura): { x: number; y: number; w: number;
   return { x: Math.min(va, vb), y, w: Math.abs(vb - va), h };
 }
 
+// --- Comandi dei livelli e della trasparenza -----------------------------------------------------------------------
+type Livello = keyof typeof livelli;
+const NOMI_LIVELLI: [Livello, string][] = [['zone', 'Fasce delle zone'], ['oggetti', 'Oggetti'], ['spazi', 'Spazi (quote)']];
+NOMI_LIVELLI.forEach(([chiave, testo]) => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = testo;
+  b.dataset.livello = chiave;
+  b.setAttribute('aria-pressed', String(livelli[chiave]));
+  b.addEventListener('click', () => {
+    livelli[chiave] = !livelli[chiave];
+    ricorda(`scheletri-l-${chiave}`, livelli[chiave] ? '1' : '0');
+    b.setAttribute('aria-pressed', String(livelli[chiave]));
+    ridisegna();
+  });
+  el('scelta-livelli').appendChild(b);
+});
+el<HTMLInputElement>('trasparenza').addEventListener('input', e => {
+  trasparenza = Number((e.target as HTMLInputElement).value);
+  applicaTrasparenza();
+});
+
 // --- Evidenziazione (riga ↔ disegno) -------------------------------------------------------------------------------
 let zonaSopra: string | null = null;
+function infoOggetto(o: OggettoMisurato): string {
+  const r = o.rett;
+  const misure = o.def.vars.map(n => `<code>${n}</code> ${esc(misureDelFile.get(n)?.valore ?? '')}`).join(' · ');
+  return `<b>${esc(o.nome)}</b> · zona ${o.def.zona} · ${inUnita(r.right - r.left)} × ${inUnita(r.bottom - r.top)} ${unita} · x ${inUnita(r.left)}, y ${inUnita(r.top)}` +
+    `<br>Nel file: ${misure || 'nessuna riga'}`;
+}
 function evidenzia(): void {
-  const attiva = sopra ?? scelta;
+  const ogg = sopraOgg ? corrente?.oggetti.find(o => o.chiave === sopraOgg) : undefined;
+  const attive = new Set<string>();
+  if (ogg) ogg.def.vars.forEach(v => attive.add(v));
+  else if (sopra ?? scelta) attive.add((sopra ?? scelta) as string);
   document.querySelectorAll<HTMLElement>('[data-var]').forEach(e => {
-    e.classList.toggle('is-on', e.dataset.var === attiva);
+    e.classList.toggle('is-on', attive.has(e.dataset.var ?? ''));
     e.classList.toggle('is-scelta', e.dataset.var === scelta && e.tagName === 'TR');
   });
+  document.querySelectorAll<HTMLElement>('[data-og]').forEach(e => {
+    const delleVar = (e.dataset.vars ?? '').split(' ');
+    e.classList.toggle('is-on', e.dataset.og === sopraOgg || (!ogg && [...attive].some(v => delleVar.includes(v))));
+  });
   document.querySelectorAll<HTMLElement>('[data-z]').forEach(e => e.classList.toggle('is-on', e.dataset.z === zonaSopra));
+  el('info').innerHTML = ogg ? infoOggetto(ogg) : 'Passa il mouse (o tocca) un oggetto del disegno: si evidenziano la sua misura e le righe di <code>partita-misure.css</code> che lo riguardano; e viceversa da una riga.';
 }
 const dellaRiga = (e: EventTarget | null) => (e as HTMLElement | null)?.closest<HTMLElement>('[data-var]')?.dataset.var ?? null;
 const dellaZona = (e: EventTarget | null) => (e as HTMLElement | null)?.closest<HTMLElement>('[data-z]')?.dataset.z ?? null;
+const delloOggetto = (e: EventTarget | null) => (e as HTMLElement | null)?.closest<HTMLElement>('[data-og]')?.dataset.og ?? null;
 for (const radiceEventi of [radice, posto]) {
-  radiceEventi.addEventListener('mouseover', e => { sopra = dellaRiga(e.target); zonaSopra = sopra ? null : dellaZona(e.target); evidenzia(); });
-  radiceEventi.addEventListener('mouseleave', () => { sopra = null; zonaSopra = null; evidenzia(); });
+  radiceEventi.addEventListener('mouseover', e => {
+    sopraOgg = delloOggetto(e.target);
+    sopra = sopraOgg ? null : dellaRiga(e.target);
+    zonaSopra = sopraOgg || sopra ? null : dellaZona(e.target);
+    evidenzia();
+  });
+  radiceEventi.addEventListener('mouseleave', () => { sopraOgg = null; sopra = null; zonaSopra = null; evidenzia(); });
   radiceEventi.addEventListener('click', e => {
-    const v = dellaRiga(e.target);
+    const o = delloOggetto(e.target);
+    const v = o ? corrente?.oggetti.find(x => x.chiave === o)?.def.vars[0] ?? null : dellaRiga(e.target);
     if (!v) return;
     scelta = scelta === v ? null : v;
     sopra = null;
+    sopraOgg = o;
     evidenzia();
     // Dal disegno alla riga: la riga scelta si porta in vista
     if (radiceEventi === posto && scelta) radice.querySelector(`tr[data-var="${scelta}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
