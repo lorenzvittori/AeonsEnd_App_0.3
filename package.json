@@ -11,7 +11,8 @@
     "docs": "node tools/check-docs.mjs",
     "check": "tsc --noEmit && tsc --noEmit -p tests && node tools/check-moduli.mjs && npm run colori && npm run docs",
     "test": "vitest run",
-    "confronta": "node tools/confronto/confronta.mjs"
+    "confronta": "node tools/confronto/confronta.mjs",
+    "screenshot": "node tools/screenshot/screenshot.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

@@ -17,7 +17,8 @@ export const VISTE = {
   tel: { width: 375, height: 812 },
   tel390: { width: 390, height: 844 },
   desk: { width: 1280, height: 800 },
-  orizz: { width: 812, height: 375 }
+  orizz: { width: 812, height: 375 },
+  tel360: { width: 360, height: 720 }   // tools/screenshot/ (un frame di Figma)
 };
 
 export const avvia = () => chromium.launch();
@@ -33,8 +34,10 @@ const pausa = ms => new Promise(r => setTimeout(r, ms));
 // Una pagina dell'app di una build. opz: { vista: 'tel'|'desk'|'orizz', ridotto, salvataggio (testo JSON), lingua ('it'|'en':
 // la scelta salvata; senza, il browser è italiano e vale l'italiano), nome }
 export async function apri(browser, build, opz = {}) {
+  // opz.scala (deviceScaleFactor, predefinito 1) e opz.telefono (schermo a tocco con la pagina da telefono) servono a tools/screenshot/
   const ctx = await browser.newContext({ viewport: VISTE[opz.vista || 'tel'], serviceWorkers: 'block',
-    reducedMotion: opz.ridotto ? 'reduce' : 'no-preference', deviceScaleFactor: 1, hasTouch: false, locale: 'it-IT', timezoneId: 'Europe/Rome' });
+    reducedMotion: opz.ridotto ? 'reduce' : 'no-preference', deviceScaleFactor: opz.scala || 1, hasTouch: !!opz.telefono, isMobile: !!opz.telefono,
+    locale: 'it-IT', timezoneId: 'Europe/Rome' });
   await ctx.route(url => !/^(http:\/\/127\.0\.0\.1:|data:|blob:)/.test(url.toString()), r => r.abort());
   // Orologio fermo: parte da ORA e avanza solo con runFor (senza pauseAt scorrerebbe col tempo vero)
   await ctx.clock.install({ time: ORA - 1000 });
@@ -135,6 +138,17 @@ export class Pagina {
       case 'muovi': await this.page.mouse.move(a, b, { steps: 4 }); break;
       case 'su': await this.page.mouse.up(); break;
       case 'tasto': await this.page.keyboard.press(a); break;
+      // Per gli stati che durano poco (la scritta Tier): il codice `a`, poi il tempo va avanti di `b` ms (in pezzi, con una pausa vera tra l'uno e
+      // l'altro perché le promesse dell'app si risolvano) e niente animazioni portate alla fine. Lo usa tools/screenshot/ con C.fermaBanner
+      case 'subito':
+        await this.js(a);
+        for (let i = 0; i < 4; i++) { await pausa(60); await this.page.clock.runFor((b || 0) / 4); }
+        return;
+      // Un salvataggio di tools/confronto/salvataggi/ (file `a`) diventa la partita salvata e il menu iniziale si ridisegna (Riprendi partita)
+      case 'salvataggio':
+        await this.page.evaluate(([k, t]) => { localStorage.setItem(k, t); }, [SAVE_KEY, readFileSync(join(import.meta.dirname, 'salvataggi', a), 'utf8')]);
+        await this.js('app.aggiornaInizio()');
+        break;
       // Tasto Indietro: lo stesso evento che manda il browser (l'app chiude il livello in primo piano e rimette la voce in più)
       case 'indietro': await this.js("window.dispatchEvent(new PopStateEvent('popstate'))"); break;
       default: throw new Error('passo sconosciuto: ' + tipo);

@@ -87,6 +87,7 @@ Da lanciare dalla cartella del repo (PowerShell).
 | `npm run check` | `tsc` su `src/` e `tests/`, `tools/check-moduli.mjs` (livelli, cicli, `any`, testi, README...), Stylelint dei colori (`npm run colori`), `tools/check-docs.mjs` (percorsi, link e diagrammi di `docs/`, `npm run docs`) |
 | `npm test` | i test con Vitest (`tests/`) |
 | `npm run confronta -- <tag o commit> [--solo prova,...]` | confronta la versione attuale con un tag o un commit nel browser senza finestra |
+| `npm run screenshot [-- --scala 1] [-- --lingua en] [-- --solo a,b]` | screenshot dell'app a 360×720 in tutte le fasi (per Figma e Stitch) in `screenshot/360x720/` (non su GitHub), con `indice.html`; riusa `tools/confronto/dati/schermate.mjs` ([tools/screenshot/README.md](tools/screenshot/README.md)) |
 | `node tools/check-moduli.mjs --conta` | quanti `any`, eccezioni ai tipi, file `.js`, usi di `G` (attesi 0) |
 | `python tools/import-db.py` | rigenera `cards.json`, `products.json` e le immagini dal DataBase (serve openpyxl e Pillow) |
 

@@ -20,3 +20,6 @@ dist/
 
 # Strumento di confronto (npm run confronta): build e worktree dei confronti, esito
 .confronto/
+
+# Screenshot dell'app per Figma e Stitch (npm run screenshot): le immagini non vanno su GitHub
+/screenshot/

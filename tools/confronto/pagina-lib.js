@@ -43,6 +43,16 @@
     }
   };
 
+  // Per tools/screenshot/: la scritta Tier si ferma a metà della sua animazione (finisci() la porterebbe a opacità 0: sparita), tutto il resto va alla fine
+  C.fermaBanner = () => {
+    const suoi = new Set([...document.querySelectorAll('.ae-tier-banner, .ae-tier-banner *')].flatMap(e => e.getAnimations()));
+    document.getAnimations().forEach(a => {
+      if (suoi.has(a)) { a.pause(); a.currentTime = 700; return; }
+      try { a.finish(); } catch { a.cancel(); }
+    });
+    return suoi.size;
+  };
+
   // --- Misura ---
   const SALTA = new Set(['SCRIPT', 'STYLE', 'TEMPLATE', 'NOSCRIPT', 'LINK', 'META', 'TITLE', 'HEAD', 'BASE']);
   const ATTR = /^(aria-|data-|role$|title$|alt$|src$|href$|placeholder$|disabled$|hidden$|tabindex$|type$|value$|inert$)/;

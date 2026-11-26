@@ -27,6 +27,8 @@ Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dall
 - `pubblicazione-precedente.mjs`: nel workflow di pubblicazione, dopo `npm run build`: scarica i file di `app/` dell'`index.html` del sito
   pubblicato e li mette in `dist/app/` accanto ai nuovi (si tengono le ultime 3 pubblicazioni, elenco in `app/precedenti.json`).
 - `confronto/`: lo strumento di confronto, vedi [confronto/README.md](confronto/README.md).
+- `screenshot/`: gli screenshot dell'app a 360×720 (`npm run screenshot`, opzioni `--scala 1`, `--lingua en`) per Figma e Stitch; riusa lo strumento di confronto
+  e le situazioni di `confronto/dati/schermate.mjs`; esce in `screenshot/360x720/` (non va su GitHub) con un `indice.html`. Vedi [screenshot/README.md](screenshot/README.md).
 
 ## Pubblicazione
 - `.github/workflows/pages.yml` parte solo con push su `main` (anche lanciato a mano pubblica solo `main`; Pages → Source = "GitHub Actions"). Passi:

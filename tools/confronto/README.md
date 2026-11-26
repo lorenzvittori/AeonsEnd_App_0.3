@@ -50,6 +50,10 @@ Una partita = una riga in `dati/partite.mjs`; una schermata = una voce in `dati/
 del giro da cui si raggiunge; `forza` per i pulsanti); un passo di Indietro = una riga in `dati/indietro.mjs`; un salvataggio = un `.json` in `salvataggi/`
 (il testo di `localStorage['aeonsend-app-0.2-save']`); una prova nuova = un file in `prove/` e la riga in `confronta.mjs`.
 
+`dati/schermate.mjs` serve anche agli screenshot (`tools/screenshot/`, [README](../screenshot/README.md)): le voci con `foto`/`atteso`/`test`/`istante` si fotografano
+(le altre prove ignorano questi campi) e `FOTO_IN_PIU`/`ORDINE_FOTO` sono solo per loro. Passi di `browser.mjs` nati per gli screenshot: `['subito', codice, ms]`,
+`['salvataggio', file]`; `apri()` accetta `scala` e `telefono` (schermo a tocco, `isMobile`), la vista `tel360` è 360×720.
+
 ## Cosa non prova
 Animazioni vere (si guarda il punto d'arrivo), gesti con più dita, scorrimento inerziale, il telefono vero (Android/iOS), le immagini come pixel (solo le
 proprietà CSS), la rete lenta o assente, il service worker (spento). Il browser interno di Claude non esegue animazioni né transizioni, `requestAnimationFrame`

@@ -19,6 +19,7 @@ come `npm run check` sono "scorciatoie" definite nel file `package.json`, alla v
 | `npm run check` | tutti i controlli statici, vedi sotto | **prima di ogni commit** |
 | `npm test` | i test automatici (Vitest) | **prima di ogni commit** |
 | `npm run confronta -- <tag o commit>` | confronta la versione attuale con un'altra nel browser | a fine fase, dopo modifiche che non devono cambiare l'app |
+| `npm run screenshot` | gli screenshot dell'app in tutte le fasi (360×720, 720×1440 pixel) in `screenshot/360x720/`, con un indice da aprire nel browser; `-- --scala 1` per 360×720 pixel, `-- --lingua en` per l'inglese | quando servono immagini dell'interfaccia (Figma, Google Stitch); non cambia l'app |
 | `npm run colori` | solo il controllo Stylelint dei colori | dopo aver toccato un CSS |
 | `npm run docs` | solo il controllo di `docs/` | dopo aver toccato la documentazione |
 | `node tools/check-moduli.mjs --conta` | quanti `any`, eccezioni ai tipi, file `.js` (attesi 0) | per una verifica rapida della pulizia |
@@ -107,6 +108,15 @@ Passo per passo:
    strumento non riesce a lavorare. Un giro completo dura circa tre minuti.
 6. Cosa il confronto **non** prova: animazioni vere, gesti con più dita, scorrimento inerziale, il telefono vero, le immagini come pixel, la rete
    lenta o assente e il service worker (è spento).
+
+## `npm run screenshot`: le immagini dell'interfaccia
+
+Costruisce la versione attuale e la percorre con lo stesso browser senza finestra del confronto (stesso caso e stesso orologio fissi), usando le stesse situazioni di
+`tools/confronto/dati/schermate.mjs`: per ogni stato (menu, Nuova partita, Crea mazzo, i due turni, Vittoria, Modalità test...) aspetta che animazioni e immagini
+delle carte siano finite e fa lo screenshot a 360×720 (telefono, schermo a tocco, 720×1440 pixel; un frame 360×720 in Figma). Nelle foto della partita nasconde il
+pulsante Regolazioni e la scritta TEST. Controlla che lo stato sia quello giusto (per esempio il testo del pulsante principale) e che nessuna immagine sia vuota o nera.
+Le immagini sono in `screenshot/360x720/` (l'inglese in `screenshot/360x720-en/`) con un indice (una pagina html) per vederle tutte insieme; la cartella non va su GitHub.
+Come aggiungere uno stato: [tools/screenshot/README.md](../tools/screenshot/README.md).
 
 ## I tag di ripristino
 
