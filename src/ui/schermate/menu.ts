@@ -14,6 +14,7 @@ import { retryBtn, startError, startErrorText } from '../pagina.ts';
 import { el, need, pageEl, query } from '../dom.ts';
 import type { SalvataggioValido } from '../../tipi/salvataggio.ts';
 import { openCollection, openOptions } from '../finestre/opzioni.ts';
+import { openLibrary } from '../finestre/biblioteca.ts';
 import { openTestScreen } from '../finestre/test.ts';
 import { riprendiPartita, vaiA } from '../ridisegno.ts';
 
@@ -51,8 +52,8 @@ export function startHomeActions(): HTMLElement {
   addCollection.classList.add('ae-button--full', 'start-home-collection');
   const options = button(T.options, 'secondary', () => openOptions(options));
   options.classList.add('ae-button--full', 'start-home-options');
-  // Biblioteca: per ora il tocco non fa niente (la schermata verrà dopo); il testo è in testi-it.ts / testi-en.ts
-  const library = button(T.library, 'secondary');
+  // Biblioteca: a tutto schermo (ui/finestre/biblioteca.ts); il testo è in testi-it.ts / testi-en.ts
+  const library = button(T.library, 'secondary', () => openLibrary(library));
   library.classList.add('ae-button--full', 'start-home-library');
   library.dataset.testo = 'library';
   // Modalità test: scenari che partono in un momento preciso della partita

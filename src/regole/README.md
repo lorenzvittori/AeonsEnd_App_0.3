@@ -8,6 +8,8 @@ l'ora come `now()`, gli uid come `newUid()`) e restituiscono il risultato, oppur
 
 ## File
 - `caso.ts`: mescolare e scegliere a caso (tipo `Caso` = la funzione del caso).
+- `biblioteca.ts`: logica della Biblioteca (mercato): filtri combinabili, fasce di costo (8 e oltre in "8+"), raggruppamento e
+  ordinamento delle carte supply, set presenti, preferenze salvate (lettura da testo). Provata in `tests/biblioteca.test.ts`.
 - `json.ts`: copie JSON tipizzate (`jsonCopy`), `parseJson` (restituisce `unknown`), `isRecord`.
 - `mazzo-nemesi.ts`: Nemesis Deck Setup (`buildDeck`), collezione, Modalità battaglia, Unisci e il suo blocco, mazzo corto,
   nemesi giocabili.
