@@ -99,7 +99,8 @@ export function openDrawTurn(): void {
     }
     // Turno già deciso: la scritta in bianco e, se gioca un giocatore, il suo token (sempre, anche senza scelta)
     info.appendChild(el('p', 'ae-draw-turn-who', whoText(kind)));
-    const player = turnCardPlayer(kind);
+    // (turno nemesi: il token della nemesi, Assets/ui/turn-tokens/N.webp)
+    const player = kind === 'nemesis' ? 'nemesis' : turnCardPlayer(kind);
     if (player) {
       const token = el('span', 'ae-draw-turn-token');
       token.dataset.kind = player;

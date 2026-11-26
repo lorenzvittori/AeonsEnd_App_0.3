@@ -44,6 +44,7 @@
 .ae-draw-turn-token { width: calc(var(--ae-pick-w, 52px) * 1.4); aspect-ratio: 1; background: transparent var(--ae-turn-face) center / contain no-repeat; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ae-player) 55%, transparent)); }
 .ae-draw-turn-token[data-kind="p1"] { --ae-player: var(--ae-turn-p1); --ae-turn-face: url('/Assets/ui/turn-tokens/p1.webp'); }
 .ae-draw-turn-token[data-kind="p2"] { --ae-player: var(--ae-turn-p2); --ae-turn-face: url('/Assets/ui/turn-tokens/p2.webp'); }
+.ae-draw-turn-token[data-kind="nemesis"] { --ae-player: var(--carta-turno-nemesi); --ae-turn-face: url('/Assets/ui/turn-tokens/N.webp'); }
 .ae-draw-turn-token[data-kind="p3"] { --ae-player: var(--ae-turn-p3); --ae-turn-face: url('/Assets/ui/turn-tokens/p3.webp'); }
 .ae-draw-turn-token[data-kind="p4"] { --ae-player: var(--ae-turn-p4); --ae-turn-face: url('/Assets/ui/turn-tokens/p4.webp'); }
 .ae-draw-turn-picks { display: flex; gap: 20px; }

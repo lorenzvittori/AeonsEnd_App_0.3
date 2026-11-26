@@ -34,7 +34,7 @@ Caricamento dei dati e uso della rete. Livello 1: importa da `tipi/`, `regole/` 
   Necroswarm 70 mini espansioni) e wave 1 (Rageborne 70, Crooked Mask 70, Horde-Crone 60, Blight Lord 70, Wayward One 60, Carapace Queen 60,
   Prince of Gluttons 70; gli ultimi due hanno un minion a vita variabile). Il numero è la vita iniziale (`life`).
 - I dorsi in `Assets/ui/backs/` sono 28 più quello predefinito (`decor/card-back-logo.webp`); le carte dei turni in `Assets/ui/turn-cards/<carta>.webp`
-  (p1…p4, p12, p34, nemesis, wild, back; 252×352) e i token dei giocatori in `Assets/ui/turn-tokens/pN.webp`.
+  (p1…p4, p12, p34, nemesis, wild, back; 252×352) e i token dei giocatori in `Assets/ui/turn-tokens/pN.webp` e quello della nemesi in `Assets/ui/turn-tokens/N.webp` (232×232).
 
 ## Da sapere prima di modificare
 - Un'immagine già pubblicata sostituita con lo **stesso nome**: i telefoni tengono la vecchia; si cambia `MEDIA_CACHE` in
