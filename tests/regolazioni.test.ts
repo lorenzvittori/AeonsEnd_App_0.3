@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { COLORI, MISURE, componiColore, componiMisura, dividiColore, leggiColori, leggiMisure, predefiniti, regolazioniValide,
+import { COLORI, MISURE, componiColore, componiMisura, dividiColore, leggiColori, leggiDisegni, leggiMisure, predefiniti, regolazioniValide,
   testoCopia, valoriUguali } from '../src/ui/finestre/test-regolazioni-lettura.ts';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -91,6 +91,16 @@ describe('lettura delle misure', () => {
     expect(MISURE).toEqual(leggiMisure(misure));
     expect(MISURE.map(g => g.titolo)).toEqual(['Carte (tutte le zone)', '1 testata', '2 fascia turno', '3 fascia carte piccole',
       '4 vite', '5 fascia carte grandi', '6 pulsanti interattivi', '7 pulsante principale']);
+  });
+
+  it('i disegni delle zone: il commento di più righe dopo il titolo, senza /* e */, allineato; nessuno per un gruppo senza disegno', () => {
+    const d = leggiDisegni('  /* --- 1 zona --- */\n  /*      [sopra]\n        | --uno\n     [box] */\n  --uno: 1px; /* x */\n\n  /* --- Carte --- */\n  --due: 2;\n');
+    expect(d).toEqual({ '1 zona': '     [sopra]\n   | --uno\n[box]' });
+    const veri = leggiDisegni(misure);
+    expect(Object.keys(veri)).toEqual(MISURE.map(g => g.titolo).filter(t => t !== 'Carte (tutte le zone)'));
+    expect(veri['1 testata']).toContain('--testata-spazio-sopra');
+    expect(veri['5 fascia carte grandi']).toContain('--carte-grandi-avanzo-sotto');
+    Object.values(veri).forEach(t => { expect(t).not.toContain('*/'); expect(t).not.toContain('/*'); });
   });
 
   it('partita-misure.css vero: tutte le variabili sono lette, con etichetta; nessuna è un calc() (ogni variabile è una misura vera)', () => {

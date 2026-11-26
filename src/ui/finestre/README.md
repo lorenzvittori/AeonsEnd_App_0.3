@@ -10,7 +10,7 @@ Ogni finestra con stile ha il suo `.css` accanto.
 - `opzioni.ts` + `.css`: Opzioni del menu iniziale, La mia collezione, finestra "nemesi non più in collezione" (`openMissingNemesis`).
 - `scheda-carta.ts`: la scheda della carta in gioco toccata. `vita.ts`: la finestra della vita di Gravehold o della nemesi.
 - `statistiche.ts` + `.css`: Vittoria, Sconfitta (`showEndScreen`, `showDefeat`) e Statistiche. `test.ts` + `.css`: Modalità test e scenari.
-- `test-regolazioni.ts` + `.css`: pannello "Regolazioni" della Modalità test; `test-regolazioni-lettura.ts`: la sua parte pura.
+- `test-regolazioni.ts` + `.css`: pannello "Regolazioni" della Modalità test; `test-regolazioni-lettura.ts`: la sua parte pura (la legge anche la pagina `scheletri/`: `MISURE` e i disegni delle zone, `DISEGNI`).
 
 ## Cosa fanno
 - **Menu:** turno nemesi e carte nel mazzo; *Annulla ultima azione* (chiude il menu e lascia un pulsante sospeso, ripetibile: il

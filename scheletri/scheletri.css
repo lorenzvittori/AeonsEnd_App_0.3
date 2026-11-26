@@ -1,0 +1,71 @@
+/* scheletri/scheletri.css: l'aspetto della pagina scheletri/ (pagina di sviluppo, non l'app). Colori come variabili su :root. */
+:root {
+  color-scheme: light;
+  --bg: #f4f2ed; --ink: #1d1d1f; --muted: #5f5d58; --line: #c9c5bb; --carta: #fff; --testa: #ebe7de; --riga: #e3dfd6;
+  --schermo: #101116; --oro: 223, 174, 89; --rosso: #c0392b; --blu: 120, 160, 220; --verde: #2e7d4f;
+  --evidenza: #fff3d6;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 24px 16px 48px; background: var(--bg); color: var(--ink); font: 14px/20px system-ui, -apple-system, "Segoe UI", sans-serif; }
+h1 { margin: 0 0 6px; font-size: 22px; line-height: 28px; }
+.intro { max-width: 820px; margin: 0 0 16px; color: var(--muted); }
+.intro b { color: var(--ink); }
+.comandi { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-bottom: 12px; }
+.gruppo { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.gruppo button { min-height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--carta); font: inherit; color: inherit; cursor: pointer; }
+.gruppo button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.stato { margin: 0 0 20px; padding: 8px 12px; border-radius: 8px; background: var(--carta); border: 1px solid var(--line); max-width: 820px; }
+.stato.is-live { border-color: var(--verde); color: #1f5c39; }
+.stato.is-error { border-color: var(--rosso); color: #8e2a20; }
+
+/* Due colonne: le zone a sinistra, il disegno fermo a destra (sotto i 1000px il disegno va sopra) */
+.pagina { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: start; }
+.disegno { position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow: auto; }
+
+/* Una zona = un blocco: titolo, disegno del commento del file, tabella delle variabili */
+.zona { margin: 0 0 20px; padding: 12px 14px; background: var(--carta); border: 1px solid var(--line); border-radius: 10px; }
+.zona.is-on { border-color: rgb(var(--oro)); box-shadow: 0 0 0 2px rgba(var(--oro), .45); }
+.zona h2 { margin: 0 0 8px; font-size: 17px; line-height: 24px; }
+.zona h2 .n { display: inline-block; min-width: 24px; height: 24px; margin-right: 8px; padding: 0 6px; border-radius: 12px; background: var(--ink); color: #fff; font-size: 13px; line-height: 24px; text-align: center; }
+.zona pre { margin: 0 0 10px; padding: 8px 10px; background: var(--bg); border-radius: 6px; font: 12px/16px ui-monospace, "Cascadia Mono", Consolas, monospace; overflow-x: auto; white-space: pre; }
+.tabella { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; line-height: 18px; }
+th, td { padding: 4px 8px; border-bottom: 1px solid var(--riga); text-align: right; vertical-align: top; }
+th { background: var(--testa); font-weight: 600; white-space: nowrap; }
+th:nth-child(-n+2), td:nth-child(-n+2) { text-align: left; }
+td:nth-child(2) { min-width: 170px; }
+td.nome code { font: 12px/16px ui-monospace, "Cascadia Mono", Consolas, monospace; white-space: nowrap; }
+td.valore, td.misura, td.diff { white-space: nowrap; }
+td.diff { font-weight: 700; }
+td.motivo { text-align: left; color: var(--muted); font-style: italic; }
+td small { display: block; font-weight: 400; color: var(--muted); }
+tr[data-var] { cursor: pointer; }
+tr.is-diff td { background: #fde8e4; }
+tr.is-diff td.diff { color: var(--rosso); }
+tr.is-spiegata td.diff { color: var(--muted); }
+tr[data-var].is-on td { background: var(--evidenza); }
+tr.is-diff.is-on td { background: #f9d2cb; }
+tr.is-scelta td:first-child { box-shadow: inset 4px 0 0 var(--rosso); }
+
+/* Il disegno dello schermo, in scala; le misure arrivano da scheletri.ts */
+.schermo { position: relative; flex: 0 0 auto; background: var(--schermo); border-radius: 8px; overflow: hidden; outline: 1px solid #000; }
+.dz { position: absolute; left: 0; border: 1px dashed rgba(var(--blu), .8); background: rgba(var(--blu), .08); }
+.dz.is-on { background: rgba(var(--blu), .22); border-style: solid; }
+.dz .zn { position: absolute; left: 3px; top: 2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: rgb(var(--blu)); color: #111;
+  font: 700 10px/16px system-ui, sans-serif; text-align: center; }
+.dz .zt { position: absolute; right: 4px; top: 2px; color: rgba(255, 255, 255, .7); font: 10px/16px system-ui, sans-serif; }
+.caso { position: absolute; inset: 0; pointer-events: none; }
+.caso .ab { display: none; position: absolute; border: 1px solid rgba(var(--oro), .95); background: rgba(var(--oro), .18); }
+.caso .ev { position: absolute; pointer-events: auto; cursor: pointer; background: transparent; }
+.caso.is-on .ab { display: block; }
+.caso.is-on .ev { background: rgba(192, 57, 43, .75); outline: 1px solid #fff; z-index: 3; }
+.caso.is-on .ab { z-index: 2; }
+.vuoto { position: absolute; left: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, .45); font: 11px/14px system-ui, sans-serif; pointer-events: none; }
+
+/* App vera, misurata dal vivo: fuori dallo schermo ma con le sue misure (display: none non darebbe le misure) */
+.misuratore { position: absolute; left: -10000px; top: 0; width: 360px; border: 0; visibility: hidden; }
+
+@media (max-width: 1000px) {
+  .pagina { grid-template-columns: minmax(0, 1fr); }
+  .disegno { position: static; order: -1; max-height: none; }
+}

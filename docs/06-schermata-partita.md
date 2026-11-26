@@ -54,6 +54,13 @@ Ogni variabile di `ui/schermate/partita-misure.css` è una **misura vera**: l'al
 N px sposta di N px esattamente quello che dice il suo commento, e niente altro (niente "centra e poi sposta", niente margini negativi di
 compensazione). Il disegno è lo stesso che sta in cima a ogni zona nel file delle misure: dall'alto in basso, con la variabile tra una cosa e l'altra.
 
+**Vederle accanto a quelle vere.** La pagina `scheletri/` (una seconda pagina di Vite, di sviluppo: non è una schermata dell'app) ha la stessa struttura del
+file: un blocco per zona, nello stesso ordine, con il disegno del commento e, per ogni variabile, il nome, il commento, il valore nel file, la misura vera presa
+dall'app e la differenza (in rosso se non è 0; le variabili che non si possono misurare hanno il motivo). A destra lo schermo in scala (360×720 e gli altri formati,
+turno giocatori o nemesi): toccando una riga si evidenzia la cosa o lo spazio che misura. Si apre con `npm run dev` su <http://localhost:5173/AeonsEnd_App_0.3/scheletri/>,
+con `npm run preview` su <http://localhost:4173/AeonsEnd_App_0.3/scheletri/> e, dopo la pubblicazione, nell'indirizzo del sito seguito da `scheletri/`. Misura con le stesse coppie
+"tra X e Y" della prova `misure` (`tools/confronto/dati/misure.mjs`), quindi pagina e prova dicono la stessa cosa. Dettagli in [scheletri/README.md](../scheletri/README.md).
+
 ```mermaid
 flowchart TB
     Z1["1 · riga della testata<br/>--testata-altezza"]

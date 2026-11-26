@@ -16,7 +16,12 @@ export default defineConfig({
     assetsInlineLimit: 0,
     // CSS non minificato: il minificatore riscrive regole e valori (prefissi, colori, variabili aggiunte) e il CSS deve
     // restare quello scritto nei file .css
-    cssMinify: false
+    cssMinify: false,
+    // Due pagine: l'app (index.html) e la pagina di sviluppo scheletri/ (le misure di partita-misure.css accanto a quelle
+    // vere dell'app). Non è una schermata dell'app: nessun link, niente nel service worker.
+    rollupOptions: {
+      input: { main: 'index.html', scheletri: 'scheletri/index.html' }
+    }
   },
   test: {
     environment: 'node',

@@ -81,7 +81,7 @@ Da lanciare dalla cartella del repo (PowerShell).
 | Comando | Cosa fa |
 |---|---|
 | `npm install` (o `npm ci`) | la prima volta |
-| `npm run dev` | prova l'app su <http://localhost:5173/AeonsEnd_App_0.3/>, si aggiorna a ogni modifica |
+| `npm run dev` | prova l'app su <http://localhost:5173/AeonsEnd_App_0.3/>, si aggiorna a ogni modifica; la pagina delle misure (scheletro) è su `.../AeonsEnd_App_0.3/scheletri/` (anche con `npm run preview`) |
 | `npm run build` | costruisce il sito in `dist/` (file con l'hash nel nome, codice in `dist/app/`) |
 | `npm run preview` | serve il sito costruito, come sarà pubblicato: <http://localhost:4173/AeonsEnd_App_0.3/> |
 | `npm run check` | `tsc` su `src/` e `tests/`, `tools/check-moduli.mjs` (livelli, cicli, `any`, testi, README...), Stylelint dei colori (`npm run colori`), `tools/check-docs.mjs` (percorsi, link e diagrammi di `docs/`, `npm run docs`) |
@@ -159,7 +159,8 @@ Ogni cartella di codice ha un `README.md`: a cosa serve, il livello, cosa può i
 | [`tools/`](tools/README.md) | controllo dei moduli, ponte DataBase → app, icone, pubblicazione |
 | [`tools/confronto/`](tools/confronto/README.md) | lo strumento di confronto tra due versioni |
 | [`docs/`](docs/00-leggimi.md) | spiegazioni con diagrammi Mermaid, dal quadro generale al dettaglio (12 file, partenza `00-leggimi.md`) |
-| `public/` | file serviti così come sono: `Data/`, `thumbs/`, `Assets/`, JSON, `manifest.webmanifest`, `sw.js`, `scheletri/` |
+| `public/` | file serviti così come sono: `Data/`, `thumbs/`, `Assets/`, JSON, `manifest.webmanifest`, `sw.js` |
+| `scheletri/` | la pagina delle misure (seconda pagina di Vite, di sviluppo; [README](scheletri/README.md)) |
 
 ## 7. Livelli in breve
 

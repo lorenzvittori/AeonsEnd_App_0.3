@@ -100,7 +100,7 @@ Passo per passo:
 3. **Caso e orologio sono finti e uguali** per le due: così le stesse azioni danno gli stessi risultati. Le animazioni vanno subito alla fine.
 4. Le **prove**: `partite` (sette partite complete, con Undo e ripresa a metà), `scenari` (tutti quelli della Modalità test), `salvataggi` (salvataggi
    veri di versioni vecchie, ripresi e giocati), `schermate` (il giro di tutte le schermate a due misure: telefono e desktop, con lo stile
-   calcolato di ogni elemento), `indietro` (il tasto Indietro), `scheletri` (la pagina `public/scheletri/`), `lingua` (l'app in italiano e inglese:
+   calcolato di ogni elemento), `indietro` (il tasto Indietro), `scheletri` (la pagina `scheletri/`: ogni variabile del file delle misure ha la sua riga, ogni differenza è 0 o spiegata), `lingua` (l'app in italiano e inglese:
    cerca testi che escono dal loro riquadro), `misure` (non confronta due versioni: per ogni variabile di `src/ui/schermate/partita-misure.css` la aumenta di 10px e
    controlla che lo spazio tra le due cose del suo commento cresca di 10px, a tre formati di schermo e nei due turni) e `console` (errori dell'app, solo nella versione attuale).
 5. L'esito è una riga per prova. Si legge con attenzione: **una differenza voluta** (un testo, un valore cambiato) si dichiara nel report;

@@ -26,7 +26,7 @@ uguali per le due build; le animazioni vanno alla fine.
 - `salvataggi`: i file di `salvataggi/` (main v228 dei test e uno scritto dal sito pubblicato v273), ripresi e giocati.
 - `schermate`: il giro delle schermate a 375×812 e 1280×800 (più 812×375 e riduzione del movimento per le voci con `anche`): `getComputedStyle` di
   tutti gli elementi visibili con `::before`/`::after`, posizione, testo e attributi, e i pulsanti principali con `:hover`/`:active`/`:focus-visible` forzati.
-- `indietro`: il giro fino al tasto Indietro. `scheletri`: la pagina `public/scheletri/` nei 4 formati.
+- `indietro`: il giro fino al tasto Indietro. `scheletri`: la pagina `scheletri/` (le misure di `partita-misure.css` accanto a quelle vere): nei 4 formati e nei due turni ogni variabile ha la sua riga e ogni differenza è 0 o spiegata (`diffSpiegata`, `nonUguale` in `dati/misure.mjs`); se anche la versione di confronto ha la pagina nuova, ne confronta il testo.
 - `lingua`: non confronta due build: apre la versione attuale in italiano e in inglese (375×812 e 1280×800), percorre il giro di `dati/schermate.mjs`
   più le finestre di `dati/lingua.mjs` e riapre i salvataggi; segnala in inglese un testo che esce dal suo box (`scrollWidth > clientWidth`) o dallo
   schermo, un pulsante su più righe dove in italiano ha meno righe, un testo o `aria-label` vuoto, "undefined"/"NaN"/"[object"/"null" visibili e testo
@@ -36,7 +36,7 @@ uguali per le due build; le animazioni vanno alla fine.
   `getBoundingClientRect` che lo spazio tra le due cose cresca di 10px. Controlli fissi: fondo della carta grande → zona 6 uguale a `--interattivi-distanza` (e, nel turno giocatori, → comandi della carta al centro: caso `--interattivi-distanza`);
   carta grande, zona 5 e zona 6 uguali (misura e posizione) nei due turni; i pesi dell'avanzo (`--carte-grandi-avanzo-sopra` / `-sotto`) dividono lo spazio
   come dicono (non su desktop: la colonna si adatta alla carta). Le variabili che non si provano così (proporzioni, pesi, minimi, valori che dipendono
-  dal testo) stanno in `NON_PROVABILI` con il motivo, e nell'elenco dell'esito. Una variabile nuova in `partita-misure.css` = un caso in `dati/misure.mjs`
+  dal testo) stanno in `NON_PROVABILI` con il motivo, e nell'elenco dell'esito. Le coppie e le funzioni `LEGGI` / `IMPOSTA` di `dati/misure.mjs` le usa anche la pagina `scheletri/`. Una variabile nuova in `partita-misure.css` = un caso in `dati/misure.mjs`
   (o una riga in `NON_PROVABILI`).
 - `console`: errori dell'app solo nella versione attuale (`vibrate` non conta).
 

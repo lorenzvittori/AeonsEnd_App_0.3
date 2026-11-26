@@ -50,7 +50,8 @@ Passo per passo:
 | Cartella | Chi la scrive | Cosa contiene | Va su GitHub? |
 |---|---|---|---|
 | `src/` | una persona (o Claude) | codice TypeScript e CSS, diviso in cartelle per livello | sì |
-| `public/` | in gran parte lo script `tools/import-db.py` | JSON, immagini, `sw.js`, `manifest.webmanifest`, la pagina `scheletri/` | sì |
+| `public/` | in gran parte lo script `tools/import-db.py` | JSON, immagini, `sw.js`, `manifest.webmanifest` | sì |
+| `scheletri/` | a mano | la pagina di sviluppo con le misure dell'app (seconda pagina di Vite) | sì |
 | `dist/` | il comando `npm run build` | il sito finito: `index.html`, la cartella `dist/app/` con codice e CSS, una copia di `public/` | no |
 
 ## Cosa fa la build, e perché "unisce e traduce"

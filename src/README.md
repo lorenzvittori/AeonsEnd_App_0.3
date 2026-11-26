@@ -15,11 +15,11 @@ Il codice dell'app: Vite + TypeScript `strict`, moduli ES, nessun framework. Ogn
   (`.ae-rotate`: altezza ≤ 500px e schermo touch); pulsante Riprova se i dati non si caricano.
 
 ## Da sapere prima di modificare
-- **Niente variabili globali** tranne `window.app` (per la console, `public/scheletri/` e le prove di `tools/confronto/`):
+- **Niente variabili globali** tranne `window.app` (per la console, `scheletri/` e le prove di `tools/confronto/`):
   le funzioni esportate dai moduli (`app.render()`, `app.act()`, `app.nuovaPartita()`, `app.startScenario(app.SCENARI[0])`),
   i campi dello stato per nome (`app.queue`, `app.turn`...; assegnabili solo per il debug), gli oggetti `app.catalogo`,
   `app.preferenze`, `app.partita`, l'elemento `app.app`, `app.noSave = true` (spegne il salvataggio), `app.regole` (regole pure).
-  Se un nome cambia si aggiornano `main.ts`, `tools/confronto/pagina-lib.js` e `public/scheletri/`.
+  Se un nome cambia si aggiornano `main.ts`, `tools/confronto/pagina-lib.js` e `scheletri/`.
 - Al caricamento i moduli non eseguono niente (solo funzioni e costanti): il codice di avvio sta in `avvio()`.
 - Intestazione di ogni file: prima riga `// <percorso>: cosa contiene`, poi `Dipende da:` e `Usato da:`; nei commenti niente
   storia delle versioni, solo il perché, al presente. Un file `.ts` nuovo va citato nel README della sua cartella
@@ -27,4 +27,4 @@ Il codice dell'app: Vite + TypeScript `strict`, moduli ES, nessun framework. Ogn
 - Niente `any` (si usa `unknown` con un controllo), `@ts-ignore` vietato, `@ts-expect-error` con il motivo sulla stessa riga;
   nessun ciclo di import; nessun file sopra 500 righe (si divide in file di supporto `<nome>-*.ts`).
 - I file serviti così come sono stanno in `public/`: `Data/`, `thumbs/`, `Assets/`, i JSON (`cards.json`, `nemesis.json`,
-  `products.json`, `deck-setup.json`), `manifest.webmanifest`, `sw.js`, `scheletri/`. Vedi [dati/README.md](dati/README.md).
+  `products.json`, `deck-setup.json`), `manifest.webmanifest`, `sw.js`. Vedi [dati/README.md](dati/README.md).

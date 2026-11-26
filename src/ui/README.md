@@ -45,4 +45,4 @@ L'interfaccia. I file qui sono il livello 2 (base) e il coordinatore (livello 6)
   `FILE_CON_TESTI`). Testi fissi di `index.html`: `data-testo`, `data-testo-aria`, `data-testo-title` con la chiave, scritti da `testi.avvio()`.
 - **Una lingua** (es. francese): codice in `Lingua`/`LINGUE` (`stato/preferenze.ts`), `testi-fr.ts` con `I18N_FR: Testi`, voce in
   `DIZIONARI` e in `check-moduli.mjs`, poi la prova `lingua` di `tools/confronto`. La lingua è una preferenza (`aeonsend-app-0.2-language`);
-  si sceglie in Opzioni, che ricarica l'app. Restano fissi: nome del gioco, manifest, `public/scheletri/`, etichette del pannello Regolazioni.
+  si sceglie in Opzioni, che ricarica l'app. Restano fissi: nome del gioco, manifest, `scheletri/`, etichette del pannello Regolazioni.

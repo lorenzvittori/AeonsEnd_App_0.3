@@ -38,9 +38,8 @@ Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dall
   pubblicazione: per questo `pubblicazione-precedente.mjs` conserva i file delle pubblicazioni di prima. Un `index.html` del sito senza build
   (fino alla v268) carica `public/script.js`, che ricarica la pagina una volta. La cartella del codice costruito si chiama `app/` e non `assets/`:
   su Windows sarebbe la stessa di `public/Assets/`.
-- `public/sw.js` (service worker) e `manifest.webmanifest` si copiano così come sono. `public/scheletri/` è una pagina di misura per chi
-  sviluppa (scheletro della partita in mm nei formati 18:9-20:9, misure prese con l'app vera in un iframe; `misure.json` di riserva): non è
-  l'app e va rifatta se cambia il layout.
+- `public/sw.js` (service worker) e `manifest.webmanifest` si copiano così come sono. `scheletri/` (fuori da `public/`) è una seconda pagina di Vite, di
+  sviluppo: le misure di `partita-misure.css` zona per zona accanto a quelle vere dell'app (`scheletri/README.md`); non è l'app.
 
 ## Da sapere prima di modificare
 - Aggiungere un controllo a `check-moduli.mjs`: una riga nell'elenco in testa, il controllo, e un messaggio che dica file e riga.

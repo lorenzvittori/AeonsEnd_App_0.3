@@ -147,7 +147,7 @@ Passo per passo:
    la chiave, `data-testo="playersTurn"` per il testo, `data-testo-aria` per l'etichetta dei lettori di schermo, `data-testo-title` per il
    suggerimento. `avvio()` di `ui/testi.ts` li scrive tutti (`applicaTestiFissi()`) e imposta anche `lang` della pagina.
 5. **Restano fissi** (non cambiano con la lingua): il nome del gioco, il `manifest.webmanifest` (la descrizione è in italiano), la pagina
-   `public/scheletri/` e le etichette del pannello Regolazioni.
+   `scheletri/` e le etichette del pannello Regolazioni.
 6. **Una terza lingua** (per esempio il francese): il codice in `Lingua` e `LINGUE`, un nuovo file dei testi (come `ui/testi-en.ts`), la sua voce in `DIZIONARI` e in
    `check-moduli`, poi la prova `lingua` di `tools/confronto`. La procedura completa è in [src/ui/README.md](../src/ui/README.md).
 7. **Per aggiungere un testo**: la chiave in `I18N_IT`, la stessa in `I18N_EN`, poi `T.chiave`. Lo strumento di confronto ha una prova `lingua` che

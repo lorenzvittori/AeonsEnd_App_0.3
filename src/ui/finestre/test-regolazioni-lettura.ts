@@ -8,7 +8,8 @@
 //   --testata-altezza: 58px;     (commento: altezza minima della testata)
 // Dei colori si leggono le variabili --colore-* con valore #rrggbb o #rrggbbaa; delle misure quelle con un numero e
 // un'unità (px, %...) o senza unità; le altre (calc()...) non si regolano.
-// Livello 4 (ui/finestre/), file di supporto di test.ts. Dipende da: i due file CSS (?raw). Usato da: test-regolazioni.ts.
+// Livello 4 (ui/finestre/), file di supporto di test.ts. Dipende da: i due file CSS (?raw). Usato da: test-regolazioni.ts e,
+// fuori dall'app, dalla pagina scheletri/ (MISURE, DISEGNI).
 
 import paletteTesto from '../../stili/palette.css?raw';
 import misureTesto from '../schermate/partita-misure.css?raw';
@@ -82,9 +83,37 @@ export function leggiMisure(testo: string): Gruppo<Misura>[] {
     .filter(g => g.voci.length > 0);
 }
 
+// I disegni delle zone: il commento di più righe che segue "/* --- titolo --- */" (per titolo). Serve alla pagina scheletri/
+// (scheletri/scheletri.ts), che mostra a ogni zona il disegno scritto nel file; il pannello non lo usa. Il testo è quello del
+// commento senza "/*" e "*/", spostato a sinistra quanto basta (l'allineamento delle righe resta).
+export function leggiDisegni(testo: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  let titolo: string | null = null;
+  let righe: string[] | null = null;
+  const chiudi = () => {
+    if (!righe || titolo === null) return;
+    righe[0] = righe[0].replace('/*', '  ');
+    righe[righe.length - 1] = righe[righe.length - 1].replace(/\s*\*\/\s*$/, '');
+    const pieni = righe.filter(r => r.trim() !== '');
+    const rientro = Math.min(...pieni.map(r => r.length - r.trimStart().length));
+    out[titolo] = righe.map(r => r.slice(rientro).replace(/\s+$/, '')).join('\n').replace(/^\n+|\n+$/g, '');
+    righe = null;
+    titolo = null;
+  };
+  for (const riga of testo.split(/\r?\n/)) {
+    if (righe) { righe.push(riga); if (riga.includes('*/')) chiudi(); continue; }
+    const g = riga.match(RIGA_GRUPPO);
+    if (g) { titolo = g[1]; continue; }
+    if (titolo === null || riga.trim() === '') continue;
+    if (/^\s*\/\*/.test(riga)) { righe = [riga]; if (riga.includes('*/')) chiudi(); } else titolo = null;
+  }
+  return out;
+}
+
 // Quello che legge il pannello: i file veri
 export const COLORI: Gruppo<ColoreBase>[] = leggiColori(paletteTesto);
 export const MISURE: Gruppo<Misura>[] = leggiMisure(misureTesto);
+export const DISEGNI: Record<string, string> = leggiDisegni(misureTesto);
 
 // Valori predefiniti (quelli scritti nei CSS), per nome
 export function predefiniti(colori: Gruppo<ColoreBase>[], misure: Gruppo<Misura>[]): Record<string, string> {

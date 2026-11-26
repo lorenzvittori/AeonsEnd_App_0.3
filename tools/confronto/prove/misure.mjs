@@ -5,42 +5,15 @@
 // Controlli fissi: la distanza tra il fondo della carta grande e la cima della zona 6 è --interattivi-distanza; la carta
 // grande ha la stessa misura e posizione nei due turni; i due pesi dell'avanzo dividono lo spazio come dicono.
 // Le variabili che non si provano così sono elencate (con il motivo) nell'esito: ctx.elenco.
-// Dipende da: browser.mjs, dati/misure.mjs. Usato da: confronta.mjs.
+// Dipende da: browser.mjs, dati/misure.mjs (anche LEGGI e IMPOSTA, che usa pure la pagina scheletri/). Usato da: confronta.mjs.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { apri } from '../browser.mjs';
-import { CASI, MOMENTI, NON_PROVABILI, VISTE_PROVA } from '../dati/misure.mjs';
+import { CASI, IMPOSTA, LEGGI, MOMENTI, NON_PROVABILI, VISTE_PROVA } from '../dati/misure.mjs';
 
 const DELTA = 10;
 const TOLLERANZA = 0.6;
-
-// Nella pagina: lo spazio (b − a) di ogni caso, nullo se una delle due cose non c'è (o non si vede)
-const LEGGI = ({ casi }) => {
-  const visibile = e => e.getClientRects().length > 0 && getComputedStyle(e).display !== 'none';
-  const trova = sel => [...document.querySelectorAll(sel)].find(visibile) || null;
-  const bordo = (e, lato) => e.getBoundingClientRect()[lato];
-  const rail = document.getElementById('rail');
-  if (rail) rail.scrollLeft = 0;
-  return casi.map(c => {
-    const ea = trova(c.a[0]);
-    const eb = trova(c.b[0]);
-    return ea && eb ? Math.round((bordo(eb, c.b[1]) - bordo(ea, c.a[1])) * 100) / 100 : null;
-  });
-};
-
-// Nella pagina: imposta (o toglie, con null) variabili su :root e ridisegna come fa il pannello Regolazioni
-const IMPOSTA = ({ valori }) => {
-  const radice = document.documentElement;
-  for (const [nome, v] of Object.entries(valori)) {
-    if (v === null) radice.style.removeProperty(nome); else radice.style.setProperty(nome, v);
-  }
-  window.app.render();
-  window.app.render();
-  // Le transizioni CSS (es. la casella accesa) vanno alla fine prima di misurare
-  void document.body.offsetHeight;
-  window.__c.finisci();
-};
 
 // Nella pagina: il valore attuale di una variabile (numero e unità)
 const VALORE = ({ nome }) => {
@@ -71,6 +44,9 @@ const CARTA = () => {
 
 const arrotonda = n => Math.round(n * 100) / 100;
 
+// Lo spazio di ogni caso (LEGGI sta in dati/misure.mjs, con i bordi: qui serve solo la misura)
+const leggi = async (pg, casi) => (await pg.page.evaluate(LEGGI, { casi })).map(d => d && d.misura);
+
 export default {
   nome: 'misure',
   async esegui(ctx) {
@@ -100,7 +76,7 @@ export default {
             continue;
           }
           const applicabili = CASI.filter(c => !c.turni || c.turni.includes(momento.id));
-          const base = await pg.page.evaluate(LEGGI, { casi: applicabili });
+          const base = await leggi(pg, applicabili);
           for (const [k, c] of applicabili.entries()) {
             if (base[k] === null) { assenti++; ctx.elenco.push({ schermata: nome, variabile: c.v, esito: 'elemento assente in questo momento' }); continue; }
             const attuale = await pg.page.evaluate(VALORE, { nome: c.v });
@@ -109,9 +85,9 @@ export default {
             const tutte = Object.keys(prima).concat(c.v);
             // Misura con le variabili di `prima`, poi con la variabile aumentata di 10
             if (Object.keys(prima).length) await pg.page.evaluate(IMPOSTA, { valori: prima });
-            const [m0] = await pg.page.evaluate(LEGGI, { casi: [c] });
+            const [m0] = await leggi(pg, [c]);
             await pg.page.evaluate(IMPOSTA, { valori: { [c.v]: (attuale.numero + DELTA) + attuale.unita } });
-            const [m1] = await pg.page.evaluate(LEGGI, { casi: [c] });
+            const [m1] = await leggi(pg, [c]);
             await pg.page.evaluate(IMPOSTA, { valori: Object.fromEntries(tutte.map(n => [n, null])) });
             provati++;
             const atteso = DELTA * (c.fattore || 1);

@@ -168,7 +168,7 @@ Lo stato (`stato/`) e le regole (`regole/`) **non** hanno una `avvio()`: i loro 
 ## `window.app`: il pannello di controllo per la console
 
 `window.app` è l'**unica variabile globale** dell'app (cioè visibile da qualunque punto, anche dalla console del browser). Serve per
-guardare e provare l'app dall'esterno: la console degli sviluppatori, la pagina di misura `public/scheletri/` e lo strumento di
+guardare e provare l'app dall'esterno: la console degli sviluppatori, la pagina di misura `scheletri/` e lo strumento di
 confronto (`tools/confronto/`) la usano. Il codice dell'app non la usa mai.
 
 Dentro ci sono tutte le funzioni esportate dai moduli e i campi dello stato, **per nome**:
@@ -185,7 +185,7 @@ Dentro ci sono tutte le funzioni esportate dai moduli e i campi dello stato, **p
 | `app.app` | l'elemento `#app` della pagina |
 
 Dettagli tecnici: i nomi sono collegati ai valori veri con delle "proprietà con get", quindi si legge sempre il valore di adesso, non
-una copia. Se si cambia un nome si aggiornano `main.ts`, `tools/confronto/pagina-lib.js` e `public/scheletri/`.
+una copia. Se si cambia un nome si aggiornano `main.ts`, `tools/confronto/pagina-lib.js` e `scheletri/`.
 
 ## Per approfondire
 

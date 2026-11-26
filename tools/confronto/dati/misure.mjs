@@ -10,9 +10,16 @@
 //   turni    in quali momenti si prova (default: tutti): 'giocatori' | 'nemesi'
 //   fattore  di quanto cresce lo spazio per +10px della variabile (default 1; 2 se la variabile conta da tutti e due i lati)
 //   prima    altre variabili da impostare prima di misurare, { '--nome': 'valore' } (es. togliere un minimo che nasconde l'effetto)
+//   piu      altre variabili che la misura comprende (lo spazio misurato = valore della variabile + valore di queste)
+//   diffSpiegata  il motivo per cui la misura differisce davvero dal valore (la pagina scheletri/ la mostra in grigio, spiegata)
+//   nonUguale  il motivo per cui la misura non è uguale al valore della variabile (la pagina scheletri/ non calcola la differenza)
 // I casi che non si possono provare così stanno in NON_PROVABILI, con il motivo.
 //
-// Dipende da: niente (solo dati). Usato da: prove/misure.mjs.
+// Qui anche le due funzioni che leggono e cambiano la pagina (LEGGI, IMPOSTA): le usano la prova "misure" (dentro la pagina,
+// con Playwright) e la pagina scheletri/ (dentro l'app in un iframe, con eval), così dicono sempre la stessa cosa. Sono
+// autosufficienti (niente nomi di fuori): si passano al browser come testo.
+//
+// Dipende da: niente (solo dati). Usato da: prove/misure.mjs, scheletri/scheletri.ts.
 
 export const VISTE_PROVA = ['tel', 'tel390', 'desk'];
 
@@ -24,6 +31,37 @@ export const MOMENTI = [
   // Turno nemesi con il carosello di 10 carte (finisce il turno del giocatore e la carta turno è la nemesi)
   { id: 'nemesi', passi: [['scenario', 'full-queue'], ['js', 'app.fineTurnoGiocatore(); app.pescaCartaTurno(); app.render()']], atteso: 'nemesi' }
 ];
+
+// Nella pagina: lo spazio (b − a) di ogni caso e i due bordi, null se una delle due cose non c'è (o non si vede)
+export const LEGGI = ({ casi }) => {
+  const visibile = e => e.getClientRects().length > 0 && getComputedStyle(e).display !== 'none';
+  const trova = sel => [...document.querySelectorAll(sel)].find(visibile) || null;
+  const rett = e => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }; };
+  const rail = document.getElementById('rail');
+  if (rail) rail.scrollLeft = 0;
+  return casi.map(c => {
+    const ea = trova(c.a[0]);
+    const eb = trova(c.b[0]);
+    if (!ea || !eb) return null;
+    const ra = rett(ea);
+    const rb = rett(eb);
+    return { misura: Math.round((rb[c.b[1]] - ra[c.a[1]]) * 100) / 100, a: ra, b: rb };
+  });
+};
+
+// Nella pagina: imposta (o toglie, con null) variabili su :root e ridisegna come fa il pannello Regolazioni
+export const IMPOSTA = ({ valori }) => {
+  const radice = document.documentElement;
+  for (const [nome, v] of Object.entries(valori)) {
+    if (v === null) radice.style.removeProperty(nome); else radice.style.setProperty(nome, v);
+  }
+  window.app.render();
+  window.app.render();
+  // Le transizioni CSS (es. la casella accesa) vanno alla fine prima di misurare
+  void document.body.offsetHeight;
+  if (window.__c) window.__c.finisci();
+  else for (let i = 0; i < 3; i++) document.getAnimations().forEach(a => { try { a.finish(); } catch { a.cancel(); } });
+};
 
 // Selettori usati più volte (la prima corrispondenza visibile)
 const STATO = '.queue-slot .ae-status-badge, .ae-focus-status';
@@ -46,10 +84,10 @@ export const CASI = [
   { v: '--testata-spazio-sopra', a: ['#topbar', 'top'], b: [PILA, 'top'] },
   { v: '--testata-margine-sinistro', a: ['#topbar', 'left'], b: ['.ae-phase', 'left'] },
   { v: '--testata-margine-destro', a: ['.ae-menu-button', 'right'], b: ['#topbar', 'right'] },
-  { v: '--testata-spazio-colonne', a: [PILA + ':last-child', 'right'], b: ['.ae-menu-button', 'left'], nota: 'insieme a --testata-pile-margine-destro' },
+  { v: '--testata-spazio-colonne', a: [PILA + ':last-child', 'right'], b: ['.ae-menu-button', 'left'], piu: ['--testata-pile-margine-destro'], nota: 'la misura comprende anche --testata-pile-margine-destro' },
   { v: '--testata-pile-altezza', a: [PILA, 'top'], b: [PILA, 'bottom'] },
   { v: '--testata-pile-spazio', a: [PILA + ':first-child', 'right'], b: [PILA + ':last-child', 'left'] },
-  { v: '--testata-pile-margine-destro', a: [PILA + ':last-child', 'right'], b: ['.ae-menu-button', 'left'] },
+  { v: '--testata-pile-margine-destro', a: [PILA + ':last-child', 'right'], b: ['.ae-menu-button', 'left'], piu: ['--testata-spazio-colonne'], nota: 'la misura comprende anche --testata-spazio-colonne' },
   { v: '--testata-pile-numero', a: ['.ae-header-piles .ae-pile-count', 'top'], b: ['.ae-header-piles .ae-pile-count', 'bottom'] },
 
   // --- 2 fascia turno ---
@@ -75,13 +113,13 @@ export const CASI = [
   { v: '--vite-margine-lati', a: ['#vite', 'left'], b: ['.ae-life-box', 'left'] },
   { v: '--vite-box-altezza', a: ['.ae-life-box', 'top'], b: ['.ae-life-box', 'bottom'] },
   { v: '--vite-box-larghezza-minima-sfondo', a: ['.ae-life-box.has-bg', 'left'], b: ['.ae-life-box.has-bg', 'right'] },
-  { v: '--vite-box-margine-interno', a: ['.ae-life-box', 'left'], b: ['.ae-life-box', 'right'], fattore: 2,
+  { v: '--vite-box-margine-interno', a: ['.ae-life-box', 'left'], b: ['.ae-life-box', 'right'], fattore: 2, nonUguale: 'la larghezza del box è il numero più due volte il margine: la prova controlla che +10px alla variabile = +20px di larghezza',
     prima: { '--vite-box-larghezza-minima': '0px', '--vite-box-larghezza-minima-sfondo': '0px' }, nota: 'senza il minimo di larghezza, che altrimenti vince' },
-  { v: '--vite-scritta-distanza', a: ['.ae-life-tag', 'bottom'], b: ['.ae-life-box', 'top'] },
+  { v: '--vite-scritta-distanza', a: ['.ae-life-tag', 'bottom'], b: ['.ae-life-box', 'top'], diffSpiegata: 'la scritta si posiziona dal bordo interno del box (bordo di 0,8px): lo spazio vero è la variabile meno il bordo' },
 
   // --- 5 fascia carte grandi ---
   { v: '--carte-grandi-spazio-sopra', a: [ZONA5, 'top'], b: [STATO, 'top'], prima: { '--carte-grandi-avanzo-sopra': '0', '--carte-grandi-avanzo-sotto': '0' }, nota: 'senza avanzo sopra, che altrimenti si somma' },
-  { v: '--carte-grandi-alone-sotto', a: [ZONA6, 'top'], b: ['#focus', 'bottom'], turni: ['nemesi'], nota: 'di quanto il carosello sporge sotto la carta' },
+  { v: '--carte-grandi-alone-sotto', a: [CARTA, 'bottom'], b: ['#focus', 'bottom'], turni: ['nemesi'], nota: 'di quanto il carosello sporge sotto la carta' },
   { v: '--carte-grandi-spazio', a: ['.queue-slot:nth-child(1), .ae-focus-slide:nth-child(1)', 'right'], b: ['.queue-slot:nth-child(2), .ae-focus-slide:nth-child(2)', 'left'] },
   { v: '--carte-grandi-goccia-numero', a: [GRANDE_ICONA, 'right'], b: [GRANDE_NUMERO, 'left'], nota: 'tra la goccia e il numero della riga vita/token della prima carta grande con la vita' },
   { v: '--carte-grandi-numero-interlinea', a: [GRANDE_NUMERO, 'top'], b: [GRANDE_NUMERO, 'bottom'], nota: 'altezza della riga del numero' },
