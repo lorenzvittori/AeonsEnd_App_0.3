@@ -17,11 +17,17 @@ Caricamento dei dati e uso della rete. Livello 1: importa da `tipi/`, `regole/` 
   (`prefetchDeckImages`, non con "Risparmio dati").
 
 ## Formato dei dati (in `public/`, generati da `tools/import-db.py`: non si modificano a mano)
-- `cards.json`: `id` (testo del DataBase, es. `"NA-1b-02"`: solo identificatore, mai nei nomi dei file), `name`, `boxCode`
+- `cards_nemesis.json`: `id` (testo del DataBase, es. `"NA-1b-02"`: solo identificatore, mai nei nomi dei file), `name`, `boxCode`
   (prodotto: `"1"`, `"4"`, `"4.2"`), `category`, `nemesis` (solo Specific), `tier` (0…8, `"9+"`, null), `inNemesisDeck` (solo
   queste entrano nel mazzo), `type` (Attack | Power | Minion), `subType`, `hp`, `hpVariable`, `shield`, `powerTokens`,
   `quantity`, `removalCost` (Æ per scartare il potere), `removable`, `image` (`Data/Nemesis/<Box>_<Prodotto>/.../Tier_N/<Nome>.webp`).
   `effect`, `toDiscard`, `immediately`, `persistent`, `powerEffect` sono testi non usati dall'app.
+- `cards_supply.json` e `cards_treasure.json` (per la biblioteca: **non si leggono all'avvio**, li controlla `controllo.ts` nei
+  test): `id` (copiato dal DataBase così com'è, es. `"[AE055, AE061]"`), `name`, `boxCode`, `type` (supply: Gem | Relic | Spell;
+  tesori: Treasured Gem | Treasured Spell | Treasured Relic | Treasure Level 1-3), `level` (solo tesori: 1 per i Treasured, N per
+  "Treasure Level N"), `cost` (numero in Æ; nei tesori può essere null), `mechanics` (parole chiave, o null), `effect` (testo, a capo
+  con `\n`), `image` (`Data/Supply/<codice>/<Gem | Relic | Spell>/<Nome>.webp`, tesori: `Data/Treasure/<codice>/Level_N/<Nome>.webp`),
+  `thumb` (stesso percorso sotto `thumbs/`). Entrano solo le carte con l'immagine.
 - `products.json`: `{ codice: nome }` (`"4": "The New Age"`, `"4.1": "Shattered Dreams"`). Il codice senza punto è la
   scatola base della wave; la wave è la parte prima del punto (`waveOfCode`).
 - `nemesis.json`: `name`, `boxCode` (null per le Promo, mai giocabili), `waveOrder`, `battle`, `flagBattle5`, `life` (vita

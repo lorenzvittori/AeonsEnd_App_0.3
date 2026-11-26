@@ -7,10 +7,10 @@ import type { Carta } from './dati.ts';
 
 // --- Carte in gioco ---
 
-// Una carta in gioco nella coda ("voce"): la carta di cards.json più il suo stato nella partita
+// Una carta in gioco nella coda ("voce"): la carta di cards_nemesis.json più il suo stato nella partita
 export interface VoceInGioco {
   uid: number;                   // identificativo stabile della carta in gioco (anche con due copie della stessa carta)
-  data: Carta;                   // la carta di cards.json
+  data: Carta;                   // la carta di cards_nemesis.json
   tokens: number | null;         // token rimasti del potere (null per le altre carte)
   hp: number | null;             // vita attuale del minion (null per le altre carte; 0 = "?" per la vita variabile)
   turnHp: number | null;         // vita a inizio del turno giocatori: tetto del +1 (null: vita variabile non impostata)

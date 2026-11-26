@@ -1,27 +1,34 @@
-"""Ponte DataBase -> app: genera cards.json, products.json e le immagini delle carte nemesi dal DataBase.
+"""Ponte DataBase -> app: genera cards_nemesis.json, cards_supply.json, cards_treasure.json, products.json e le
+immagini delle carte dal DataBase.
 
 Legge (SOLO LETTURA; gli Excel vengono prima copiati in una cartella temporanea e letta la copia):
     <DataBase>/Data/NEMESIS_CARDS.xlsx      una riga per carta nemesi
-    <DataBase>/Data/DataBase_*.xlsx         foglio MAIN: Path_FRONT dell'immagine (PNG)
+    <DataBase>/Data/SUPPLY_CARDS.xlsx       una riga per carta supply (Gem, Relic, Spell)
+    <DataBase>/Data/TREASURE_CARDS.xlsx     una riga per carta tesoro (Treasured..., Treasure Level N)
+    <DataBase>/Data/DataBase_*.xlsx         foglio MAIN: Path_FRONT dell'immagine (PNG), ritrovato per UID (supply e tesori)
     <DataBase>/pipeline.py                  BOXES_NAMES: codice scatola -> nome del prodotto
 
 Scrive nel repository dell'app:
-    cards.json, products.json
+    cards_nemesis.json, cards_supply.json, cards_treasure.json, products.json
     Data/Nemesis/<BoxCode>_<Prodotto>/<_Basics | _Upgraded | Nemesi>/Tier_<N>/<Nome>.webp   (WebP 90, max 1640 px)
     thumbs/Nemesis/...  (stesso albero, miniature ~264 x 369)
+    Data/Supply/<codice>/<Gem | Relic | Spell>/<Nome>.webp e Data/Treasure/<codice>/<Level_N>/<Nome>.webp, con le
+        miniature in thumbs/Supply e thumbs/Treasure (stessi formati e qualita' delle nemesi)
     Assets/nemesis/<slug>.webp, -back.webp, -portrait.webp, nemesis-art.json   (illustrazioni delle nemesi, dalla
         plancia "mat" nel MAIN; si fanno solo per le nemesi che non hanno ancora la voce, --force-art le rifa tutte)
     tools/anteprima-nemesi/   con --anteprima: pagina per confrontare i ritagli (immagini fuori da git, non pubblicata)
 
-Le carte di The New Age che l'app aveva gia' (vecchio cards.json) NON vengono riconvertite: la scansione e la
-miniatura esistenti vengono spostate con "git mv" nel nuovo percorso. Un file gia' presente non si sovrascrive
-mai, salvo con --force. Le carte il cui PNG manca (e che non hanno gia' l'immagine nell'app) NON entrano in
-cards.json: lo script le elenca per scatola nelle segnalazioni. Rilanciato due volte, lo script dà lo stesso risultato.
+Le carte di The New Age che l'app aveva gia' (vecchio cards.json, ora cards_nemesis.json) NON vengono riconvertite: la
+scansione e la miniatura esistenti vengono spostate con "git mv" nel nuovo percorso. Un file gia' presente non si
+sovrascrive mai, salvo con --force. Le carte il cui PNG manca (e che non hanno gia' l'immagine nell'app) NON entrano nei
+file JSON: lo script le elenca per scatola nelle segnalazioni. Rilanciato due volte, lo script dà lo stesso risultato.
 
 Uso (dalla cartella del repository, servono openpyxl e Pillow):
     python tools/import-db.py                      # DataBase predefinito: ..\\DataBase
     python tools/import-db.py "C:\\percorso\\DataBase"
-    python tools/import-db.py --no-images          # solo cards.json e products.json
+    python tools/import-db.py --no-images          # solo i JSON delle nemesi e products.json
+    python tools/import-db.py --solo-supply        # solo cards_supply.json e Data/Supply, thumbs/Supply
+    python tools/import-db.py --solo-tesori        # solo cards_treasure.json e Data/Treasure, thumbs/Treasure
     python tools/import-db.py --force              # rifa' anche le immagini e le miniature gia' presenti
 """
 
@@ -42,7 +49,7 @@ import openpyxl
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]  # cartella del repository
-# File del sito (Data/, thumbs/, Assets/, cards.json, products.json, nemesis.json): stanno
+# File del sito (Data/, thumbs/, Assets/, cards_nemesis.json, cards_supply.json, products.json...): stanno
 # in public/. I percorsi scritti DENTRO i JSON restano relativi alla radice del sito (Data/..., Assets/...)
 SITE = ROOT / 'public'
 IMG_ROOT = Path('Data') / 'Nemesis'
@@ -51,6 +58,16 @@ MAX_WIDTH = 1640
 WEBP_QUALITY = 90
 THUMB_SIZE = (264, 369)
 THUMB_QUALITY = 76
+CARDS_NEMESIS = 'cards_nemesis.json'  # era cards.json: il nome dice che sono le carte del mazzo nemesi
+
+# Supply e tesori (per la biblioteca): file Excel, JSON, cartelle delle immagini (sotto Data/ e thumbs/)
+EXTRA = {
+    'supply': {'excel': 'SUPPLY_CARDS.xlsx', 'json': 'cards_supply.json', 'main_type': 'Supply',
+               'img': Path('Data') / 'Supply', 'thumb': Path('thumbs') / 'Supply'},
+    'treasure': {'excel': 'TREASURE_CARDS.xlsx', 'json': 'cards_treasure.json', 'main_type': 'Treasure',
+                 'img': Path('Data') / 'Treasure', 'thumb': Path('thumbs') / 'Treasure'},
+}
+SUPPLY_TYPES = ('Gem', 'Relic', 'Spell')
 
 # Colonna Excel -> chiave JSON (iniziale minuscola); quelle che non servono calcoli
 PLAIN_TEXT = {'ID': 'id', 'Name': 'name', 'BoxCode': 'boxCode', 'Type': 'type', 'SubType': 'subType'}
@@ -322,12 +339,166 @@ def write_thumb(src_webp: Path, dst: Path):
         img.save(dst, 'WEBP', quality=THUMB_QUALITY, method=6)
 
 
+# ------------------------------------------------------------------------------- supply e tesori (biblioteca)
+# Una riga per carta: Box = scatola principale, MiniExpansion = espansione. La scatola dell'app e' la mini espansione
+# se c'e', altrimenti Box (come per le nemesi). L'immagine e' il Path_FRONT del MAIN, trovato per UID.
+def find_front(data: Path, path_front):
+    """File dell'immagine dal Path_FRONT del MAIN, o None. Le cartelle del DataBase hanno un prefisso di numero
+    ("1 - Aeons_End_(Core_Box)", "1.2 The_Nameless") che nel MAIN non c'e': si cerca la cartella senza prefisso."""
+    text = text_or_none(path_front)
+    if text is None:
+        return None
+    cur = data
+    for part in text.replace('\\', '/').split('/'):
+        if (cur / part).exists():
+            cur = cur / part
+            continue
+        found = [d for d in cur.iterdir() if d.is_dir() and re.sub(r'^\d+(\.\d+)?\s*-?\s*', '', d.name) == part] \
+            if cur.is_dir() else []
+        if len(found) != 1:
+            return None
+        cur = found[0]
+    return cur if cur.is_file() else None
+
+
+def box_code_of(name, products):
+    """Nome di scatola (come nell'Excel) -> codice "x.y" di BOXES_NAMES; None se non c'e'."""
+    by_name = {box_key(v): k for k, v in products.items()}
+    return by_name.get(box_key(name))
+
+
+def treasure_level(kind_type):
+    """Type del tesoro -> livello: "Treasure Level N" -> N; "Treasured ..." (Gem, Spell, Relic) -> 1; altro -> None."""
+    t = str(kind_type or '').strip()
+    m = re.fullmatch(r'Treasure Level (\d+)', t)
+    if m:
+        return int(m.group(1))
+    return 1 if t.startswith('Treasured ') else None
+
+
+def importa_extra(data: Path, main_rows, products, args, issues, kinds):
+    """Supply e/o tesori: cards_supply.json / cards_treasure.json, le immagini in Data/ e le miniature in thumbs/.
+    Entrano solo le carte con l'immagine; le altre si elencano per scatola nelle segnalazioni."""
+    if args.no_images:
+        print('supply e tesori: saltati (--no-images, servono le immagini)')
+        return
+    for kind in kinds:
+        cfg = EXTRA[kind]
+        by_uid = {m['UID']: m for m in main_rows if m.get('Type') == cfg['main_type']}
+        with tempfile.TemporaryDirectory(prefix='import-db-') as tmp:
+            tmp = Path(tmp)
+            shutil.copy2(data / cfg['excel'], tmp / cfg['excel'])
+            rows = read_sheet(tmp / cfg['excel'])
+
+        cards, skipped = [], []
+        for r in rows:
+            label = f'{r["ID"]} {r["Name"]}'
+            product = r.get('MiniExpansion') or r['Box']
+            code = box_code_of(product, products)
+            if code is None:
+                issues.append(f'{label}: scatola "{product}" non e\' in BOXES_NAMES, saltata')
+                continue
+            card = {'id': str(r['ID']), 'name': str(r['Name']).strip(), 'boxCode': code,
+                    'type': str(r['Type']).strip(), 'mechanics': text_or_none(r.get('Mechanics')),
+                    'effect': text_or_none(r.get('Effect'))}
+            cost = number_or_text(r.get('Cost'))
+            if kind == 'supply':
+                if card['type'] not in SUPPLY_TYPES:
+                    issues.append(f'{label}: Type "{card["type"]}" non ammesso (Gem, Relic, Spell), saltata')
+                    continue
+                if not isinstance(cost, int):
+                    issues.append(f'{label}: Cost "{r.get("Cost")}" non e\' un numero, saltata')
+                    continue
+                card['_rank'] = SUPPLY_TYPES.index(card['type'])
+                card['_group'] = card['type']
+                card['cost'] = cost
+            else:
+                level = treasure_level(card['type'])
+                if level is None:
+                    issues.append(f'{label}: Type "{card["type"]}" senza livello, saltata')
+                    continue
+                card['level'] = level
+                card['_rank'] = level
+                card['_group'] = f'Level_{level}'
+                card['cost'] = cost if isinstance(cost, int) else None
+            card['_row'] = r
+            cards.append(card)
+
+        # ordine stabile: scatola, tipo o livello, nome
+        cards.sort(key=lambda c: (code_key(c['boxCode']), c['_rank'], natural_key(c['name']), natural_key(c['id'])))
+
+        # percorsi e immagini: Data/<Supply|Treasure>/<codice>/<gruppo>/<Nome>.webp, miniatura nello stesso albero
+        used = {}
+        stats = defaultdict(int)
+        for c in cards:
+            rel = Path(c['boxCode']) / slugify(c['_group']) / f'{slugify(c["name"])}.webp'
+            if rel in used:  # stesso nome nella stessa cartella: aggiungo l'ID
+                alt = rel.with_name(f'{slugify(c["name"])}_{slugify(c["id"])}.webp')
+                issues.append(f'{c["id"]} {c["name"]}: nome gia\' usato da {used[rel]} nella stessa cartella, file chiamato {alt.name}')
+                rel = alt
+            used[rel] = c['id']
+            c['image'] = (cfg['img'] / rel).as_posix()
+            c['thumb'] = (cfg['thumb'] / rel).as_posix()
+
+            m = by_uid.get(c['_row']['UID'])
+            png = find_front(data, m.get('Path_FRONT')) if m else None
+            dst, thumb = SITE / c['image'], SITE / c['thumb']
+            if png is not None and (not dst.exists() or args.force):
+                write_image(png, dst)
+                stats['immagini convertite dal DataBase'] += 1
+            elif dst.exists():
+                stats['immagini gia presenti'] += 1
+            if dst.exists() and (not thumb.exists() or args.force):
+                write_thumb(dst, thumb)
+                stats['miniature generate'] += 1
+            elif dst.exists():
+                stats['miniature gia presenti'] += 1
+            if not dst.exists():
+                skipped.append(c)
+
+        # le carte senza immagine non entrano nel file
+        kept = [c for c in cards if (SITE / c['image']).exists()]
+        if skipped:
+            per_box = defaultdict(int)
+            for c in skipped:
+                per_box[c['boxCode']] += 1
+            issues.append(f'{len(skipped)} {kind} senza immagine NON messe in {cfg["json"]}: ' +
+                          ', '.join(f'{k} ({v})' for k, v in sorted(per_box.items(), key=lambda kv: code_key(kv[0]))))
+
+        out = []
+        for c in kept:
+            item = {'id': c['id'], 'name': c['name'], 'boxCode': c['boxCode'], 'type': c['type']}
+            if kind == 'treasure':
+                item['level'] = c['level']
+            item.update({'cost': c['cost'], 'mechanics': c['mechanics'], 'effect': c['effect'],
+                         'image': c['image'], 'thumb': c['thumb']})
+            out.append(item)
+        text = json.dumps(out, indent=4, ensure_ascii=False, separators=(',', ':  '))
+        (SITE / cfg['json']).write_text(text + '\n', encoding='utf-8', newline='\n')
+
+        print(f'{len(rows)} righe in {cfg["excel"]} -> {len(out)} carte in {cfg["json"]}')
+        for k, v in sorted(stats.items()):
+            print(f'  {k}: {v}')
+        by = defaultdict(int)
+        for c in kept:
+            by[c['boxCode']] += 1
+        print('  per scatola: ' + ', '.join(f'{k} {v}' for k, v in sorted(by.items(), key=lambda kv: code_key(kv[0]))))
+
+
+def stampa_segnalazioni(issues):
+    print(f'{len(issues)} segnalazioni:')
+    for i in issues:
+        print('  -', i)
+
+
 # ------------------------------------------------------------------------------------------------ programma
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('db', nargs='?', default=str(ROOT.parent / 'DataBase'), help='cartella del DataBase (default ..\\DataBase)')
     ap.add_argument('--force', action='store_true', help='rifa anche immagini e miniature gia presenti')
-    ap.add_argument('--no-images', action='store_true', help='solo cards.json e products.json')
+    ap.add_argument('--no-images', action='store_true', help='solo i JSON delle nemesi e products.json')
+    ap.add_argument('--solo-supply', action='store_true', help='rifa solo cards_supply.json e le sue immagini')
+    ap.add_argument('--solo-tesori', action='store_true', help='rifa solo cards_treasure.json e le sue immagini')
     ap.add_argument('--force-art', action='store_true', help='rifa anche le illustrazioni delle nemesi gia presenti')
     ap.add_argument('--anteprima', action='store_true', help='crea anche tools/anteprima-nemesi/ (non pubblicata)')
     args = ap.parse_args()
@@ -348,6 +519,13 @@ def main():
     boxes = read_boxes_names(db / 'pipeline.py')
     products = {k.replace('wave', '', 1): v[0] for k, v in boxes.items()}
 
+    # ---- solo supply o solo tesori: il resto (nemesi, prodotti, illustrazioni) non si tocca
+    if args.solo_supply or args.solo_tesori:
+        kinds = [k for k, on in (('supply', args.solo_supply), ('treasure', args.solo_tesori)) if on]
+        importa_extra(data, main_rows, products, args, issues, kinds)
+        stampa_segnalazioni(issues)
+        return
+
     # ---- abbinamento NEMESIS_CARDS <-> MAIN (scatola vera + nome; omonimi anche per ID)
     index = defaultdict(list)
     for m in main_rows:
@@ -366,9 +544,9 @@ def main():
                 issues.append(f'omonimo non risolto: {r["ID"]} {r["Name"]} ha {len(cand)} righe nel MAIN, presa la prima')
         return cand[0] if cand else None
 
-    # ---- vecchio cards.json (per riusare le scansioni e le miniature di The New Age)
+    # ---- vecchio cards_nemesis.json (per riusare le scansioni e le miniature di The New Age)
     old_cards = []
-    cards_path = SITE / 'cards.json'
+    cards_path = SITE / CARDS_NEMESIS
     if cards_path.exists():
         old_cards = json.loads(cards_path.read_text(encoding='utf-8-sig'))
     old_by_id = {c['id']: c for c in old_cards}
@@ -447,7 +625,7 @@ def main():
 
         c['_old'] = None
 
-    # scansione e miniatura gia' nell'app (vecchio cards.json, solo The New Age): prima per id, poi per nome + nemesi
+    # scansione e miniatura gia' nell'app (vecchio cards_nemesis.json, solo The New Age): prima per id, poi per nome + nemesi
     # (gli omonimi di altre scatole, per esempio Doom Aegis del Core Set, non vi rientrano)
     for c in cards:
         old = old_by_id.get(c['id'])
@@ -502,7 +680,8 @@ def main():
         for base in (SITE / 'Data', SITE / 'thumbs'):
             for d in sorted((p for p in base.rglob('*') if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
                 rel = d.relative_to(SITE).as_posix()
-                if rel.startswith(('Data/Nemesis/', 'thumbs/Nemesis/')) or rel in ('Data/Nemesis', 'thumbs/Nemesis'):
+                if any(rel == f'{b}/{s}' or rel.startswith(f'{b}/{s}/')
+                       for b in ('Data', 'thumbs') for s in ('Nemesis', 'Supply', 'Treasure')):
                     continue
                 if not any(d.iterdir()):
                     d.rmdir()
@@ -511,22 +690,22 @@ def main():
                     if files and not any(s.is_dir() for s in d.iterdir()):
                         leftovers.append(rel)
         for d in SITE.joinpath('Data').iterdir():
-            if d.is_dir() and d.name != 'Nemesis' and not any(d.iterdir()):
+            if d.is_dir() and d.name not in ('Nemesis', 'Supply', 'Treasure') and not any(d.iterdir()):
                 d.rmdir()
         if leftovers:
             issues.append('cartelle vecchie non vuote (restano dove sono): ' + ', '.join(sorted(leftovers)))
 
-    # ---- le carte senza immagine non entrano in cards.json (entreranno quando il PNG ci sara' e si rilancera' il ponte)
+    # ---- le carte senza immagine non entrano in cards_nemesis.json (entreranno quando il PNG ci sara' e si rilancera' il ponte)
     no_image = [c for c in cards if not (SITE / c['image']).exists()]
     if no_image:
         cards = [c for c in cards if (SITE / c['image']).exists()]
         per_box = defaultdict(int)
         for c in no_image:
             per_box[c['boxCode']] += 1
-        issues.append(f'{len(no_image)} carte senza immagine NON messe in cards.json: ' +
+        issues.append(f'{len(no_image)} carte senza immagine NON messe in {CARDS_NEMESIS}: ' +
                       ', '.join(f'{k} ({v})' for k, v in sorted(per_box.items(), key=lambda kv: code_key(kv[0]))))
 
-    # ---- cards.json e products.json
+    # ---- cards_nemesis.json e products.json
     out_cards = []
     for c in cards:
         out_cards.append({
@@ -540,7 +719,7 @@ def main():
         })
     # 4 spazi e due spazi dopo i due punti, come il vecchio file (PowerShell)
     text = json.dumps(out_cards, indent=4, ensure_ascii=False, separators=(',', ':  '))
-    cards_path.write_text(text + '\n', encoding='utf-8', newline='\n')
+    cards_path.write_text(text + '\n', encoding='utf-8', newline='\n')  # cards_nemesis.json
 
     # tutti i codici di BOXES_NAMES (l'app mostra anche le wave non ancora disponibili)
     prod_out = {k: products[k] for k in sorted(products, key=code_key)}
@@ -553,8 +732,11 @@ def main():
         if args.anteprima:
             write_preview_page(previews)
 
+    # ---- supply e tesori (cards_supply.json, cards_treasure.json, Data/Supply, Data/Treasure, thumbs/...)
+    importa_extra(data, main_rows, products, args, issues, ['supply', 'treasure'])
+
     # ---- riepilogo
-    print(f'{len(rows)} righe in NEMESIS_CARDS -> {len(out_cards)} carte in cards.json, {len(prod_out)} prodotti in products.json')
+    print(f'{len(rows)} righe in NEMESIS_CARDS -> {len(out_cards)} carte in {CARDS_NEMESIS}, {len(prod_out)} prodotti in products.json')
     for k, v in sorted(stats.items()):
         print(f'  {k}: {v}')
     by = defaultdict(int)

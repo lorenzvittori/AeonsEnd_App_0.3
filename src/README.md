@@ -26,5 +26,5 @@ Il codice dell'app: Vite + TypeScript `strict`, moduli ES, nessun framework. Ogn
   (lo controlla `npm run check`).
 - Niente `any` (si usa `unknown` con un controllo), `@ts-ignore` vietato, `@ts-expect-error` con il motivo sulla stessa riga;
   nessun ciclo di import; nessun file sopra 500 righe (si divide in file di supporto `<nome>-*.ts`).
-- I file serviti così come sono stanno in `public/`: `Data/`, `thumbs/`, `Assets/`, i JSON (`cards.json`, `nemesis.json`,
+- I file serviti così come sono stanno in `public/`: `Data/`, `thumbs/`, `Assets/`, i JSON (`cards_nemesis.json`, `nemesis.json`,
   `products.json`, `deck-setup.json`), `manifest.webmanifest`, `sw.js`. Vedi [dati/README.md](dati/README.md).

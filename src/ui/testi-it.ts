@@ -155,6 +155,7 @@ export const I18N_IT = {
   deckShort: (have: number, want: number) => `Il mazzo avrà ${have} carte Basic e Upgraded invece di ${want}: nella collezione non ce ne sono abbastanza`,
   gameSetupTitle: 'Impostazioni della partita',
   options: 'Opzioni',
+  library: 'Biblioteca',
   mainMenu: 'Menu iniziale',
   exit: 'Esci',
   wave: 'Wave',
@@ -258,7 +259,7 @@ export const I18N_IT = {
   testExit: 'Esci dal test',
   testRestart: 'Ricomincia lo scenario',
   testFailed: (why: string) => `Lo scenario non parte: ${why}`,
-  testCardMissing: (name: string) => `la carta «${name}» non è in cards.json`,
+  testCardMissing: (name: string) => `la carta «${name}» non è in cards_nemesis.json`,
   testCardAmbiguous: (name: string) => `il nome «${name}» è di più carte: serve il boxCode`,
   testNotReady: 'dati non ancora caricati',
   // Pannello "Regolazioni" della Modalità test (colori e misure)

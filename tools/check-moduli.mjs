@@ -70,7 +70,7 @@ const DIZIONARI = new Set(['src/ui/testi-it.ts', 'src/ui/testi-en.ts']);
 const ACCESSO_TESTI = 'src/ui/testi.ts';
 // File con testo italiano ammesso fuori dai dizionari, con il motivo
 const FILE_CON_TESTI = new Map([
-  ['src/dati/controllo.ts', 'messaggi di controllo dei dati (cards.json, nemesis.json...): vanno solo in console, per chi sviluppa'],
+  ['src/dati/controllo.ts', 'messaggi di controllo dei dati (cards_nemesis.json, nemesis.json...): vanno solo in console, per chi sviluppa'],
   ['src/ui/finestre/test-regolazioni-lettura.ts', 'testo CSS da incollare nei file dei CSS (Modalità test); i nomi e i gruppi del pannello vengono dai commenti dei CSS, scritti in italiano']
 ]);
 // Parole comuni dell'interfaccia: una stringa che ne contiene una (intera) è considerata testo italiano, come ogni stringa con lettere accentate

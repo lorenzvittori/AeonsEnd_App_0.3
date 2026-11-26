@@ -1,6 +1,6 @@
 // regole/mazzo-nemesi.ts: il mazzo nemesi (Nemesis Deck Setup) e le nemesi che si possono giocare.
 // Riceve:
-// - db = { cards, nemeses, deckSetup }: i dati di public/ (cards.json, nemesis.json, deck-setup.json);
+// - db = { cards, nemeses, deckSetup }: i dati di public/ (cards_nemesis.json, nemesis.json, deck-setup.json);
 // - collection: Set dei codici prodotto posseduti ("4" scatola base, "4.1" mini espansione), o null = tutto ammesso;
 // - s = { players, nemesis, battleMode, mergeCollection }: le scelte della partita (battleMode e mergeCollection
 //   mancanti = attive);
@@ -129,7 +129,7 @@ export function deckShortfall(db: DatiRegole, collection: Collezione, s: ScelteP
   return have < want ? { want, have } : null;
 }
 
-// Mazzo nemesi: { deck, plan }. deck = carte di cards.json (si pesca dalla fine); plan = quante carte vengono da ognuno
+// Mazzo nemesi: { deck, plan }. deck = carte di cards_nemesis.json (si pesca dalla fine); plan = quante carte vengono da ognuno
 // dei 9 mazzi [{ tier, kind: 'basic' | 'upgraded' | 'specific', count }] per la schermata "Crea mazzo". Senza riga di
 // deck-setup.json: mazzo e plan vuoti. Ordine del caso: per i Tier 3, 2, 1, mescola le Basic ammesse, le Upgraded
 // ammesse e poi le carte del Tier.

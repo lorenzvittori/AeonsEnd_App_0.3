@@ -18,7 +18,7 @@ import { el } from './ui/dom.ts';
 import { render, setStartMode } from './ui/navigazione.ts';
 import { buildStartPage, showStartSkeleton } from './ui/schermate/nuova-partita.ts';
 
-// Avvio: legge cards.json, deck-setup.json, nemesis.json e products.json (e le immagini delle nemesi, facoltative), li
+// Avvio: legge cards_nemesis.json, deck-setup.json, nemesis.json e products.json (e le immagini delle nemesi, facoltative), li
 // controlla (dati/controllo.ts: carte e nemesi sbagliate si scartano con un errore in console) e mostra la pagina
 // iniziale (con "Riprendi partita" se ce n'è una salvata)
 export let initRunning = false;
@@ -32,7 +32,7 @@ export async function init(): Promise<void> {
   updateInert();
   try {
     const [cardsData, setupData, nemesisData, productData, artData] = await Promise.all([
-      loadJson(DATA_ROOT + 'cards.json'), loadJson(DATA_ROOT + 'deck-setup.json'), loadJson(DATA_ROOT + 'nemesis.json'),
+      loadJson(DATA_ROOT + 'cards_nemesis.json'), loadJson(DATA_ROOT + 'deck-setup.json'), loadJson(DATA_ROOT + 'nemesis.json'),
       loadJson(DATA_ROOT + 'products.json'), loadJson('Assets/nemesis/nemesis-art.json').catch(() => ({}))
     ]);
     const art = checkNemesisArt(artData || {});
@@ -41,7 +41,7 @@ export async function init(): Promise<void> {
     const nemeses = checkNemeses(nemesisData);
     const setup = checkDeckSetup(setupData);
     reportProblems([...cards.problems, ...nemeses.problems, ...products.problems, ...art.problems]);
-    if (cards.value.length === 0) throw new Error('Nessuna carta trovata in cards.json');
+    if (cards.value.length === 0) throw new Error('Nessuna carta trovata in cards_nemesis.json');
     // Le scansioni delle carte stanno nella cartella Data/, le miniature in thumbs/ con lo stesso percorso
     cards.value.forEach(c => {
       c.thumb = DATA_ROOT + String(c.image).replace(/^Data\//, THUMB_DIR);

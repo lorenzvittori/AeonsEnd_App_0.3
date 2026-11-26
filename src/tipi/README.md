@@ -1,10 +1,10 @@
 # src/tipi/
 
-Il contratto comune dei dati: tipi di `cards.json` e degli altri JSON, della partita in corso e del salvataggio.
+Il contratto comune dei dati: tipi di `cards_nemesis.json` e degli altri JSON, della partita in corso e del salvataggio.
 Livello 0: non importa da niente (solo altri file di `tipi/`). Lo usano `regole/`, `stato/`, `dati/` e `ui/` (con `import type`).
 
 ## File
-- `dati.ts`: i JSON di `public/`: `Carta` (cards.json; `Categoria` = Basic | Upgraded | Specific, `TipoCarta`,
+- `dati.ts`: i JSON di `public/`: `Carta` (cards_nemesis.json; `Categoria` = Basic | Upgraded | Specific, `TipoCarta`,
   `Tier` = numero | '9+' | null, `thumb` aggiunta al caricamento), `Nemesi`, `Prodotti` (`CodiceProdotto`), `DeckSetup`,
   `ArteNemesi` (`Assets/nemesis/nemesis-art.json`), `DatiRegole` (carte, nemesi e Deck Setup passati alle regole).
 - `partita.ts`: lo stato di gioco: `VoceInGioco` (carta in coda: uid, tokens, hp, turnHp, paid, isNew, bornTurn, hpSet,

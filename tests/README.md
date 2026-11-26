@@ -8,7 +8,7 @@ Importano direttamente i moduli di `src/` (al caricamento non toccano il DOM). P
 - `mazzo-nemesi.test.ts`: ogni nemesi giocabile × 2/3/4 giocatori × Modalità battaglia × Unisci, su tre collezioni.
 - `mazzo-turni.test.ts`: carte per 2/3/4 giocatori, wild, carte 1/2 e 3/4, memoria delle coppie, mescola, giro nuovo, salvataggi vecchi.
 - `mazzo-turni-riga.test.ts`: la riga della schermata del mazzo dei turni (spazi, metà tra carte, centratura, `it.on`, zone di rilascio).
-- `turno-nemesi.test.ts`: risoluzione, pesca, vittoria, fine del turno giocatori, statistiche, con le carte vere di `cards.json`.
+- `turno-nemesi.test.ts`: risoluzione, pesca, vittoria, fine del turno giocatori, statistiche, con le carte vere di `cards_nemesis.json`.
 - `vite.test.ts`: vite di Gravehold e della nemesi (valori iniziali, tetto, passi, Gravehold nei negativi, Sconfitta). `vite-scrub.test.ts`: scrubbing (partenza, passi da 30px, limiti).
 - `salvataggio.test.ts`: fotografia e ripristino, formati vecchi (con un salvataggio vero di main v228 in `tests/dati/`), versione, scrittura.
 - `versione.test.ts`: la composizione della versione (`v0.3.12`, il fallback `v0.3.?` senza git o tag).

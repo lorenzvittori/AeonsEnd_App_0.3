@@ -21,7 +21,7 @@ import type { Fotografia, FotografiaLetta, Salvataggio, SalvataggioValido } from
 
 // Quello che serve al ripristino oltre alla fotografia
 export interface ContestoRipristino {
-  cardsById: ReadonlyMap<string, Carta>;   // carte di cards.json per id
+  cardsById: ReadonlyMap<string, Carta>;   // carte di cards_nemesis.json per id
   newUid: () => number;                    // uid nuovo per ogni carta in gioco
   players: number;                         // giocatori della partita
   nemeses: readonly Nemesi[];              // nemesis.json (vita iniziale della nemesi)

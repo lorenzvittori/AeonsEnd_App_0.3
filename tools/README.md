@@ -18,11 +18,14 @@ Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dall
   in `.gitignore`, come dist/ e screenshot/, si scrivono senza backtick), ogni link tra
   file funziona, ogni blocco `mermaid` si disegna (Playwright senza finestra e `mermaid` come dipendenza di sviluppo). Non sa se un diagramma dice il
   vero: lo verifica chi scrive. Un file `.md` passato come argomento controlla solo quello.
-- `import-db.py`: il ponte DataBase → app (Python con openpyxl e Pillow). Genera `cards.json`, `products.json`, `Data/Nemesis/`,
-  `thumbs/Nemesis/` e le immagini delle nemesi (`Assets/nemesis/`: carta, retro, ritaglio, `nemesis-art.json`): **questi file non si
-  modificano a mano**. Fonti in sola lettura: `Data/NEMESIS_CARDS.xlsx`, `Data/DataBase_*.xlsx` (foglio MAIN), `BOXES_NAMES` di `pipeline.py`.
+- `import-db.py`: il ponte DataBase → app (Python con openpyxl e Pillow). Genera `cards_nemesis.json`, `cards_supply.json`,
+  `cards_treasure.json`, `products.json`, `Data/Nemesis/`, `Data/Supply/`, `Data/Treasure/` con le miniature in `thumbs/` e le immagini
+  delle nemesi (`Assets/nemesis/`: carta, retro, ritaglio, `nemesis-art.json`): **questi file non si modificano a mano**. Fonti in sola
+  lettura: `Data/NEMESIS_CARDS.xlsx`, `Data/SUPPLY_CARDS.xlsx`, `Data/TREASURE_CARDS.xlsx`, `Data/DataBase_*.xlsx` (foglio MAIN, immagini
+  per UID), `BOXES_NAMES` di `pipeline.py`.
   `python tools/import-db.py` (DataBase predefinito `..\DataBase`) o `python tools/import-db.py "C:\percorso\DataBase"`; `--no-images` rifà solo i
-  JSON; `--force` rifà anche immagini e miniature già presenti (senza, un file esistente non si sovrascrive). Due lanci di fila danno lo stesso risultato.
+  JSON delle nemesi; `--solo-supply` rifà solo le supply e `--solo-tesori` solo i tesori; `--force` rifà anche immagini e miniature già presenti
+  (senza, un file esistente non si sovrascrive). Due lanci di fila danno lo stesso risultato.
 - `build-app-icons.py`: le icone dell'app installabile (`public/Assets/ui/app-icons/`) da `public/Assets/ui/decor/app-icon.png` (400×400); l'icona
   maskable ha l'immagine nel 72% centrale con il bordo sfumato. Le usa `public/manifest.webmanifest` (a tutto schermo, verticale).
 - `pubblicazione-precedente.mjs`: nel workflow di pubblicazione, dopo `npm run build`: scarica i file di `app/` dell'`index.html` del sito

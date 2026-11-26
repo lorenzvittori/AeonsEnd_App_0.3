@@ -1,4 +1,4 @@
-// Turno nemesi e turno giocatori (src/regole/turno-nemesi.ts) con le carte vere di cards.json: risoluzione (potere,
+// Turno nemesi e turno giocatori (src/regole/turno-nemesi.ts) con le carte vere di cards_nemesis.json: risoluzione (potere,
 // minion, attacco), pesca (anche a mazzo vuoto), vittoria a mazzo vuoto, costo Æ, statistiche, minion a vita variabile.
 import { describe, it, expect } from 'vitest';
 import * as N from '../src/regole/turno-nemesi.ts';

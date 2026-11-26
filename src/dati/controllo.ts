@@ -1,5 +1,6 @@
-// dati/controllo.ts: controllo leggero dei JSON letti all'avvio (cards.json, nemesis.json, products.json,
-// deck-setup.json, nemesis-art.json): campi obbligatori, tipo di ogni campo e valori ammessi dei tipi in tipi/dati.ts.
+// dati/controllo.ts: controllo leggero dei JSON letti all'avvio (cards_nemesis.json, nemesis.json, products.json,
+// deck-setup.json, nemesis-art.json) e di quelli della biblioteca (cards_supply.json, cards_treasure.json, letti dopo):
+// campi obbligatori, tipo di ogni campo e valori ammessi dei tipi in tipi/dati.ts.
 // I file li produce tools/import-db.py dal DataBase: se qualcosa non torna, l'errore dice quale carta (id) o nemesi
 // (nome) e quale campo. Una carta o una nemesi sbagliata si scarta (l'app continua con le altre) e si segnala in console;
 // un file con la forma sbagliata (non un elenco, non un oggetto) è un errore che ferma l'avvio.
@@ -7,8 +8,8 @@
 // Dipende da: regole/json.ts (isRecord), tipi/dati.ts. Usato da: avvio.ts, test in tests/dati-json.test.ts.
 
 import { isRecord } from '../regole/json.ts';
-import type { ArteNemesi, ArteNemesiTutte, BattagliaDeckSetup, Carta, Categoria, CartePerTier, DeckSetup, Nemesi, Prodotti,
-  RigaDeckSetup, TipoCarta } from '../tipi/dati.ts';
+import type { ArteNemesi, ArteNemesiTutte, BattagliaDeckSetup, Carta, CartaSupply, CartaTesoro, Categoria, CartePerTier, DeckSetup,
+  Nemesi, Prodotti, RigaDeckSetup, TipoCarta, TipoSupply, TipoTesoro } from '../tipi/dati.ts';
 
 // Valori ammessi
 const CATEGORIE: readonly Categoria[] = ['Basic', 'Upgraded', 'Specific'];
@@ -66,14 +67,14 @@ function hasShape<T>(item: Record<string, unknown>, rules: Record<string, Regola
   return problemsOf(item, rules).length === 0;
 }
 
-// cards.json: elenco di carte. Le carte sbagliate si scartano con il loro id nei problemi
+// cards_nemesis.json: elenco di carte. Le carte sbagliate si scartano con il loro id nei problemi
 export function checkCards(data: unknown): Controllato<Carta[]> {
-  if (!Array.isArray(data)) throw new Error('cards.json non è un elenco di carte');
+  if (!Array.isArray(data)) throw new Error('cards_nemesis.json non è un elenco di carte');
   const value: Carta[] = [];
   const problems: string[] = [];
   const seen = new Set<string>();
   data.forEach((item: unknown, i) => {
-    if (!isRecord(item)) { problems.push(`cards.json, posizione ${i}: non è un oggetto`); return; }
+    if (!isRecord(item)) { problems.push(`cards_nemesis.json, posizione ${i}: non è un oggetto`); return; }
     const id = typeof item.id === 'string' ? item.id : `(posizione ${i})`;
     const own = problemsOf(item, REGOLE_CARTA);
     if (!own.length && hasShape<Carta>(item, REGOLE_CARTA)) {
@@ -82,9 +83,80 @@ export function checkCards(data: unknown): Controllato<Carta[]> {
       seen.add(item.id);
       if (!own.length) { value.push(item); return; }
     }
-    problems.push(...own.map(p => `cards.json, carta ${id}: ${p}`));
+    problems.push(...own.map(p => `cards_nemesis.json, carta ${id}: ${p}`));
   });
   return { value, problems };
+}
+
+// Carte della biblioteca (cards_supply.json, cards_treasure.json): non si leggono all'avvio, ma il controllo è lo stesso
+// di cards_nemesis.json (campi, tipi, valori ammessi; le carte sbagliate si scartano con il loro id). Immagine e
+// miniatura devono stare nella cartella giusta (Data/Supply/..., thumbs/Supply/...)
+const TIPI_SUPPLY: readonly TipoSupply[] = ['Gem', 'Relic', 'Spell'];
+const TIPI_TESORO: readonly TipoTesoro[] = ['Treasured Gem', 'Treasured Spell', 'Treasured Relic', 'Treasure Level 1',
+  'Treasure Level 2', 'Treasure Level 3'];
+const testoNonVuoto: Regola = v => (typeof v === 'string' && v.length > 0 ? null : 'deve essere un testo non vuoto');
+const livello: Regola = v => (v === 1 || v === 2 || v === 3 ? null : 'deve essere 1, 2 o 3');
+
+const REGOLE_SUPPLY: Record<keyof CartaSupply, Regola> = {
+  id: testoNonVuoto, name: testoNonVuoto, boxCode: str, type: oneOf(TIPI_SUPPLY), cost: num, mechanics: strOrNull,
+  effect: strOrNull, image: str, thumb: str
+};
+
+const REGOLE_TESORO: Record<keyof CartaTesoro, Regola> = {
+  id: testoNonVuoto, name: testoNonVuoto, boxCode: str, type: oneOf(TIPI_TESORO), level: livello, cost: numOrNull,
+  mechanics: strOrNull, effect: strOrNull, image: str, thumb: str
+};
+
+// Livello del tesoro dal suo Type: "Treasure Level N" -> N; "Treasured ..." -> 1; altro -> null
+function livelloDi(tipo: string): number | null {
+  const m = /^Treasure Level (\d)$/.exec(tipo);
+  if (m) return Number(m[1]);
+  return tipo.startsWith('Treasured ') ? 1 : null;
+}
+
+// Immagine e miniatura nella cartella della carta (Data/<cartella>/ e thumbs/<cartella>/)
+function percorsi(cartella: string) {
+  return (c: { image: string; thumb: string }): string[] => [
+    ...(c.image.startsWith(`Data/${cartella}/`) ? [] : [`image deve essere in Data/${cartella}/`]),
+    ...(c.thumb.startsWith(`thumbs/${cartella}/`) ? [] : [`thumb deve essere in thumbs/${cartella}/`])
+  ];
+}
+
+// Elenco di carte della biblioteca: come checkCards, con la coerenza propria di ogni tipo di carta
+function checkElencoCarte<T extends { id: string }>(data: unknown, file: string, rules: Record<string, Regola>,
+  coerenza: (c: T) => string[]): Controllato<T[]> {
+  if (!Array.isArray(data)) throw new Error(`${file} non è un elenco di carte`);
+  const value: T[] = [];
+  const problems: string[] = [];
+  const seen = new Set<string>();
+  data.forEach((item: unknown, i) => {
+    if (!isRecord(item)) { problems.push(`${file}, posizione ${i}: non è un oggetto`); return; }
+    const id = typeof item.id === 'string' ? item.id : `(posizione ${i})`;
+    const own = problemsOf(item, rules);
+    if (!own.length && hasShape<T>(item, rules)) {
+      own.push(...coerenza(item));
+      if (typeof item.id === 'string') {
+        if (seen.has(item.id)) own.push('id ripetuto');
+        seen.add(item.id);
+      }
+      if (!own.length) { value.push(item); return; }
+    }
+    problems.push(...own.map(p => `${file}, carta ${id}: ${p}`));
+  });
+  return { value, problems };
+}
+
+// cards_supply.json: carte supply (Gem, Relic, Spell), costo numerico in Æ
+export function checkSupplyCards(data: unknown): Controllato<CartaSupply[]> {
+  return checkElencoCarte<CartaSupply>(data, 'cards_supply.json', REGOLE_SUPPLY, percorsi('Supply'));
+}
+
+// cards_treasure.json: carte tesoro; il livello deve corrispondere al Type
+export function checkTreasureCards(data: unknown): Controllato<CartaTesoro[]> {
+  return checkElencoCarte<CartaTesoro>(data, 'cards_treasure.json', REGOLE_TESORO, c => [
+    ...percorsi('Treasure')(c),
+    ...(livelloDi(c.type) === c.level ? [] : [`level ${c.level} non corrisponde al Type "${c.type}"`])
+  ]);
 }
 
 // nemesis.json: elenco di nemesi. Le nemesi sbagliate si scartano con il loro nome nei problemi

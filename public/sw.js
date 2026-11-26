@@ -4,7 +4,7 @@
 //   suoi. Quando arriva un index.html nuovo, le copie dei file di app/ che non cita più si cancellano.
 // - Immagini e font: prima la copia salvata (non cambiano), altrimenti la rete, e si salvano.
 // Le immagini delle carte del mazzo si scaricano all'inizio della partita (src/dati/rete.ts, prefetchDeckImages).
-const CODE_CACHE = 'ae-code-v2'; // v2: fase A (Vite); la v1 aveva script.js e i CSS senza hash, si cancella
+const CODE_CACHE = 'ae-code-v3'; // v3: cards.json è diventato cards_nemesis.json (il telefono prende il file nuovo); la v2 si cancella
 const MEDIA_CACHE = 'ae-media-v2'; // v256: carte turno rimesse com'erano prima di "nre cards" (stesso nome di file)
 const SHELL = ['./', 'index.html', 'manifest.webmanifest'];
 

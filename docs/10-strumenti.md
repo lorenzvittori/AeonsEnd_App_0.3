@@ -23,7 +23,8 @@ come `npm run check` sono "scorciatoie" definite nel file `package.json`, alla v
 | `npm run colori` | solo il controllo Stylelint dei colori | dopo aver toccato un CSS |
 | `npm run docs` | solo il controllo di `docs/` | dopo aver toccato la documentazione |
 | `node tools/check-moduli.mjs --conta` | quanti `any`, eccezioni ai tipi, file `.js` (attesi 0) | per una verifica rapida della pulizia |
-| `python tools/import-db.py` | rigenera `cards.json`, `products.json` e le immagini dal DataBase | solo quando cambia il DataBase |
+| `python tools/import-db.py` | rigenera `cards_nemesis.json`, `cards_supply.json`, `cards_treasure.json`, `products.json` e le immagini dal DataBase | solo quando cambia il DataBase |
+| `python tools/import-db.py --solo-supply` (o `--solo-tesori`) | rifà solo `cards_supply.json` (o `cards_treasure.json`) e le sue immagini | quando cambiano solo le supply (o i tesori) |
 
 ## `npm run check`: cosa controlla
 

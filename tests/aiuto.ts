@@ -12,7 +12,7 @@ const ROOT = join(import.meta.dirname, '..');
 // Contenuto di un file JSON di public/, da controllare
 export const readJson = (name: string): unknown => parseJson(readFileSync(join(ROOT, 'public', name), 'utf8'));
 
-export const cards = checkCards(readJson('cards.json')).value;
+export const cards = checkCards(readJson('cards_nemesis.json')).value;
 export const nemeses = checkNemeses(readJson('nemesis.json')).value;
 export const deckSetup = checkDeckSetup(readJson('deck-setup.json'));
 export const products = checkProducts(readJson('products.json')).value;

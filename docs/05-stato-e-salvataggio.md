@@ -94,9 +94,9 @@ Passo per passo:
 1. **`StatoPartita`** è la partita intera: tutti i campi di gioco (`Partita`) più tre cose che servono a salvare e annullare: `nextUid`,
    `undoStack` e `testRun`.
 2. **`Partita`** contiene i campi di gioco: la coda, il mazzo nemesi, gli scarti, i turni, le vite, le statistiche, il mazzo dei turni.
-3. **`VoceInGioco`** è una carta **in coda**: la carta di `cards.json` (`data`) più il suo stato nella partita (token rimasti, vita...).
+3. **`VoceInGioco`** è una carta **in coda**: la carta di `cards_nemesis.json` (`data`) più il suo stato nella partita (token rimasti, vita...).
 4. **`MazzoTurni`** è il mazzo dei turni, con la sua storia del giro (`history`) e gli scarti (`drawn`).
-5. **`Carta`** è una carta così come sta in `cards.json`: non cambia mai durante la partita.
+5. **`Carta`** è una carta così come sta in `cards_nemesis.json`: non cambia mai durante la partita.
 
 ### Il significato dei campi
 
@@ -129,7 +129,7 @@ Passo per passo:
 | Campo | Significato |
 |---|---|
 | `uid` | il numero che identifica quella carta in gioco, anche se ci sono due copie della stessa carta |
-| `data` | la carta di `cards.json` |
+| `data` | la carta di `cards_nemesis.json` |
 | `tokens` | i token rimasti di un potere (vuoto per le altre carte) |
 | `hp` | la vita attuale di un minion (0 e `hpSet` falso = vita "?") |
 | `turnHp` | la vita a inizio del turno dei giocatori: è il tetto del tasto +1 |

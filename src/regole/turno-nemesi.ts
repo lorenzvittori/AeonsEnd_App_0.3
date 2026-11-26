@@ -4,7 +4,7 @@
 //   queue (carte in gioco, dalla più vecchia), deck (si pesca dalla fine), discard, stats, turn (turni nemesi),
 //   currentIndex (carta da risolvere), newIndex (carta appena pescata, -1 = nessuna), resolving (turno nemesi in
 //   corso), maxTierDrawn (Tier più alto pescato).
-// Le carte in gioco ("voci", VoceInGioco in tipi/partita.ts) hanno come `data` la carta di cards.json. uid e ora
+// Le carte in gioco ("voci", VoceInGioco in tipi/partita.ts) hanno come `data` la carta di cards_nemesis.json. uid e ora
 // arrivano da fuori (newUid(), now()).
 // Le funzioni che fanno un passo lo dicono ("Modifica g") e restituiscono l'esito (effetto, carta pescata, carte
 // uscite); le altre restituiscono un valore e non cambiano niente.
@@ -116,7 +116,7 @@ export function statCard(stats: Partial<Statistiche>, group: GruppoStatistiche, 
   stats.cards[group].push(data.id);
 }
 
-// Costo in Æ per scartare un potere (removalCost di cards.json); 0 se il costo non è in Æ
+// Costo in Æ per scartare un potere (removalCost di cards_nemesis.json); 0 se il costo non è in Æ
 export function aetherCost(data: { removalCost: number | string | null }): number {
   return Number(data.removalCost) || 0;
 }

@@ -1,4 +1,4 @@
-// tipi/dati.ts: i tipi dei dati letti all'avvio da public/ (cards.json, nemesis.json, products.json,
+// tipi/dati.ts: i tipi dei dati letti all'avvio da public/ (cards_nemesis.json, nemesis.json, products.json,
 // deck-setup.json, Assets/nemesis/nemesis-art.json). Sono prodotti da tools/import-db.py dal DataBase.
 // Non dipende da niente. Usato da: regole/, stato/, dati/ (anche dal controllo dei JSON in dati/controllo.ts), ui/.
 
@@ -11,10 +11,14 @@ export type Categoria = 'Basic' | 'Upgraded' | 'Specific';
 // Tipo della carta (Power, Minion, Attack: quelle del mazzo nemesi; le altre sono carte speciali di alcune nemesi)
 export type TipoCarta = 'Power' | 'Minion' | 'Attack' | 'Corruption' | 'Strike' | 'Gem' | 'Curse' | 'Rush' | 'Reminder';
 
+// Tipo di una carta supply (biblioteca) e di una carta tesoro (il Type del DataBase: "Treasured Gem" ecc.)
+export type TipoSupply = 'Gem' | 'Relic' | 'Spell';
+export type TipoTesoro = 'Treasured Gem' | 'Treasured Spell' | 'Treasured Relic' | 'Treasure Level 1' | 'Treasure Level 2' | 'Treasure Level 3';
+
 // Tier: 1-3 per le carte del mazzo nemesi; 0, 4-8, '9+' o null per carte speciali fuori dal mazzo (World Devourer...)
 export type Tier = number | '9+' | null;
 
-// Una carta di cards.json
+// Una carta di cards_nemesis.json
 export interface Carta {
   id: string;                    // identificativo unico ("AE204", "NA-1c-26"; più copie: "[D55, D58]")
   name: string;                  // nome inglese stampato sulla carta
@@ -39,6 +43,26 @@ export interface Carta {
   powerEffect: string | null;    // testo dell'effetto del potere quando si risolve
   image: string;                 // scansione della carta (percorso in Data/; all'avvio diventa relativo a DATA_ROOT)
   thumb?: string;                // miniatura in thumbs/ (non è nel file: la aggiunge l'avvio, avvio.ts)
+}
+
+// Una carta supply di cards_supply.json (per la biblioteca: non si legge all'avvio). Il costo è in Æ
+export interface CartaSupply {
+  id: string;                    // identificativo copiato dal DataBase così com'è ("[AE055, AE061]": più copie)
+  name: string;                  // nome inglese stampato sulla carta
+  boxCode: CodiceProdotto;       // prodotto in cui è la carta (la mini espansione se c'è, altrimenti la scatola base)
+  type: TipoSupply;              // Gem, Relic, Spell
+  cost: number;                  // costo in Æ
+  mechanics: string | null;      // parole chiave (Attach, Silence...), null se nessuna
+  effect: string | null;         // testo dell'effetto, a capo con \n
+  image: string;                 // scansione della carta (Data/Supply/...)
+  thumb: string;                 // miniatura (thumbs/Supply/...)
+}
+
+// Una carta tesoro di cards_treasure.json: come la supply, con il livello (1 per i Treasured, 1-3 per i Treasure Level)
+export interface CartaTesoro extends Omit<CartaSupply, 'type' | 'cost'> {
+  type: TipoTesoro;              // "Treasured Gem" | "Treasured Spell" | "Treasured Relic" | "Treasure Level 1-3"
+  level: number;                 // livello del tesoro (ricavato dal Type)
+  cost: number | null;           // costo in Æ (i tesori spesso non ce l'hanno)
 }
 
 // Una nemesi di nemesis.json
@@ -94,7 +118,7 @@ export type ArteNemesiTutte = Record<string, ArteNemesi>;
 
 // I dati usati dalle regole del mazzo nemesi
 export interface DatiRegole {
-  cards: Carta[];                // cards.json
+  cards: Carta[];                // cards_nemesis.json
   nemeses: Nemesi[];             // nemesis.json
   deckSetup: DeckSetup;          // deck-setup.json
 }

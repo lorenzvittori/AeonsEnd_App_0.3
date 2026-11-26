@@ -14,7 +14,7 @@ export interface OpzioniInizio {
 
 // I dati letti all'avvio
 export interface Catalogo {
-  allCards: Carta[];             // cards.json (con la miniatura)
+  allCards: Carta[];             // cards_nemesis.json (con la miniatura)
   cardsById: Map<string, Carta>; // carte per id
   deckSetup: DeckSetup | null;   // deck-setup.json (null finché non è caricato)
   nemeses: Nemesi[];             // nemesis.json

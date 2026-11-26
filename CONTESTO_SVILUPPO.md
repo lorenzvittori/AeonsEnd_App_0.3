@@ -22,7 +22,7 @@ framework, nessun dato personale: tutto resta nel browser (`localStorage`).
 | Cosa | Dove |
 |---|---|
 | Repo attivo (si lavora qui) | `C:\Users\lvitt\OneDrive\Documenti\GiuHub Local Repository\AeonsEnd\AeonsEnd_App_0.2` – GitHub `lorenzvittori/AeonsEnd_App_0.3` (non lavorare in `AeonsEnd_App_0.2.5`) |
-| DataBase (fonte di cards.json e delle immagini, solo lettura) | `...\GiuHub Local Repository\AeonsEnd\DataBase` (predefinito di `tools/import-db.py`) |
+| DataBase (fonte di cards_nemesis.json e delle immagini, solo lettura) | `...\GiuHub Local Repository\AeonsEnd\DataBase` (predefinito di `tools/import-db.py`) |
 | Sito | <https://lorenzvittori.github.io/AeonsEnd_App_0.3/> |
 | Versione vecchia (v1, non toccare se non richiesto) | `...\GiuHub Local Repository\AeonsEnd_APP` – GitHub `lorenzvittori/AeonsEnd_APP` – il sito vecchio ha anche il prototipo in `new_design_0.2/` |
 
@@ -93,7 +93,7 @@ Da lanciare dalla cartella del repo (PowerShell).
 | `npm run confronta -- <tag o commit> [--solo prova,...]` | confronta la versione attuale con un tag o un commit nel browser senza finestra |
 | `npm run screenshot [-- --scala 1] [-- --lingua en] [-- --solo a,b]` | screenshot dell'app a 360×720 in tutte le fasi (per Figma e Stitch) in `screenshot/360x720/` (non su GitHub), con `indice.html`; riusa `tools/confronto/dati/schermate.mjs` ([tools/screenshot/README.md](tools/screenshot/README.md)) |
 | `node tools/check-moduli.mjs --conta` | quanti `any`, eccezioni ai tipi, file `.js`, usi di `G` (attesi 0) |
-| `python tools/import-db.py` | rigenera `cards.json`, `products.json` e le immagini dal DataBase (serve openpyxl e Pillow) |
+| `python tools/import-db.py` | rigenera `cards_nemesis.json`, `products.json` e le immagini dal DataBase (serve openpyxl e Pillow) |
 
 `check`, `test` e `build` devono essere verdi prima di ogni commit. Dettagli: [tools/README.md](tools/README.md),
 [tools/confronto/README.md](tools/confronto/README.md), [tests/README.md](tests/README.md).

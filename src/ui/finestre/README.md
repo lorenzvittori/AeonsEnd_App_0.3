@@ -40,7 +40,7 @@ Ogni finestra con stile ha il suo `.css` accanto.
   schermata, Undo rimette la vita. Un tocco durante l'animazione di entrata di Vittoria e Sconfitta (e dei banner Tier e "Partita iniziata")
   la finisce subito.
 - **Modalità test:** dal menu iniziale, elenco degli **scenari** (`SCENARI`, `startScenario`); uno scenario non parte se una carta non è
-  in `cards.json` (o il nome è di più carte senza `boxCode`) e dice il motivo. Nella testata "TEST · <scenario>". **Isolamento:** con un test in
+  in `cards_nemesis.json` (o il nome è di più carte senza `boxCode`) e dice il motivo. Nella testata "TEST · <scenario>". **Isolamento:** con un test in
   corso (`testRun`) niente si salva e la collezione non conta; lo scenario sostituisce solo, finché dura, le carte 1/2 e 3/4 e il
   mazzo dei turni dei giri nuovi. Scenari: turni, minion a vita variabile, cambio Tier, coda piena, Vittoria, carte 1/2 e 3/4, memoria
   1/2, Wild e fine giro, statistiche piene, mazzo nemesi vuoto, vite quasi a zero. **Aggiungere uno scenario:** un oggetto in più in

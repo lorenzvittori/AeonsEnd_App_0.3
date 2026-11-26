@@ -11,7 +11,7 @@ import type { CartaTurno, Impostazioni, MemoriaCoppie, Partita, ProvaInCorso, Sc
 
 // Una carta in gioco nella fotografia (la carta come id, niente uid)
 export interface VoceFotografia {
-  id: string;                    // id della carta di cards.json
+  id: string;                    // id della carta di cards_nemesis.json
   tokens: number | null;         // token del potere
   hp: number | null;             // vita del minion
   turnHp: number | null;         // vita a inizio turno giocatori

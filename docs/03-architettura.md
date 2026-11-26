@@ -150,7 +150,7 @@ Passo per passo:
    di `index.html` e deve venire prima di chiunque li usi; `ui/testi.ts` scrive i testi nella lingua scelta; `ui/navigazione.ts`
    registra gli agganci; `avvio.ts` va per ultimo.
 5. L'`avvio()` di `avvio.ts` mette il pulsante "Riprova" e lancia `init()`, che è **asincrona**: parte, aspetta la rete e intanto il
-   resto continua. Legge `cards.json`, `deck-setup.json`, `nemesis.json`, `products.json` e `Assets/nemesis/nemesis-art.json`, li controlla
+   resto continua. Legge `cards_nemesis.json`, `deck-setup.json`, `nemesis.json`, `products.json` e `Assets/nemesis/nemesis-art.json`, li controlla
    (`dati/controllo.ts`: una carta sbagliata si scarta con un messaggio in console; un file rotto ferma l'avvio e mostra l'errore),
    riempie il catalogo, prepara la prima partita da zero (`nuovaPartita()`), disegna e mostra il menu iniziale.
 

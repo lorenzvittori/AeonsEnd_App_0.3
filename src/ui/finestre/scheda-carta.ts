@@ -70,7 +70,7 @@ export function openCardDialog(entry: VoceInGioco): void {
     });
     const footer = el('div', 'ae-modal-footer');
     footer.append(button(T.close, 'secondary', cancel));
-    // Solo i poteri con "TO DISCARD" si possono rimuovere pagando il costo (cards.json: removable)
+    // Solo i poteri con "TO DISCARD" si possono rimuovere pagando il costo (cards_nemesis.json: removable)
     const d = draftOf(entry);
     if (data.removable !== false && !entry.paid && !(d && d.paid)) footer.appendChild(remove);
     dialog.appendChild(footer);

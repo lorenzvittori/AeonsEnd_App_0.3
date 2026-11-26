@@ -18,7 +18,7 @@ Il diagramma mostra cosa succede ai dati e al codice, dalla sorgente fino al sit
 ```mermaid
 flowchart LR
     A["DataBase<br/>Excel e scansioni delle carte<br/>cartella fuori dal repository"] --> B["tools/import-db.py<br/>il ponte DataBase → app"]
-    B --> C["public/<br/>cards.json, nemesis.json, products.json<br/>Data/ e thumbs/ con le immagini"]
+    B --> C["public/<br/>cards_nemesis.json, nemesis.json, products.json<br/>cards_supply.json, cards_treasure.json (per la biblioteca)<br/>Data/ e thumbs/ con le immagini"]
     D["src/<br/>il codice TypeScript e i CSS"] --> E["npm run build<br/>Vite unisce e traduce"]
     F["index.html<br/>la pagina di partenza"] --> E
     C --> E
@@ -32,8 +32,9 @@ Passo per passo:
 1. **DataBase.** È la raccolta personale delle carte (file Excel con una riga per carta e le scansioni). Sta in una cartella a parte,
    `DataBase`, accanto al repository: l'app la legge soltanto, non la modifica mai.
 2. **`tools/import-db.py`** è uno script **Python** (un altro linguaggio di programmazione, usato qui solo per questo lavoro). Legge il
-   DataBase e fabbrica i file che l'app userà: `cards.json` (una voce per carta), `products.json` (i nomi dei prodotti, come "The New
-   Age"), le immagini ridimensionate in `Data/` e le miniature in `thumbs/`. **Questi file non si modificano a mano**: se serve un
+   DataBase e fabbrica i file che l'app userà: `cards_nemesis.json` (una voce per carta del mazzo nemesi), `cards_supply.json` e
+   `cards_treasure.json` (le carte supply e i tesori, per la futura biblioteca: non si leggono all'avvio), `products.json` (i nomi
+   dei prodotti, come "The New Age"), le immagini ridimensionate in `Data/` e le miniature in `thumbs/`. **Questi file non si modificano a mano**: se serve un
    cambiamento si rilancia lo script.
 3. **`public/`** è la cartella dei file che l'app usa **così come sono**: i JSON, le immagini, il `sw.js` (il service worker, vedi sotto),
    il `manifest.webmanifest` (la "carta d'identità" dell'app installata: nome, icona, a tutto schermo).

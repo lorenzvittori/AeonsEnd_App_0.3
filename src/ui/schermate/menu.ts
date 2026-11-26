@@ -51,10 +51,14 @@ export function startHomeActions(): HTMLElement {
   addCollection.classList.add('ae-button--full', 'start-home-collection');
   const options = button(T.options, 'secondary', () => openOptions(options));
   options.classList.add('ae-button--full', 'start-home-options');
+  // Biblioteca: per ora il tocco non fa niente (la schermata verrà dopo); il testo è in testi-it.ts / testi-en.ts
+  const library = button(T.library, 'secondary');
+  library.classList.add('ae-button--full', 'start-home-library');
+  library.dataset.testo = 'library';
   // Modalità test: scenari che partono in un momento preciso della partita
   const test = button(T.testMenu, 'secondary', () => openTestScreen(test));
   test.classList.add('ae-button--full', 'start-home-test');
-  box.append(addCollection, fresh, options, test);
+  box.append(addCollection, fresh, options, library, test);
   startChoicePanel().after(box);
   return box;
 }
