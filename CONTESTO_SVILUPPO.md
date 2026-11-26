@@ -69,6 +69,10 @@ lavoro solo quando l'utente scrive "pubblica" (sezione 3). Il branch `ts` resta 
   - Le correzioni brevi di una riga di solito si riferiscono all'ultima cosa toccata.
 - **Pacchetti e librerie:** installabili se pesano meno di 1 GB.
 - **Modifiche grandi:** prima di farle si crea un **tag git di ripristino**, così l'utente può tornare indietro.
+- **Versione dell'app (v0.3.x) automatica:** x è il numero di commit dal tag `v0.3` (`git rev-list --count v0.3..HEAD`), calcolato
+  da `vite.config.ts` a ogni `dev` e `build`, e mostrato in alto a destra nel menu iniziale. Non si scrive mai a mano. Per una
+  versione nuova (0.4) si crea il tag `v0.4` sul primo commit della nuova versione. Il sito conta i commit con la storia intera e
+  i tag (`.github/workflows/pages.yml`, `fetch-depth: 0`, `fetch-tags: true`): se il conteggio sul sito non torna, si controlla lì.
 - **Messaggi di chiusura:** in italiano, chiari. Si dice cosa non è stato verificato (per esempio l'aspetto visivo o il
   telefono vero).
 - **Documentazione:** quando cambia un comportamento visibile, si aggiorna questo file (sezioni 4 e 5). La storia delle

@@ -17,6 +17,8 @@ l'ora come `now()`, gli uid come `newUid()`) e restituiscono il risultato, oppur
 - `vite.ts`: vite di Gravehold (`GRAVEHOLD_LIFE` = 30) e della nemesi (`nemesisStartLife`, campo `life` di nemesis.json),
   tetto, minimo (`lifeFloor`: 0 per la nemesi, nessuno per Gravehold), Vittoria a 0 della nemesi e Sconfitta a 0 o meno di Gravehold.
 - `salvataggio.ts`: fotografia (salvataggio e undo), ripristino anche dai formati vecchi, controllo di `SAVE_VERSION`.
+- `versione.ts`: la versione dell'app (`componiVersione`: tag `vN.N` + numero di commit, es. `v0.3.12`; senza git `v0.3.?`).
+  Non è una regola del gioco: è qui perché è una funzione pura e la usa `vite.config.ts` (test in `tests/versione.test.ts`).
 
 ## Regole di gioco
 - **Mazzo** (`buildDeck`): per ogni Tier 1-3 carte con `inNemesisDeck` e quel `tier`, scelte a caso tra Basic e Upgraded

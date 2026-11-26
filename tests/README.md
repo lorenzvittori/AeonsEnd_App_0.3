@@ -11,6 +11,7 @@ Importano direttamente i moduli di `src/` (al caricamento non toccano il DOM). P
 - `turno-nemesi.test.ts`: risoluzione, pesca, vittoria, fine del turno giocatori, statistiche, con le carte vere di `cards.json`.
 - `vite.test.ts`: vite di Gravehold e della nemesi (valori iniziali, tetto, passi, Gravehold nei negativi, Sconfitta). `vite-scrub.test.ts`: scrubbing (partenza, passi da 30px, limiti).
 - `salvataggio.test.ts`: fotografia e ripristino, formati vecchi (con un salvataggio vero di main v228 in `tests/dati/`), versione, scrittura.
+- `versione.test.ts`: la composizione della versione (`v0.3.12`, il fallback `v0.3.?` senza git o tag).
 - `fine-turno-nemesi.test.ts`: la fine del turno nemesi da tutte le strade: un minion portato a 0 dalla scheda (appena pescato, o con altre carte da pescare) estrae o no la carta turno come `risolviCarta`.
 - `pesca-turno.test.ts`: "Fine turno" (giocatori e nemesi) lascia il turno da pescare, `pescaCartaTurno` lo pesca (undo a parte), a fine giro il mazzo dei turni si mescola, i punti vita tolti alla nemesi e dati a Gravehold vanno alle statistiche del giocatore.
 - `partita.test.ts`: `nuovaPartita()` dà sempre lo stesso stato, un'azione = un passo di undo, salvataggio → ripresa = stesso stato, Undo e ripresa al passo Pesca con carte in coda,

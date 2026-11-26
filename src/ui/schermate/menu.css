@@ -8,6 +8,12 @@
   padding: max(24px, calc(var(--ae-safe-top) + 16px)) 0 calc(24px + var(--ae-safe-bottom));
 }
 .start-box { width: min(100% - 32px, 480px); margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+/* Versione dell'app: in alto a destra, piccola e discreta, nella zona sicura (sotto la barra di stato del telefono).
+   Carattere Inter (l'interfaccia), non Cinzel: è un dato, non un titolo */
+.start-version {
+  position: fixed; top: calc(var(--ae-safe-top) + 8px); right: 16px; margin: 0; z-index: 41;
+  font: 400 12px/16px var(--ae-font-ui); font-variant-numeric: tabular-nums; color: var(--ae-text-quiet);
+}
 .start-title { margin-top: 8px; text-align: center; font: 600 28px/34px var(--ae-font-display); }
 .start-subtitle { display: block; margin-top: 6px; font: 600 16px/22px var(--ae-font-display); letter-spacing: .14em; color: var(--ae-text-muted); }
 .start-group { display: flex; flex-direction: column; }

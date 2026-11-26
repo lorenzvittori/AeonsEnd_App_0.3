@@ -59,7 +59,7 @@ describe('moduli di src/', () => {
 
   it('src/regole/ non nomina document, window, localStorage, G, Math.random, Date (fuori dai commenti)', () => {
     const regole = files.filter(f => rel(f).startsWith('src/regole/'));
-    expect(regole.length).toBe(7);
+    expect(regole.length).toBe(8);
     for (const f of regole) {
       const code = readFileSync(f, 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
       for (const bad of [/\bdocument\b/, /\bwindow\b/, /\blocalStorage\b/, /\bG\./, /Math\.random/, /\bDate\b/, /from '\.\.\/(?!tipi\/)/]) {

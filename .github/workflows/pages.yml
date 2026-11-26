@@ -37,7 +37,11 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      # Storia intera e tag: la versione (v0.3.x) conta i commit dall'ultimo tag vN.N (vite.config.ts)
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - uses: actions/setup-node@v5
         with:

@@ -114,6 +114,19 @@ export function disegnaMenu(saved: SalvataggioValido | null, isHome: boolean): H
     : fresh.disabled ? query(home, '.start-home-collection', HTMLElement) : fresh;
 }
 
-// Al caricamento non c'è niente da fare (main.ts chiama avvio() di ogni modulo)
+// Versione e commit: vite.config.ts li costruisce con `define` (src/regole/versione.ts per la composizione)
+declare const __VERSIONE__: string;
+declare const __COMMIT__: string;
+
+// Versione in alto a destra del menu iniziale; l'hash del commit va nel suggerimento (title), non si traduce
+export function scriviVersione(): void {
+  const elemento = document.getElementById('versione-app');
+  if (!elemento) return;
+  elemento.textContent = __VERSIONE__;
+  elemento.title = __COMMIT__;
+}
+
+// Al caricamento: la versione (main.ts chiama avvio() di ogni modulo)
 export function avvio(): void {
+  scriviVersione();
 }

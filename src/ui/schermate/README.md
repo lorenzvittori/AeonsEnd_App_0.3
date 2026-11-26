@@ -4,7 +4,7 @@ Le schermate dell'app, ognuna con il suo `disegna...()`. Livello 5: importa da l
 aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (`<nome>-*.ts`). Il CSS sta accanto al `.ts`.
 
 ## File
-- `menu.ts` + `.css`: menu iniziale (Riprendi partita, Nuova partita, Opzioni, Test). `nuova-partita.ts` + `nuova-partita-anteprima.ts`:
+- `menu.ts` + `.css`: menu iniziale (Riprendi partita, Nuova partita, Opzioni, Test); scrive la versione in alto a destra (`#versione-app`, da `__VERSIONE__`; hash del commit nel suggerimento). `nuova-partita.ts` + `nuova-partita-anteprima.ts`:
   Nuova partita e la carta della nemesi scelta (`buildNemesisFlip`, zoom a due dita, `resetNemesisZoom`).
 - `partita.css`: la mappa delle 7 zone. `partita-misure.css`: tutte le misure delle zone come variabili. `turno-giocatori.ts` + `.css`,
   `turno-nemesi.ts` + `turno-nemesi-carosello.ts` + `.css`: i due turni. `crea-mazzo.ts` + `crea-mazzo-cursore.ts` + `.css`: "Crea mazzo".

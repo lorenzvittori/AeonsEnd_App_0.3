@@ -70,6 +70,8 @@ diventano un solo foglio, nell'ordine deciso da `stili/indice.ts` (vedi [file 09
 del contenuto. Così un telefono non può mai usare per sbaglio un codice vecchio: quando il file cambia, cambia il nome, e il browser
 lo scarica di nuovo. Per questo non servono più i numeri di versione a mano che si usavano prima.
 
+La versione mostrata nel menu iniziale (v0.3.x) non è un file da aggiornare: `vite.config.ts` la calcola da git (il tag `v0.3` e il numero di commit dopo quel tag) e la passa all'app alla partenza di `npm run dev` e `npm run build`.
+
 Un dettaglio: il sito vive sotto l'indirizzo `/AeonsEnd_App_0.3/` e non alla radice del dominio. L'impostazione `base` in
 `vite.config.ts` dice a Vite di aggiungere questo pezzo a tutti i percorsi. Per questo in locale l'app è su
 `http://localhost:5173/AeonsEnd_App_0.3/`.
