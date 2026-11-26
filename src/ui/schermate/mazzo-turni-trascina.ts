@@ -118,6 +118,7 @@ export function onPointerMove(f: Finestra, e: PointerEvent) {
   const order = shownOrder(f);
   const ph = placeholderAt(f);
   let target: Destinazione | null = null;
+  let stay = false; // la carta è sul suo segnaposto: niente guida
   let shownPos = -1; // posto nella fila VISTA (con il segnaposto), per la guida e le carte che si allargano
   const laneRect = f.lane.getBoundingClientRect();
   // Carta del mazzo sugli scarti (zona "scarti" = tutta l'area a sinistra del centro del segmento verticale, nella
@@ -136,11 +137,15 @@ export function onPointerMove(f: Finestra, e: PointerEvent) {
       const last = f.d.left.length - 1;
       if (ph === 0 && target.type === 'pos' && target.index === 0 && !f.zoneTop.hidden) { target = { type: 'top' }; shownPos = -1; }
       else if (ph === last && target.type === 'pos' && target.index === last && !f.zoneBottom.hidden) { target = { type: 'bottom' }; shownPos = -1; }
+    } else if (ph >= 0) {
+      // Unica carta del mazzo in mano: l'unico posto nel mazzo è il suo segnaposto (nessuna guida, nessun cerchio)
+      target = { type: 'pos', index: 0 };
+      stay = true;
     } else target = { type: 'top' };
   }
   f.drag.target = target;
   f.lane.classList.toggle('is-over', !!target && target.type === 'pos');
-  layoutFan(f, displayOrder(f), -1, shownPos >= 0 ? { type: 'pos', index: shownPos } : target);
+  layoutFan(f, displayOrder(f), -1, shownPos >= 0 ? { type: 'pos', index: shownPos } : stay ? null : target);
 }
 export function endDrag(f: Finestra, apply: boolean) {
   stopListening(f);

@@ -55,7 +55,7 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
 - Si lavora su una **bozza** (`turnDraftFrom`, `turnDraftKey`): ogni modifica si scrive subito nella partita; **un solo passo di undo per
   visita** (`before = snapshot()` all'apertura, `commitUndo` alla chiusura). Carte note all'apertura scurite e ferme salvo in cima (`d.old`).
 - Spostamenti: la carta segue il dito dopo `TURN_DRAG_PX` (6px) o col tocco (selezione + destinazione); destinazioni Cima, Fondo, tra due
-  carte, scarti (`inPileZone`, fascia `inCardBand`); riga compatta con `spaceItems` (`TURN_GAP_MAX` 12px, `CARD_GAP_K`, `TURN_SPREAD`).
+  carte, scarti (`inPileZone`, fascia `inCardBand`); riga a tutta larghezza con `spaceItems` (primo oggetto sul bordo sinistro, ultimo su quello destro; `CARD_GAP_K`, `TURN_SPREAD`).
 - Facce: `turnCardFace` usa `Assets/ui/turn-cards/<carta>.webp` (dorso `back.webp`); sulle carte 1/2, 3/4 e Wild con il giocatore deciso c'è il suo
   token (`Assets/ui/turn-tokens/pN.webp`). Le carte hanno contorno chiaro e ombra; un posto vuoto (scarti o mazzo) è un riquadro tratteggiato con ∅.
 - Una carta degli scarti rimessa nel mazzo lascia il turno giocato nella barra (anche il turno in corso continua); una carta del mazzo negli

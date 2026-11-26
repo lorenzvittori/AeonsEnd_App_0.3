@@ -12,8 +12,6 @@ export interface OggettoRiga {
   on?: OggettoRiga;              // fuori dalla fila: centrato su questo oggetto (cerchio sul posto vuoto o sul segnaposto)
 }
 
-// Spazio massimo tra due oggetti: con poche carte la fila resta compatta e sta al centro della riga
-export const TURN_GAP_MAX = 12;
 // Tra due carte vicine (scarti-scarti, mazzo-mazzo) lo spazio è questa frazione di quello tra gli altri oggetti
 // (carta-cerchio, cerchio-segmento, carta-segmento)
 export const CARD_GAP_K = 0.5;
@@ -27,14 +25,15 @@ export function isCardItem(it: OggettoRiga): boolean {
 }
 
 // Mette in fila gli oggetti (tranne quelli con it.on) in una riga larga W: spazio g tra due oggetti, g * CARD_GAP_K tra
-// due carte vicine, g al massimo TURN_GAP_MAX, la fila al centro della riga. Gli oggetti con it.on stanno al centro
-// dell'oggetto it.on. Scrive left e right di ogni oggetto e restituisce g
+// due carte vicine, la fila occupa sempre tutta la riga (primo oggetto sul bordo sinistro, ultimo su quello destro; un
+// oggetto solo sta al centro). Gli oggetti con it.on stanno al centro dell'oggetto it.on. Scrive left e right di ogni
+// oggetto e restituisce g
 export function spaceItems(items: OggettoRiga[], W: number): number {
   const flow = items.filter(it => !it.on);
   const sum = flow.reduce((s, it) => s + it.vis, 0);
   const f = flow.slice(1).map((it, i) => isCardItem(it) && isCardItem(flow[i]) ? CARD_GAP_K : 1);
   const units = f.reduce((s, x) => s + x, 0);
-  const g = units ? Math.min(TURN_GAP_MAX, (W - sum) / units) : 0;
+  const g = units ? (W - sum) / units : 0;
   let x = Math.max(0, (W - sum - g * units) / 2);
   flow.forEach((it, i) => { it.left = x; it.right = x + it.vis; x = it.right + g * (f[i] || 0); });
   items.forEach(it => {

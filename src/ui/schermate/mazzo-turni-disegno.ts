@@ -42,7 +42,7 @@ export function flipChange(f: Finestra, op: () => void) {
   const oldEls = f.fanEls.slice();
   op();
   f.sel = null;
-  draw(f);
+  draw(f, true);
   if (reducedMotion.matches || !f.lane.animate) return;
   let k = 0;
   f.d.known.forEach((known, i) => {
@@ -75,7 +75,10 @@ export function inPileZone(f: Finestra, x: number, y: number, laneRect: DOMRect)
   const split = f.rowGeo ? rr.left + f.rowGeo.split * pageZoom(f) : (() => { const dv = f.divider.getBoundingClientRect(); return dv.left + dv.width / 2; })();
   return x >= rr.left - 24 && x < split && inCardBand(y, laneRect.top, laneRect.bottom);
 }
-export function draw(f: Finestra) {
+// still: la disposizione non cambia (rivela / copri): gli scarti, ricreati, non devono muoversi con la transizione dal
+// margine 0 al margine finale
+export function draw(f: Finestra, still = false) {
+  if (still) f.pileRow.classList.add('is-still');
   const n = f.d.left.length;
   f.fanEls = f.d.left.map((kind, i) => {
     const known = f.d.known[i];
@@ -156,6 +159,7 @@ export function draw(f: Finestra) {
   markTargets(f, f.sel);
   f.hint.textContent = f.sel ? T.turnSelected(selName(f, f.sel)) : T.turnHint;
   layoutFan(f);
+  if (still) { void f.pileRow.offsetWidth; f.pileRow.classList.remove('is-still'); }
   // Ogni modifica vale subito nel mazzo dei turni; la selezione da sola non cambia niente
   const key = turnDraftKey(f.d);
   if (key !== f.savedKey) { f.savedKey = key; saveTurnDraft(f.d); }
@@ -165,26 +169,34 @@ export function selName(f: Finestra, s: Selezione) {
   return s.source === 'deck' ? turnCardName(f.d.left[s.index], -1, f.d) : turnCardName(f.d.drawn[s.index], s.index, f.d);
 }
 export function zoneD(f: Finestra, w: number) { return Math.round(Math.min(14, w * 0.3)); }
-export function rowWidth(f: Finestra) { return f.row.clientWidth || 343; }
+// (larghezza vera, anche con decimali: le carte arrivano al pixel dove finisce la riga)
+export function rowWidth(f: Finestra) {
+  const w = f.row.getBoundingClientRect().width;
+  return (Math.abs(w - f.row.offsetWidth) < 1 ? w : w / pageZoom(f)) || 343;
+}
 // st: { holding: null | 'pile' | 'deck', selected: carta selezionata, dragDeck: carta del mazzo trascinata, dragIndex:
 // sua posizione nel mazzo }
-export function rowItems(f: Finestra, w: number, st: { holding: Selezione['source'] | null; selected?: Selezione | null; dragDeck?: boolean; dragIndex?: number | null }): OggettoRiga[] {
-  const k = f.d.drawn.length, n = f.d.left.length;
+// st.n, st.k: numero di carte del mazzo e degli scarti da supporre (solo per misurare: la carta in rowGeometry, il
+// carattere dei titoli in layoutHeads)
+export function rowItems(f: Finestra, w: number, st: { holding: Selezione['source'] | null; selected?: Selezione | null; dragDeck?: boolean; dragIndex?: number | null; n?: number; k?: number }): OggettoRiga[] {
+  const k = st.k ?? f.d.drawn.length, n = st.n ?? f.d.left.length;
   const zd = zoneD(f, w);
   const tight = !!st.holding;
   // carta come si vede: con una carta in mano le altre all'85% (anche il segnaposto), quella selezionata al 100%
   const sc = (source: Selezione['source'], i: number) => !tight ? 1 : (st.selected && st.selected.source === source && st.selected.index === i ? 1 : 0.85);
   const item = (kind: OggettoRiga['kind'], vis: number, i = -1, on?: OggettoRiga): OggettoRiga => ({ kind, i, vis, left: 0, right: 0, ...(on ? { on } : {}) });
   const items: OggettoRiga[] = [];
-  if (k) f.d.drawn.forEach((x, i) => items.push(item('pile', sc('pile', i) * w, i)));
+  if (k) for (let i = 0; i < k; i++) items.push(item('pile', sc('pile', i) * w, i));
   else items.push(item('pileEmpty', w));
   // Senza scarti il cerchio degli scarti sta al centro del posto tratteggiato
   if (st.holding === 'deck') items.push(k ? item('pileZone', zd) : item('pileZone', zd, -1, items[0]));
   items.push(item('divider', 1));
-  // (Cima e Fondo solo se nel mazzo c'è una carta vera oltre al segnaposto della carta trascinata)
-  const mReal = n - (st.dragDeck ? 1 : 0);
+  // (Cima e Fondo solo se nel mazzo c'è una carta vera oltre a quella in mano, trascinata o selezionata)
+  const mReal = n - (st.holding === 'deck' ? 1 : 0);
   const ends = tight && mReal > 0;
-  const deckIt = n ? f.d.left.map((x, i) => item('deck', sc('deck', i) * w, i)) : [item('deckEmpty', w)];
+  const deckIt = n ? Array.from({ length: n }, (x, i) => item('deck', sc('deck', i) * w, i)) : [item('deckEmpty', (tight ? 0.85 : 1) * w)];
+  // Mazzo vuoto con una carta degli scarti in mano: il cerchio sta al centro del posto tratteggiato
+  if (tight && !n) items.push(item('top', zd, -1, deckIt[0]));
   // Trascinando la carta in cima (in fondo) il cerchio Cima (Fondo) sta sul suo segnaposto
   const ph = st.dragDeck && st.dragIndex !== null && st.dragIndex !== undefined ? st.dragIndex : -1;
   if (ends) items.push(ph === 0 ? item('top', zd, -1, deckIt[0]) : item('top', zd));
@@ -192,12 +204,15 @@ export function rowItems(f: Finestra, w: number, st: { holding: Selezione['sourc
   if (ends) items.push(ph === n - 1 ? item('bottom', zd, -1, deckIt[n - 1]) : item('bottom', zd));
   return items;
 }
-export function rowGeometry(f: Finestra) {
-  const k = f.d.drawn.length, n = f.d.left.length;
+// k, n: carte negli scarti e nel mazzo (quelle della finestra; altri valori servono a misurare un'altra disposizione)
+export function rowGeometry(f: Finestra, k = f.d.drawn.length, n = f.d.left.length) {
   const W = rowWidth(f);
-  const states: { holding: Selezione['source'] | null; selected?: Selezione; dragDeck?: boolean }[] = [{ holding: null }];
-  if (k) states.push({ holding: 'pile', selected: { source: 'pile', index: 0 } });
-  if (n) states.push({ holding: 'deck', dragDeck: true }, { holding: 'deck', selected: { source: 'deck', index: 0 } });
+  const states: { holding: Selezione['source'] | null; selected?: Selezione; dragDeck?: boolean; n: number; k: number }[] = [{ holding: null, n, k }];
+  if (k) states.push({ holding: 'pile', selected: { source: 'pile', index: 0 }, n, k });
+  // Mazzo vuoto o con una carta sola: la carta ha la stessa misura (e le scritte dei titoli lo stesso spazio), come
+  // se ci fosse una carta
+  const m = Math.max(n, 1);
+  states.push({ holding: 'deck', dragDeck: true, n: m, k }, { holding: 'deck', selected: { source: 'deck', index: 0 }, n: m, k });
   let w = TURN_W_MAX;
   while (w > TURN_W_MIN && !states.every(st => spaceItems(rowItems(f, w, st), W) >= TURN_GAP_MIN - 1e-6)) w -= 0.5;
   w = Math.max(TURN_W_MIN, w);
@@ -273,8 +288,11 @@ export function layoutFan(f: Finestra, order: number[] = displayOrder(f), lifted
     card.style.zIndex = String(1 + kk);
     card.classList.toggle('is-lifted', it.i === lifted);
     if (it.i === 0) {
-      f.revealTop.style.left = (it.left + it.vis / 2 - laneOff - 22) + 'px';
-      f.revealTop.style.top = (h / 2 - 22) + 'px';
+      // Cerchio dell'occhio in proporzione alla carta (44px con la carta più larga)
+      const eyeD = Math.round(Math.min(44, w * 0.6));
+      f.revealTop.style.setProperty('--ae-eye-d', eyeD + 'px');
+      f.revealTop.style.left = (it.left + it.vis / 2 - laneOff - eyeD / 2) + 'px';
+      f.revealTop.style.top = (h / 2 - eyeD / 2) + 'px';
       f.revealTop.style.zIndex = String(2 + g.n);
     }
   });
@@ -315,7 +333,8 @@ export function layoutFan(f: Finestra, order: number[] = displayOrder(f), lifted
   f.board.style.setProperty('--ae-split', split + 'px');
   layoutHeads(f, split);
   const empty = one('deckEmpty');
-  if (empty) placeEmpty(f, empty.left - laneOff, h, w);
+  // (il posto vuoto, come le carte, è largo w e scalato attorno al centro: il bordo visibile è empty.left)
+  if (empty) placeEmpty(f, boxLeft(empty) - laneOff, h, w);
   f.rowGeo = { centers: deckObjs.map(it => it.left + it.vis / 2), split, n: m };
   // Guida (linea-pallino-linea): sul cerchio di Cima o Fondo, oppure a metà tra due carte
   f.zoneTop.classList.toggle('is-over', !!top && overIdx === 0);
@@ -356,6 +375,13 @@ export function scheduleHeadsGrow(f: Finestra) {
     f.headsGrowing = false;
   }, 220);
 }
+// Posizione del segmento verticale nella disposizione peggiore per "Mazzo turno": a riposo, tutte le carte negli scarti
+function worstSplit(f: Finestra): number {
+  const g = rowGeometry(f, f.d.drawn.length + f.d.left.length, 0);
+  const items = rowItems(f, g.w, { holding: null, k: g.k, n: 0 });
+  spaceItems(items, g.W);
+  return need(items.find(it => it.kind === 'divider'), 'segmento verticale').left + 0.5;
+}
 export function layoutHeads(f: Finestra, cx: number) {
   f.lastHeadsCx = cx;
   const W = f.heads.clientWidth || f.board.clientWidth;
@@ -367,6 +393,9 @@ export function layoutHeads(f: Finestra, cx: number) {
   // Scarti: tra 0 e la cuspide
   const leftEnd = cx - CUSP_HALF;
   let grow = fitHeadNoGrow(f, f.pileHead, Math.max(0, leftEnd - HEAD_GAP));
+  // Con una carta sola nel mazzo (o nessuna) "Mazzo turno" ha lo stesso carattere che a mazzo vuoto, con una carta in
+  // mano o no: lo spazio è quello della disposizione peggiore (tutte le carte negli scarti, mazzo vuoto)
+  const fitFrom = f.d.left.length < 2 ? worstSplit(f) + CUSP_HALF : 0;
   const tw = textW(f, f.pileHead);
   const x0 = Math.max(0, Math.min((leftEnd - tw) / 2, leftEnd - HEAD_GAP - tw));
   f.pileHead.style.left = x0 + 'px';
@@ -374,7 +403,7 @@ export function layoutHeads(f: Finestra, cx: number) {
   // "Turno" sotto, allineate a destra; poi, se serve, il carattere scende. Il blocco di due righe è centrato sulla
   // linea dei titoli, a 16,5px dall'alto
   const rightStart = cx + CUSP_HALF;
-  grow = fitHeadNoGrow(f, f.deckHead, Math.max(0, right - rightStart - HEAD_GAP), true) || grow;
+  fitHead(f, f.deckHead, Math.max(0, right - Math.max(rightStart, fitFrom) - HEAD_GAP), true);
   if (grow) scheduleHeadsGrow(f);
   f.deckHead.style.top = f.deckHead.classList.contains('is-two-lines')
     ? (16.5 - f.deckHead.getBoundingClientRect().height / pageZoom(f) / 2) + 'px' : '';

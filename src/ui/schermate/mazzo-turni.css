@@ -419,6 +419,9 @@
 }
 /* Carte del mazzo con una carta in mano: all'85% o meno se la corsia è stretta (--ae-lane-scale da mazzo-turni.ts) */
 .ae-turn-screen.is-holding .ae-turn-lane .ae-turn-card:not(.is-selected):not(.is-dragging) { scale: var(--ae-lane-scale, .85); }
+/* Anche il posto tratteggiato del mazzo vuoto scende all'85% come le carte */
+.ae-turn-lane .ae-turn-fan-empty { transition: scale .2s ease; }
+.ae-turn-screen.is-holding .ae-turn-lane .ae-turn-fan-empty { scale: var(--ae-lane-scale, .85); }
 /* Anche il segnaposto della carta trascinata è piccolo come le altre */
 .ae-turn-screen.is-holding .ae-turn-row .ae-turn-card.is-dragging { scale: .85; }
 .ae-turn-screen.is-holding .ae-turn-lane .ae-turn-card.is-dragging { scale: var(--ae-lane-scale, .85); }
@@ -521,6 +524,11 @@
   border: 1px dashed color-mix(in srgb, var(--contorno-chiaro) 25%, transparent); border-radius: 8% / 6%;
 }
 .ae-turn-lane .ae-turn-fan-empty { inset: 0 auto auto 0; }
+/* Occhio sulla prima carta del mazzo: il cerchio è proporzionale alla carta (--ae-eye-d da mazzo-turni-disegno.ts layoutFan) */
+.ae-turn-lane .ae-turn-eye--top { width: var(--ae-eye-d, 44px); height: var(--ae-eye-d, 44px); min-width: 0; min-height: 0; }
+.ae-turn-lane .ae-turn-eye--top .ae-icon { width: calc(var(--ae-eye-d, 44px) * .55); height: calc(var(--ae-eye-d, 44px) * .55); }
+/* Scarti ricreati senza che la disposizione cambi (rivela / copri tutto): niente transizione del margine */
+.ae-turn-pile-row.is-still .ae-turn-pile-slot, .ae-turn-pile-row.is-still .ae-turn-pile-empty { transition: none !important; }
 .ae-turn-empty-icon { display: block; width: min(26px, calc(var(--ae-turn-w, 48px) * .42)); aspect-ratio: 1; opacity: .8; transition: opacity .15s ease; }
 .ae-turn-empty-icon svg { display: block; width: 100%; height: 100%; }
 .ae-turn-area--pile.has-zone .ae-turn-empty-icon, .ae-turn-lane.is-empty-target .ae-turn-empty-icon { opacity: 0; }
