@@ -8,13 +8,13 @@
 [x] rimescolare dagli scarti al mazzo una o più carte a scelta: Nothingness, Sunder, Lash, Talix.
 [x] rivelare la prima carta e rimetterla in cima o in fondo: Flare, Xaxos’s Flare e Hissing Acid la rimettono solo in cima; Quartz Shard e Lash’s Quartz Shard permettono anche il fondo.
 [x] rivelare tutto il mazzo e sceglierne l’ordine: Xaxos.
-- le carte devono essere più visibili
-- quando devo scegliere chi gioca, mette il toke, non la carta
-- sce clicco su rivela tutto, deve diventare copri tutto
-- manca un'animazione di mescola
-- quando sto trascinando una carta quella spostarsi in alto, così il mio dito non la copre e avere un bordo colorato attorno
-- quando sto trascinando una carta nel mazzo turno non deve diventare trasparente, rimanere al 100%
-- quando entro nella scheda mazzo dei turni dopo aver scartato una carta, il mazzo scarti lampeggia. perchè succede? la schermata in alto deve essere sempre la stessa, non deve cambiare niente se non che non posso interagire con: mazzo pesca, mazzo scarti, barra dei turni
+[x] errore: quando rivelo tutto o copro tutto le carte negli scarti si muovo, non devono farlo. 
+[x] diminuire grandezza cerchio dell'occhio della prima carta mazzo turno 
+[x] errore: quando c'è una sola carta nel mazzo turno e la sposto posso mettere la carta sia nel posto precedete sia alla sua sinitra. soluzione: quando muovo l'ultima carta del mazzo gli unici posti in cui posso andare sono: in cima al mazzo scarti (e c'è già il cerchio) oppure tornare nel mazzo turno al posto della carta fantasma e non serve il cerchio. 
+[x] errore: quando il mazzo turno è vuoto e sposto una carta scarti il luogo tratteggiato sotto il mazzo turno deve avere la stessa dimensione delle carte degli scarti. 
+[x] errore: manca il cerchio nella carta del mazzo turno quando muovo una carta dagli scarti e il mazzo turno è vuoto
+[x] quando ci c'è 1 carta nel mazzo turno, la scritta "mazzo turno" deve avere la stessa dimensione font di quando non ce ne sono più
+[x] errore: carte + box carte insieme devono sempre toccare bordo sinistro e bordo destro dell'app che dovrebbero essere 16px a sx e dx. le dimennsioni poi devono essere relative come sono già ora. 
 
 
 

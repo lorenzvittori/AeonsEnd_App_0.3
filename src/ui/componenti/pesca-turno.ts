@@ -94,7 +94,7 @@ export function openDrawTurn(): void {
         b.addEventListener('click', () => choose(p));
         picks.appendChild(b);
       });
-      info.append(el('p', 'ae-draw-turn-who ae-draw-turn-ask', T.pairChoiceTitle), picks);
+      info.append(el('p', 'ae-draw-turn-who', T.pairChoiceTitle), picks);
       return;
     }
     // Turno già deciso: la scritta in bianco e, se gioca un giocatore, il suo token (sempre, anche senza scelta)

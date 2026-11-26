@@ -23,7 +23,7 @@ componenti. Ogni pezzo con stile ha il suo `.css` accanto (importato da `stili/i
 - `pulsante-principale.ts`: zona 7, l'unico pulsante e "Annulla modifiche"; disegnato dal coordinatore e dal carosello.
 - `ripristino.ts`: `restore`/`undo` lato interfaccia (animazioni ferme, finestre chiuse, carta da mostrare, `chiudiCreaMazzo`).
 - `scarti.ts` + `.css`: la pila degli scarti `#discard` (dalla più recente, tocco = carta grande in sola lettura).
-- `sfondi.ts`: sfondo dell'app (3: `BACKGROUNDS`), sfondo del box di Gravehold (`GRAVEHOLD_BGS`: Città o Torre) e dorso delle carte
+- `sfondi.ts`: sfondo dell'app (ogni `battle-bg*.webp` di `public/Assets/ui/decor/`, elenco letto da `vite.config.ts`: `BACKGROUNDS`, senza nomi), sfondo del box di Gravehold (`GRAVEHOLD_BGS`: Città o Torre) e dorso delle carte
   (29, `CARD_BACKS` in `ui/pagina.ts`, `setCardBack`): pulsanti con anteprima usati dal menu laterale e dalle Opzioni. Scelte nel browser, mai nell'undo.
 - `token-volo.ts`: le animazioni dei token (il potere da risolvere che pulsa e diventa grigio, i token della carta pescata che compaiono)
   su una copia del token messa sul `body`, sopra tutta la pagina (`avviaVolo`, `riallineaVoli`; fotogrammi in `componenti.css` e

@@ -19,6 +19,7 @@ export interface SceltaSfondo {
   set: (id: string) => void;     // sceglie uno sfondo
   name: (id: string) => string;  // nome mostrato
   chosen: (name: string) => string; // etichetta per i lettori di schermo
+  showName?: boolean;            // il nome si vede accanto all'anteprima (predefinito sì; lo sfondo dell'app no: solo le anteprime)
 }
 
 // Nome di un elemento di un elenco di testi (sfondi, dorsi) per id
@@ -30,11 +31,11 @@ function textOf(names: Record<string, string>, id: string): string {
 // Non fa parte della partita (niente undo).
 export const BACKGROUND_KEY = 'aeonsend-app-0.2-background';
 
-export const BACKGROUNDS: Sfondo[] = [
-  { id: 'masked', src: 'Assets/ui/decor/battle-bg.webp' },
-  { id: 'horned', src: 'Assets/ui/decor/battle-bg-2.webp' },
-  { id: 'maw', src: 'Assets/ui/decor/battle-bg-3.webp' }
-];
+// Ogni file public/Assets/ui/decor/battle-bg*.webp è uno sfondo (l'elenco lo legge vite.config.ts quando parte `npm run dev` o
+// `npm run build`, in ordine di nome con i numeri in ordine: per uno sfondo nuovo basta mettere il file e riavviare `npm run dev`).
+// L'id è il nome del file senza .webp; il primo è il predefinito (anche se la scelta salvata non esiste più).
+declare const __SFONDI__: string[];
+export const BACKGROUNDS: Sfondo[] = __SFONDI__.map(file => ({ id: file.replace(/\.webp$/, ''), src: `Assets/ui/decor/${file}` }));
 
 export function currentBackground(): Sfondo {
   let id: string | null = null;
@@ -43,7 +44,9 @@ export function currentBackground(): Sfondo {
 }
 
 export function applyBackground(): void {
-  app.style.setProperty('--ae-battle-bg', cssUrl(currentBackground().src));
+  const bg = currentBackground();
+  app.style.setProperty('--ae-battle-bg', cssUrl(bg.src));
+  app.dataset.sfondo = bg.id;
 }
 
 export function setBackground(id: string): void {
@@ -93,7 +96,8 @@ export function backgroundChoiceButton(onClosed: (() => void) | null,
     name.textContent = choice.name(b.id);
     btn.setAttribute('aria-label', choice.chosen(choice.name(b.id)));
   };
-  btn.append(thumb, name);
+  btn.append(thumb);
+  if (choice.showName !== false) btn.append(name);
   btn.addEventListener('click', () => openBackgroundPicker(sync, onClosed, choice));
   sync();
   return btn;
@@ -114,7 +118,9 @@ export function openBackgroundPicker(onChosen: (() => void) | null, onClosed: ((
     const img = el('img');
     img.alt = '';
     img.src = b.src;
-    item.append(img, el('span', 'ae-bg-item-name', choice.name(b.id)));
+    item.append(img);
+    if (choice.showName !== false) item.append(el('span', 'ae-bg-item-name', choice.name(b.id)));
+    else item.setAttribute('aria-label', choice.name(b.id));
     item.addEventListener('click', () => {
       choice.set(b.id);
       close();
@@ -176,7 +182,8 @@ export function avvio(): void {
 
   APP_BG_CHOICE = {
     className: '', title: () => T.background, list: BACKGROUNDS, current: currentBackground, set: setBackground,
-    name: id => textOf(T.backgrounds, id), chosen: n => T.backgroundChosen(n)
+    // Senza nomi: per i lettori di schermo "Sfondo 3" (il posto nell'elenco)
+    name: id => `${T.background} ${BACKGROUNDS.findIndex(b => b.id === id) + 1}`, chosen: n => T.backgroundChosen(n), showName: false
   };
 
   GRAVEHOLD_BG_CHOICE = {

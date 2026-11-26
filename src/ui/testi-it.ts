@@ -170,7 +170,6 @@ export const I18N_IT = {
   menuDeck: 'Carte nel mazzo',
   background: 'Sfondo',
   backgroundChosen: (name: string) => `Sfondo: ${name}`,
-  backgrounds: { masked: 'Nemesi mascherata', horned: 'Demone cornuto', maw: 'Bocca con tentacoli' },
   graveholdBg: 'Sfondo Gravehold',
   graveholdBgChosen: (name: string) => `Sfondo Gravehold: ${name}`,
   graveholdBgs: { city: 'Città', tower: 'Torre' },
@@ -205,7 +204,7 @@ export const I18N_IT = {
   drawTurnCard: 'Pesca carta turno',
   trackWaiting: 'Carta turno da pescare',
   pairChoiceTitle: 'Chi gioca questo turno?',
-  drawTurnTitle: 'Pesca nuovo turno',
+  drawTurnTitle: 'Nuovo turno',
   drawTurnCardLabel: 'Pesca la carta del nuovo turno, coperta',
   drawnTurnNemesis: 'Turno Nemesi',
   // Mazzo dei turni

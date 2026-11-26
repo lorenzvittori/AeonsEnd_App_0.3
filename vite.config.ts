@@ -1,7 +1,13 @@
 // Configurazione di Vite (npm run dev / build / preview) e di Vitest (npm test).
+import { readdirSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
 
+// Gli sfondi dell'app: ogni public/Assets/ui/decor/battle-bg*.webp (src/ui/componenti/sfondi.ts); un file nuovo si vede riavviando `npm run dev`
+const sfondi = readdirSync('public/Assets/ui/decor').filter(f => /^battle-bg.*\.webp$/.test(f))
+  .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }));
+
 export default defineConfig({
+  define: { __SFONDI__: JSON.stringify(sfondi) },
   // Il sito è pubblicato su GitHub Pages in https://lorenzvittori.github.io/AeonsEnd_App_0.3/: Vite aggiunge questo
   // percorso agli indirizzi che iniziano con / (file di public/ in index.html e nel CSS) e ai file costruiti.
   // In locale l'app è quindi in http://localhost:5173/AeonsEnd_App_0.3/ (dev) e :4173 (preview).

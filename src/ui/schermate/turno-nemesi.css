@@ -13,7 +13,7 @@
   border-bottom: 1px solid var(--ae-border); overscroll-behavior-x: contain; scroll-snap-type: x proximity;
 }
 /* Barra di scorrimento della fascia (con tante carte): metà dell'altezza di quella di sistema, con i bordi arrotondati */
-.ae-compact-rail::-webkit-scrollbar { height: 7px; }
+.ae-compact-rail::-webkit-scrollbar { height: 3px; }
 .ae-compact-rail::-webkit-scrollbar-track { background: transparent; border-radius: 999px; }
 .ae-compact-rail::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ae-text-muted) 55%, transparent); border-radius: 999px; }
 @supports not selector(::-webkit-scrollbar) { .ae-compact-rail { scrollbar-width: thin; } }

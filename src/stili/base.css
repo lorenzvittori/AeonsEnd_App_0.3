@@ -23,13 +23,15 @@ body { overflow: hidden; }
 .ae-shell > .ae-main { position: relative; z-index: 1; }
 
 /* --- Sfondo unico: la maga a sinistra, la nemesi a destra ---
-   Immagine scelta nel Menu (--ae-battle-bg, impostata da JS; BACKGROUNDS), predefinita battle-bg.webp.
+   Immagine scelta nel Menu (--ae-battle-bg, impostata da JS; BACKGROUNDS), predefinita il primo battle-bg*.webp (ogni battle-bg*.webp di Assets/ui/decor è uno sfondo).
    Turno giocatori: si vede il lato sinistro; turno nemesi (anche in pesca): lo sfondo scorre e si vede il lato destro
    (partita.css, in base a data-turno). Velo scuro al 50%. */
 .ae-shell {
-  background: linear-gradient(color-mix(in srgb, var(--ae-bg) 50%, transparent), color-mix(in srgb, var(--ae-bg) 50%, transparent)), var(--ae-battle-bg, url('/Assets/ui/decor/battle-bg.webp')) 0% center / cover no-repeat, var(--ae-bg);
+  background: linear-gradient(color-mix(in srgb, var(--ae-bg) 50%, transparent), color-mix(in srgb, var(--ae-bg) 50%, transparent)), var(--ae-battle-bg, url('/Assets/ui/decor/battle-bg-1.webp')) 0% center / cover no-repeat, var(--ae-bg);
   transition: background-position .8s cubic-bezier(.45, 0, .2, 1);
 }
+/* Sfondo bianco: tutto bianco, senza il velo scuro */
+.ae-shell[data-sfondo="white"] { background: var(--colore-bianco); }
 @media (prefers-reduced-motion: reduce) {
   .ae-shell { transition: none; }
 }

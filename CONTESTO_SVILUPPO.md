@@ -135,7 +135,7 @@ Il tag `main-prima-ripristino` conserva la `main` che si sta sostituendo. Dopo i
 | **Crea mazzo** (`#deck-build`, `ui.deckBuilding`) | Schermata dei 9 mazzi dopo "Inizia partita", con lo slider (`deckSlider`). |
 | **Menu iniziale** (`startMode = 'home'`) | Partita in corso (Riprendi), Nuova partita, Opzioni. |
 | **Collezione** | Prodotti posseduti (wave e mini espansioni), scelti in "La mia collezione". |
-| **Sfondo unico** (`--ae-battle-bg`, `BACKGROUNDS`) | Un'immagine sola su tutta l'app: maga a sinistra (turno giocatori), nemesi a destra (turno nemesi). Si sceglie nel Menu tra `battle-bg.webp`, `battle-bg-2.webp`, `battle-bg-3.webp` (1672 x 941). |
+| **Sfondo unico** (`--ae-battle-bg`, `BACKGROUNDS`) | Un'immagine sola su tutta l'app: maga a sinistra (turno giocatori), nemesi a destra (turno nemesi). Si sceglie nel Menu tra le anteprime (senza nomi): ogni `battle-bg*.webp` di `public/Assets/ui/decor/` è uno sfondo (elenco letto da `vite.config.ts`; un file nuovo si vede riavviando `npm run dev`). |
 | **BannerInfoNemesi** | Tolto in v105, recuperabile dal tag `v104-banner-info-nemesi`. |
 
 ## 6. Mappa delle cartelle
