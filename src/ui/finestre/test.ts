@@ -50,7 +50,7 @@ import { avviaRegolazioni, terminaRegolazioni } from './test-regolazioni.ts';
 //   turn, maxTier             turni nemesi giocati e Tier più alto già uscito (per la scritta "Tier N")
 //   graveLife, nemesisLife    (facoltativi) vite di Gravehold e della nemesi
 //   stats                     (facoltativo) { startedMinAgo, tierMinAgo: { 2, 3 }, minionsKilled: [{ name, turns }],
-//                             powersPaid, powersResolved, attacksResolved (nomi), mages: { p1: { damage, powers, kills } } }
+//                             powersPaid, powersResolved, attacksResolved (nomi), mages: { p1: { damage, powers, kills, aether, nemesisDamage, graveHeal } } }
 // Per aggiungere uno scenario basta un oggetto in più qui sotto (src/ui/finestre/README.md).
 // Una carta di uno scenario: il nome, o { name, boxCode } quando il nome è di più carte
 export type CartaScenario = string | { name: string; boxCode?: string };
@@ -172,7 +172,8 @@ export const SCENARI: Scenario[] = [
       minionsKilled: [{ name: 'Drillbeak Wurm', turns: 1 }, { name: 'Carriode Colony', turns: 3 }, { name: 'Blind Enigma', turns: 2 }],
       powersPaid: ['Morbid Gyre', 'Eye of Nothing'], powersResolved: ['Woven Sky'],
       attacksResolved: ['Rend', 'Disorient', 'Aether Shock'],
-      mages: { p1: { damage: 14, powers: 1, kills: 2 }, p2: { damage: 9, powers: 1, kills: 1 } }
+      mages: { p1: { damage: 14, powers: 1, kills: 2, aether: 2, nemesisDamage: 12, graveHeal: 3 },
+        p2: { damage: 9, powers: 1, kills: 1, aether: 3, nemesisDamage: 7, graveHeal: 0 } }
     }
   },
   {

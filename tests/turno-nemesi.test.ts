@@ -195,7 +195,7 @@ describe('turno giocatori e statistiche', () => {
     const p = g.add(POWER2);
     const gone = N.applyDrafts(g, new Map([[m.uid, { hp: 0 }], [p.uid, { paid: true }], [999, { hp: 3 }]]), 'p2');
     expect(gone).toEqual([m, p]);
-    expect(g.stats.mages.p2).toEqual({ damage: MINION_HP, powers: 1, kills: 1 });
+    expect(g.stats.mages.p2).toEqual({ ...N.emptyMage(), damage: MINION_HP, powers: 1, kills: 1, aether: N.aetherCost(POWER2) });
     expect(g.queue.length).toBe(0);
     expect(g.stats.minionsKilled).toBe(1);
     expect(g.stats.powersPaid).toBe(1);
@@ -210,7 +210,7 @@ describe('turno giocatori e statistiche', () => {
     const m3 = k.add(MINION);
     m3.hp = 1;
     N.applyDrafts(k, new Map([[m3.uid, { hp: 2 }]]), 'p1');
-    expect(k.stats.mages.p1).toEqual({ damage: 0, powers: 0, kills: 0 });
+    expect(k.stats.mages.p1).toEqual(N.emptyMage());
   });
 
   it('minion a vita variabile: "?" finché non impostata, non muore a 0, +1 senza limite, poi vita massima', () => {
@@ -225,7 +225,7 @@ describe('turno giocatori e statistiche', () => {
     g.queue.push(e);
     N.applyDrafts(g, new Map([[e.uid, { hp: 7 }]]), 'p1');
     expect([e.hp, e.turnHp, e.hpSet, e.hpMax]).toEqual([7, 7, true, 7]);
-    expect(g.stats.mages.p1).toEqual({ damage: 0, powers: 0, kills: 0 });
+    expect(g.stats.mages.p1).toEqual(N.emptyMage());
     expect(N.hpUnset(e)).toBe(false);
     expect(N.hpMaxOf(e)).toBe(7);
     expect(N.hpCap(e, true)).toBe(7);

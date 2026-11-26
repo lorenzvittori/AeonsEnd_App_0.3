@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vite
 import { caricaCatalogo } from '../src/stato/catalogo.ts';
 import { preferenze } from '../src/stato/preferenze.ts';
 import * as P from '../src/stato/partita.ts';
-import { isDrawStep } from '../src/regole/turno-nemesi.ts';
+import { isDrawStep, makeEntry } from '../src/regole/turno-nemesi.ts';
 import { DRAW_UID, ui } from '../src/ui/pagina.ts';
 import { viewCard } from '../src/ui/schermate/turno-nemesi.ts';
 import { actionText, variantePartita } from '../src/ui/partita-variante.ts';
@@ -26,7 +26,7 @@ function fissa(seed: number): void {
 
 // Stato dell'interfaccia che conta per le varianti (come ui di src/ui/pagina.ts)
 function uiDi(cambi: Partial<UiPerVariante> = {}): UiPerVariante {
-  return { deckBuilding: false, drafts: new Map<number, BozzaCarta>(), trackShuffle: false, viewedUid: null, ...cambi };
+  return { deckBuilding: false, drafts: new Map<number, BozzaCarta>(), viewedUid: null, ...cambi };
 }
 
 // Modifiche non salvate su una carta (bozza della vita di un minion)
@@ -94,9 +94,12 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
     v = variante(partita, uiDi());
     expect(v.momento).toBe('giocatori');
     expect(v.azione).toBe('fine-turno');
-    expect([T.endTurn, T.endTurnShuffle]).toContain(v.testo);
-    // Durante il mazzo dei turni mischiato: "Fine turno · Mischia mazzo"
-    expect(variante(partita, uiDi({ trackShuffle: true })).testo).toBe(T.endTurnShuffle);
+    expect(v.testo).toBe(T.endTurn);
+    // Il turno finisce: il turno dopo è da pescare (finestra "Pesca nuovo turno"), il pulsante torna "Pesca carta turno"
+    P.fineTurnoGiocatore();
+    v = variante(partita, uiDi());
+    expect(v.azione).toBe('pesca-carta-turno');
+    expect(v.testo).toBe(T.drawTurnCard);
   });
 
   it('turno giocatori con modifiche non salvate: "Salva modifiche" e "Annulla modifiche"', () => {
@@ -111,7 +114,7 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
     for (const drafts of [new Map<number, BozzaCarta>(), conModifiche()]) {
       const v = variante(partita, uiDi({ drafts, viewedUid: active.uid }));
       expect(v).toEqual({ momento: 'nemesi', carteGrandi: 'carosello', azione: 'risolvi',
-        testo: actionText(active, false, P.turnRoundOver(), T), annullaModifiche: false });
+        testo: actionText(active, false, T), annullaModifiche: false });
     }
     // Nessuna carta guardata ancora: si mostra quella da risolvere
     expect(variante(partita, uiDi()).azione).toBe('risolvi');
@@ -143,7 +146,7 @@ describe.each([['it', DIZIONARI.it], ['en', DIZIONARI.en]] as const)('variantePa
       const v = variante(partita, uiDi({ viewedUid }));
       expect(v.momento).toBe('nemesi');
       expect(v.azione).toBe('risolvi');
-      expect(v.testo).toBe(actionText(drawn, true, P.turnRoundOver(), T));
+      expect(v.testo).toBe(actionText(drawn, true, T));
     }
   });
 
@@ -188,8 +191,7 @@ describe('variantePartita() in inglese: testo del pulsante principale', () => {
     expect(variantePartita(partita, uiDi(), EN).testo).toBe('Draw turn card');
     expect(variantePartita(partita, uiDi({ drafts: conModifiche() }), EN).testo).toBe('Save changes');
     finoA(() => !partita.resolving && !P.awaitingTurnCard());
-    expect(['End turn · Draw turn card', 'End turn · Shuffle deck']).toContain(variantePartita(partita, uiDi(), EN).testo);
-    expect(variantePartita(partita, uiDi({ trackShuffle: true }), EN).testo).toBe('End turn · Shuffle deck');
+    expect(variantePartita(partita, uiDi(), EN).testo).toBe('End turn');
   });
 
   it('turno nemesi: Draw, Back to the card to resolve', () => {
@@ -200,5 +202,20 @@ describe('variantePartita() in inglese: testo del pulsante principale', () => {
     finoA(turnoNemesiConCarte);
     const other = must(partita.queue.find((e, i) => i !== partita.currentIndex), 'altra carta');
     expect(variantePartita(partita, uiDi({ viewedUid: other.uid }), EN).testo).toBe('Back to the card to resolve');
+  });
+});
+
+// La carta appena pescata chiude il turno nemesi: il pulsante lo dice
+describe('actionText(): carta appena pescata', () => {
+  it('attacco: "Effetto risolto · Fine turno"; le altre carte: "Metti in gioco · Fine turno nemesi"', () => {
+    const attack = must(cards.find(c => c.type === 'Attack'), 'un attacco');
+    const power = must(cards.find(c => c.type === 'Power'), 'un potere');
+    for (const T of [DIZIONARI.it, DIZIONARI.en]) {
+      expect(actionText(makeEntry(attack, 1, 1), true, T)).toBe(T.ctaAttackEnd);
+      expect(actionText(makeEntry(power, 2, 1), true, T)).toBe(T.ctaPutInPlayEnd);
+      // un attacco già in coda (non appena pescato) resta "Effetto risolto"
+      expect(actionText(makeEntry(attack, 1, 1), false, T)).toBe(T.ctaResolved);
+    }
+    expect(DIZIONARI.it.ctaAttackEnd).toBe('Effetto risolto · Fine turno');
   });
 });

@@ -12,7 +12,8 @@
 // regole/salvataggio.ts, test in tests/turno-nemesi.test.ts.
 
 import type { Carta } from '../tipi/dati.ts';
-import type { BozzaCarta, Giocatore, GruppoStatistiche, Partita, Statistiche, StatisticheMago, VoceInGioco } from '../tipi/partita.ts';
+import type { BozzaCarta, Giocatore, GruppoStatistiche, Partita, Statistiche, StatisticheMago, TipoVita,
+  VoceInGioco } from '../tipi/partita.ts';
 
 // I campi della partita usati dal turno nemesi
 export type Gioco = Pick<Partita, 'queue' | 'deck' | 'discard' | 'stats' | 'turn' | 'currentIndex' | 'newIndex' | 'resolving' | 'maxTierDrawn'>;
@@ -79,11 +80,33 @@ export function entryByUid(queue: readonly VoceInGioco[], uid: number | null): V
 // --- Statistiche ---
 
 // Statistiche di una partita nuova. cards: id delle carte di ogni gruppo; startedAt / tierAt / endedAt: istanti;
-// mages: per giocatore { damage, powers, kills }
+// mages: per giocatore { damage, powers, kills, aether, nemesisDamage, graveHeal }
 export function emptyStats(deckSize: number): Statistiche {
   return { deckSize, minionsKilled: 0, powersPaid: 0, powersResolved: 0, aetherSpent: 0, attacksResolved: 0, minions: [], mages: {},
     cards: { minionsKilled: [], powersPaid: [], powersResolved: [], attacksResolved: [] },
     startedAt: null, tierAt: {}, endedAt: null };
+}
+
+// Statistiche di un mago a zero
+export function emptyMage(): StatisticheMago {
+  return { damage: 0, powers: 0, kills: 0, aether: 0, nemesisDamage: 0, graveHeal: 0 };
+}
+
+// Statistiche del mago in `stats` (le crea a zero se mancano; i campi che i salvataggi vecchi non hanno valgono 0).
+// Modifica `stats`
+export function mageStats(stats: Pick<Statistiche, 'mages'>, mage: Giocatore): StatisticheMago {
+  const m = Object.assign(emptyMage(), stats.mages[mage]);
+  stats.mages[mage] = m;
+  return m;
+}
+
+// Cambio di vita durante il turno di un mago (null: nessun mago, per esempio turno nemesi): punti tolti alla nemesi o
+// dati a Gravehold. Modifica `stats`
+export function countLifeChange(stats: Pick<Statistiche, 'mages'>, kind: TipoVita, before: number, after: number,
+  mage: Giocatore | null): void {
+  if (!mage) return;
+  if (kind === 'nemesis' && after < before) mageStats(stats, mage).nemesisDamage += before - after;
+  else if (kind === 'grave' && after > before) mageStats(stats, mage).graveHeal += after - before;
 }
 
 // Aggiunge la carta all'elenco di un gruppo (anche su statistiche vecchie senza elenchi). Modifica `stats`
@@ -260,11 +283,7 @@ export function removeWhileResolving(g: Gioco, entry: VoceInGioco): void {
 // Poi le carte grigie vanno negli scarti. Modifica g. Restituisce le voci uscite
 export function applyDrafts(g: Pick<Gioco, 'queue' | 'discard' | 'stats' | 'turn'>, drafts: ReadonlyMap<number, BozzaCarta>,
   mage: Giocatore | null): VoceInGioco[] {
-  let m: StatisticheMago | null = null;
-  if (mage) {
-    m = g.stats.mages[mage] || { damage: 0, powers: 0, kills: 0 };
-    g.stats.mages[mage] = m;
-  }
+  const m: StatisticheMago | null = mage ? mageStats(g.stats, mage) : null;
   drafts.forEach((d, uid) => {
     const entry = entryByUid(g.queue, uid);
     if (!entry) return;
@@ -279,7 +298,7 @@ export function applyDrafts(g: Pick<Gioco, 'queue' | 'discard' | 'stats' | 'turn
       if (firstSet && d.hp > 0) { entry.hpSet = true; entry.turnHp = d.hp; entry.hpMax = d.hp; }
     }
     if (d.paid) {
-      if (m && !entry.paid) m.powers++;
+      if (m && !entry.paid) { m.powers++; m.aether += aetherCost(entry.data); }
       entry.paid = true;
     }
   });

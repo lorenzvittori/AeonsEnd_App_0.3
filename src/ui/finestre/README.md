@@ -14,24 +14,31 @@ Ogni finestra con stile ha il suo `.css` accanto.
 
 ## Cosa fanno
 - **Menu:** turno nemesi e carte nel mazzo; *Annulla ultima azione* (chiude il menu e lascia un pulsante sospeso, ripetibile: il
-  primo toglie le modifiche non salvate); Scarti; *Nemesi uccisa* (apre la Vittoria); Sfondo, Dorso, Sfondo Gravehold (pulsanti con
+  primo toglie le modifiche non salvate); Scarti; *Statistiche in corso* (apre le Statistiche, aggancio `apriStatistiche`); *Nemesi uccisa* (apre la Vittoria); Sfondo, Dorso, Sfondo Gravehold (pulsanti con
   anteprima); *Ricomincia la partita*; *Esci dalla partita* (rosso, conferma "Uscire dalla partita?" con `openExitConfirm`; i pulsanti
   da tenere premuto usano `holdToConfirm`, `HOLD_EXIT_MS`). Nella Modalità test: "Ricomincia lo scenario", "Esci dal test".
 - **Opzioni:** La mia collezione (riepilogo wave · prodotti; un interruttore per wave con le sue mini espansioni, Seleziona/Deseleziona
   tutto, vale solo con "Salva collezione"; per ora wave 1 e 4), Dorso, Sfondo, *Carte turno 1/2 e 3/4* (interruttore, attivo, vale dal
   prossimo giro), *Lingua / Language* (sceglierne un'altra salva e ricarica l'app). Il menu iniziale mostra "Modalità test" in fondo.
-- **Scheda carta:** minion = vita in bozza (−5 −1 +1; +1 solo fino alla vita di inizio turno), potere = token e rimozione pagando il
+- **Scheda carta:** minion = vita in bozza (−5 −1 +1, senza tetti: oltre la vita massima il numero diventa dorato e compare un avviso, `hpOverMax`; il
+  minimo è 0; i comandi sotto la carta grande restano con il +1 solo fino alla vita di inizio turno), potere = token e rimozione pagando il
   costo. Minion a vita variabile ("?"): "Imposta la vita" con −5 −1 +1 +5 da 0; `unsetHpClick` apre la scheda dal box "?".
   Il pulsante principale diventa *Salva modifiche* (un solo passo di undo; minion a 0 e poteri pagati vanno negli scarti) con *Annulla modifiche*.
 - **Vita** (`openLifeDialog`): pillola al centro con numero grande, −5 −1 · +1 +5, cambio "+x"/"−y"; esce dal box e si ingrandisce
   (`LIFE_ZOOM_MS` 280ms); si chiude toccando fuori, con Esc o Indietro e la vita si applica una volta sola (un passo di undo, senza cambi nessuno).
-- **Statistiche:** turni nemesi, carte giocate (mazzo iniziale − rimaste), rimanenti (per Tier), minion uccisi (con la vita della carta,
+  Gravehold non ha minimo (`lifeFloor`): può andare nei negativi; la Sconfitta scatta quando arriva a 0 o meno da sopra.
+- **Statistiche** (`openStats`, anche da *Statistiche in corso* del menu): in cima i tempi e la tabella dei maghi, poi le righe con le carte, in fondo i
+  turni in gioco dei minion (una fila di miniature con la clessidra e i turni, come le altre carte). Turni nemesi, carte giocate (mazzo iniziale − rimaste), rimanenti (per Tier), minion uccisi (con la vita della carta,
   "*" se variabile), poteri scartati pagando e risolti, Æ spesi (solo costi "Spend N Æ"), attacchi risolti, turni in gioco di ogni minion;
   elenchi in `stats.cards` / `stats.minions` (id; i salvataggi vecchi non li hanno). **Maghi**: `stats.mages` (`p1`…`p4`, `wild`),
   contati in `saveAllDrafts` per il giocatore del turno: danni ai minion (le cure nello stesso salvataggio li riducono), minion
-  uccisi; non contano le vite del turno nemesi. **Tempi** (`statsTimes`): `startedAt`, `tierAt` (prima carta di ogni Tier), `endedAt`;
+  uccisi, poteri scartati e **costo pagato** (Æ = `removalCost` della carta); in `cambiaVita` i punti tolti alla nemesi (**Danni nemesi**) e
+  dati a Gravehold (**Vita a Gravehold**) nel turno di un giocatore; non contano le vite del turno nemesi. La tabella ha il token del
+  giocatore e "P1"…"P4". **Tempi** (`statsTimes`): `startedAt`, `tierAt` (prima carta di ogni Tier), `endedAt`;
   è l'orologio, pause comprese; partite iniziate prima mostrano "—". Vittoria = mazzo vuoto e niente potere o minion in gioco,
-  o *Nemesi uccisa*; vita a 0: nemesi → Vittoria, Gravehold → Sconfitta; chiusa la schermata, Undo rimette la vita.
+  o *Nemesi uccisa*; vita a 0: nemesi → Vittoria, Gravehold (0 o meno) → Sconfitta, con "Continua" che torna alla partita; chiusa la
+  schermata, Undo rimette la vita. Un tocco durante l'animazione di entrata di Vittoria e Sconfitta (e dei banner Tier e "Partita iniziata")
+  la finisce subito.
 - **Modalità test:** dal menu iniziale, elenco degli **scenari** (`SCENARI`, `startScenario`); uno scenario non parte se una carta non è
   in `cards.json` (o il nome è di più carte senza `boxCode`) e dice il motivo. Nella testata "TEST · <scenario>". **Isolamento:** con un test in
   corso (`testRun`) niente si salva e la collezione non conta; lo scenario sostituisce solo, finché dura, le carte 1/2 e 3/4 e il

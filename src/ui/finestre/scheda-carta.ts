@@ -3,7 +3,7 @@
 // All'avvio il tocco sul box "?" di un minion a vita variabile, ovunque compaia, apre questa scheda.
 // Livello 4 (ui/finestre/). Dipende da: stato/partita.ts (lettura, cambiaVitaMinion), ui/ base (testi, pagina, dom,
 // ridisegno), ui/componenti (componenti, dialoghi, testata). Usato da: schermate turno giocatori e turno nemesi.
-import { cambiaVitaMinion, entryByUid, hpCap, hpUnset, partita } from '../../stato/partita.ts';
+import { cambiaVitaMinion, entryByUid, hpMaxOf, hpUnset, partita } from '../../stato/partita.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
 import { cardArt, draftHp, draftOf, hasHp, needsPairChoice, setDraft, tokenIcons,
   typeName } from '../componenti/componenti.ts';
@@ -100,16 +100,16 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
   const delta = el('p', 'ae-hp-delta');
   row.append(number, delta);
   const controls = el('div', 'ae-hp-controls');
-  // Turno giocatori: −5, −1 e +1 (solo fino alla vita di inizio turno); turno nemesi: −1 e +1; vita "?" da impostare:
-  // −5, −1, +1 e +5 nei due turni
-  const cap = Number(hpCap(entry, partita.resolving));
-  const stepButtons: [number, HTMLButtonElement][] = [];
+  // Turno giocatori: −5, −1 e +1; turno nemesi: −1 e +1; vita "?" da impostare: −5, −1, +1 e +5 nei due turni. In questa
+  // finestra la vita non ha tetti: si può salire a piacere, e oltre la vita massima il numero diventa dorato e compare un
+  // avviso (non blocca niente)
+  const max = Number(hpMaxOf(entry));
   (unset ? [-5, -1, 1, 5] : partita.resolving ? [-1, 1] : [-5, -1, 1]).forEach(step => {
     const b = button(step > 0 ? '+' + step : '−' + Math.abs(step), 'secondary', () => {
-      draft = Math.min(cap, Math.max(0, draft + step));
+      draft = Math.max(0, draft + step);
       update();
+      if (!unset && draft > max) showToast(T.hpOverMax(max));
     });
-    stepButtons.push([step, b]);
     b.setAttribute('aria-label', T.lifeStepAria(step));
     controls.appendChild(b);
   });
@@ -130,9 +130,8 @@ export function buildHpPanel(dialog: HTMLElement, panel: HTMLElement, entry: Voc
     delta.replaceChildren();
     if (dies) delta.append(icon('heart'), el('span', '', T.willBeDeleted));
     else if (change !== 0 && !unset) delta.append(icon('heart'), el('span', '', T.hpDelta(change)));
-    stepButtons.forEach(([step, b]) => {
-      if (step > 0 && !partita.resolving) { b.disabled = draft >= cap; b.classList.toggle('is-dimmed', draft >= cap); }
-    });
+    // Oltre la vita massima della carta (non per la vita "?", che non ne ha ancora una): numero dorato
+    number.classList.toggle('is-over', !unset && draft > max);
     confirm.textContent = dies ? T.deleteMinion : T.confirmHp;
     confirm.className = 'ae-button ' + (dies ? 'ae-button--danger' : 'ae-button--primary');
   }

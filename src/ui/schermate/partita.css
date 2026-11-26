@@ -75,13 +75,18 @@
 .ae-main .ae-queue-viewport:has(> .ae-empty:not([hidden]))::before, .ae-main .ae-queue-viewport:has(> .ae-empty:not([hidden]))::after { flex-grow: 0; }
 .ae-main :is(.ae-queue-viewport, .ae-focus)[hidden] { display: none; }
 /* Zona 5: la coda o il carosello, uno visibile per momento (misure e spaziatori: sopra) */
-/* Zona 3: la fascia senza carte (turno giocatori, coda vuota) non c'è */
-.ae-compact-rail[hidden] { display: none; }
+/* Zona 3: la fascia senza carte (turno giocatori, coda vuota; classe is-vuota, messa da renderQueue) tiene il suo spazio,
+   vuota e invisibile: le vite sotto non si spostano quando le carte arrivano o se ne vanno */
+.ae-compact-rail.is-vuota { visibility: hidden; }
 
 /* --- Varianti del momento (data-turno) --- */
 /* Sfondo (la maga a sinistra, la nemesi a destra, base.css .ae-shell): turno nemesi e passo Pesca mostrano il lato
    destro; lo sfondo scorre (transizione di base.css) */
 .ae-shell:is([data-turno="nemesi"], [data-turno="pesca"]) { background-position: 0 0, 100% center, 0 0; }
+/* Turno da pescare (finestra "Pesca nuovo turno"; anche carta 1/2 o 3/4 con il giocatore da scegliere): lo sfondo sta al
+   centro, un po' verso la maga. Resta lì finché la finestra è aperta: va a sinistra (giocatori) o a destra (nemesi) solo
+   dopo che si è chiusa */
+.ae-shell[data-fondo="centro"] { background-position: 0 0, 38% center, 0 0; }
 /* Niente dissolvenza nel turno nemesi e dal turno nemesi al turno giocatori (le carte non spariscono: toPlayersTurn
    in turno-giocatori.ts aggiunge is-from-nemesis) */
 :is([data-turno="nemesi"], [data-turno="pesca"]) > .ae-main > [data-zona], .ae-main.is-from-nemesis > [data-zona] { animation: none; }

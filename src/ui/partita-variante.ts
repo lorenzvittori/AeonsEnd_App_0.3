@@ -6,7 +6,7 @@
 // tipo dello stato dell'interfaccia). Usato da: navigazione (render), ui/componenti/pulsante-principale.ts,
 // turno-nemesi-carosello.ts, test.
 
-import { awaitingTurnCard, turnRoundOver } from '../regole/mazzo-turni.ts';
+import { awaitingTurnCard } from '../regole/mazzo-turni.ts';
 import { hpUnset, isDrawStep } from '../regole/turno-nemesi.ts';
 import type { Partita, VoceInGioco } from '../tipi/partita.ts';
 import { DRAW_UID } from './pagina.ts';
@@ -25,8 +25,8 @@ export type MomentoPartita = 'giocatori' | 'nemesi' | 'pesca' | 'crea-mazzo';
 export type AzionePrincipale =
   | 'cursore'            // "Crea mazzo": il pulsante non c'è, al suo posto il cursore
   | 'salva-modifiche'    // turno giocatori con modifiche non salvate
-  | 'pesca-carta-turno'  // turno giocatori in attesa della carta del mazzo dei turni
-  | 'fine-turno'         // turno giocatori: fine del turno del giocatore
+  | 'pesca-carta-turno'  // turno giocatori in attesa della carta del mazzo dei turni (apre la finestra "Pesca nuovo turno")
+  | 'fine-turno'         // turno giocatori: fine del turno del giocatore (poi si apre la finestra "Pesca nuovo turno")
   | 'risolvi'            // turno nemesi: risolve la carta di turno (o la mette in gioco, o imposta la vita)
   | 'pesca'              // turno nemesi, passo Pesca: gira la carta coperta
   | 'torna';             // turno nemesi, si guarda un'altra carta: torna alla carta da risolvere
@@ -48,17 +48,16 @@ export interface VariantePartita {
 
 // Cosa serve della partita e dell'interfaccia (solo lettura)
 export type PartitaPerVariante = Pick<Partita, 'resolving' | 'newIndex' | 'currentIndex' | 'queue' | 'turnOrder'>;
-export type UiPerVariante = Pick<StatoUi, 'deckBuilding' | 'drafts' | 'trackShuffle' | 'viewedUid'>;
+export type UiPerVariante = Pick<StatoUi, 'deckBuilding' | 'drafts' | 'viewedUid'>;
 
 // Testo del pulsante per la carta da risolvere. Anche sull'ultima carta si va solo avanti: la pesca è un passo a parte,
-// con il pulsante "Pesca". `t`: i testi (come in variantePartita).
-export function actionText(entry: VoceInGioco, isNew: boolean, roundOver: boolean, t: Testi = T): string {
+// con il pulsante "Pesca". La carta appena pescata chiude il turno nemesi: "Effetto risolto · Fine turno" per un attacco,
+// "Metti in gioco · Fine turno nemesi" per le altre. `t`: i testi (come in variantePartita).
+export function actionText(entry: VoceInGioco, isNew: boolean, t: Testi = T): string {
   const { data, tokens } = entry;
   // Minion con vita "?": non si mette in gioco finché non si imposta la vita; il pulsante apre la sua scheda
   if (hpUnset(entry)) return t.ctaSetHp;
-  // Ultima carta del giro dei turni: "Metti in gioco · Mischia mazzo"
-  if (isNew) return data.type === 'Attack' ? t.ctaResolved
-    : roundOver ? t.ctaPutInPlayShuffle : t.ctaPutInPlayEnd;
+  if (isNew) return data.type === 'Attack' ? t.ctaAttackEnd : t.ctaPutInPlayEnd;
   // Potere: il token se ne va da solo; il pulsante dice solo cosa succede dopo (Number: null vale 0)
   if (data.type === 'Power') return Number(tokens) > 1 ? t.ctaPowerNext : t.ctaPowerLast;
   // Minion (resta in gioco) e attacco (va negli scarti)
@@ -87,18 +86,17 @@ export function variantePartita(p: PartitaPerVariante, u: UiPerVariante, t: Test
       return { momento, carteGrandi, azione: 'torna',
         testo: t.backToActive, annullaModifiche: false };
     }
-    const testo = drawStep || !active ? t.ctaDraw : actionText(active, p.newIndex >= 0, turnRoundOver(p.turnOrder), t);
+    const testo = drawStep || !active ? t.ctaDraw : actionText(active, p.newIndex >= 0, t);
     return { momento, carteGrandi, azione: drawStep ? 'pesca' : 'risolvi', testo, annullaModifiche: false };
   }
   // Turno giocatori (e "Crea mazzo", che ha la stessa disposizione con il cursore al posto del pulsante)
   const saving = u.drafts.size > 0;
   const awaiting = awaitingTurnCard(p.turnOrder, p.resolving);
-  // A inizio giro (dopo il primo) "Pesca la prima carta turno"; all'ultimo turno del giro "Fine turno · Mischia mazzo"
-  // (anche durante l'animazione del mazzo mischiato)
+  // "Fine turno" apre la finestra "Pesca nuovo turno"; chiusa senza pescare, il pulsante diventa "Pesca carta turno" (a
+  // inizio giro "Pesca la prima carta turno") e la riapre
   const testo = saving ? t.saveChanges
-    : u.trackShuffle ? t.endTurnShuffle
     : awaiting ? (p.turnOrder.round >= 1 && !(p.turnOrder.history || []).length ? t.drawFirstTurnCard : t.drawTurnCard)
-    : turnRoundOver(p.turnOrder) ? t.endTurnShuffle : t.endTurn;
+    : t.endTurn;
   if (u.deckBuilding) {
     return { momento: 'crea-mazzo', carteGrandi: 'coda', azione: 'cursore', testo, annullaModifiche: false };
   }

@@ -10,9 +10,9 @@
 // vite = valori iniziali; stats da zero (mazzo iniziale = tutte le carte); turnHp = hp; bornTurn = turn; hpMax (minion
 // a vita variabile già impostata) = la più alta tra vita e vita di inizio turno; mazzo dei turni: restoreTurnOrder.
 
-import { restoreTurnOrder, emptyPairNext } from './mazzo-turni.ts';
+import { restoreTurnOrder, emptyPairNext, playerKinds } from './mazzo-turni.ts';
 import type { Caso } from './caso.ts';
-import { emptyStats, isVariableMinion, makeEntry } from './turno-nemesi.ts';
+import { emptyStats, isVariableMinion, makeEntry, mageStats } from './turno-nemesi.ts';
 import { GRAVEHOLD_LIFE, nemesisStartLife } from './vite.ts';
 import { isRecord, jsonCopy } from './json.ts';
 import type { Carta, Nemesi } from '../tipi/dati.ts';
@@ -96,6 +96,8 @@ export function restoreGame(s: FotografiaLetta, ctx: ContestoRipristino): { game
   stats.cards = Object.assign(emptyStats(0).cards, stats.cards || {});
   stats.tierAt = Object.assign({}, stats.tierAt || {});
   stats.mages = stats.mages && typeof stats.mages === 'object' ? stats.mages : {};
+  // Statistiche dei maghi di salvataggi vecchi: i campi che mancano (Æ, danni alla nemesi, vita a Gravehold) valgono 0
+  for (const kind of playerKinds(4)) if (stats.mages[kind]) mageStats(stats, kind);
   const view: VistaRipristino = { viewed: null, lastDrawnUid: null, anchor: null };
   let resolving: boolean;
   let currentIndex: number;

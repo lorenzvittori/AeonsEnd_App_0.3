@@ -22,7 +22,7 @@ export const MOMENTI = [
   { id: 'giocatori', atteso: 'giocatori', passi: [['scenario', 'full-queue'], ['js', `const q = document.getElementById('queue'); const s = document.querySelectorAll('.queue-slot')[1];
     q.scrollLeft += s.getBoundingClientRect().left + s.getBoundingClientRect().width / 2 - q.getBoundingClientRect().width / 2; q.dispatchEvent(new Event('scroll')); app.render();`]] },
   // Turno nemesi con il carosello di 10 carte (finisce il turno del giocatore e la carta turno è la nemesi)
-  { id: 'nemesi', passi: [['scenario', 'full-queue'], ['js', 'app.fineTurnoGiocatore(); app.render()']], atteso: 'nemesi' }
+  { id: 'nemesi', passi: [['scenario', 'full-queue'], ['js', 'app.fineTurnoGiocatore(); app.pescaCartaTurno(); app.render()']], atteso: 'nemesi' }
 ];
 
 // Selettori usati più volte (la prima corrispondenza visibile)

@@ -20,6 +20,7 @@ import { BG_SLIDE_MS, buzz, ENTER_MS, lockFor, MORPH_MS, scrollItemInto, shakeAp
   trackDrag } from '../componenti/animazioni.ts';
 import { query } from '../dom.ts';
 import { beginTrackShuffle, playTurnShuffle, SHUFFLE_FADE_MS } from '../componenti/barra-turni.ts';
+import { openDrawTurn } from '../componenti/pesca-turno.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
 import { passaAlTurnoGiocatori, richiediRidisegno } from '../ridisegno.ts';
 import type { DopoAzioneNemesi } from '../ridisegno.ts';
@@ -55,15 +56,19 @@ export function onResolveClick(): void {
     // "Pesca": la carta coperta diventa la carta pescata, che si gira
     if (ui.viewedUid !== DRAW_UID) return;
     const roundAtDraw = partita.turnOrder.round;
-    // Mazzo vuoto: il turno nemesi finisce e si estrae il turno dopo (stato/partita.ts, pescaCarta)
+    // Mazzo vuoto: il turno nemesi finisce e il turno dopo è da pescare (stato/partita.ts, pescaCarta)
     showDrawnCard(pescaCarta());
     if (partita.resolving) {
       showActive(activeEntry());
       lockFor(duration('focus'));
     }
     richiediRidisegno();
-    // Mazzo vuoto all'ultimo turno del giro: mazzo dei turni mischiato
-    if (!partita.resolving && awaitingTurnCard() && partita.turnOrder.round !== roundAtDraw) playTurnShuffle(SHUFFLE_FADE_MS);
+    // Mazzo vuoto: il turno nemesi è finito (all'ultimo turno del giro il mazzo dei turni si è mischiato); si apre la
+    // finestra "Pesca nuovo turno"
+    if (!partita.resolving) {
+      if (partita.turnOrder.round !== roundAtDraw) playTurnShuffle(SHUFFLE_FADE_MS);
+      openDrawTurn();
+    }
     return;
   }
   const active = activeEntry();
@@ -84,21 +89,19 @@ export function onResolveClick(): void {
 }
 
 // Dopo un'azione del turno nemesi già fatta nello stato (carta risolta, minion eliminato dalla scheda): se il turno è
-// finito si torna al turno giocatori (animazione, sfondo, pulsante), se è ripartito subito si annuncia, altrimenti si
+// finito si torna al turno giocatori (animazione, sfondo al centro, poi la finestra "Pesca nuovo turno"), altrimenti si
 // mostra la carta dopo. Lo chiede anche la scheda della carta, con l'aggancio dopoAzioneNemesi
 export function mostraDopoAzione(a: DopoAzioneNemesi): void {
-  const { ghostSource, wasNewStep, turnBefore, roundBefore, scartata } = a;
-  // Dal mazzo dei turni è uscita di nuovo la nemesi: il turno nemesi riparte (scossa e annuncio)
-  if (partita.resolving && partita.turn !== turnBefore) {
-    shakeApp();
-    announce(T.trackNemesisResolve);
-  }
-
+  const { ghostSource, wasNewStep, roundBefore, scartata } = a;
   // Fine dell'ultimo turno del giro: mazzo dei turni mischiato; scritte e colori della barra svaniscono durante il
   // passaggio al turno giocatori, poi le caselle si uniscono e si separano
   const roundShuffled = !partita.resolving && awaitingTurnCard() && partita.turnOrder.round !== roundBefore;
-  const shuffleAfter = roundShuffled ? () => playTurnShuffle(0) : undefined;
   if (roundShuffled) beginTrackShuffle();
+  // A passaggio finito si apre la finestra "Pesca nuovo turno" (e, a fine giro, la barra dei turni si mischia)
+  const shuffleAfter = () => {
+    if (roundShuffled) playTurnShuffle(0);
+    openDrawTurn();
+  };
   if (!partita.resolving) {
     // Fine del turno nemesi: si torna alla VistaCoda con la carta pescata in vista
     // Carta appena pescata e messa in gioco (si prende dalla carta risolta, non da ui.lastDrawnUid: dopo un undo gli uid cambiano)

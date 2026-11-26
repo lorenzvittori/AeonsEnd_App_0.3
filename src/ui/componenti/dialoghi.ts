@@ -13,6 +13,7 @@ export interface Dialogo {
   backdrop: HTMLDivElement;      // sfondo che contiene il dialogo
   onCancel: () => void;          // Esc, X o tocco fuori
   trigger: Element | null;       // elemento che aveva il focus all'apertura (lo riprende alla chiusura)
+  onClosed?: () => void;         // alla chiusura, da qualunque strada (anche closeAllModals)
 }
 
 // Opzioni di apertura di un dialogo
@@ -20,6 +21,7 @@ export interface OpzioniDialogo {
   onCancel: () => void;          // Esc, X o tocco fuori (closeOnScrim)
   initialFocus?: HTMLElement | null; // elemento con il focus all'apertura (altrimenti il primo che lo può avere)
   closeOnScrim?: boolean;        // un tocco fuori dal dialogo lo annulla (predefinito)
+  onClosed?: () => void;         // alla chiusura, da qualunque strada (anche closeAllModals)
 }
 
 export const modals: Dialogo[] = [];
@@ -39,10 +41,10 @@ export function updateInert(): void {
 }
 
 // Apre un dialogo. onCancel = Esc, X o tocco fuori (closeOnScrim). Restituisce la funzione che lo chiude.
-export function openModal(node: HTMLElement, { onCancel, initialFocus, closeOnScrim = true }: OpzioniDialogo): () => void {
+export function openModal(node: HTMLElement, { onCancel, initialFocus, closeOnScrim = true, onClosed }: OpzioniDialogo): () => void {
   const backdrop = el('div', 'ae-modal-backdrop');
   backdrop.appendChild(node);
-  const record: Dialogo = { backdrop, onCancel, trigger: document.activeElement };
+  const record: Dialogo = { backdrop, onCancel, trigger: document.activeElement, onClosed };
   backdrop.addEventListener('click', e => {
     if (e.target === backdrop && closeOnScrim) record.onCancel();
   });
@@ -60,6 +62,7 @@ export function closeModal(record: Dialogo): void {
   record.backdrop.remove();
   updateInert();
   restoreFocus(record.trigger);
+  if (record.onClosed) record.onClosed();
 }
 
 export function closeAllModals(): void {

@@ -165,7 +165,9 @@ describe('salvataggi vecchi', () => {
     // v228 non aveva le vite: Gravehold 30 e la vita della nemesi da nemesis.json
     expect(game.graveLife).toBe(30);
     expect(game.nemesisLife).toBe(start);
-    const withLives = (s: FotografiaLetta) => ({ ...s, graveLife: 30, nemesisLife: start });
+    // I salvataggi vecchi non hanno Æ, danni alla nemesi e vita a Gravehold dei maghi: al ripristino valgono 0
+    const mages = (s: FotografiaLetta) => Object.fromEntries(Object.entries((s.stats && s.stats.mages) || {}).map(([k, m]) => [k, { ...N.emptyMage(), ...m }]));
+    const withLives = (s: FotografiaLetta) => ({ ...s, graveLife: 30, nemesisLife: start, stats: { ...s.stats, mages: mages(s) } });
     expect(S.snapshotGame(game)).toEqual(withLives(MAIN_V228.state));
     const undo = must(MAIN_V228.undo, 'passi di undo');
     expect(undo.length).toBe(3);

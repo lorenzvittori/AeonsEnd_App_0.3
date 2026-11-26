@@ -76,7 +76,7 @@ export function renderResolve(): void {
   rail.replaceChildren(...railItems);
   rail.classList.toggle('is-bloccata', bloccata);
   // (la fascia è la stessa del turno giocatori, che la nasconde quando la coda è vuota)
-  rail.hidden = false;
+  rail.classList.remove('is-vuota');
   rail.scrollLeft = railScroll;
   rail.scrollTop = railScrollTop;
   const viewedItem = query(rail, `[data-uid="${ui.viewedUid}"]`, HTMLElement);

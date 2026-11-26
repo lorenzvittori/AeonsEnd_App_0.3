@@ -14,39 +14,34 @@
 @media (prefers-reduced-motion: reduce) {
   .ae-victory-actions { animation: none; }
 }
+/* Un tocco durante l'animazione di entrata (statistiche.ts, is-settled): subito la scritta e i pulsanti come a fine animazione */
+.ae-modal-backdrop.ae-victory-backdrop.is-settled { animation: none; }
+.ae-victory-backdrop.is-settled .ae-tier-banner-text { animation: none; transform: scale(1.04); }
+.ae-victory-backdrop.is-settled .ae-victory-actions { animation: none; }
 /* Statistiche */
+/* Nella finestra (colonna con scorrimento) le righe non si schiacciano: la fila dei minion resta alta quanto le sue carte */
+.ae-stats > * { flex-shrink: 0; }
 .ae-stats-subtitle { margin-top: 4px; color: var(--ae-gold); font: 600 15px/20px var(--ae-font-display); }
 .ae-stats-empty { color: var(--ae-text-muted); font: 500 14px/20px var(--ae-font-ui); }
 
 /* Banner con testo lungo ("Partita iniziata"): stessa animazione dei Tier, carattere più piccolo per stare nello schermo */
 /* Ordine: regola di turno-nemesi.css; sta qui perché deve venire dopo ".ae-victory-screen .ae-tier-banner-text" (stesso elemento, stessa specificità) */
 .ae-tier-banner-text.is-long { max-width: calc(100vw - 24px); font-size: min(64px, 11vw); line-height: 1.15; text-align: center; }
-/* Statistiche: turni in gioco dei minion con la miniatura della carta */
-.ae-stats-minions { display: flex; flex-direction: column; gap: 8px; }
-.ae-stats-minion { display: flex; align-items: center; gap: 12px; }
-.ae-stats-minion-pic { flex: 0 0 44px; width: 44px; padding: 0; border: 0; background: none; }
-.ae-stats-minion-pic .ae-card-art { width: 100%; height: auto; aspect-ratio: 63 / 88; }
-.ae-stats-minion-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
-.ae-stats-minion-name { font: 600 15px/20px var(--ae-font-ui); }
-.ae-stats-minion-note { color: var(--ae-text-muted); font: 500 12px/16px var(--ae-font-ui); }
-.ae-stats-minion-note:empty { display: none; }
-.ae-stats-minion-turns { flex: 0 0 auto; font: 700 15px/20px var(--ae-font-ui); font-variant-numeric: tabular-nums; }
 /* Statistiche: tempi */
 .ae-stats-times { margin-bottom: 4px; }
-/* Statistiche maghi, tabella (una riga per giocatore, con il pallino del suo colore) */
+/* Statistiche maghi, tabella (una riga per giocatore: il suo token e "P1".."P4"; 7 colonne, le intestazioni vanno a capo) */
 .ae-stats-mages { width: 100%; border-collapse: collapse; table-layout: fixed; font: 500 13px/17px var(--ae-font-ui); }
-.ae-stats-mages th, .ae-stats-mages td { padding: 6px 3px; text-align: center; vertical-align: middle; }
-.ae-stats-mages thead th { color: var(--ae-text-muted); font: 600 11px/14px var(--ae-font-ui); }
-.ae-stats-mages thead th:first-child, .ae-stats-mages tbody th { width: 36%; text-align: left; }
+.ae-stats-mages th, .ae-stats-mages td { padding: 6px 2px; text-align: center; vertical-align: middle; }
+.ae-stats-mages thead th { color: var(--ae-text-muted); font: 600 9px/11px var(--ae-font-ui); vertical-align: bottom; overflow-wrap: anywhere; }
+.ae-stats-mages thead th:first-child, .ae-stats-mages tbody th { width: 62px; padding-right: 14px; text-align: left; }
 .ae-stats-mages tbody tr { border-top: 1px solid color-mix(in srgb, var(--contorno-chiaro) 12%, transparent); }
-.ae-stats-mages tbody th { font-weight: 600; white-space: nowrap; }
+.ae-stats-mages tbody th { font-weight: 700; white-space: nowrap; }
 .ae-stats-mages td { font-weight: 700; font-variant-numeric: tabular-nums; }
-.ae-stats-mage-dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; vertical-align: 1px; background: var(--ae-turn-wild); }
-.ae-stats-mage-dot[data-kind="p1"] { background: var(--ae-turn-p1); }
-.ae-stats-mage-dot[data-kind="p2"] { background: var(--ae-turn-p2); }
-.ae-stats-mage-dot[data-kind="p3"] { background: var(--ae-turn-p3); }
-.ae-stats-mage-dot[data-kind="p4"] { background: var(--ae-turn-p4); }
-
+.ae-stats-mage-token { display: inline-block; width: 22px; height: 22px; margin-right: 3px; vertical-align: middle; background: transparent var(--ae-turn-face) center / contain no-repeat; }
+.ae-stats-mage-token[data-kind="p1"] { --ae-turn-face: url('/Assets/ui/turn-tokens/p1.webp'); }
+.ae-stats-mage-token[data-kind="p2"] { --ae-turn-face: url('/Assets/ui/turn-tokens/p2.webp'); }
+.ae-stats-mage-token[data-kind="p3"] { --ae-turn-face: url('/Assets/ui/turn-tokens/p3.webp'); }
+.ae-stats-mage-token[data-kind="p4"] { --ae-turn-face: url('/Assets/ui/turn-tokens/p4.webp'); }
 /* Statistiche: sotto alcune righe le carte in fila (si toccano per vederle grandi) */
 .ae-stats-list { display: flex; flex-direction: column; gap: 8px; }
 .ae-stats-row { margin-top: 4px; }
@@ -64,4 +59,5 @@
   font: 700 11px/14px var(--ae-font-ui); font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .ae-stats-hp .ae-icon { width: 11px; height: 11px; color: var(--ae-danger); }
+.ae-stats-hp .ae-icon--turns { color: var(--ae-gold); }
 .ae-victory-screen.is-defeat .ae-tier-banner-text { color: var(--esito-negativo); }

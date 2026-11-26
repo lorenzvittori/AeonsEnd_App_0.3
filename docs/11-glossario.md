@@ -47,14 +47,14 @@ chiama nel codice e dove si trova. Serve a tradurre tra quello che si dice al ta
 | carte nel mazzo dei turni | Mazzo turno / Turn deck | `turnOrder.left` (`left[0]` = cima) | `regole/mazzo-turni.ts` |
 | scarti dei turni | Scarti / Discards | `turnOrder.drawn` | `regole/mazzo-turni.ts` |
 | giro (del mazzo dei turni) | Turno N / Turn N (nella testata) | `turnOrder.round`; fine giro: `turnRoundOver()` | `regole/mazzo-turni.ts` |
-| rimescolare a fine giro | Fine turno · Mischia mazzo / End turn · Shuffle deck | `shuffleTurnOrder()`, `nextTurnCard()` | `regole/mazzo-turni.ts`, `stato/partita.ts` |
-| pescare la carta turno | Pesca carta turno / Draw turn card | `drawTurnCard()`, `pescaCartaTurno()`; azione `pesca-carta-turno`; `awaitingTurnCard()` | `regole/mazzo-turni.ts`, `stato/partita.ts` |
-| fine turno di un giocatore | Fine turno · Pesca ordine turno / End turn · Draw turn card | `endPlayerTurn()`, `fineTurnoGiocatore()`; azione `fine-turno` | `stato/partita.ts` |
+| rimescolare a fine giro | (nessun testo: avviene con Fine turno) | `shuffleTurnOrder()`, `closeTurn()` | `regole/mazzo-turni.ts`, `stato/partita.ts` |
+| pescare la carta turno | Pesca carta turno / Draw turn card; finestra Pesca nuovo turno / Draw new turn | `drawTurnCard()`, `pescaCartaTurno()`; azione `pesca-carta-turno`; `awaitingTurnCard()`; `openDrawTurn()` | `regole/mazzo-turni.ts`, `stato/partita.ts`, `ui/componenti/pesca-turno.ts` |
+| fine turno (giocatori o nemesi) | Fine turno / End turn | `endPlayerTurn()`, `fineTurnoGiocatore()`, `afterNemesisTurn()`, `closeTurn()`; azione `fine-turno` | `stato/partita.ts` |
 | storia del giro | (la barra dei turni) | `turnOrder.history`, tipo `TurnoStoria` | `tipi/partita.ts` |
 | carta rivelata / nota | occhio, Rivela tutto / Copri tutto | `turnOrder.known` | `regole/mazzo-turni.ts` |
 | Wild | Wild | carta `wild`; `turnOrder.wild` (giocatore 1-3) | `regole/mazzo-turni.ts` |
 | carte 1/2 e 3/4 | Carte turno 1/2 e 3/4 / ... | carte `p12`, `p34`; memoria `pairNext`; `picks`; `isPairCard()` | `regole/mazzo-turni.ts` |
-| scelta del giocatore di una carta 1/2 o 3/4 | Chi gioca questo turno? | `choosePairPlayer()`, `scegliGiocatoreCoppia()`, `needsPairChoice()` | `regole/mazzo-turni.ts`, `ui/componenti/barra-turni.ts` |
+| scelta del giocatore di una carta 1/2 o 3/4 | Chi gioca questo turno? | `choosePairPlayer()`, `scegliGiocatoreCoppia()`, `needsPairChoice()` | `regole/mazzo-turni.ts`, `ui/componenti/barra-turni.ts`, `ui/componenti/pesca-turno.ts` |
 | barra dei turni | (zona 2) | `#fascia-turno`, `renderTurnTrack()` | `ui/componenti/barra-turni.ts` |
 
 ## Le modifiche, l'Undo, il salvataggio

@@ -15,7 +15,7 @@ l'ora come `now()`, gli uid come `newUid()`) e restituiscono il risultato, oppur
   storia del giro, bozza della schermata, lettura dei salvataggi vecchi.
 - `turno-nemesi.ts`: carte in gioco, risoluzione, pesca, vittoria a mazzo vuoto, statistiche, fine del turno dei giocatori.
 - `vite.ts`: vite di Gravehold (`GRAVEHOLD_LIFE` = 30) e della nemesi (`nemesisStartLife`, campo `life` di nemesis.json),
-  tetto, Vittoria e Sconfitta a 0.
+  tetto, minimo (`lifeFloor`: 0 per la nemesi, nessuno per Gravehold), Vittoria a 0 della nemesi e Sconfitta a 0 o meno di Gravehold.
 - `salvataggio.ts`: fotografia (salvataggio e undo), ripristino anche dai formati vecchi, controllo di `SAVE_VERSION`.
 
 ## Regole di gioco
@@ -29,9 +29,9 @@ l'ora come `now()`, gli uid come `newUid()`) e restituiscono il risultato, oppur
   potere all'ultimo token: negli scarti. **Pesca** (`drawNewCard`): solo con "Pesca"; il mazzo non si rimescola (vuoto = niente
   pesca); un attacco pescato va negli scarti, le altre carte si mettono in gioco. **Inizio turno nemesi** (`nemesisTurn`):
   `turn` sale di uno e parte la risoluzione (`startResolution`). **Fine del turno di un giocatore** (`endPlayerTurnCards`):
-  `turnHp` = vita attuale e le carte grigie (`isGone`) vanno negli scarti; le bozze non salvate non arrivano qui (con bozze il
+  `turnHp` = vita attuale e le carte grigie (`isGone`) vanno negli scarti; **statistiche dei maghi** (`mageStats`, `emptyMage`): danni ai minion, uccisioni, poteri scartati e Æ pagati (`aetherCost` = `removalCost`) in `applyDrafts`, punti vita tolti alla nemesi e dati a Gravehold in `countLifeChange`; le bozze non salvate non arrivano qui (con bozze il
   pulsante è "Salva modifiche"; `ui.drafts` è dell'interfaccia). **Fine del turno nemesi**: da `resolveCurrent`, `drawNewCard` e
-  `removeWhileResolving` (`endResolution`); poi `stato/partita.ts` estrae la carta turno dopo (`afterNemesisTurn`). **Vittoria** (`isVictory`):
+  `removeWhileResolving` (`endResolution`); poi `stato/partita.ts` chiude il turno (`afterNemesisTurn`: il turno dopo è da pescare). **Vittoria** (`isVictory`):
   `turn > 0`, mazzo vuoto, nessun potere né minion in coda.
 - **Minion a vita variabile** (`hpVariable`): entra senza vita (`hp` 0, `hpSet` false), mostra "?" finché i giocatori non la
   impostano; quella vita diventa `hpMax` (tetto del +1, con la vita di inizio turno nel turno giocatori); la prima impostazione
@@ -43,7 +43,7 @@ l'ora come `now()`, gli uid come `newUid()`) e restituiscono il risultato, oppur
   turni valgono per quel giocatore (`turnCardPlayer`). **Carte 1/2 e 3/4** (4 giocatori, preferenza): `pairNext` dice a chi tocca
   la prossima della coppia (null = si sceglie, poi la memoria diventa l'altro; giocatore = carta obbligata); non si azzera
   a fine giro né mescolando; `picks[pos] = { player, forced }`; `predictedPairPlayers` deduce i giocatori delle carte note.
-  Rimettere nel mazzo una carta già giocata non cambia la memoria (`takeFromTurnPile`). `waiting` serve solo a leggere salvataggi vecchi.
+  Rimettere nel mazzo una carta già giocata non cambia la memoria (`takeFromTurnPile`). `waiting`: il turno è finito e il turno dopo è da pescare (`closeTurn` in `stato/partita.ts`; `currentTurn` è null, `awaitingTurnCard` vero).
 
 ## Da sapere prima di modificare
 - Una regola nuova prende tutto come argomento; se serve il caso o l'ora, si aggiunge un parametro e lo passa `stato/partita.ts`.

@@ -22,6 +22,8 @@ export function openLifeDialog(kind: TipoVita): void {
   const original = grave ? partita.graveLife : partita.nemesisLife;
   // Tetto: il valore iniziale, o la vita attuale se è più alta (regole/vite.ts)
   const cap = Vite.lifeCap(original, grave ? GRAVEHOLD_LIFE : nemesisStartLife());
+  // Minimo: 0 per la nemesi; Gravehold può andare nei negativi (a 0 o meno è la Sconfitta)
+  const floor = Vite.lifeFloor(kind);
   let draft = original;
   let close = () => {};
   // Finestra a pillola al centro, come il box (stesso sfondo): in alto il numero grande, sotto −5 −1 · +1 +5.
@@ -45,7 +47,7 @@ export function openLifeDialog(kind: TipoVita): void {
   [-5, -1, 1, 5].forEach(step => {
     const b = el('button', 'ae-life-step', step > 0 ? '+' + step : '−' + Math.abs(step));
     b.type = 'button';
-    b.addEventListener('click', () => { draft = Vite.stepLife(draft, step, cap); update(); });
+    b.addEventListener('click', () => { draft = Vite.stepLife(draft, step, cap, floor); update(); });
     b.setAttribute('aria-label', T.lifeStepAria(step));
     steps.push([step, b]);
     if (step === 1) controls.appendChild(el('span', 'ae-life-step-gap'));
@@ -64,7 +66,7 @@ export function openLifeDialog(kind: TipoVita): void {
     delta.hidden = change === 0;
     number.classList.toggle('is-loss', change < 0);
     number.classList.toggle('is-gain', change > 0);
-    steps.forEach(([step, b]) => { b.disabled = step > 0 ? draft >= cap : draft <= 0; });
+    steps.forEach(([step, b]) => { b.disabled = step > 0 ? draft >= cap : draft <= floor; });
   }
   // La finestra esce dal box e si ingrandisce al centro; chiudendo torna nel box (il box intanto è nascosto)
   const zoomFrom = () => {
@@ -87,7 +89,8 @@ export function openLifeDialog(kind: TipoVita): void {
       close();
       if (box) box.style.visibility = '';
       // A 0: nemesi = Vittoria, Gravehold = Sconfitta (regole/vite.ts)
-      const outcome = Vite.lifeOutcome(kind, value, changed);
+      // Vittoria o Sconfitta solo se la vita è appena arrivata a 0 o meno da sopra (dopo "Continua" non si ripropone)
+      const outcome = Vite.lifeOutcome(kind, value, changed && original > 0);
       if (outcome) mostraFinePartita(outcome);
     };
     const to = animated() && zoomFrom();

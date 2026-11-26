@@ -22,8 +22,10 @@ subito dopo, perché prima prepara le animazioni). **Un'azione = un passo di und
 (`applicaBozzaTurni` senza undo a ogni modifica, `aggiungiPassoUndo` un passo alla chiusura) e la fine della partita
 (`segnaFinePartita`: ora di fine, senza undo).
 `pescaCarta`, `risolviCarta` e `cambiaVitaMinion` (minion a 0 nel turno nemesi) chiudono il turno nemesi quando era l'ultima carta e,
-nello stesso passo di undo, chiamano `afterNemesisTurn` (la carta turno dopo). Il passo Pesca si riprende con Undo e ripresa
-(`restoreGame`).
+nello stesso passo di undo, chiamano `afterNemesisTurn`. Come `fineTurnoGiocatore` (`endPlayerTurn`), questa **chiude il turno** (`closeTurn`):
+il turno dopo è in attesa (`turnOrder.waiting`, a fine giro il mazzo dei turni si mescola) e la carta turno si pesca con un'azione a
+parte, `pescaCartaTurno`, dalla finestra "Pesca nuovo turno". `cambiaVita` aggiunge nelle statistiche del giocatore di turno i punti tolti
+alla nemesi (`nemesisDamage`) e dati a Gravehold (`graveHeal`). Il passo Pesca si riprende con Undo e ripresa (`restoreGame`).
 
 ## Partita da zero e ripristino
 - `campiDaZero()` è l'unico punto che costruisce una partita vuota. `nuovaPartita()` (Nuova partita, Ricomincia, cambio dei

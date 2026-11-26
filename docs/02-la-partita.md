@@ -27,13 +27,13 @@ flowchart TD
     A["Menu iniziale<br/>Riprendi, Nuova partita, Opzioni"] --> B["Nuova partita<br/>giocatori, wave, nemesi, opzioni del mazzo"]
     B -->|"Inizia partita<br/>startGame in ui/navigazione.ts"| C["Crea mazzo<br/>i 9 mazzi, il cursore porta le carte nel mazzo"]
     C -->|"banner Partita iniziata"| D["Turno giocatori, in attesa<br/>pulsante Pesca carta turno"]
-    D -->|"pescaCartaTurno<br/>esce la prima carta del mazzo dei turni"| E{"Che carta esce?"}
+    D -->|"finestra Pesca nuovo turno<br/>pescaCartaTurno: esce la prima carta del mazzo dei turni"| E{"Che carta esce?"}
     E -->|"un giocatore o il wild"| F["Turno giocatori<br/>si modificano vite e costi, si salva"]
     E -->|"la nemesi"| G["Turno nemesi<br/>si risolve ogni carta in coda"]
-    F -->|"Fine turno · Pesca ordine turno<br/>fineTurnoGiocatore"| E
+    F -->|"Fine turno<br/>fineTurnoGiocatore, poi la finestra Pesca nuovo turno"| E
     G -->|"ultima carta risolta"| H["Passo Pesca<br/>dorso al centro, pulsante Pesca"]
     H -->|"pescaCarta<br/>la carta entra in gioco"| I["Carta nuova<br/>messa in gioco o, se è un attacco, scartata"]
-    I -->|"fine turno nemesi<br/>afterNemesisTurn"| E
+    I -->|"fine turno nemesi<br/>afterNemesisTurn, poi la finestra Pesca nuovo turno"| E
     F --> J["Vittoria o Sconfitta"]
     G --> J
 ```
@@ -48,17 +48,20 @@ Passo per passo:
 3. **Crea mazzo.** Una schermata scura mostra i nove mazzi da cui nasce il mazzo nemesi (Tier 1, 2, 3 per Base, Potenziate, Specifiche).
    Si trascina un cursore in basso e le carte volano nel mazzo in alto a sinistra, prima il Tier 3 poi il 2 poi l'1. A fine corsa compare
    il banner "Partita iniziata". Il mazzo vero era già pronto: l'animazione lo mostra soltanto.
-4. **Attesa della carta turno.** Il pulsante in basso dice "Pesca carta turno": si pesca la prima carta del mazzo dei turni.
+4. **Attesa della carta turno.** Il pulsante in basso dice "Pesca carta turno" e lo sfondo sta al centro: tocca e si apre la finestra
+   "Pesca nuovo turno" (il dorso delle carte turno); toccando il dorso si gira e si pesca la prima carta del mazzo dei turni.
 5. **Che carta esce?** Se esce un giocatore (o il wild) si gioca il turno al tavolo e nell'app si possono togliere punti vita ai
    minion e segnare i costi pagati dei poteri. Se esce la nemesi parte subito il turno nemesi.
-6. **Turno giocatori.** Le modifiche sono *bozze*: non valgono finché non si tocca "Salva modifiche". "Fine turno · Pesca ordine turno"
-   chiude il turno e fa uscire la carta dopo.
+6. **Turno giocatori.** Le modifiche sono *bozze*: non valgono finché non si tocca "Salva modifiche". "Fine turno" chiude il turno
+   (le carte grigie vanno negli scarti), lo sfondo va al centro e si apre la finestra "Pesca nuovo turno", dove si pesca la carta
+   dopo. Si esce dalla finestra toccando fuori; se non si è pescato il pulsante diventa "Pesca carta turno" e la riapre.
 7. **Turno nemesi.** Le carte in coda si risolvono una alla volta, dalla più vecchia: un potere perde un token (all'ultimo token va
    negli scarti), un minion resta, un attacco va negli scarti. Il pulsante dice cosa succede.
 8. **Passo Pesca.** Risolte tutte le carte, al centro appare il dorso del mazzo nemesi con il pulsante dorato "Pesca".
 9. **Carta nuova.** La carta pescata si gira. Un attacco si risolve e va negli scarti; un potere o un minion si "mette in gioco" e
-   resta in coda. Finito questo il turno nemesi è chiuso e dal mazzo dei turni esce la carta successiva (può essere di nuovo la
-   nemesi: allora il turno nemesi ricomincia).
+   resta in coda (il pulsante dice "Effetto risolto · Fine turno" per un attacco, "Metti in gioco · Fine turno nemesi" per le altre).
+   Finito questo il turno nemesi è chiuso e si apre la finestra "Pesca nuovo turno": la carta successiva esce toccando il dorso (può
+   essere di nuovo la nemesi: allora il turno nemesi ricomincia alla chiusura della finestra).
 10. **Fine.** Vedi sotto.
 
 ## I giri del mazzo dei turni
@@ -67,9 +70,10 @@ Il mazzo dei turni si consuma carta dopo carta; quando finisce, un **giro** è c
 con 3 giocatori G1 G2 G3 e il *Wild*, con 4 giocatori G1 G2 G3 G4 (oppure, con l'opzione "Carte turno 1/2 e 3/4", due carte 1/2 e due
 3/4); in ogni caso **due carte nemesi**. A fine giro:
 
-- l'ultimo turno dice "Fine turno · Mischia mazzo" (oppure "Metti in gioco · Mischia mazzo" se l'ultimo turno è della nemesi);
-- il mazzo dei turni viene rimescolato (`round` sale di uno: è il "Turno N" della testata);
-- l'app torna in attesa e il pulsante dice di nuovo "Pesca la prima carta turno".
+- l'ultimo turno si chiude come gli altri ("Fine turno"); il mazzo dei turni viene rimescolato subito (`round` sale di uno: è il
+  "Turno N" della testata);
+- l'app torna in attesa e la finestra "Pesca nuovo turno" pesca la prima carta del giro nuovo (se la si chiude prima, il pulsante dice
+  "Pesca la prima carta turno").
 
 Il dettaglio (carte 1/2 e 3/4, Wild, rivelare e riordinare le carte) è nel [file 08](08-mazzo-dei-turni.md).
 
@@ -109,16 +113,13 @@ stateDiagram-v2
     CreaMazzo --> AttesaCartaTurno: banner Partita iniziata
     AttesaCartaTurno --> TurnoGiocatori: esce un giocatore
     AttesaCartaTurno --> Risoluzione: esce la nemesi
-    TurnoGiocatori --> TurnoGiocatori: esce un altro giocatore
-    TurnoGiocatori --> Risoluzione: esce la nemesi
-    TurnoGiocatori --> AttesaCartaTurno: fine giro, mazzo rimescolato
+    TurnoGiocatori --> AttesaCartaTurno: Fine turno (a fine giro il mazzo si rimescola)
     Risoluzione --> PassoPesca: ultima carta risolta
-    PassoPesca --> TurnoGiocatori: carta messa in gioco, esce un giocatore
-    PassoPesca --> Risoluzione: esce di nuovo la nemesi
-    PassoPesca --> AttesaCartaTurno: fine giro, mazzo rimescolato
+    PassoPesca --> AttesaCartaTurno: carta messa in gioco, fine turno nemesi
     TurnoGiocatori --> Vittoria: mazzo vuoto e niente poteri né minion
     TurnoGiocatori --> Vittoria: vita della nemesi a 0
-    TurnoGiocatori --> Sconfitta: vita di Gravehold a 0
+    TurnoGiocatori --> Sconfitta: vita di Gravehold a 0 o meno
+    Sconfitta --> TurnoGiocatori: Continua
     Vittoria --> Menu: Menu iniziale
     Sconfitta --> Menu: Menu iniziale
 ```
@@ -128,19 +129,21 @@ Passo per passo (i nomi in `CamelCase` sono i momenti; nel codice la schermata a
 
 1. **Si parte dal Menu**; da lì o si crea una partita (NuovaPartita, poi CreaMazzo) o si riprende quella salvata (che porta
    direttamente al turno in cui eri).
-2. **AttesaCartaTurno** è il turno giocatori "vuoto" in cui nessuna carta turno è ancora uscita. Succede a inizio partita e a ogni
-   inizio di giro.
+2. **AttesaCartaTurno** è il turno giocatori "vuoto" in cui la carta turno non è ancora uscita: la finestra "Pesca nuovo turno" la
+   pesca (`pescaCartaTurno()`), con lo sfondo al centro. Succede a inizio partita e a **ogni fine turno** (dei giocatori o della nemesi:
+   `closeTurn()` mette il turno in attesa, `turnOrder.waiting`, e a fine giro rimescola il mazzo dei turni).
 3. **Risoluzione** e **PassoPesca** sono i due pezzi del turno nemesi (nel codice, entrambi con `resolving` vero; il passo Pesca è
    quello in cui `isDrawStep()` è vero).
-4. Dal turno nemesi si torna ai giocatori (o si riparte con la nemesi, o si va a fine giro) **sempre** passando per
-   `afterNemesisTurn()` in `stato/partita.ts`, che estrae la carta turno successiva (risolvere, pescare a mazzo vuoto, portare a 0 la vita
-   dell'ultimo minion dalla scheda: [file 07](07-turno-nemesi.md)). L'unica eccezione è il turno nemesi che finisce subito perché coda e
+4. Dal turno nemesi si va all'attesa della carta turno (e da lì ai giocatori, o di nuovo alla nemesi) **sempre** passando per
+   `afterNemesisTurn()` in `stato/partita.ts`, che chiude il turno (risolvere, pescare a mazzo vuoto, portare a 0 la vita
+   dell'ultimo minion dalla scheda: [file 07](07-turno-nemesi.md)); la carta dopo esce dalla finestra "Pesca nuovo turno". L'unica eccezione è il turno nemesi che finisce subito perché coda e
    mazzo sono vuoti: lì è Vittoria.
 5. **Vittoria a mazzo vuoto:** quando si è nel turno giocatori, `isVictory()` (in `regole/turno-nemesi.ts`) è vero con
    `turn > 0`, mazzo vuoto e nessun potere né minion in coda. La finestra "Vittoria" la apre `checkVictory()` in `ui/navigazione.ts` una
    sola volta per ogni stato; se tocchi fuori dalla finestra torni alla partita, e con Undo puoi tornare indietro.
 6. **Vittoria con la vita:** portando la vita della nemesi a 0 (o con la voce di menu "Nemesi uccisa") si vince subito. **Sconfitta:**
-   la vita di Gravehold a 0. Le vite si possono cambiare in qualunque momento della partita, quindi queste due fine possono arrivare
+   la vita di Gravehold a 0 o meno (Gravehold può andare nei negativi; la schermata di Sconfitta ha anche "Continua", che torna alla
+   partita, e non si ripropone finché la vita non risale sopra 0). Le vite si possono cambiare in qualunque momento della partita, quindi queste due fine possono arrivare
    anche durante il turno nemesi; nel diagramma sono disegnate una volta sola, dal turno giocatori, per non riempirlo di frecce.
 7. Dalle due finestre si torna al Menu con "Menu iniziale". La partita salvata resta nel browser finché non se ne crea un'altra.
 

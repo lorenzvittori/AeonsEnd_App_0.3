@@ -203,7 +203,15 @@
     let az;
     // Il pulsante principale vero (come il tocco di chi gioca): così passano da dove passa l'app (la carta mostrata si aggiorna)
     const clicca = () => { C.finisci(); document.getElementById('pulsante-principale').click(); };
-    if (a.awaitingTurnCard()) { clicca(); az = 'pesca carta turno'; }
+    // Finestra "Pesca nuovo turno" (versioni nuove; in quelle vecchie non c'è): si pesca toccando il dorso, poi si chiude toccando fuori
+    const pescaDallaFinestra = () => {
+      const w = document.querySelector('.ae-draw-turn');
+      if (!w) return;
+      const stage = w.querySelector('.ae-draw-turn-stage');
+      if (stage && !stage.disabled) stage.click();
+      if (w.parentElement) w.parentElement.click();
+    };
+    if (a.awaitingTurnCard()) { if (!document.querySelector('.ae-draw-turn')) clicca(); pescaDallaFinestra(); az = 'pesca carta turno'; }
     else if (!p.resolving) {
       const cur = a.currentTurn();
       const m = p.queue.find(e => e.data.type === 'Minion' && !a.hpUnset(e) && Number(e.hp) > 0);

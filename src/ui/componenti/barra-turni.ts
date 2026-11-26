@@ -35,7 +35,7 @@ export function playTurnShuffle(fadeMs: number): void {
   lockFor(fade + merge + 40, () => {
     ui.trackShuffle = false;
     turnTrack.classList.remove('is-shuffling');
-    pulsantePrincipale.focus({ preventScroll: true });
+    if (!ui.pescaTurnoAperta) pulsantePrincipale.focus({ preventScroll: true });
     announce(T.drawFirstTurnCard);
   });
   richiediRidisegno();
@@ -298,7 +298,8 @@ export function pairButtons(kind: CartaTurno | null, cls: string, label: (p: Gio
 export function renderPairChoice(): void {
   const pending = needsPairChoice();
   const minimized = pending && ui.pairMinimized === pairChoiceKey();
-  const show = pending && !minimized;
+  // Con la finestra "Pesca nuovo turno" aperta la scelta è dentro di lei (ui/componenti/pesca-turno.ts)
+  const show = pending && !minimized && !ui.pescaTurnoAperta;
   const wasShown = !pairChoice.hidden;
   pairChoice.hidden = !show;
   app.classList.toggle('is-pair-choice', show);

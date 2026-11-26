@@ -16,9 +16,9 @@ export function scrubStart(up: number, side: number): 'start' | 'cancel' | 'wait
 }
 
 // Vita dopo uno spostamento di `up` pixel in su (negativo = in giù) da quando lo scrubbing è partito: 1 punto ogni
-// LIFE_SCRUB_PX (arrotondato), mai sotto 0 né sopra `cap`
-export function scrubValue(start: number, up: number, cap: number): number {
-  return Math.min(cap, Math.max(0, start + Math.round(up / LIFE_SCRUB_PX)));
+// LIFE_SCRUB_PX (arrotondato), mai sotto `floor` (0 se non detto) né sopra `cap`
+export function scrubValue(start: number, up: number, cap: number, floor = 0): number {
+  return Math.min(cap, Math.max(floor, start + Math.round(up / LIFE_SCRUB_PX)));
 }
 
 // Il cambio rispetto all'inizio, come nella finestra della vita: "+x", "−y" (segno meno tipografico) o '' se uguale

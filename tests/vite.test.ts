@@ -26,6 +26,12 @@ describe('vite e fine partita', () => {
     expect(V.stepLife(3, -5, 30)).toBe(0);
     expect(V.stepLife(10, -1, 30)).toBe(9);
     expect(V.stepLife(34, 1, V.lifeCap(34, 30))).toBe(34);
+    // Gravehold non ha un minimo: va nei negativi; la nemesi si ferma a 0
+    expect(V.lifeFloor('grave')).toBe(-Infinity);
+    expect(V.lifeFloor('nemesis')).toBe(0);
+    expect(V.stepLife(3, -5, 30, V.lifeFloor('grave'))).toBe(-2);
+    expect(V.stepLife(-2, -1, 30, V.lifeFloor('grave'))).toBe(-3);
+    expect(V.stepLife(3, -5, 30, V.lifeFloor('nemesis'))).toBe(0);
   });
 
   it('scrittura della vita: solo il campo giusto della partita', () => {
@@ -42,5 +48,8 @@ describe('vite e fine partita', () => {
     expect(V.lifeOutcome('grave', 0, false)).toBe(null);
     expect(V.lifeOutcome('nemesis', 1, true)).toBe(null);
     expect(V.lifeOutcome('grave', 5, true)).toBe(null);
+    // Gravehold a 0 o meno è la Sconfitta (anche nei negativi), ma solo se la vita è appena arrivata lì
+    expect(V.lifeOutcome('grave', -3, true)).toBe('defeat');
+    expect(V.lifeOutcome('grave', -3, false)).toBe(null);
   });
 });

@@ -85,8 +85,8 @@ export function renderLives(): void {
 }
 
 // Number scrubbing sui box delle vite: tenendo premuto e trascinando in verticale (in su sale, in giù scende) la vita
-// cambia di 1 ogni LIFE_SCRUB_PX, mai sopra il massimo né sotto 0, come nella finestra (vite-scrub.ts), con le cifre
-// che scorrono (renderLifeDigits) e il cambio "+x" / "−y" accanto. Parte dopo LIFE_SCRUB_START in verticale (più in
+// cambia di 1 ogni LIFE_SCRUB_PX, mai sopra il massimo né sotto 0 (Gravehold può scendere sotto 0), come nella finestra
+// (vite-scrub.ts), con le cifre che scorrono (renderLifeDigits) e il cambio "+x" / "−y" accanto. Parte dopo LIFE_SCRUB_START in verticale (più in
 // verticale che di lato; di lato il gesto si annulla). Al rilascio la vita si applica una volta sola (azione cambiaVita:
 // un passo di undo, si salva); a 0 → Vittoria o Sconfitta. Un tocco senza trascinare apre ancora la finestra; il click
 // che segue uno scrubbing no (data-scrubbed). Sul box la pagina non scorre (vite.css, touch-action: none)
@@ -116,7 +116,7 @@ export function lifeScrub(b: HTMLElement, kind: TipoVita): void {
       return;
     }
     e.preventDefault();
-    const next = scrubValue(s.start, up, s.cap);
+    const next = scrubValue(s.start, up, s.cap, Vite.lifeFloor(kind));
     if (next === s.value) return;
     const v = value();
     renderLifeDigits(v, String(next), String(s.value), next < s.value ? -1 : 1);
@@ -150,7 +150,8 @@ export function lifeScrub(b: HTMLElement, kind: TipoVita): void {
     }
     cambiaVita(kind, shown);
     richiediRidisegno();
-    const outcome = Vite.lifeOutcome(kind, shown, true);
+    // Vittoria o Sconfitta solo se la vita è appena arrivata a 0 o meno da sopra (dopo "Continua" non si ripropone)
+    const outcome = Vite.lifeOutcome(kind, shown, start > 0);
     if (outcome) mostraFinePartita(outcome);
   };
   b.addEventListener('pointerup', end(true));

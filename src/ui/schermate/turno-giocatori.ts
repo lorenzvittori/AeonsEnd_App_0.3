@@ -2,17 +2,17 @@
 // ognuna con i suoi comandi sotto (nello spazio riservato della zona 6), fascia piccola nel turno giocatori (zona 3), "Annulla modifiche" e
 // l'azione del pulsante principale (onPulsanteTurnoGiocatori: "Fine turno", "Pesca carta turno", "Salva modifiche"), passaggio
 // animato dal turno nemesi (toPlayersTurn). Il pulsante lo disegna ui/componenti/pulsante-principale.ts. L'inizio del
-// turno nemesi a schermo lo chiede con l'aggancio passaAlTurnoNemesi.
+// turno nemesi a schermo lo chiede la finestra Pesca nuovo turno (ui/componenti/pesca-turno.ts) alla chiusura.
 // Livello 5 (ui/schermate/). Dipende da: stato/ (partita, catalogo), ui/ base (testi, pagina, dom, ridisegno),
 // ui/componenti (animazioni, barra-turni, componenti, dialoghi, misure, testata), ui/finestre/scheda-carta.ts.
 // Usato da: navigazione (render, agganci, avvio).
 
 import { T } from '../testi.ts';
-import { awaitingTurnCard, entryByUid, fineTurnoGiocatore, hpCap, hpUnset, partita, pescaCartaTurno, salvaModifiche,
+import { awaitingTurnCard, entryByUid, fineTurnoGiocatore, hpCap, hpUnset, partita, salvaModifiche,
   turnRoundOver } from '../../stato/partita.ts';
 import { displayEntry, draftHp, draftOf, hasHp, needsPairChoice, queueItem,
   setDraft } from '../componenti/componenti.ts';
-import { announce, button } from '../componenti/dialoghi.ts';
+import { button } from '../componenti/dialoghi.ts';
 import { flyToDiscard } from '../componenti/testata.ts';
 import type { VoceInGioco } from '../../tipi/partita.ts';
 import { annullaModificheBtn, mainEl, pulsantePrincipale, queueEmpty, queueList, queueViewport, rail, reducedMotion,
@@ -20,9 +20,10 @@ import { annullaModificheBtn, mainEl, pulsantePrincipale, queueEmpty, queueList,
 import type { AncoraCoda } from '../pagina.ts';
 import { ENTER_MS, fastScrollTo, MORPH_MS, scrollItemInto, scrollJobs, trackDrag } from '../componenti/animazioni.ts';
 import { el, query, queryAll } from '../dom.ts';
-import { passaAlTurnoNemesi, richiediRidisegno } from '../ridisegno.ts';
+import { richiediRidisegno } from '../ridisegno.ts';
 import { catalogo } from '../../stato/catalogo.ts';
-import { playTurnShuffle, SHUFFLE_FADE_MS, turnTrack } from '../componenti/barra-turni.ts';
+import { playTurnShuffle, SHUFFLE_FADE_MS } from '../componenti/barra-turni.ts';
+import { openDrawTurn } from '../componenti/pesca-turno.ts';
 import { altezzaArea, sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
 
@@ -181,7 +182,8 @@ export function renderQueue(): void {
   }));
   railEl.scrollLeft = railScroll;
   railEl.classList.remove('is-bloccata');
-  railEl.hidden = partita.queue.length === 0;
+  // Senza carte la fascia resta al suo posto, vuota e invisibile (partita.css): le vite sotto non si spostano
+  railEl.classList.toggle('is-vuota', partita.queue.length === 0);
   queueList.replaceChildren(...partita.queue.map((entry, i) => {
     // Ogni carta grande, con i suoi comandi sotto (si vedono solo per la carta al centro)
     const slot = el('div', 'queue-slot');
@@ -254,23 +256,18 @@ export function onPulsanteTurnoGiocatori(): void {
   }
   // Carta 1/2 o 3/4 senza giocatore: si sceglie nella finestra
   if (needsPairChoice()) return;
-  // Fine dell'ultimo turno del giro: mazzo dei turni mischiato, animazione, poi "Pesca la prima carta turno"
-  const roundEnding = !awaitingTurnCard() && turnRoundOver();
-  if (awaitingTurnCard()) pescaCartaTurno(); else fineTurnoGiocatore();
-  if (roundEnding) {
-    playTurnShuffle(SHUFFLE_FADE_MS);
+  // "Pesca carta turno" (turno da pescare, per esempio a inizio partita o dopo aver chiuso la finestra): la riapre
+  if (awaitingTurnCard()) {
+    openDrawTurn();
     return;
   }
-  if (!partita.resolving) {
-    // Dal mazzo dei turni è uscito un giocatore (o il wild): si resta nel turno giocatori, cambia il colore della barra
-    richiediRidisegno();
-    announce(turnTrack.getAttribute('aria-label'));
-    turnTrack.classList.remove('is-changed');
-    void turnTrack.offsetWidth;
-    turnTrack.classList.add('is-changed');
-    return;
-  }
-  passaAlTurnoNemesi();
+  // "Fine turno": il turno finisce (a fine giro il mazzo dei turni si mescola) e lo sfondo va al centro; si pesca il turno
+  // dopo nella finestra "Pesca nuovo turno"
+  const roundEnding = turnRoundOver();
+  fineTurnoGiocatore();
+  richiediRidisegno();
+  if (roundEnding) playTurnShuffle(SHUFFLE_FADE_MS);
+  openDrawTurn();
 }
 
 // Dal turno nemesi al turno giocatori: la carta grande del turno nemesi si trasforma in quella della coda, le altre

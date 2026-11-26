@@ -103,6 +103,9 @@ export interface StatisticheMago {
   damage: number;                // danni fatti ai minion
   powers: number;                // poteri scartati pagando
   kills: number;                 // minion uccisi
+  aether: number;                // Æ pagati per scartare poteri (removalCost)
+  nemesisDamage: number;         // punti vita tolti alla nemesi nei suoi turni
+  graveHeal: number;             // punti vita dati a Gravehold nei suoi turni
 }
 
 // Statistiche della partita (finestra Statistiche della Vittoria)

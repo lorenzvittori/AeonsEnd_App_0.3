@@ -14,7 +14,7 @@ import { T } from './testi.ts';
 import { battleOf } from '../dati/dati.ts';
 import { collectionWaveEnabled, saveCollection, waveOfNemesis } from '../dati/collezione.ts';
 import { prefetchDeckImages } from '../dati/rete.ts';
-import { impostaUndo, isVictory, nuovaPartita, partita } from '../stato/partita.ts';
+import { awaitingTurnCard, impostaUndo, isVictory, nuovaPartita, partita } from '../stato/partita.ts';
 import { readSave, statoSalvataggio } from '../stato/salvataggio.ts';
 import { catalogo } from '../stato/catalogo.ts';
 import { loadDeckOptions, preferenze } from '../stato/preferenze.ts';
@@ -30,6 +30,7 @@ import { showBanner, TIER_BANNER_MS } from './componenti/banner.ts';
 import { creaBarraTurni, renderTurnTrack } from './componenti/barra-turni.ts';
 import { closeAllModals, focusables, loadImage, modals, showToast, topLayer,
   updateInert } from './componenti/dialoghi.ts';
+import { needsPairChoice } from './componenti/componenti.ts';
 import { closeDeckPopover, closeUndoFloat, deckPopover, undoFloat } from './componenti/pesca-undo.ts';
 import { disegnaPulsantePrincipale } from './componenti/pulsante-principale.ts';
 import { restore, undo, updateUndoBtn } from './componenti/ripristino.ts';
@@ -40,7 +41,7 @@ import { renderLives } from './componenti/vite.ts';
 import { openTurnScreen } from './schermate/mazzo-turni.ts';
 import { openSideMenu } from './finestre/menu-laterale.ts';
 import { openMissingNemesis } from './finestre/opzioni.ts';
-import { showDefeat, showVictory } from './finestre/statistiche.ts';
+import { openStats, showDefeat, showVictory } from './finestre/statistiche.ts';
 import { endTest, restartScenario } from './finestre/test.ts';
 import { openLifeDialog } from './finestre/vita.ts';
 import { closeDeckBuild, openGameSetup, rebuildDeck, showDeckBuild, specificCardsOf } from './schermate/crea-mazzo.ts';
@@ -77,6 +78,9 @@ function mostraTurno(v: VariantePartita): void {
   focusEl.hidden = v.carteGrandi === 'coda';
   // Per i lettori di schermo: di quali carte si tratta
   const nemesi = v.momento === 'nemesi' || v.momento === 'pesca';
+  // Lo sfondo sta al centro (partita.css) finché il turno è da pescare, o con una carta 1/2 o 3/4 finché non si sceglie il
+  // giocatore; poi a sinistra (giocatori) o a destra (nemesi, data-turno)
+  app.dataset.fondo = !ui.deckBuilding && (ui.pescaTurnoAperta || (!nemesi && (awaitingTurnCard() || needsPairChoice()))) ? 'centro' : '';
   zonaCarteGrandi.setAttribute('aria-label', nemesi ? T.zonaCarteGrandiNemesi : T.zonaCarteGrandiGiocatori);
   rail.setAttribute('aria-label', nemesi ? T.railNemesi : T.queueRail);
   // Dissolvenza delle zone entrando nel turno giocatori: dal turno nemesi no (la classe la mette toPlayersTurn e si
@@ -102,7 +106,8 @@ export function render(): void {
   updateUndoBtn();
   if (ui.tierBanner) {
     ui.tierWaitUntil = performance.now() + TIER_BANNER_MS;
-    showBanner(T.tierN(ui.tierBanner));
+    // (un tocco la finisce subito: token e vita della carta pescata non aspettano più)
+    showBanner(T.tierN(ui.tierBanner), () => { ui.tierWaitUntil = 0; });
     ui.tierBanner = null;
   }
   // Vite (zona 4)
@@ -334,7 +339,8 @@ export function avvio(): void {
     vaiA: schermata => setStartMode(schermata === 'nuova-partita' ? 'setup' : 'home', true),
     riprendiPartita: resumeGame,
     aggiornaInizio,
-    vita: openLifeDialog
+    vita: openLifeDialog,
+    statistiche: openStats
   });
 
   // Toccando la barra dei turni si apre il mazzo dei turni (rivela, rimescola dagli scarti, ordina)

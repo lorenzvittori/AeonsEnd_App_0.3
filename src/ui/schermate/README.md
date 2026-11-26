@@ -30,18 +30,20 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
   Tier 3); lasciando prima di `DECK_SLIDE_DONE` tutto torna indietro; da tastiera si completa subito. Poi banner e sfondo del turno.
 - **Turno giocatori:** fascia piccola con tutte le carte in gioco, carte grandi in orizzontale (tocco al centro = scheda, di lato = porta
   al centro); i comandi sotto la carta al centro li mostra `markQueueRail` (classe `is-centred`; durante uno scorrimento avviato dall'app l'evidenziazione resta sulla
-  carta scelta, col dito segue lo scorrimento). *Fine turno · Pesca ordine turno* (`endPlayerTurn`) estrae il turno dopo: se
-  esce la nemesi, scossa e vibrazione e lo sfondo scorre a destra. Dopo "Crea mazzo" l'app attende "Pesca carta turno" (`drawFirstTurn`).
-  A fine giro: "Fine turno · Mischia mazzo", animazione `playTurnShuffle`, poi "Pesca la prima carta turno".
+  carta scelta, col dito segue lo scorrimento). *Fine turno* (`endPlayerTurn`) chiude il turno (il turno dopo è in attesa), lo sfondo va al
+  centro (`data-fondo="centro"`) e si apre la finestra "Pesca nuovo turno" (`componenti/pesca-turno.ts`), dove si pesca il turno dopo
+  (`pescaCartaTurno`): se esce la nemesi, scossa e vibrazione e lo sfondo a destra, alla chiusura della finestra. Dopo "Crea mazzo" l'app
+  attende "Pesca carta turno" (apre la stessa finestra). A fine giro il mazzo dei turni si mischia subito (animazione `playTurnShuffle`).
 - **Turno nemesi:** carosello (`#focus`, scroll-snap nativo; `renderFocus` lo ricostruisce solo se cambia `focusStateSignature`,
   `scrollFocusTo`); carte risolte dalla più vecchia. Pulsante: potere "Vai avanti" / "Effetto risolto e scarta" all'ultimo token (un token si
   spegne da solo, `.is-auto-token`: pulsa e diventa grigio su una copia sopra la pagina, `componenti/token-volo.ts`), minion e attacco "Effetto risolto". **Passo Pesca**: dorso
   grande (la carta più grande che ci sta: `--carta-pescata-spazio-sopra`, `--carta-pescata-margine-lati`), pulsante dorato; **dal passo Pesca alla carta pescata messa in
   gioco le carte piccole non si toccano** (`viewCard`, classe `is-bloccata`); la carta nuova ha il
-  bagliore dorato (un attacco lampeggia di rosso e va negli scarti, le altre "Metti in gioco · Fine turno nemesi"). Alla prima carta di Tier
-  2 e 3 il banner. Il mazzo non si rimescola. Dal turno nemesi `passaAlTurnoGiocatori`. Dopo ogni azione che può chiudere il turno nemesi (pulsante
-  principale, minion a 0 dalla scheda) lo schermo fa lo stesso passaggio: `mostraDopoAzione` (`turno-nemesi.ts`), chiesta dalla scheda
-  con l'aggancio `dopoAzioneNemesi`; la carta turno la estrae sempre l'azione dello stato (`afterNemesisTurn`).
+  bagliore dorato (un attacco lampeggia di rosso e va negli scarti con "Effetto risolto · Fine turno", le altre "Metti in gioco · Fine turno
+  nemesi"). Alla prima carta di Tier 2 e 3 il banner (un tocco lo finisce subito). Il mazzo non si rimescola. Dal turno nemesi
+  `passaAlTurnoGiocatori`. Dopo ogni azione che può chiudere il turno nemesi (pulsante principale, minion a 0 dalla scheda) lo schermo fa lo
+  stesso passaggio: `mostraDopoAzione` (`turno-nemesi.ts`), chiesta dalla scheda con l'aggancio `dopoAzioneNemesi`; l'azione dello stato
+  (`afterNemesisTurn`) chiude il turno e a fine passaggio si apre la finestra "Pesca nuovo turno".
 - **Menu e Nuova partita:** menu con partita in corso (Riprendi), collezione vuota = "Inserisci collezione" e Nuova partita oscurata. Nuova
   partita: giocatori 2-4; opzioni del mazzo (*Modalità battaglia*, *Unisci le carte della collezione*, preferenze del browser
   `aeonsend-app-0.2-deck-options`, copiate in `settings`); wave multiple a cifre romane; nemesi con dado, freccia che apre la carta (il retro

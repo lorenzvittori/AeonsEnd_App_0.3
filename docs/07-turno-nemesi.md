@@ -131,10 +131,12 @@ Passo per passo:
 4. La prima impostazione **non conta come danno** nelle statistiche dei maghi (`applyDrafts()`).
 5. Nel turno giocatori il tocco sul box "?" apre la stessa scheda, ma la conferma scrive una *bozza*, come per le altre vite.
 
-Per un minion normale, nel turno nemesi la scheda ha solo −1 e +1 (nel turno giocatori −5, −1 e +1). A 0 il minion esce subito:
+Per un minion normale, nel turno nemesi la scheda ha solo −1 e +1 (nel turno giocatori −5, −1 e +1). In questa scheda la vita **non ha tetti**: si può
+salire oltre la vita massima della carta, e il numero diventa dorato e compare l'avviso "Attenzione: supera la vita massima" (non blocca
+niente; il minimo resta 0). A 0 il minion esce subito:
 `removeWhileResolving()` lo conta come ucciso e lo manda negli scarti, e gli indici (`currentIndex`, `newIndex`) seguono la coda.
 Se era l'ultima carta del turno (la carta appena pescata, oppure l'ultima della coda senza niente da pescare) il turno nemesi finisce
-**come alla fine normale**: la stessa azione (`cambiaVitaMinion()`) chiama `afterNemesisTurn()` ed estrae la carta turno, e lo
+**come alla fine normale**: la stessa azione (`cambiaVitaMinion()`) chiama `afterNemesisTurn()` (il turno dopo è da pescare), e lo
 schermo fa lo stesso passaggio di `onResolveClick()` (aggancio `dopoAzioneNemesi`, che chiama `mostraDopoAzione()` in
 `ui/schermate/turno-nemesi.ts`: animazione, sfondo, pulsante).
 
@@ -148,8 +150,8 @@ stateDiagram-v2
     [*] --> Pesca: ultima carta risolta
     Pesca --> CartaPescata: tocco su Pesca, pescaCarta
     Pesca --> FineTurno: mazzo vuoto, niente da pescare
-    CartaPescata --> FineTurno: Effetto risolto o Metti in gioco
-    FineTurno --> [*]: esce la carta turno successiva
+    CartaPescata --> FineTurno: Effetto risolto · Fine turno o Metti in gioco
+    FineTurno --> [*]: finestra Pesca nuovo turno, esce la carta turno successiva
 ```
 
 Passo per passo:
@@ -162,19 +164,21 @@ Passo per passo:
 3. **La carta pescata** si gira: finché l'immagine non è caricata si vede il dorso con "Caricamento carta..."; poi ruota in 350 ms. È la carta **più grande che ci sta** (`sizeFocus()`: `--carta-pescata-spazio-sopra` sopra la riga vita/token, `--carta-pescata-margine-lati` ai lati, senza scala né crescita). Ha
    l'etichetta NUOVA e un bagliore dorato; i token compaiono uno alla volta, ognuno su una copia sopra la pagina (`ui/componenti/token-volo.ts`); un **attacco** lampeggia di rosso. Se l'immagine non arriva si vede un segnaposto con nome e
    tipo e il tasto "Riprova immagine": il gioco può continuare.
-4. **Si risolve** con il pulsante: un attacco ("Effetto risolto") vola negli scarti, un potere o un minion ("Metti in gioco · Fine turno
-   nemesi") restano in coda. In entrambi i casi il turno nemesi finisce e **la stessa azione** estrae la carta turno successiva
-   (`afterNemesisTurn()`): se è di nuovo la nemesi il turno riparte con una scossa.
-5. **Mazzo vuoto.** Se il mazzo non ha carte non si pesca: `drawNewCard()` restituisce niente, il turno finisce e si estrae la carta
-   turno successiva. **Il mazzo nemesi non si rimescola mai.**
+4. **Si risolve** con il pulsante: un attacco ("Effetto risolto · Fine turno") vola negli scarti, un potere o un minion ("Metti in gioco · Fine turno
+   nemesi") restano in coda. In entrambi i casi il turno nemesi finisce e **la stessa azione** chiama `afterNemesisTurn()`: il turno dopo è
+   da pescare. Finita l'animazione si apre la finestra "Pesca nuovo turno" (lo sfondo è già al centro): toccando il dorso esce la carta
+   turno successiva; se è di nuovo la nemesi il turno riparte con una scossa alla chiusura della finestra.
+5. **Mazzo vuoto.** Se il mazzo non ha carte non si pesca: `drawNewCard()` restituisce niente, il turno finisce e il turno dopo è da pescare
+   (finestra "Pesca nuovo turno"). **Il mazzo nemesi non si rimescola mai.**
 
 ## Come finisce il turno nemesi
 
 Il turno nemesi finisce quando `resolving` torna falso. Le strade sono quattro; le prime tre sono dentro un'azione e la stessa azione
-chiama `afterNemesisTurn()` (`stato/partita.ts`), che estrae la carta turno successiva (`nextTurnCard()`) e, se è di nuovo la nemesi,
-fa ripartire il turno con `nemesisTurn()`:
+chiama `afterNemesisTurn()` (`stato/partita.ts`), che chiude il turno (`closeTurn()`: il turno dopo in attesa, o il mazzo dei turni
+rimescolato a fine giro); la carta turno successiva esce poi dalla finestra "Pesca nuovo turno" (`pescaCartaTurno()`) e, se è di nuovo la
+nemesi, fa ripartire il turno con `nemesisTurn()`:
 
-| Strada | Quando | Azione | Estrae la carta turno |
+| Strada | Quando | Azione | Chiude il turno (carta turno da pescare) |
 |---|---|---|---|
 | risolvere | ultima carta risolta senza niente da pescare, o la carta appena pescata | `risolviCarta()` (`resolveCurrent()`) | sì |
 | pescare | mazzo vuoto al passo Pesca (`drawNewCard()` restituisce niente) | `pescaCarta()` | sì |
@@ -182,7 +186,7 @@ fa ripartire il turno con `nemesisTurn()`:
 | inizio con coda e mazzo vuoti | `startResolution()` chiude subito il turno | `fineTurnoGiocatore()` o `pescaCartaTurno()` (`nemesisTurn()`) | no: è una Vittoria |
 
 Anche lo schermo fa lo stesso passaggio per le prime tre strade (`mostraDopoAzione()`): ritorno al turno giocatori con l'animazione, lo
-sfondo e il pulsante, oppure scossa e annuncio se la nemesi riparte.
+sfondo al centro e il pulsante, poi la finestra "Pesca nuovo turno".
 
 ## Il cambio di Tier
 

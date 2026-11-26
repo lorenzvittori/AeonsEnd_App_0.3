@@ -139,6 +139,7 @@ export interface StatoUi {
   trackPreview?: boolean;        // barra dei turni in anteprima nella finestra del mazzo dei turni
   trackShuffle?: boolean;        // barra dei turni durante la mescolata di un giro nuovo
   pairMinimized?: string | null; // scelta 1/2 o 3/4 ridotta a icona (firma della scelta)
+  pescaTurnoAperta?: boolean;    // finestra "Pesca nuovo turno" aperta (ui/componenti/pesca-turno.ts)
   focusSignature?: string;       // firma dello stato disegnato nel carosello del turno nemesi (focusStateSignature): se
                                  // non cambia, il carosello non si ridisegna ('' = da ridisegnare, per esempio dopo il
                                  // cambio del dorso delle carte)

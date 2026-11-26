@@ -10,7 +10,7 @@ import { T } from '../testi.ts';
 import { partita } from '../../stato/partita.ts';
 import { menuBtn, reducedMotion, ui } from '../pagina.ts';
 import { el } from '../dom.ts';
-import { mostraFinePartita, ricominciaMazzo, ricominciaScenario, vaiAlMenuIniziale } from '../ridisegno.ts';
+import { apriStatistiche, mostraFinePartita, ricominciaMazzo, ricominciaScenario, vaiAlMenuIniziale } from '../ridisegno.ts';
 import { animDone, buzz } from '../componenti/animazioni.ts';
 import { button, dialogShell, openModal } from '../componenti/dialoghi.ts';
 import { openExitConfirm, openUndoFloat } from '../componenti/pesca-undo.ts';
@@ -56,7 +56,10 @@ export function openSideMenu(leave?: () => void): void {
   const undoItem = button(T.undoAction, 'secondary', () => { go(); undo(); openUndoFloat(); });
   undoItem.classList.add('ae-button--full');
   undoItem.disabled = partita.undoStack.length === 0 && ui.drafts.size === 0;
-  const items: HTMLElement[] = [statsList, undoItem, discardOpen, killed];
+  // Statistiche della partita fin qui (le stesse della Vittoria)
+  const statsOpen = button(T.statsInProgress, 'secondary', () => { go(); apriStatistiche(); });
+  statsOpen.classList.add('ae-button--full');
+  const items: HTMLElement[] = [statsList, undoItem, discardOpen, statsOpen, killed];
   // Durante "Crea mazzo": Ricomincia la partita (mazzo nuovo con la stessa nemesi e gli stessi giocatori)
   if (ui.deckBuilding) {
     const restart = button(T.restartGame, 'secondary', () => { go(); ricominciaMazzo(); });

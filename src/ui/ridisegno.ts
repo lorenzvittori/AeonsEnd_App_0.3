@@ -35,6 +35,7 @@ export interface Agganci {
   riprendiPartita: () => void;
   aggiornaInizio: () => void;
   vita: (kind: 'grave' | 'nemesis') => void;
+  statistiche: () => void;
 }
 
 // Finché il coordinatore non li registra, chiamarli è un errore del programma
@@ -55,7 +56,8 @@ const gestori: Agganci = {
   vaiA: mancante('vaiA'),
   riprendiPartita: mancante('riprendiPartita'),
   aggiornaInizio: mancante('aggiornaInizio'),
-  vita: mancante('vita')
+  vita: mancante('vita'),
+  statistiche: mancante('statistiche')
 };
 
 // Il coordinatore registra i gestori (tutti o una parte)
@@ -144,4 +146,9 @@ export function aggiornaInizio(): void {
 // Tocco sul box della vita (componente): si apre la finestra della vita
 export function apriFinestraVita(kind: 'grave' | 'nemesis'): void {
   gestori.vita(kind);
+}
+
+// "Statistiche in corso" del menu laterale: le statistiche della partita (la finestra sta nello stesso livello del menu)
+export function apriStatistiche(): void {
+  gestori.statistiche();
 }

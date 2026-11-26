@@ -7,7 +7,7 @@
 import { shuffle } from '../../dati/dati.ts';
 import { partita } from '../../stato/partita.ts';
 import { buzz, lockFor, tween } from '../componenti/animazioni.ts';
-import { showBanner, TIER_BANNER_MS } from '../componenti/banner.ts';
+import { showBanner } from '../componenti/banner.ts';
 import { dockDeck, renderDockPiles } from '../componenti/testata.ts';
 import { el, query, queryAll } from '../dom.ts';
 import { app, CARD_BACK, pulsantePrincipale, reducedMotion, ui } from '../pagina.ts';
@@ -159,12 +159,13 @@ export function finishDeckBuild(): void {
   // Niente carta turno pescata da sola: il pulsante è "Pesca carta turno"
   richiediRidisegno();
   pulsantePrincipale.focus({ preventScroll: true });
-  // Banner "Partita iniziata", uguale a quello dei Tier; finito il banner lo sfondo si accende
-  showBanner(T.gameStarted);
-  setTimeout(() => {
+  // Banner "Partita iniziata", uguale a quello dei Tier; finito il banner (anche con un tocco) lo sfondo si accende
+  const lightUp = () => {
     ui.deckDark = false;
     app.classList.remove('is-deck-dark');
-  }, reducedMotion.matches ? 0 : TIER_BANNER_MS);
+  };
+  showBanner(T.gameStarted, lightUp);
+  if (reducedMotion.matches) lightUp();
 }
 
 // Completa il mazzo da dove è arrivato il cursore (rilascio vicino alla fine, tastiera), poi la partita inizia

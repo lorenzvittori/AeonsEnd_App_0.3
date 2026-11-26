@@ -1,0 +1,46 @@
+/* pesca-turno.css: finestra "Pesca nuovo turno" (dorso delle carte turno che si gira, di chi è il turno, scelta 1/2 e 3/4)
+   Elementi creati da: ui/componenti/pesca-turno.ts. La carta che si gira usa le regole .ae-flip di turno-nemesi.css; i token
+   della scelta sono .ae-pair-pick di mazzo-turni.css.
+   Ordine: deve venire dopo dialoghi.css, mazzo-turni.css e turno-nemesi.css (ritocca gli stessi elementi con la stessa specificità).
+   Si importa da src/stili/indice.ts. */
+
+/* Velo leggero: dietro la finestra si vede lo sfondo dell'app che si sposta */
+.ae-modal-backdrop.ae-draw-turn-backdrop { background: color-mix(in srgb, var(--velo-finestra) 55%, transparent); }
+.ae-draw-turn {
+  width: min(260px, 100%); display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 22px 20px 24px;
+  border-radius: 16px; background: color-mix(in srgb, var(--finestra-sfondo) 96%, transparent);
+  border: 1px solid color-mix(in srgb, var(--contorno-chiaro) 14%, transparent);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--ombra) 60%, transparent);
+  animation: ae-dialog-in var(--ae-duration-dialog) var(--ae-ease-decelerate);
+}
+.ae-draw-turn-title { margin: 0; color: var(--ae-gold); font: 600 20px/26px var(--ae-font-display); letter-spacing: .06em; text-align: center; }
+
+/* Il dorso (252 x 352, come le carte turno): bagliore dorato finché non si pesca */
+.ae-draw-turn-stage {
+  position: relative; flex: 0 0 auto; width: min(180px, 46vw, calc((100dvh - 280px) * 252 / 352)); aspect-ratio: 252 / 352;
+  padding: 0; border: 0; background: none; color: inherit; cursor: pointer; border-radius: 8% / 6%;
+  box-shadow: 0 0 22px 2px color-mix(in srgb, var(--bagliore-giallo) 70%, transparent);
+}
+.ae-draw-turn-stage.is-drawn { cursor: default; box-shadow: none; }
+.ae-draw-turn .ae-flip-face { border-radius: 8% / 6%; }
+.ae-draw-turn .ae-flip-face--front { background: var(--ae-surface); }
+.ae-draw-turn .ae-flip-face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ae-draw-turn-stage:focus-visible { outline: 3px solid var(--ae-focus); outline-offset: 4px; }
+
+/* Sotto la carta: di chi è il turno (la finestra si allarga solo quando serve) */
+.ae-draw-turn-info {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  animation: ae-fade .3s ease-out both;
+}
+.ae-draw-turn-info:empty { display: none; }
+.ae-draw-turn-who { margin: 0; color: var(--ae-text); font: 600 17px/24px var(--ae-font-ui); text-align: center; }
+/* Token del giocatore di turno (non si tocca), stessa misura dei due token della scelta */
+.ae-draw-turn-token { width: calc(var(--ae-pick-w, 52px) * 1.4); aspect-ratio: 1; background: transparent var(--ae-turn-face) center / contain no-repeat; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--ae-player) 55%, transparent)); }
+.ae-draw-turn-token[data-kind="p1"] { --ae-player: var(--ae-turn-p1); --ae-turn-face: url('/Assets/ui/turn-tokens/p1.webp'); }
+.ae-draw-turn-token[data-kind="p2"] { --ae-player: var(--ae-turn-p2); --ae-turn-face: url('/Assets/ui/turn-tokens/p2.webp'); }
+.ae-draw-turn-token[data-kind="p3"] { --ae-player: var(--ae-turn-p3); --ae-turn-face: url('/Assets/ui/turn-tokens/p3.webp'); }
+.ae-draw-turn-token[data-kind="p4"] { --ae-player: var(--ae-turn-p4); --ae-turn-face: url('/Assets/ui/turn-tokens/p4.webp'); }
+.ae-draw-turn-picks { display: flex; gap: 20px; }
+@media (prefers-reduced-motion: reduce) {
+  .ae-draw-turn, .ae-draw-turn-info { animation: none; }
+}

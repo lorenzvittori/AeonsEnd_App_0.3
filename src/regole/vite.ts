@@ -6,8 +6,9 @@
 // regole/salvataggio.ts, test in tests/vite.test.ts.
 //
 // Come funziona: Gravehold parte da 30, la nemesi dal campo "life" di nemesis.json (0 se manca). Nella finestra della
-// vita i passi (−5 −1 +1 +5) non scendono sotto 0 né salgono sopra il tetto (il valore iniziale, o la vita attuale se è
-// più alta). Alla chiusura, se la vita è cambiata ed è arrivata a 0: nemesi a 0 = Vittoria, Gravehold a 0 = Sconfitta.
+// vita i passi (−5 −1 +1 +5) non salgono sopra il tetto (il valore iniziale, o la vita attuale se è più alta) e la
+// nemesi non scende sotto 0; Gravehold può andare nei negativi. Alla chiusura, se la vita è appena arrivata a 0 o meno:
+// nemesi a 0 = Vittoria, Gravehold a 0 o meno = Sconfitta.
 
 import type { Nemesi } from '../tipi/dati.ts';
 import type { Partita, TipoVita } from '../tipi/partita.ts';
@@ -33,9 +34,14 @@ export function lifeCap(current: number, start: number): number {
   return Math.max(current, start);
 }
 
-// Un passo della finestra della vita: tra 0 e il tetto
-export function stepLife(value: number, step: number, cap: number): number {
-  return Math.min(cap, Math.max(0, value + step));
+// Il minimo della vita: 0 per la nemesi; Gravehold può scendere sotto 0 (resta la Sconfitta già scattata a 0)
+export function lifeFloor(kind: TipoVita): number {
+  return kind === 'grave' ? -Infinity : 0;
+}
+
+// Un passo della finestra della vita: tra il minimo (floor, 0 se non detto) e il tetto
+export function stepLife(value: number, step: number, cap: number, floor = 0): number {
+  return Math.min(cap, Math.max(floor, value + step));
 }
 
 // Scrive la vita. Modifica g (graveLife o nemesisLife)
@@ -43,9 +49,10 @@ export function setLife(g: Pick<Partita, 'graveLife' | 'nemesisLife'>, kind: Tip
   if (kind === 'grave') g.graveLife = value; else g.nemesisLife = value;
 }
 
-// Fine della partita dopo un cambio di vita: 'defeat' (Gravehold a 0), 'victory' (nemesi a 0), null altrimenti
-// (anche se la vita non è cambiata)
+// Fine della partita dopo un cambio di vita: 'defeat' (Gravehold a 0 o meno), 'victory' (nemesi a 0), null altrimenti.
+// `changed`: la vita è appena arrivata a 0 o meno da sopra (chi chiama passa false se non è cambiata o se era già a 0 o
+// meno: dopo "Continua" della Sconfitta non si ripropone a ogni tocco)
 export function lifeOutcome(kind: TipoVita, value: number, changed: boolean): EsitoVita {
-  if (!changed || value !== 0) return null;
+  if (!changed || value > 0) return null;
   return kind === 'grave' ? 'defeat' : 'victory';
 }

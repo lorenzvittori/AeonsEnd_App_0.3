@@ -37,8 +37,9 @@ Passo per passo:
 
 ## Caso (a) · "Fine turno" nel turno giocatori
 
-Il giocatore ha finito il suo turno e tocca il pulsante in basso, che dice "Fine turno · Pesca ordine turno". Il diagramma segue il
-tocco fino alla fine, con i due esiti possibili: esce una carta di un giocatore, oppure esce la nemesi.
+Il giocatore ha finito il suo turno e tocca il pulsante in basso, che dice "Fine turno". Il turno finisce, lo sfondo va al centro e si apre
+la finestra "Pesca nuovo turno": toccando il dorso delle carte turno si pesca il turno dopo. Il diagramma segue i due tocchi, con i due
+esiti possibili: esce una carta di un giocatore, oppure esce la nemesi.
 
 ```mermaid
 sequenceDiagram
@@ -49,19 +50,25 @@ sequenceDiagram
     participant R as regole/
     participant S as stato/salvataggio.ts
     participant A as ui/ridisegno.ts
+    participant W as ui/componenti/pesca-turno.ts
     U->>N: tocca il pulsante principale con data-azione fine-turno
     N->>G: onPulsanteTurnoGiocatori()
     G->>P: fineTurnoGiocatore()
     P->>S: act() fotografa lo stato prima, snapshot e pushUndo
-    P->>R: endPlayerTurnCards poi nextTurnCard
-    Note over R: le carte grigie vanno negli scarti<br/>drawTurnCard pesca dal mazzo dei turni
+    P->>R: endPlayerTurnCards poi closeTurn
+    Note over R: le carte grigie vanno negli scarti<br/>il turno dopo è in attesa (a fine giro il mazzo si rimescola)
+    P->>S: save() scrive la partita nel browser
+    G->>A: richiediRidisegno() (sfondo al centro)
+    G->>W: openDrawTurn()
+    U->>W: tocca il dorso delle carte turno
+    W->>P: pescaCartaTurno() (un altro passo di undo)
+    P->>R: drawTurnCard dal mazzo dei turni
     alt esce un giocatore
-        P->>S: save() scrive la partita nel browser
-        G->>A: richiediRidisegno()
+        W->>A: richiediRidisegno() (sfondo a sinistra)
     else esce la nemesi
         R->>R: nemesisTurn: turn sale di uno, resolving diventa vero
-        P->>S: save() scrive la partita nel browser
-        G->>A: passaAlTurnoNemesi()
+        U->>W: tocca fuori dalla finestra
+        W->>A: passaAlTurnoNemesi()
         A->>N: enterNemesisTurnView() poi richiediRidisegno()
     end
     A->>N: render()
@@ -76,20 +83,24 @@ Passo per passo:
 2. **I controlli.** `onPulsanteTurnoGiocatori()` esce subito se c'è un'animazione in corso (`ui.isTransitioning`), se c'è una carta 1/2 o 3/4 con
    il giocatore ancora da scegliere (`needsPairChoice()`), o se ci sono bozze (in quel caso il pulsante sarebbe "Salva modifiche", vedi
    il caso c).
-3. **L'azione.** Chiama `fineTurnoGiocatore()` di `stato/partita.ts`, che esegue `act(endPlayerTurn)`.
+3. **L'azione.** Chiama `fineTurnoGiocatore()` di `stato/partita.ts`, che esegue `act(endPlayerTurn)`. Con il turno già in attesa
+   (pulsante "Pesca carta turno") apre soltanto la finestra.
 4. **Undo.** `act()` per prima cosa fa la fotografia dello stato (`snapshot()`, che usa `regole/salvataggio.ts`) e la mette in
    `undoStack`. Questa fotografia è ciò che il pulsante Annulla restituirà.
 5. **Le regole.** `endPlayerTurn()` chiama `endPlayerTurnCards()` (in `regole/turno-nemesi.ts`: la vita attuale di ogni minion diventa
    il nuovo riferimento di inizio turno e le carte grigie, cioè poteri pagati e minion a 0, vanno negli scarti) e poi
-   `nextTurnCard()`. Se il giro è finito, quest'ultima rimescola il mazzo dei turni e restituisce "niente": si andrà in attesa. Altrimenti
-   `drawTurnCard()` (in `regole/mazzo-turni.ts`) toglie la carta in cima.
-6. **Se esce la nemesi** si chiama `nemesisTurn()`: `turn` sale di uno e `resolving` diventa vero.
+   `closeTurn()`: il turno dopo è in attesa (`turnOrder.waiting`); se il giro è finito si rimescola invece il mazzo dei turni.
+6. **La finestra "Pesca nuovo turno".** `openDrawTurn()` (`ui/componenti/pesca-turno.ts`) mostra il dorso delle carte turno. Toccandolo,
+   `pescaCartaTurno()` (un altro passo di undo) fa `drawTurnCard()` (in `regole/mazzo-turni.ts`: toglie la carta in cima) e il dorso si
+   gira. **Se esce la nemesi** si chiama `nemesisTurn()`: `turn` sale di uno e `resolving` diventa vero.
 7. **Il salvataggio.** `act()` chiama `save()`, cioè `scriviPartita()`: scrive nel `localStorage` la partita e la cronologia
    dell'Undo (ma non prima del primo turno nemesi, vedi il [file 05](05-stato-e-salvataggio.md)).
-8. **Il ridisegno.** Torna il controllo a `onPulsanteTurnoGiocatori()`. Se è uscito un giocatore chiede `richiediRidisegno()`; se è uscita la
-   nemesi chiama `passaAlTurnoNemesi()` che, passando dall'aggancio, fa partire `enterNemesisTurnView()` (scossa dello schermo,
-   sfondo che scorre a destra, la carta da risolvere in primo piano) e a sua volta chiede il ridisegno. Se invece era l'ultimo
-   turno del giro parte l'animazione `playTurnShuffle()`.
+8. **Il ridisegno.** Dopo "Fine turno" `onPulsanteTurnoGiocatori()` chiede `richiediRidisegno()` (`variantePartita()` e `data-fondo` portano
+   lo sfondo al centro; se era l'ultimo turno del giro parte `playTurnShuffle()`) e apre la finestra. Se dal dorso esce un giocatore la
+   finestra chiede `richiediRidisegno()` e lo sfondo va a sinistra; se esce la nemesi sistema subito sfondo e barra dei turni, e alla chiusura
+   (tocco fuori) chiama `passaAlTurnoNemesi()` che, passando dall'aggancio, fa partire `enterNemesisTurnView()` (scossa dello schermo,
+   la carta da risolvere in primo piano) e a sua volta chiede il ridisegno. Con le carte 1/2 e 3/4 la finestra chiede anche "Chi gioca questo
+   turno?" con i due token (`scegliGiocatoreCoppia()`).
 9. **`render()`.** Disegna in ordine: testata, momento della partita (`variantePartita()` scrive `data-turno`), pulsante, pile, barra
    dei turni, Undo, vite e infine il turno attuale.
 
@@ -102,7 +113,7 @@ Passo per passo:
 | 3 carte piccole | la fascia resta | la fascia con la carta da risolvere in rosso |
 | 5 carte grandi | la coda, `#queue` | il carosello, `#focus` |
 | 6 interattivi | spazio riservato, vuoto (i comandi stanno sotto ogni carta grande, visibili per quella al centro) | spazio riservato, vuoto |
-| 7 principale | colore del nuovo giocatore | testo della prima carta (per esempio "Effetto risolto") |
+| 7 principale | colore del nuovo giocatore ("Fine turno") | testo della prima carta (per esempio "Effetto risolto") |
 
 ## Caso (b) · Risolvere una carta nel turno nemesi
 
@@ -145,8 +156,8 @@ Passo per passo:
 4. **Le regole.** `resolveCurrent()` in `regole/turno-nemesi.ts` guarda il tipo della carta: potere con più di un token, `tokens - 1` e
    `currentIndex + 1` (effetto `token`); minion, solo `currentIndex + 1` (effetto `next`); attacco o potere all'ultimo token, la carta
    va negli scarti e finisce nelle statistiche (effetto `discard`). Se non resta niente da risolvere né da pescare, il turno nemesi finisce.
-5. **Fine del turno nemesi?** Se `resolving` è tornato falso, la stessa azione chiama `afterNemesisTurn()` per estrarre la carta turno
-   successiva (come nel caso a). Il tutto sta dentro lo stesso `act()`: **un tocco, un solo passo di Undo**.
+5. **Fine del turno nemesi?** Se `resolving` è tornato falso, la stessa azione chiama `afterNemesisTurn()` (`closeTurn()`: il turno dopo è
+   in attesa; la carta si pesca poi dalla finestra "Pesca nuovo turno", che `mostraDopoAzione()` apre a fine animazione, come nel caso a). Il tutto sta dentro lo stesso `act()`: **un tocco, un solo passo di Undo**.
 6. **Il salvataggio.** `save()` scrive nel browser, qui sempre (siamo già dopo il primo turno nemesi).
 7. **Le animazioni e il ridisegno.** Tornati in `onResolveClick()`: se la carta è stata scartata vola verso la pila degli scarti in alto
    (`flyToDiscard`), `showActive()` aggiorna la carta mostrata (`ui.viewedUid`) e `lockFor(ms)` blocca i tocchi (`ui.isTransitioning`)
@@ -229,7 +240,7 @@ Passo per passo:
 | 3 carte piccole | etichetta "HP: −1" sulla carta; a 0 la carta diventa grigia (per i lettori di schermo "ucciso") | il numero nuovo di vita; la carta a 0 è già negli scarti e sparisce |
 | 5 carte grandi | stessa etichetta, box "x/X"; a 0 la carta è grigia | il box mostra solo la vita nuova |
 | comandi sotto la carta (zona 6) | i comandi della carta si aggiornano (il +1 si accende; a 0 −5 e −1 sono spenti) | i comandi della carta che ora è al centro |
-| 7 principale | "Salva modifiche" dorato e "Annulla modifiche" | "Fine turno · Pesca ordine turno" |
+| 7 principale | "Salva modifiche" dorato e "Annulla modifiche" | "Fine turno" |
 | 1 testata, pile | invariate | gli scarti salgono se una carta è uscita |
 
 ## Per approfondire

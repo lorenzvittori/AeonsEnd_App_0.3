@@ -33,7 +33,7 @@ import { preferenze, turnPairsSaved } from './preferenze.ts';
 import { scriviPartita } from './salvataggio.ts';
 import type { Carta, DatiRegole, RigaDeckSetup } from '../tipi/dati.ts';
 import type { BozzaCarta, BozzaTurni, CartaTurno, Giocatore, GruppoStatistiche, MazzoTurni, Partita, PianoMazzo,
-  ProvaInCorso, SceltePerMazzo, Statistiche, TipoVita, TurnoStoria, VoceInGioco } from '../tipi/partita.ts';
+  ProvaInCorso, SceltePerMazzo, Statistiche, StatisticheMago, TipoVita, TurnoStoria, VoceInGioco } from '../tipi/partita.ts';
 import type { Fotografia, FotografiaLetta, StatoPartita } from '../tipi/salvataggio.ts';
 
 // Regole senza stato, usate così come sono
@@ -177,6 +177,11 @@ export function emptyStats(deckSize: number): Statistiche {
   return Nemesi.emptyStats(deckSize);
 }
 
+// Statistiche di un giocatore in questa partita (a zero dove mancano)
+export function mageStatsOf(kind: Giocatore): StatisticheMago {
+  return Object.assign(Nemesi.emptyMage(), stato.stats.mages[kind]);
+}
+
 // --- Mazzo dei turni ---
 
 // Opzione "Carte turno 1/2 e 3/4": quella del browser (stato/preferenze.ts), o quella dello scenario della Modalità test
@@ -219,14 +224,14 @@ export function drawTurnCard(pick?: (card: CartaTurno) => boolean): CartaTurno {
   return r.card;
 }
 
-// Fine di un turno: la carta turno dopo, o a fine giro il mazzo mescolato e l'attesa (null)
-export function nextTurnCard(): CartaTurno | null {
-  if (turnRoundOver()) { shuffleTurnOrder(); return null; }
-  return drawTurnCard();
+// Fine di un turno (dei giocatori o della nemesi): la carta del turno dopo non si pesca qui ma nella finestra "Pesca nuovo
+// turno" (pescaCartaTurno); intanto il turno è in attesa. All'ultimo turno del giro il mazzo dei turni si mescola (giro nuovo)
+export function closeTurn(): void {
+  if (turnRoundOver()) shuffleTurnOrder(); else stato.turnOrder.waiting = true;
 }
 
-// "Pesca carta turno": il primo turno del giro; se è la nemesi parte subito il turno nemesi
-export function drawFirstTurn(): void {
+// Pesca della carta turno (primo turno del giro o turno dopo): se è la nemesi parte subito il turno nemesi
+export function drawNextTurn(): void {
   if (drawTurnCard() === 'nemesis') nemesisTurn();
 }
 
@@ -269,16 +274,15 @@ export function nemesisTurn(): void { Nemesi.nemesisTurn(stato); }
 export function resolveCurrent(): Nemesi.Effetto { return Nemesi.resolveCurrent(stato); }
 
 // Fine del turno di un giocatore: danno e cura del turno si azzerano (la vita attuale diventa il riferimento), le carte
-// grigie (poteri pagati, minion a 0) vanno negli scarti, poi il turno dopo dal mazzo dei turni (nemesi: turno nemesi)
+// grigie (poteri pagati, minion a 0) vanno negli scarti, poi il turno dopo è da pescare (closeTurn)
 export function endPlayerTurn(): void {
   Nemesi.endPlayerTurnCards(stato);
-  if (nextTurnCard() === 'nemesis') nemesisTurn();
+  closeTurn();
 }
 
-// Fine del turno nemesi: si estrae il turno dopo; se è di nuovo la nemesi, il turno nemesi riparte subito. Ultima carta
-// del giro: mazzo dei turni mischiato e attesa
+// Fine del turno nemesi: il turno dopo è da pescare (closeTurn); ultima carta del giro: mazzo dei turni mischiato
 export function afterNemesisTurn(): void {
-  if (nextTurnCard() === 'nemesis') nemesisTurn();
+  closeTurn();
 }
 
 // Dopo un minion eliminato nel turno nemesi: gli indici della risoluzione seguono la coda
@@ -288,12 +292,13 @@ export function removeWhileResolving(entry: VoceInGioco): void {
 
 // --- Azioni (ognuna un passo di undo, poi il salvataggio; il ridisegno lo fa chi chiama) ---
 
-// "Pesca carta turno" (attesa della prima carta del giro): il primo turno; se è la nemesi parte il turno nemesi
+// Pesca della carta turno nella finestra "Pesca nuovo turno" (dopo "Fine turno" o a inizio giro): il turno dopo dal mazzo
+// dei turni; se è la nemesi parte il turno nemesi
 export function pescaCartaTurno(): void {
-  act(drawFirstTurn);
+  act(drawNextTurn);
 }
 
-// "Fine turno" di un giocatore: il turno dopo dal mazzo dei turni
+// "Fine turno" di un giocatore: il turno dopo è da pescare (pescaCartaTurno)
 export function fineTurnoGiocatore(): void {
   act(endPlayerTurn);
 }
@@ -323,9 +328,14 @@ export function risolviCarta(): Nemesi.Effetto {
   });
 }
 
-// Vita di Gravehold o della nemesi (finestra della vita)
+// Vita di Gravehold o della nemesi (finestra della vita). Nel turno di un giocatore i punti tolti alla nemesi e quelli dati
+// a Gravehold vanno alle sue statistiche (il wild conta per il giocatore che è wild nel giro)
 export function cambiaVita(kind: TipoVita, value: number): void {
-  act(() => { Vite.setLife(stato, kind, value); });
+  act(() => {
+    const before = kind === 'grave' ? stato.graveLife : stato.nemesisLife;
+    Vite.setLife(stato, kind, value);
+    Nemesi.countLifeChange(stato.stats, kind, before, value, stato.resolving ? null : turnCardPlayer(currentTurnCard()));
+  });
 }
 
 // Vita di un minion confermata nel turno nemesi (scheda della carta). La prima impostazione della vita di un minion a

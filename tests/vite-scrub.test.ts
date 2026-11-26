@@ -26,6 +26,8 @@ describe('scrubbing delle vite', () => {
     expect(scrubValue(20, 30 * 50, 30)).toBe(30);
     expect(scrubValue(20, -30 * 50, 30)).toBe(0);
     expect(scrubValue(35, 30, 35)).toBe(35);
+    // Gravehold può scendere sotto 0: minimo -Infinity
+    expect(scrubValue(2, -30 * 5, 30, -Infinity)).toBe(-3);
   });
 
   it('cambio come nella finestra: +x, −y, niente se uguale', () => {

@@ -127,9 +127,10 @@ stateDiagram-v2
 Passo per passo (per la coppia 1/2; la 3/4 funziona uguale e ha la sua memoria):
 
 1. **SenzaMemoria.** `pairNext.p12` è vuoto. Esce una carta 1/2: `drawTurnCard()` non sa chi gioca.
-2. **DaScegliere.** Sulla barra compare "Chi gioca questo turno?" (`renderPairChoice()` in `ui/componenti/barra-turni.ts`); finché non si
-   sceglie, il pulsante principale non fa niente (`needsPairChoice()`). La scelta chiama `scegliGiocatoreCoppia()`, un'azione con il suo
-   passo di Undo.
+2. **DaScegliere.** Nella finestra "Pesca nuovo turno" (`ui/componenti/pesca-turno.ts`), sotto la carta girata, compare "Chi gioca
+   questo turno?" con i due token; se si esce prima di scegliere, la scelta scende nel pulsante in basso (`renderPairChoice()` in
+   `ui/componenti/barra-turni.ts`, anche dopo un Undo o una ripresa). Finché non si sceglie, il pulsante principale non fa niente
+   (`needsPairChoice()`) e lo sfondo resta al centro. La scelta chiama `scegliGiocatoreCoppia()`, un'azione con il suo passo di Undo.
 3. **ConMemoria.** `choosePairPlayer()` scrive il giocatore nella storia (e in `picks`, la lista di chi ha giocato le carte negli scarti)
    e mette in `pairNext.p12` **l'altro** giocatore.
 4. **Obbligata.** Quando esce la seconda carta 1/2, `drawTurnCard()` vede la memoria piena: il giocatore è già deciso
@@ -145,29 +146,30 @@ strisce bianche e del colore di quel giocatore, e la scritta dice "Wild · N".
 
 ## Fine giro e rimescolamento
 
-Quando si pesca l'ultima carta del mazzo dei turni il giro sta finendo: quel turno è l'ultimo (`turnRoundOver()`), e il pulsante dice
-"Fine turno · Mischia mazzo" (o "Metti in gioco · Mischia mazzo" se l'ultimo turno è della nemesi).
+Quando si pesca l'ultima carta del mazzo dei turni il giro sta finendo: quel turno è l'ultimo (`turnRoundOver()`); finisce come gli altri
+("Fine turno", o "Metti in gioco · Fine turno nemesi" se è della nemesi) e il mazzo si rimescola subito.
 
 ```mermaid
 flowchart TD
-    A["Turno in corso con il mazzo dei turni vuoto<br/>turnRoundOver è vero"] --> B["Pulsante: Fine turno · Mischia mazzo"]
-    B --> C["nextTurnCard in stato/partita.ts"]
+    A["Turno in corso con il mazzo dei turni vuoto<br/>turnRoundOver è vero"] --> B["Pulsante: Fine turno"]
+    B --> C["closeTurn in stato/partita.ts"]
     C --> D["shuffleTurnOrder in regole/mazzo-turni.ts<br/>un mazzo NUOVO, mescolato"]
     D --> E["round sale di uno<br/>known azzerato, scarti e storia vuoti<br/>pairNext resta, wild passa al giocatore dopo"]
     E --> F["si aspetta la carta turno<br/>awaitingTurnCard è vero"]
-    F --> G["Pulsante: Pesca la prima carta turno"]
+    F --> G["Finestra Pesca nuovo turno<br/>(o pulsante Pesca la prima carta turno)"]
 ```
 
 Passo per passo:
 
 1. Dopo l'ultima carta il turno in corso è l'ultimo della storia del giro e `left` è vuoto: `turnRoundOver()` è vero.
-2. Toccando il pulsante, l'azione (`fineTurnoGiocatore()` o, dalla nemesi, `afterNemesisTurn()`) chiama `nextTurnCard()`: a giro finito
-   rimescola con `shuffleTurnOrder()` e restituisce "niente", **senza pescare**.
+2. Toccando il pulsante, l'azione (`fineTurnoGiocatore()` o, dalla nemesi, `afterNemesisTurn()`) chiama `closeTurn()`: a giro finito
+   rimescola con `shuffleTurnOrder()`, **senza pescare** (a metà giro mette solo il turno in attesa, `waiting`).
 3. `shuffleTurnOrder()` crea un mazzo nuovo con le carte per il numero di giocatori, mescolate; `round` sale di uno (è il "Turno N" della
    testata); nessuna carta è rivelata; scarti e storia ripartono vuoti; la memoria delle coppie resta; il Wild passa al giocatore dopo.
 4. Intanto l'interfaccia fa l'animazione `playTurnShuffle()`: le caselle della barra si uniscono e si separano.
-5. La partita è "in attesa della carta turno" (`awaitingTurnCard()`): il pulsante principale è "Pesca la prima carta turno" e, premuto,
-   pesca la prima carta del giro nuovo (`pescaCartaTurno()`). Se esce la nemesi, il turno nemesi parte subito.
+5. La partita è "in attesa della carta turno" (`awaitingTurnCard()`): la finestra "Pesca nuovo turno" pesca la prima carta del giro nuovo
+   (`pescaCartaTurno()`); se la si chiude prima, il pulsante principale è "Pesca la prima carta turno" e la riapre. Se esce la nemesi, il
+   turno nemesi parte alla chiusura della finestra.
 
 ## Per approfondire
 

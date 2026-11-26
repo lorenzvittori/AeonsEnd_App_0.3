@@ -7,12 +7,17 @@ componenti. Ogni pezzo con stile ha il suo `.css` accanto (importato da `stili/i
 - `animazioni.ts`: `lockFor(ms)` (blocca i tocchi e ridisegna alla fine), `fastScrollTo` (scorrimenti animati del 50% più veloci,
   260ms, interrompibili), gesti (`trackDrag`), `buzz` (vibrazione Android), `shakeApp`, durate (`MORPH_MS`, `ENTER_MS`, `BG_SLIDE_MS`).
 - `banner.ts`: la scritta al centro ("Tier 2", "Tier 3", "Partita iniziata"; `showBanner`); il carattere Cinzel si carica
-  all'avvio (`preloadBannerFont`) e l'animazione muove solo trasformazione e opacità.
+  all'avvio (`preloadBannerFont`) e l'animazione muove solo trasformazione e opacità. Un tocco sullo schermo la finisce subito
+  (`onDone`, facoltativa, si chiama alla fine naturale o per il tocco).
 - `barra-turni.ts` + `.css`: la barra dei turni sotto la testata (zona 2). `componenti.ts` + `.css`: le carte disegnate.
 - `dialoghi.ts` + `.css`: la pila delle finestre (`openModal`, Esc, Tab, resto inerte), pulsanti, toast, annunci, immagini.
 - `misure.ts`: `misura()` legge le variabili di `schermate/partita-misure.css` (proporzioni della carta, riga vita/token, comandi,
   spazi, colonna del desktop `sizeColumn`, `sharedCardWidth` unica per i due turni (senza riserve: la zona 6 c'è sempre), `altezzaArea` (altezza
   dell'area delle carte senza lo spazio dell'alone), `spazioVicine()`).
+- `pesca-turno.ts` + `.css`: la finestra "Pesca nuovo turno" (`openDrawTurn`): si apre a ogni fine turno e da "Pesca carta turno"; il dorso delle
+  carte turno (`Assets/ui/turn-cards/back.webp`) si gira come la carta nemesi pescata (`.ae-flip`) e pesca il turno (`pescaCartaTurno`); sotto, di chi è
+  il turno o, con le carte 1/2 e 3/4, "Chi gioca questo turno?" con i due token. Si esce toccando fuori. Quando esce la nemesi il turno nemesi parte a
+  schermo alla chiusura (`passaAlTurnoNemesi`). `ui.pescaTurnoAperta` spegne la vecchia finestra della scelta 1/2 e 3/4 (`renderPairChoice`).
 - `pesca-undo.ts` + `.css`: "Pesca carta" dal mazzo in alto (Rimetti nel mazzo / Scarta), Annulla sospeso, conferma di uscita.
 - `pulsante-principale.ts`: zona 7, l'unico pulsante e "Annulla modifiche"; disegnato dal coordinatore e dal carosello.
 - `ripristino.ts`: `restore`/`undo` lato interfaccia (animazioni ferme, finestre chiuse, carta da mostrare, `chiudiCreaMazzo`).

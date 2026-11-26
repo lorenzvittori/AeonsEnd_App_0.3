@@ -135,7 +135,7 @@ flowchart TD
 
 Passo per passo:
 
-1. **I dizionari.** `ui/testi-it.ts` (`I18N_IT`) è il modello: una chiave per ogni testo, di solito una stringa (`endTurn: 'Fine turno · Pesca ordine turno'`)
+1. **I dizionari.** `ui/testi-it.ts` (`I18N_IT`) è il modello: una chiave per ogni testo, di solito una stringa (`endTurn: 'Fine turno'`)
    o una funzione quando serve un conto o un plurale (`players: (n) => ...`). `ui/testi-en.ts` ha le stesse chiavi: il tipo `Testi` lo impone,
    quindi una chiave mancante è un errore. I testi inglesi devono essere **brevi come quelli italiani**: i pulsanti stanno su una riga.
 2. **`T`.** `ui/testi.ts` è l'unico accesso: sceglie **una volta sola, all'avvio**, il dizionario in base alla lingua (`LINGUA`) e lo chiama `T`.

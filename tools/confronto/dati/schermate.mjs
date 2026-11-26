@@ -60,7 +60,7 @@ export const GIRO = [
   { id: 'turno giocatori: finestra della vita (nemesi)', passi: [CHIUDI, ['js', "app.openLifeDialog('nemesis')"]], foto: 'turno-giocatori-vita-nemesi', atteso: ['.ae-life-modal--nemesis', 'nemesisWord'] },
   { id: 'turno giocatori: scrubbing della vita', passi: [CHIUDI, ['giu', '.ae-life-box--nemesis', 0, -70]] },
   { id: 'turno giocatori: scarti', passi: [['su'], ['scenario', 'full-stats'], ['js', 'app.openDiscard()']], anche: ['orizz'], foto: 'turno-giocatori-scarti', atteso: ['mostRecent', 'leastRecent', 'close'] },
-  { id: 'turno giocatori: menu laterale', passi: [CHIUDI, ['js', 'app.openSideMenu()']], foto: 'turno-giocatori-menu-laterale', atteso: ['menu', 'menuTurn', 'testRestart', 'testExit'] },
+  { id: 'turno giocatori: menu laterale', passi: [CHIUDI, ['js', 'app.openSideMenu()']], foto: 'turno-giocatori-menu-laterale', atteso: ['menu', 'menuTurn', 'statsInProgress', 'testRestart', 'testExit'] },
   { id: 'turno giocatori: statistiche', passi: [CHIUDI, ['js', 'app.openStats()']], foto: 'turno-giocatori-statistiche', atteso: ['statsTitle', 'statsTimeTitle', 'statsMagesTitle'] },
 
   // --- Mazzo dei turni ---
@@ -86,7 +86,7 @@ export const GIRO = [
   { id: 'vite quasi a zero', passi: [['scenario', 'low-lives']], foto: 'turno-giocatori-vite-quasi-a-zero', atteso: [['pulsante', 'endTurn'], ['testo', '.ae-life-box--grave .ae-life-num', '3'], ['testo', '.ae-life-box--nemesis .ae-life-num', '3']] },
   { id: 'statistiche piene', passi: [['scenario', 'full-stats'], ['js', 'app.openStats()']] },
   { id: 'Vittoria', passi: [CHIUDI, ['scenario', 'victory'], ['js', 'app.showVictory()']], anche: ['orizz', 'ridotto'], foto: 'vittoria', atteso: ['victoryTitle', 'statsTitle', 'mainMenu'] },
-  { id: 'Sconfitta', passi: [CHIUDI, ['js', 'app.showDefeat()']], anche: ['orizz'], foto: 'sconfitta', atteso: ['defeatTitle', 'statsTitle', 'mainMenu'] },
+  { id: 'Sconfitta', passi: [CHIUDI, ['js', 'app.showDefeat()']], anche: ['orizz'], foto: 'sconfitta', atteso: ['defeatTitle', 'statsTitle', 'continueLabel', 'mainMenu'] },
 
   // --- Torna al menu ---
   { id: 'menu dopo la partita', passi: [CHIUDI, ['js', 'app.openStart()']] }
@@ -96,6 +96,9 @@ export const GIRO = [
 // prima (tranne la scheda Regolazioni, che si chiude all'inizio della voce dopo). Non entrano nel confronto delle build né nella prova lingua.
 const RIMETTI = ['js', "document.querySelector('.ae-regolazioni .ae-icon-button')?.click(); app.closeAllModals(); app.closeDiscard()"];
 const PAUSA = ['aspetta', 600];   // dopo un cambio di scenario la coda e le immagini finiscono di sistemarsi
+// Finestra "Pesca nuovo turno" dopo la fine di un turno: si tocca il dorso (si pesca) e poi fuori dalla finestra (si chiude: se esce la
+// nemesi il turno nemesi parte a schermo)
+const PESCA_TURNO = [['clic', '.ae-draw-turn-stage'], ['aspetta', 900], ['js', "document.querySelector('.ae-draw-turn-backdrop').click()"], ['aspetta', 2500]];
 const SCEGLI_COPPIA = (turnOrder) => ['js', `const b = app.SCENARI.find(s => s.id === 'pairs'); const r = app.startScenario({ ...b, turnOrder: ${JSON.stringify(turnOrder)} }); if (r) throw new Error(r);`];
 
 export const FOTO_IN_PIU = [
@@ -105,23 +108,28 @@ export const FOTO_IN_PIU = [
   { id: 'turno giocatori: comandi di un potere rimovibile', passi: [['js', "app.scrollToCard(app.partita.queue.find(e => e.data.name === 'Morbid Gyre').uid, 'center')"], PAUSA],
     foto: 'turno-giocatori-comandi-potere-rimovibile', atteso: [['pulsante', 'endTurn'], 'removePowerShort'] },
   // Carte 1/2 e 3/4: chi gioca questo turno?
-  { id: 'carte 1/2: scelta del giocatore', passi: [['scenario', 'pairs'], ['clic', '#pulsante-principale']],
-    foto: 'scelta-giocatore-carta-1-2', atteso: ['pairChoiceTitle', '.is-pair-choice', ['testo', '.ae-pair-pick', '1']] },
-  { id: 'carte 3/4: scelta del giocatore', passi: [SCEGLI_COPPIA({ left: ['p34', 'nemesis', 'p12', 'p34', 'nemesis'], drawn: ['p12'], picks: { 0: { player: 'p1', forced: false } }, pairNext: { p12: 'p1', p34: null }, round: 1 }), ['clic', '#pulsante-principale']],
-    foto: 'scelta-giocatore-carta-3-4', atteso: ['pairChoiceTitle', '.is-pair-choice', ['testo', '.ae-pair-pick', '3']] },
+  // Finestra "Pesca nuovo turno": prima il dorso, poi la carta girata (di chi è il turno)
+  { id: 'pesca nuovo turno: dorso', passi: [['scenario', 'full-queue'], ['clic', '#pulsante-principale'], ['aspetta', 600]],
+    foto: 'pesca-nuovo-turno-dorso', atteso: ['drawTurnTitle', '.ae-draw-turn-stage', ['assente', '.ae-flip.is-flipped']] },
+  { id: 'pesca nuovo turno: carta girata', passi: [['clic', '.ae-draw-turn-stage'], ['aspetta', 1200]],
+    foto: 'pesca-nuovo-turno-carta-girata', atteso: ['.ae-draw-turn .ae-flip.is-flipped', '.ae-draw-turn-who'] },
+  { id: 'carte 1/2: scelta del giocatore', passi: [RIMETTI, ['scenario', 'pairs'], ['clic', '#pulsante-principale'], ['clic', '.ae-draw-turn-stage'], ['aspetta', 1200]],
+    foto: 'scelta-giocatore-carta-1-2', atteso: ['pairChoiceTitle', '.ae-draw-turn .ae-pair-pick', ['testo', '.ae-pair-pick', '1']] },
+  { id: 'carte 3/4: scelta del giocatore', passi: [SCEGLI_COPPIA({ left: ['p34', 'nemesis', 'p12', 'p34', 'nemesis'], drawn: ['p12'], picks: { 0: { player: 'p1', forced: false } }, pairNext: { p12: 'p1', p34: null }, round: 1 }), ['clic', '#pulsante-principale'], ['clic', '.ae-draw-turn-stage'], ['aspetta', 1200]],
+    foto: 'scelta-giocatore-carta-3-4', atteso: ['pairChoiceTitle', '.ae-draw-turn .ae-pair-pick', ['testo', '.ae-pair-pick', '3']] },
   // Mazzo dei turni (Carapace Queen: carte dei giocatori e della nemesi nel mazzo)
   { id: 'mazzo dei turni: a riposo', passi: [CHIUDI, ['scenario', 'variable-hp'], ['js', 'app.openTurnScreen()'], ['aspetta', 800]],
     foto: 'mazzo-dei-turni-a-riposo', atteso: ['turnDeckTitle', 'turnHint', 'turnPileTitle', 'turnCurrent', 'turnResetAll'] },
   { id: 'mazzo dei turni: con le carte rivelate', passi: [['clic', '.ae-turn-eye--all']],
     foto: 'mazzo-dei-turni-carte-rivelate', atteso: ['turnDeckTitle', 'turnHint', '.ae-turn-eye--all[title="Copri tutto"], .ae-turn-eye--all[title="Cover all"]'] },
   // Turno nemesi (Maggoth, il mazzo del test "Carte sul mazzo dei turni": Hissing Acid potere con 3 token, poi Sunder attacco)
-  { id: 'turno nemesi: potere con token', passi: [CHIUDI, ['scenario', 'turn-deck'], ['seme', 5], ['clic', '#pulsante-principale'], ['aspetta', 2500], ['clic', '#pulsante-principale'], ['aspetta', 1500]],
+  { id: 'turno nemesi: potere con token', passi: [CHIUDI, ['scenario', 'turn-deck'], ['seme', 5], ['clic', '#pulsante-principale'], ['aspetta', 2500], ['clic', '#pulsante-principale'], ['aspetta', 1500], ...PESCA_TURNO],
     foto: 'turno-nemesi-potere-con-token', atteso: [['pulsante', 'ctaPowerNext'], '.ae-token'] },
   { id: 'turno nemesi: attacco pescato (con alone)', passi: [['clic', '#pulsante-principale'], ['aspetta', 1500], ['seme', 7], ['clic', '#pulsante-principale'], ['aspetta', 2500]],
-    foto: 'turno-nemesi-attacco-pescato', atteso: [['pulsante', 'ctaResolved'], 'newTag'] },
+    foto: 'turno-nemesi-attacco-pescato', atteso: [['pulsante', 'ctaAttackEnd'], 'newTag'] },
   // Anteprima di un'altra carta: la carta pescata è già in gioco ma si guarda l'altra (Volcanic Zala), la prima (Drillbeak Wurm) resta da risolvere
   { id: 'turno nemesi: anteprima di un\'altra carta', passi: [['aspetta', 2500], CHIUDI, ['scenario', 'tier'], ['seme', 6], ['clic', '#pulsante-principale'], ['aspetta', 600],
-    ['clic', '#pulsante-principale'], ['aspetta', 2500], ['clic', '#pulsante-principale'], ['aspetta', 1000],
+    ['clic', '#pulsante-principale'], ['aspetta', 2500], ['clic', '#pulsante-principale'], ['aspetta', 1500], ...PESCA_TURNO,
     ['js', "app.viewCard(app.partita.queue.find(e => e.data.name === 'Volcanic Zala').uid)"], ['aspetta', 800]],
     foto: 'turno-nemesi-anteprima-altra-carta', atteso: [['pulsante', 'backToActive']] },
   { id: 'turno nemesi: cambio Tier (banner)', passi: [['aspetta', 2500], CHIUDI, ['scenario', 'tier'], ['seme', 6], ['clic', '#pulsante-principale'], ['aspetta', 600],
@@ -148,7 +156,7 @@ export const ORDINE_FOTO = [
   'turno-giocatori-coda-vuota', 'turno-giocatori-coda-piena', 'turno-giocatori-comandi-minion', 'turno-giocatori-comandi-potere-rimovibile',
   'turno-giocatori-modifiche-non-salvate', 'turno-giocatori-scheda-carta', 'turno-giocatori-vita-gravehold', 'turno-giocatori-vita-nemesi',
   'turno-giocatori-scarti', 'turno-giocatori-menu-laterale', 'turno-giocatori-statistiche',
-  'scelta-giocatore-carta-1-2', 'scelta-giocatore-carta-3-4',
+  'pesca-nuovo-turno-dorso', 'pesca-nuovo-turno-carta-girata', 'scelta-giocatore-carta-1-2', 'scelta-giocatore-carta-3-4',
   'mazzo-dei-turni-a-riposo', 'mazzo-dei-turni-carte-rivelate',
   'turno-nemesi-passo-pesca', 'turno-nemesi-minion-vita-da-impostare', 'turno-nemesi-potere-con-token', 'turno-nemesi-attacco-pescato',
   'turno-nemesi-anteprima-altra-carta', 'turno-nemesi-cambio-tier-banner',

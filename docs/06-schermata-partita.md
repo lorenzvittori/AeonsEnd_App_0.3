@@ -111,13 +111,13 @@ Ogni riga della tabella è una variante; la colonna "Azione" è il valore di `da
 
 | Momento (`data-turno`) | Quando | Zona 5 | Comandi sotto le carte | Azione (`data-azione`) | Testo del pulsante (italiano) |
 |---|---|---|---|---|---|
-| `giocatori` | turno di un giocatore | coda | sì | `fine-turno` | "Fine turno · Pesca ordine turno" (ultimo turno del giro: "Fine turno · Mischia mazzo") |
-| `giocatori` | si aspetta la carta turno | coda | sì | `pesca-carta-turno` | "Pesca carta turno" (a inizio di un giro nuovo: "Pesca la prima carta turno") |
+| `giocatori` | turno di un giocatore | coda | sì | `fine-turno` | "Fine turno" (poi si apre la finestra "Pesca nuovo turno") |
+| `giocatori` | si aspetta la carta turno | coda | sì | `pesca-carta-turno` | "Pesca carta turno" (a inizio di un giro nuovo: "Pesca la prima carta turno"); apre la finestra "Pesca nuovo turno" |
 | `giocatori` | ci sono bozze non salvate | coda | sì | `salva-modifiche` | "Salva modifiche", con "Annulla modifiche" accanto |
 | `nemesi` | si risolve la carta da risolvere | carosello | no | `risolvi` | secondo la carta: "Vai avanti" (potere con più token), "Effetto risolto e scarta" (ultimo token), "Effetto risolto" (minion, attacco), "Imposta la vita" (vita "?") |
 | `nemesi` | si guarda un'altra carta | carosello | no | `torna` | "Torna alla carta da risolvere" |
 | `pesca` | tutte risolte, si pesca | carta coperta | no | `pesca` | "Pesca" |
-| `nemesi` | la carta appena pescata | carosello | no | `risolvi` | "Metti in gioco · Fine turno nemesi" (attacco: "Effetto risolto"; ultimo turno del giro: "· Mischia mazzo") |
+| `nemesi` | la carta appena pescata | carosello | no | `risolvi` | "Metti in gioco · Fine turno nemesi" (attacco: "Effetto risolto · Fine turno") |
 | `crea-mazzo` | i 9 mazzi | coda (nascosta) | sì (nascosta) | `cursore` | nessuno: al suo posto il cursore |
 
 Dal passo **Pesca** fino alla carta pescata messa in gioco le carte piccole **non si toccano**: un tocco sulla fascia non fa niente (`viewCard()` esce subito, cursore normale, classe `is-bloccata` sulla fascia), il carosello resta sulla carta da pescare o pescata e il pulsante non cambia. Per questo al passo Pesca non esiste un'anteprima né il pulsante "Torna alla carta da pescare": `inAnteprima()` è sempre falso in quei momenti. Nel turno nemesi, prima, l'anteprima delle altre carte c'è ancora ("Torna alla carta da risolvere").
@@ -125,7 +125,11 @@ Dal passo **Pesca** fino alla carta pescata messa in gioco le carte piccole **no
 Altre cose che cambiano con il momento:
 
 - **Lo sfondo.** È un'immagine sola, più larga dello schermo: la maga a sinistra, la nemesi a destra. Nei momenti `nemesi` e `pesca`
-  si vede il lato destro; la regola sta in `ui/schermate/partita.css`, e lo sfondo scorre da un lato all'altro.
+  si vede il lato destro; la regola sta in `ui/schermate/partita.css`, e lo sfondo scorre da un lato all'altro. Finché il turno è da
+  pescare (`awaitingTurnCard()`, finestra "Pesca nuovo turno"), o una carta 1/2 o 3/4 non ha il giocatore, `mostraTurno()` scrive
+  `data-fondo="centro"` e lo sfondo sta al centro; quando esce la nemesi la finestra scrive `data-fondo="destra"` (il turno nemesi si disegna
+  solo alla chiusura).
+- **La fascia piccola** (zona 3) senza carte resta al suo posto, vuota e invisibile (`is-vuota`): le vite non si spostano.
 - **Il colore del pulsante.** Nel turno giocatori ha il colore del giocatore (`data-kind="p1"`...); nel turno nemesi l'illustrazione della
   nemesi; "Salva modifiche" e "Pesca" sono dorati.
 - **Dissolvenza.** Entrando nel turno giocatori le zone compaiono in dissolvenza; dal turno nemesi no (le carte non devono sparire).
