@@ -53,26 +53,25 @@
 }
 .biblioteca-chip:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
 
-/* Riga set + ordinamento: il set occupa metà riga, l'ordinamento l'altra metà */
-.biblioteca-sets-wrap { position: relative; flex: 1 1 0; min-width: 0; display: flex; }
-.biblioteca-sets-btn { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-.biblioteca-sets-panel {
+/* Riga set e meccaniche: due pannelli a selezione multipla, ciascuno metà riga */
+.biblioteca-pick-wrap { position: relative; flex: 1 1 0; min-width: 0; display: flex; }
+.biblioteca-pick-wrap[hidden] { display: none; }
+.biblioteca-pick-btn { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.biblioteca-pick-panel {
   position: absolute; top: calc(100% + 4px); left: 0; z-index: 2; min-width: min(260px, 90vw); max-height: 50vh;
   overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 6px;
   background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md);
 }
-.biblioteca-sets-panel[hidden] { display: none; }
-.biblioteca-set-row {
+.biblioteca-pick-panel[hidden] { display: none; }
+/* Il pannello della metà destra (le meccaniche) si allinea al bordo destro: non esce dallo schermo */
+.biblioteca-pick-wrap + .biblioteca-pick-wrap > .biblioteca-pick-panel { left: auto; right: 0; }
+.biblioteca-pick-row {
   display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 8px;
   color: var(--ae-text); font: 500 14px/18px var(--ae-font-ui); cursor: pointer;
 }
-.biblioteca-set-row input { width: 16px; height: 16px; margin: 0; accent-color: var(--ae-gold); }
-.biblioteca-select {
-  flex: 1 1 0; min-width: 0; height: 30px; padding: 0 8px; box-sizing: border-box;
-  background: var(--ae-surface-raised); color: var(--ae-text); border: 1px solid var(--ae-border);
-  border-radius: var(--ae-radius-sm); font: 500 13px/16px var(--ae-font-ui);
-}
-.biblioteca-select:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
+.biblioteca-pick-row input { width: 16px; height: 16px; margin: 0; accent-color: var(--ae-gold); }
+.biblioteca-pick-row > span:nth-of-type(1) { flex: 1 1 auto; min-width: 0; }
+.biblioteca-pick-count { color: var(--ae-text-quiet); font: 500 12px/16px var(--ae-font-ui); white-space: nowrap; }
 
 /* Riga costo: etichetta e pulsanti in una striscia che, se stretta, scorre in orizzontale */
 .biblioteca-cost { min-width: 0; }

@@ -437,7 +437,7 @@
         "type":  "Spell",
         "cost":  8,
         "mechanics":  [
-            "Dual Breach Spell"
+            "Dual Breach"
         ],
         "effect":  "This spell must be prepped to two adjacent breaches so that this card touches both breaches. This fully occupies both breaches.\nCast: Deal 7 damage divided however you choose to the nemesis and any number of minions.",
         "image":  "Data/Supply/1.1/Spell/Monstrous_Inferno.webp",
@@ -530,7 +530,7 @@
         "type":  "Spell",
         "cost":  7,
         "mechanics":  [
-            "Dual Breach Spell"
+            "Dual Breach"
         ],
         "effect":  "This spell must be prepped to two adjacent breaches so that this card touches both breaches. This fully occupies both breaches.\nWhile prepped, draw an additional card during your draw phase.\nCast: Deal 6 damage.",
         "image":  "Data/Supply/1.2/Spell/Sages_Brand.webp",

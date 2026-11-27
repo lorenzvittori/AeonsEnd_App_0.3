@@ -1,19 +1,22 @@
-// La logica della Biblioteca (src/regole/biblioteca.ts) con le carte supply vere (public/cards_supply.json): filtri
-// combinabili, fasce di costo (8 e oltre in "8+"), raggruppamento e ordinamento, set presenti, preferenze salvate.
+// La logica della Biblioteca (src/regole/biblioteca.ts) con le carte supply vere (public/cards_supply.json) e le
+// meccaniche vere (public/mechanics.json): ricerca su nome, id ed effetto, filtro per meccanica combinato con set e costo,
+// fasce di costo (8 e oltre in "8+"), raggruppamento a ordine fisso, set presenti, preferenze salvate (anche quelle vecchie).
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkSupplyCards } from '../src/dati/controllo.ts';
-import type { CartaSupply } from '../src/tipi/dati.ts';
+import { checkMechanics, checkSupplyCards } from '../src/dati/controllo.ts';
+import type { CartaSupply, Meccanica } from '../src/tipi/dati.ts';
 import { PREFERENZE_BIBLIOTECA_PREDEFINITE, etichettaCosto, fasceCostoPresenti, filtra, fasciaCosto,
-  leggiPreferenzeBiblioteca, raggruppaPerCosto, setPresenti } from '../src/regole/biblioteca.ts';
+  leggiPreferenzeBiblioteca, meccanicheDisponibili, raggruppaPerCosto, setPresenti } from '../src/regole/biblioteca.ts';
 import type { Filtri } from '../src/regole/biblioteca.ts';
 
 const public_ = join(process.cwd(), 'public');
 const carte: CartaSupply[] = checkSupplyCards(JSON.parse(readFileSync(join(public_, 'cards_supply.json'), 'utf8'))).value;
 const prodotti: Record<string, string> = JSON.parse(readFileSync(join(public_, 'products.json'), 'utf8'));
+const meccaniche: Meccanica[] = checkMechanics(JSON.parse(readFileSync(join(public_, 'mechanics.json'), 'utf8'))).value;
 
-const tutti: Filtri = { ricerca: '', set: new Set(), costo: null };
+const nessuno = new Set<string>();
+const tutti: Filtri = { ricerca: '', set: nessuno, meccaniche: nessuno, costo: null };
 
 describe('fasce di costo', () => {
   it('8 e oltre sono "8+", il resto il numero', () => {
@@ -46,6 +49,27 @@ describe('filtri', () => {
     expect(trovate.every(c => c.name.toLowerCase().includes('burning'))).toBe(true);
   });
 
+  it('la ricerca trova anche per id e per una parola dell\'effetto', () => {
+    const carta = carte.find(c => c.type === 'Gem' && c.effect !== null && c.effect.length > 20)!;
+    expect(carta).toBeDefined();
+    // per id (anche scritto in maiuscole, o solo la parte prima della virgola)
+    expect(filtra(carte, 'Gem', { ...tutti, ricerca: carta.id.toUpperCase() }).includes(carta)).toBe(true);
+    // per una parola lunga dell'effetto
+    const parola = carta.effect!.match(/[A-Za-z]{6,}/)![0];
+    expect(filtra(carte, 'Gem', { ...tutti, ricerca: `  ${parola.toUpperCase()} ` }).includes(carta)).toBe(true);
+    // un testo che non c'è in nessun campo: nessun risultato
+    expect(filtra(carte, 'Gem', { ...tutti, ricerca: 'zzzz-nessuna' })).toEqual([]);
+  });
+
+  it('la ricerca ignora gli accenti (nome, id ed effetto)', () => {
+    const finta: CartaSupply = { ...carte[0], id: 'AE-é1', name: 'Élan Caffè', effect: 'Più forte' };
+    const r = [finta];
+    expect(filtra(r, finta.type, { ...tutti, ricerca: 'elan' })).toEqual(r);
+    expect(filtra(r, finta.type, { ...tutti, ricerca: 'CAFFE' })).toEqual(r);
+    expect(filtra(r, finta.type, { ...tutti, ricerca: 'piu forte' })).toEqual(r);
+    expect(filtra(r, finta.type, { ...tutti, ricerca: 'ae-e1' })).toEqual(r);
+  });
+
   it('il costo sceglie la fascia, "8+" comprende 8 e oltre', () => {
     const otto = filtra(carte, 'Spell', { ...tutti, costo: 8 });
     expect(otto.every(c => c.cost >= 8)).toBe(true);
@@ -53,30 +77,62 @@ describe('filtri', () => {
 
   it('i set si combinano con gli altri filtri (multipla, poi costo e ricerca)', () => {
     const set = new Set(['1', '4.2']);
-    const r = filtra(carte, 'Gem', { ricerca: '', set, costo: 5 });
+    const r = filtra(carte, 'Gem', { ricerca: '', set, meccaniche: nessuno, costo: 5 });
     expect(r.every(c => set.has(c.boxCode) && c.cost === 5 && c.type === 'Gem')).toBe(true);
     // Un set senza carte di quel costo: nessun risultato, non un errore
-    expect(filtra(carte, 'Gem', { ricerca: 'zzzz-nessuna', set, costo: null })).toEqual([]);
+    expect(filtra(carte, 'Gem', { ricerca: 'zzzz-nessuna', set, meccaniche: nessuno, costo: null })).toEqual([]);
+  });
+});
+
+describe('filtro per meccanica', () => {
+  it('da solo: passano le carte che hanno almeno una delle meccaniche scelte, in tutte le categorie', () => {
+    const scelta = new Set(['Attach']);
+    const attese = carte.filter(c => c.mechanics.includes('Attach'));
+    expect(attese.length).toBeGreaterThan(0);
+    const trovate = (['Gem', 'Relic', 'Spell'] as const).flatMap(cat => filtra(carte, cat, { ...tutti, meccaniche: scelta }));
+    expect(trovate.length).toBe(attese.length);
+    expect(trovate.every(c => c.mechanics.includes('Attach'))).toBe(true);
+  });
+
+  it('più meccaniche scelte: basta che la carta ne abbia una (unione, non intersezione)', () => {
+    const due = new Set(['Attach', 'Echo']);
+    const r = carte.filter(c => c.type === 'Gem' && c.mechanics.some(m => due.has(m)));
+    expect(filtra(carte, 'Gem', { ...tutti, meccaniche: due })).toEqual(r);
+  });
+
+  it('combinato con set e costo: tutti i filtri devono passare', () => {
+    const carta = carte.find(c => c.mechanics.length > 0)!;
+    const r = filtra(carte, carta.type, { ricerca: '', set: new Set([carta.boxCode]), meccaniche: new Set([carta.mechanics[0]]), costo: fasciaCosto(carta.cost) });
+    expect(r.includes(carta)).toBe(true);
+    expect(r.every(c => c.boxCode === carta.boxCode && c.mechanics.includes(carta.mechanics[0]) && fasciaCosto(c.cost) === fasciaCosto(carta.cost))).toBe(true);
+  });
+
+  it('nel filtro si offrono solo le meccaniche con almeno una carta, in ordine alfabetico', () => {
+    const lista: Meccanica[] = [
+      { name: 'Zeta', dbName: 'Zeta', it: null, cards: 2 },
+      { name: 'Alfa', dbName: 'Alfa', it: null, cards: 0 },
+      { name: 'beta', dbName: 'Beta Db', it: null, cards: 1 },
+    ];
+    expect(meccanicheDisponibili(lista).map(m => m.name)).toEqual(['beta', 'Zeta']);
+    expect(meccanicheDisponibili(meccaniche).every(m => m.cards > 0)).toBe(true);
   });
 });
 
 describe('raggruppamento', () => {
-  it('per costo crescente per default, con ordine decrescente a scelta', () => {
-    const asc = raggruppaPerCosto(carte, 'costo-asc').map(g => g.fascia);
-    expect(asc).toEqual([...asc].sort((a, b) => a - b));
-    const desc = raggruppaPerCosto(carte, 'costo-desc').map(g => g.fascia);
-    expect(desc).toEqual([...asc].reverse());
+  it('sempre per costo crescente, senza menu per cambiarlo', () => {
+    const gruppi = raggruppaPerCosto(carte).map(g => g.fascia);
+    expect(gruppi).toEqual([...gruppi].sort((a, b) => a - b));
   });
 
   it('nessun gruppo vuoto, e le carte sono tutte in un gruppo del loro costo', () => {
-    const gruppi = raggruppaPerCosto(carte, 'costo-asc');
+    const gruppi = raggruppaPerCosto(carte);
     expect(gruppi.every(g => g.carte.length > 0)).toBe(true);
     expect(gruppi.reduce((n, g) => n + g.carte.length, 0)).toBe(carte.length);
     gruppi.forEach(g => expect(g.carte.every(c => fasciaCosto(c.cost) === g.fascia)).toBe(true));
   });
 
-  it('con "nome" le carte di ogni gruppo sono in ordine alfabetico', () => {
-    raggruppaPerCosto(carte, 'nome').forEach(g => {
+  it('le carte di ogni gruppo sono in ordine alfabetico', () => {
+    raggruppaPerCosto(carte).forEach(g => {
       const nomi = g.carte.map(c => c.name);
       expect(nomi).toEqual([...nomi].sort((a, b) => a.localeCompare(b, 'en') || 0));
     });
@@ -84,7 +140,7 @@ describe('raggruppamento', () => {
 
   it('un costo solo non produce gruppi vuoti (risultati vuoti gestiti dal filtro)', () => {
     const r = filtra(carte, 'Relic', { ...tutti, costo: 7 });
-    const gruppi = raggruppaPerCosto(r, 'costo-asc');
+    const gruppi = raggruppaPerCosto(r);
     expect(gruppi.length).toBeLessThanOrEqual(1);
   });
 });
@@ -106,11 +162,16 @@ describe('preferenze salvate', () => {
     expect(leggiPreferenzeBiblioteca(null)).toEqual(PREFERENZE_BIBLIOTECA_PREDEFINITE);
     expect(leggiPreferenzeBiblioteca('non json')).toEqual(PREFERENZE_BIBLIOTECA_PREDEFINITE);
     expect(leggiPreferenzeBiblioteca('[1,2]')).toEqual(PREFERENZE_BIBLIOTECA_PREDEFINITE);
-    expect(leggiPreferenzeBiblioteca('{"categoria":"Nemesi","ordine":"x"}')).toEqual(PREFERENZE_BIBLIOTECA_PREDEFINITE);
+    expect(leggiPreferenzeBiblioteca('{"categoria":"Nemesi"}')).toEqual(PREFERENZE_BIBLIOTECA_PREDEFINITE);
   });
 
-  it('categoria e ordinamento validi si ricordano', () => {
-    expect(leggiPreferenzeBiblioteca('{"categoria":"Spell","ordine":"costo-desc"}'))
-      .toEqual({ categoria: 'Spell', ordine: 'costo-desc' });
+  it('la categoria valida si ricorda', () => {
+    expect(leggiPreferenzeBiblioteca('{"categoria":"Spell"}')).toEqual({ categoria: 'Spell' });
+  });
+
+  it('una preferenza vecchia con "ordine" si legge senza errori: il campo si ignora', () => {
+    expect(leggiPreferenzeBiblioteca('{"categoria":"Spell","ordine":"costo-desc"}')).toEqual({ categoria: 'Spell' });
+    expect(leggiPreferenzeBiblioteca('{"categoria":"Relic","ordine":"nome"}')).toEqual({ categoria: 'Relic' });
+    expect(leggiPreferenzeBiblioteca('{"ordine":"x"}')).toEqual(PREFERENZE_BIBLIOTECA_PREDEFINITE);
   });
 });

@@ -70,13 +70,14 @@ export interface CartaTesoro extends Omit<CartaSupply, 'type' | 'cost'> {
   cost: number | null;           // costo in Æ (i tesori spesso non ce l'hanno)
 }
 
-// Una meccanica di public/mechanics.json: il nome del DataBase, quante carte supply e tesori (nel file) la hanno,
-// e il nome italiano (null finché non c'è)
+// Una meccanica di public/mechanics.json (solo quelle delle carte supply): il nome nell'app (quello in cards_*.json),
+// il nome nel DataBase (dbName, diverso solo se c'è un rinomino), il nome italiano (null finché non c'è) e quante
+// carte di cards_supply.json la hanno (0 se nessuna)
 export interface Meccanica {
   name: string;
+  dbName: string;
   it: string | null;
-  supply: number;
-  treasure: number;
+  cards: number;
 }
 
 // Una nemesi di nemesis.json

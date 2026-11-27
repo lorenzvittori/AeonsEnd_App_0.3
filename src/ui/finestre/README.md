@@ -9,8 +9,9 @@ Ogni finestra con stile ha il suo `.css` accanto.
   anche trascinandolo a destra: `swipeToClose`; il pulsante Menu diventa X: `menuCloseToggle`).
 - `opzioni.ts` + `.css`: Opzioni del menu iniziale, La mia collezione, finestra "nemesi non più in collezione" (`openMissingNemesis`).
 - `biblioteca.ts` + `.css` + `biblioteca-icone.ts`: la Biblioteca a tutto schermo (`openLibrary`, dal menu iniziale): schede Nemesi,
-  Mercato (filtri, caroselli per costo o griglia, zoom della carta, barra inferiore con le icone SVG della specifica), Tesori (in arrivo).
-  Legge `cards_supply.json` alla prima apertura; preferenze (categoria, ordinamento) in `localStorage`.
+  Mercato (filtri: ricerca, set e meccaniche in due pannelli, costo; caroselli per costo o griglia, zoom della carta, barra inferiore con le
+  icone SVG della specifica), Tesori (in arrivo). Legge `cards_supply.json` e `mechanics.json` alla prima apertura (se `mechanics.json`
+  manca o è rotto, il filtro meccaniche non si mostra); l'ordine è fisso. Preferenza (categoria) in `localStorage`.
 - `scheda-carta.ts`: la scheda della carta in gioco toccata. `vita.ts`: la finestra della vita di Gravehold o della nemesi.
 - `statistiche.ts` + `.css`: Vittoria, Sconfitta (`showEndScreen`, `showDefeat`) e Statistiche. `test.ts` + `.css`: Modalità test e scenari.
 - `test-regolazioni.ts` + `.css`: pannello "Regolazioni" della Modalità test; `test-regolazioni-lettura.ts`: la sua parte pura (la legge anche la pagina `scheletri/`: `MISURE` e i disegni delle zone, `DISEGNI`).

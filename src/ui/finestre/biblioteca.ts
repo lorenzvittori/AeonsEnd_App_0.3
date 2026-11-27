@@ -1,9 +1,11 @@
 // ui/finestre/biblioteca.ts: la Biblioteca, a tutto schermo dal menu iniziale. Testata con il titolo, tre schede (Nemesi,
-// Mercato, Tesori; per ora solo il Mercato ha contenuto), nel Mercato i filtri (ricerca, set, ordinamento, costo) e le
-// carte: caroselli per costo, o una griglia a due colonne con un costo scelto. Toccando una carta, lo zoom a tutto
-// schermo (la scansione originale). La barra inferiore sceglie la categoria (Gemme, Reliquie, Incantesimi).
+// Mercato, Tesori; per ora solo il Mercato ha contenuto), nel Mercato i filtri (ricerca per nome, ID o effetto; set e
+// meccaniche in due pannelli a selezione multipla; costo) e le carte: caroselli per costo, o una griglia a due colonne con
+// un costo scelto. L'ordine è fisso (costo crescente, nome). Toccando una carta, lo zoom a tutto schermo (la scansione
+// originale). La barra inferiore sceglie la categoria (Gemme, Reliquie, Incantesimi).
 // Stato separato dalla partita: aprire la Biblioteca non tocca il mazzo, i turni o il salvataggio.
-// Le carte si leggono solo quando la Biblioteca si apre la prima volta (cards_supply.json, con il controllo di dati/).
+// Le carte (cards_supply.json) e le meccaniche (mechanics.json) si leggono solo quando la Biblioteca si apre la prima
+// volta. Se mechanics.json manca o è rotto il filtro meccaniche non si mostra e il Mercato funziona lo stesso (solo console).
 // Livello 6 (finestre). Dipende da: regole/biblioteca.ts (logica), dati/ (lettura e controllo), stato/catalogo.ts,
 // ui/ base (testi, dom, pagina), ui/componenti/dialoghi.ts (updateInert), ui/finestre/biblioteca-icone.ts.
 // Usato da: ui/schermate/menu.ts (pulsante Biblioteca). Stile: biblioteca.css.
@@ -14,23 +16,34 @@ import { updateInert } from '../componenti/dialoghi.ts';
 import { DATA_ROOT, startLayer } from '../pagina.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { loadJson } from '../../dati/dati.ts';
-import { checkSupplyCards, reportProblems } from '../../dati/controllo.ts';
-import type { CartaSupply, TipoSupply } from '../../tipi/dati.ts';
-import { CATEGORIE_MERCATO, ORDINI, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca,
+import { checkMechanics, checkSupplyCards, reportProblems } from '../../dati/controllo.ts';
+import type { CartaSupply, Meccanica, TipoSupply } from '../../tipi/dati.ts';
+import { CATEGORIE_MERCATO, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca, meccanicheDisponibili,
   raggruppaPerCosto, setPresenti } from '../../regole/biblioteca.ts';
-import type { Ordine, PreferenzeBiblioteca } from '../../regole/biblioteca.ts';
+import type { PreferenzeBiblioteca } from '../../regole/biblioteca.ts';
 import { iconaCategoria, iconaLente } from './biblioteca-icone.ts';
 
-// Preferenze della Biblioteca nel browser (categoria e ordinamento)
+// Preferenze della Biblioteca nel browser (la categoria; il vecchio campo dell'ordinamento si ignora)
 const CHIAVE_PREFERENZE = 'aeonsend-app-0.2-library';
 
 type Scheda = 'nemesi' | 'mercato' | 'tesori';
 const SCHEDE: readonly Scheda[] = ['nemesi', 'mercato', 'tesori'];
 
+// Il pannello a selezione multipla (set, meccaniche): il pulsante lo apre e chiude, l'elenco contiene le caselle
+interface Pannello {
+  wrap: HTMLElement;
+  btn: HTMLButtonElement;
+  elenco: HTMLElement;
+}
+
 // Le carte supply, lette la prima volta che si apre la Biblioteca (poi restano in memoria)
 let cartePronte: CartaSupply[] | null = null;
 let caricamento: Promise<CartaSupply[]> | null = null;
 let erroreCaricamento = false;
+
+// Le meccaniche (mechanics.json), lette insieme alle carte. Se mancano o sono rotte, il filtro non si mostra
+let meccanichePronte: Meccanica[] | null = null;
+let caricamentoMeccaniche: Promise<Meccanica[]> | null = null;
 
 // Il percorso di immagine e miniatura è relativo alla radice del sito (come per le nemesi, avvio.ts)
 function caricaCarte(): Promise<CartaSupply[]> {
@@ -47,6 +60,24 @@ function caricaCarte(): Promise<CartaSupply[]> {
     });
   }
   return caricamento;
+}
+
+// Mai rifiuta: un errore si scrive in console e il filtro meccaniche resta senza voci (la prossima apertura riprova)
+function caricaMeccaniche(): Promise<Meccanica[]> {
+  if (meccanichePronte) return Promise.resolve(meccanichePronte);
+  if (!caricamentoMeccaniche) {
+    caricamentoMeccaniche = loadJson(DATA_ROOT + 'mechanics.json').then(dati => {
+      const controllate = checkMechanics(dati);
+      reportProblems(controllate.problems);
+      meccanichePronte = controllate.value;
+      return meccanichePronte;
+    }).catch((err: unknown) => {
+      caricamentoMeccaniche = null;
+      console.error('Meccaniche non caricate, il filtro non si mostra:', err);
+      return [];
+    });
+  }
+  return caricamentoMeccaniche;
 }
 
 function leggiPreferenze(): PreferenzeBiblioteca {
@@ -95,6 +126,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     preferenze: leggiPreferenze(),
     ricerca: '',
     set: new Set<string>(),
+    meccaniche: new Set<string>(),
     costo: null as number | null
   };
 
@@ -128,7 +160,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   // Filtri del Mercato, in tre righe compatte
   const filtri = el('div', 'biblioteca-filters');
 
-  // Riga 1: ricerca per nome, con la lente
+  // Riga 1: ricerca per nome, ID o effetto, con la lente
   const cercaRiga = el('div', 'biblioteca-row');
   const campo = el('label', 'biblioteca-search');
   const lente = el('span', 'biblioteca-search-icon');
@@ -143,39 +175,33 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   campo.append(lente, cerca);
   cercaRiga.append(campo);
 
-  // Riga 2: set (selezione multipla, in un pannello) e ordinamento
-  const setRiga = el('div', 'biblioteca-row');
-  const setWrap = el('div', 'biblioteca-sets-wrap');
-  const setBtn = el('button', 'biblioteca-chip biblioteca-sets-btn');
-  setBtn.type = 'button';
-  setBtn.setAttribute('aria-expanded', 'false');
-  const setPannello = el('div', 'biblioteca-sets-panel');
-  setPannello.setAttribute('role', 'group');
-  setPannello.setAttribute('aria-label', T.librarySets);
-  setPannello.hidden = true;
-  setWrap.append(setBtn, setPannello);
-  let pannelloAperto = false;
-  const apriPannello = (aperto: boolean) => {
-    pannelloAperto = aperto;
-    setPannello.hidden = !aperto;
-    setBtn.setAttribute('aria-expanded', String(aperto));
+  // Riga 2: set e meccaniche (selezione multipla, ciascuna in un pannello; un pannello aperto alla volta)
+  let pannelloAperto: Pannello | null = null;
+  const apriPannello = (p: Pannello | null): void => {
+    pannelloAperto = p;
+    for (const q of [pannelloSet, pannelloMeccaniche]) {
+      q.elenco.hidden = q !== p;
+      q.btn.setAttribute('aria-expanded', String(q === p));
+    }
   };
-  setBtn.addEventListener('click', () => apriPannello(!pannelloAperto));
-
-  const ordine = el('select', 'biblioteca-select');
-  ordine.setAttribute('aria-label', T.libraryOrder);
-  const testoOrdine: Record<Ordine, string> = { 'costo-asc': T.libraryOrderCostAsc, 'costo-desc': T.libraryOrderCostDesc, nome: T.libraryOrderName };
-  ORDINI.forEach(o => {
-    const opzione = el('option', '', testoOrdine[o]);
-    opzione.value = o;
-    ordine.append(opzione);
-  });
-  ordine.addEventListener('change', () => {
-    stato.preferenze = { ...stato.preferenze, ordine: ORDINI.find(o => o === ordine.value) ?? stato.preferenze.ordine };
-    salvaPreferenze(stato.preferenze);
-    disegnaCorpo();
-  });
-  setRiga.append(setWrap, ordine);
+  const creaPannello = (etichetta: string): Pannello => {
+    const wrap = el('div', 'biblioteca-pick-wrap');
+    const btn = el('button', 'biblioteca-chip biblioteca-pick-btn');
+    btn.type = 'button';
+    btn.setAttribute('aria-expanded', 'false');
+    const elenco = el('div', 'biblioteca-pick-panel');
+    elenco.setAttribute('role', 'group');
+    elenco.setAttribute('aria-label', etichetta);
+    elenco.hidden = true;
+    wrap.append(btn, elenco);
+    const p: Pannello = { wrap, btn, elenco };
+    btn.addEventListener('click', () => apriPannello(pannelloAperto === p ? null : p));
+    return p;
+  };
+  const pannelloSet = creaPannello(T.librarySets);
+  const pannelloMeccaniche = creaPannello(T.libraryMechanics);
+  const setRiga = el('div', 'biblioteca-row');
+  setRiga.append(pannelloSet.wrap, pannelloMeccaniche.wrap);
 
   // Riga 3: costo, con i pulsanti delle fasce presenti nel catalogo
   const costoRiga = el('div', 'biblioteca-row biblioteca-cost');
@@ -216,7 +242,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   function costruisciPannelloSet(): void {
     if (!cartePronte) return;
     const elenco = setPresenti(cartePronte, catalogo.products).map(s => {
-      const riga = el('label', 'biblioteca-set-row');
+      const riga = el('label', 'biblioteca-pick-row');
       const casella = el('input');
       casella.type = 'checkbox';
       casella.value = s.codice;
@@ -229,14 +255,37 @@ export function openLibrary(trigger?: HTMLElement | null): void {
       riga.append(casella, el('span', '', `${s.codice} · ${s.nome}`));
       return riga;
     });
-    setPannello.replaceChildren(...elenco);
+    pannelloSet.elenco.replaceChildren(...elenco);
+  }
+
+  // Pannello delle meccaniche: solo quelle con almeno una carta (il filtro sparisce se non ce n'è nessuna)
+  function costruisciPannelloMeccaniche(lista: readonly Meccanica[]): void {
+    const disponibili = meccanicheDisponibili(lista);
+    pannelloMeccaniche.wrap.hidden = disponibili.length === 0;
+    const elenco = disponibili.map(m => {
+      const riga = el('label', 'biblioteca-pick-row');
+      const casella = el('input');
+      casella.type = 'checkbox';
+      casella.value = m.name;
+      casella.checked = stato.meccaniche.has(m.name);
+      casella.addEventListener('change', () => {
+        if (casella.checked) stato.meccaniche.add(m.name);
+        else stato.meccaniche.delete(m.name);
+        disegnaTutto();
+      });
+      riga.append(casella, el('span', '', m.name), el('span', 'biblioteca-pick-count', String(m.cards)));
+      return riga;
+    });
+    pannelloMeccaniche.elenco.replaceChildren(...elenco);
   }
 
   function disegnaFiltri(): void {
     const n = stato.set.size;
-    setBtn.textContent = n === 0 ? T.librarySetsAll : T.librarySetsCount(n);
-    setBtn.classList.toggle('is-active', n > 0);
-    ordine.value = stato.preferenze.ordine;
+    pannelloSet.btn.textContent = n === 0 ? T.librarySetsAll : T.librarySetsCount(n);
+    pannelloSet.btn.classList.toggle('is-active', n > 0);
+    const m = stato.meccaniche.size;
+    pannelloMeccaniche.btn.textContent = m === 0 ? T.libraryMechanicsAll : T.libraryMechanicsCount(m);
+    pannelloMeccaniche.btn.classList.toggle('is-active', m > 0);
 
     // Fasce di costo presenti nel catalogo supply (tutte le categorie, così la riga non cambia passando da una
     // categoria all'altra), più "Tutti"
@@ -277,11 +326,11 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     if (erroreCaricamento) { corpo.replaceChildren(messaggio(T.libraryLoadError)); return; }
     if (!cartePronte) { corpo.replaceChildren(messaggio(T.libraryLoading)); return; }
     const visibili = filtra(cartePronte, stato.preferenze.categoria,
-      { ricerca: stato.ricerca, set: stato.set, costo: stato.costo });
+      { ricerca: stato.ricerca, set: stato.set, meccaniche: stato.meccaniche, costo: stato.costo });
     if (visibili.length === 0) { corpo.replaceChildren(messaggio(T.libraryEmpty)); return; }
     // Con un costo scelto: griglia a due colonne; altrimenti caroselli orizzontali per costo
     const griglia = stato.costo !== null;
-    const gruppi = raggruppaPerCosto(visibili, stato.preferenze.ordine).map(g => {
+    const gruppi = raggruppaPerCosto(visibili).map(g => {
       const sezione = el('section', 'biblioteca-group');
       const testata = el('div', 'biblioteca-group-head');
       testata.append(el('h3', 'biblioteca-group-title', T.libraryCostGroup(etichettaCosto(g.fascia))),
@@ -345,22 +394,24 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   layer.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     e.stopPropagation();
-    if (pannelloAperto) apriPannello(false);
+    if (pannelloAperto) apriPannello(null);
     else chiudiBiblioteca();
   });
-  // Un tocco fuori dal pannello dei set lo chiude
+  // Un tocco fuori dal pannello aperto (set o meccaniche) lo chiude
   layer.addEventListener('click', e => {
-    if (pannelloAperto && !setWrap.contains(e.target instanceof Node ? e.target : null)) apriPannello(false);
+    const bersaglio = e.target instanceof Node ? e.target : null;
+    if (pannelloAperto && !pannelloAperto.wrap.contains(bersaglio)) apriPannello(null);
   });
 
   document.body.appendChild(layer);
   startLayer.inert = true;
 
-  // Le carte si leggono alla prima apertura: nel frattempo "Caricamento…"
+  // Le carte e le meccaniche si leggono alla prima apertura: nel frattempo "Caricamento…"
   disegnaTutto();
-  caricaCarte().then(() => {
+  Promise.all([caricaCarte(), caricaMeccaniche()]).then(([, meccaniche]) => {
     erroreCaricamento = false;
     costruisciPannelloSet();
+    costruisciPannelloMeccaniche(meccaniche);
     disegnaTutto();
   }, (err: unknown) => {
     console.error(err);

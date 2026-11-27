@@ -1,80 +1,74 @@
 [
     {
         "name":  "Aether Token",
+        "dbName":  "Aether Token",
         "it":  null,
-        "supply":  11,
-        "treasure":  6
+        "cards":  0
     },
     {
         "name":  "Attach",
+        "dbName":  "Attach",
         "it":  null,
-        "supply":  11,
-        "treasure":  0
-    },
-    {
-        "name":  "Cards that Interact with Trinket",
-        "it":  null,
-        "supply":  5,
-        "treasure":  0
+        "cards":  5
     },
     {
         "name":  "Conjure",
+        "dbName":  "Conjure",
         "it":  null,
-        "supply":  6,
-        "treasure":  0
+        "cards":  0
     },
     {
         "name":  "Develop",
+        "dbName":  "Develop",
         "it":  null,
-        "supply":  3,
-        "treasure":  3
+        "cards":  0
     },
     {
-        "name":  "Dual Breach Spell",
+        "name":  "Dual Breach",
+        "dbName":  "Dual Breach Spell",
         "it":  null,
-        "supply":  4,
-        "treasure":  0
+        "cards":  2
     },
     {
         "name":  "Echo",
+        "dbName":  "Echo",
         "it":  null,
-        "supply":  6,
-        "treasure":  0
+        "cards":  5
     },
     {
         "name":  "Elemental Token",
+        "dbName":  "Elemental Token",
         "it":  null,
-        "supply":  11,
-        "treasure":  7
+        "cards":  0
     },
     {
         "name":  "Link",
+        "dbName":  "Link",
         "it":  null,
-        "supply":  5,
-        "treasure":  0
+        "cards":  0
     },
     {
         "name":  "Pulse Token",
+        "dbName":  "Pulse Token",
         "it":  null,
-        "supply":  8,
-        "treasure":  0
+        "cards":  0
     },
     {
         "name":  "Recall",
+        "dbName":  "Recall",
         "it":  null,
-        "supply":  7,
-        "treasure":  0
+        "cards":  0
     },
     {
         "name":  "Shield Token",
+        "dbName":  "Shield Token",
         "it":  null,
-        "supply":  1,
-        "treasure":  0
+        "cards":  0
     },
     {
-        "name":  "Silence",
+        "name":  "Trinket Interaction",
+        "dbName":  "Cards that Interact with Trinket",
         "it":  null,
-        "supply":  0,
-        "treasure":  3
+        "cards":  0
     }
 ]

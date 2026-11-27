@@ -109,9 +109,9 @@ const REGOLE_TESORO: Record<keyof CartaTesoro, Regola> = {
   level: livello, cost: numOrNull, mechanics: listaDiTesti, effect: strOrNull, image: str, thumb: str
 };
 
-// public/mechanics.json (per la biblioteca, non letto all'avvio): elenco delle meccaniche. Quella sbagliata si scarta
+// public/mechanics.json (per la biblioteca, non letto all'avvio): elenco delle meccaniche delle supply. Quella sbagliata si scarta
 const REGOLE_MECCANICA: Record<keyof Meccanica, Regola> = {
-  name: testoNonVuoto, it: strOrNull, supply: num, treasure: num
+  name: testoNonVuoto, dbName: testoNonVuoto, it: strOrNull, cards: num
 };
 
 export function checkMechanics(data: unknown): Controllato<Meccanica[]> {

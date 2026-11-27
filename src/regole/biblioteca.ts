@@ -1,16 +1,13 @@
-// regole/biblioteca.ts: la logica pura della Biblioteca (mercato): filtri combinabili, fasce di costo, raggruppamento e
-// ordinamento delle carte supply, set presenti, preferenze salvate nel browser. Nessun DOM, nessuno stato della partita.
-// Riceve: le carte supply (CartaSupply[]), i filtri e le preferenze come testo; restituisce liste e valori.
-// Dipende da: tipi/dati.ts. Usato da: ui/finestre/biblioteca.ts, tests/biblioteca.test.ts.
+// regole/biblioteca.ts: la logica pura della Biblioteca (mercato): filtri combinabili (ricerca, set, meccanica, costo),
+// fasce di costo, raggruppamento delle carte supply (ordine fisso), set e meccaniche presenti, preferenze salvate nel
+// browser. Nessun DOM, nessuno stato della partita.
+// Riceve: le carte supply (CartaSupply[]), le meccaniche (Meccanica[]), i filtri e le preferenze come testo; restituisce
+// liste e valori. Dipende da: tipi/dati.ts. Usato da: ui/finestre/biblioteca.ts, tests/biblioteca.test.ts.
 
-import type { CartaSupply, Prodotti, TipoSupply } from '../tipi/dati.ts';
+import type { CartaSupply, Meccanica, Prodotti, TipoSupply } from '../tipi/dati.ts';
 
 // Le tre categorie del Mercato (barra inferiore): Gemme, Reliquie, Incantesimi
 export const CATEGORIE_MERCATO: readonly TipoSupply[] = ['Gem', 'Relic', 'Spell'];
-
-// Ordinamento: costo crescente (predefinito), costo decrescente, nome
-export type Ordine = 'costo-asc' | 'costo-desc' | 'nome';
-export const ORDINI: readonly Ordine[] = ['costo-asc', 'costo-desc', 'nome'];
 
 // Costo dalla fascia 8 in su: "8+" (il costo massimo nel catalogo supply è 8)
 export const COSTO_FASCIA_ALTA = 8;
@@ -25,15 +22,23 @@ export function etichettaCosto(fascia: number): string {
   return fascia >= COSTO_FASCIA_ALTA ? `${COSTO_FASCIA_ALTA}+` : String(fascia);
 }
 
-// Filtri combinabili: testo nel nome, set (codici di products.json, vuoto = tutti), costo (fascia, null = tutti)
+// Filtri combinabili: testo (nome, id o effetto), set (codici di products.json, vuoto = tutti), meccaniche (nomi nell'app,
+// vuoto = tutte; una carta passa se ha almeno una di quelle scelte), costo (fascia, null = tutti)
 export interface Filtri {
   ricerca: string;
   set: ReadonlySet<string>;
+  meccaniche: ReadonlySet<string>;
   costo: number | null;
 }
 
+// Testo confrontabile: senza maiuscole e senza accenti (e senza spazi ai bordi)
 function normalizza(testo: string): string {
-  return testo.trim().toLocaleLowerCase('en');
+  return testo.normalize('NFD').replace(/\p{M}/gu, '').trim().toLocaleLowerCase('en');
+}
+
+// La ricerca guarda nome, id ed effetto della carta
+function cercaNella(carta: CartaSupply, q: string): boolean {
+  return [carta.name, carta.id, carta.effect ?? ''].some(testo => normalizza(testo).includes(q));
 }
 
 // Le carte di una categoria che passano tutti i filtri
@@ -41,8 +46,9 @@ export function filtra(carte: readonly CartaSupply[], categoria: TipoSupply, fil
   const q = normalizza(filtri.ricerca);
   return carte.filter(c => c.type === categoria
     && (filtri.set.size === 0 || filtri.set.has(c.boxCode))
+    && (filtri.meccaniche.size === 0 || c.mechanics.some(m => filtri.meccaniche.has(m)))
     && (filtri.costo === null || fasciaCosto(c.cost) === filtri.costo)
-    && (q === '' || normalizza(c.name).includes(q)));
+    && (q === '' || cercaNella(c, q)));
 }
 
 // Fasce di costo presenti nelle carte di una categoria (i pulsanti di costo si adattano al catalogo), in ordine crescente
@@ -61,9 +67,9 @@ function confrontoNome(a: CartaSupply, b: CartaSupply): number {
   return a.name.localeCompare(b.name, 'en') || a.id.localeCompare(b.id, 'en');
 }
 
-// Raggruppa per costo (solo gruppi con almeno una carta). Con "nome" i gruppi restano per costo crescente e le carte
-// dentro ciascuno sono in ordine alfabetico; con i costi le carte di ogni gruppo sono in ordine alfabetico
-export function raggruppaPerCosto(carte: readonly CartaSupply[], ordine: Ordine): GruppoCosto[] {
+// Raggruppa per costo crescente (solo gruppi con almeno una carta); le carte dentro ciascun gruppo sono in ordine
+// alfabetico del nome. L'ordine è fisso: non c'è un menu per cambiarlo
+export function raggruppaPerCosto(carte: readonly CartaSupply[]): GruppoCosto[] {
   const mappa = new Map<number, CartaSupply[]>();
   for (const c of carte) {
     const fascia = fasciaCosto(c.cost);
@@ -71,9 +77,9 @@ export function raggruppaPerCosto(carte: readonly CartaSupply[], ordine: Ordine)
     if (lista) lista.push(c);
     else mappa.set(fascia, [c]);
   }
-  const gruppi = [...mappa].map(([fascia, lista]) => ({ fascia, carte: [...lista].sort(confrontoNome) }));
-  gruppi.sort((a, b) => (ordine === 'costo-desc' ? b.fascia - a.fascia : a.fascia - b.fascia));
-  return gruppi;
+  return [...mappa]
+    .map(([fascia, lista]) => ({ fascia, carte: [...lista].sort(confrontoNome) }))
+    .sort((a, b) => a.fascia - b.fascia);
 }
 
 // Un set (espansione) da scegliere: il codice di products.json e il nome
@@ -99,13 +105,21 @@ export function setPresenti(carte: readonly CartaSupply[], prodotti: Readonly<Pr
   return [...codici].sort(confrontoCodici).map(codice => ({ codice, nome: prodotti[codice] ?? codice }));
 }
 
-// Preferenze della Biblioteca salvate nel browser: la categoria e l'ordinamento (i filtri restano per la sessione)
-export interface PreferenzeBiblioteca {
-  categoria: TipoSupply;
-  ordine: Ordine;
+// Le meccaniche da offrire nel filtro: solo quelle che hanno almeno una carta nel file delle carte supply (cards > 0),
+// in ordine alfabetico del nome nell'app. Le fasce di costo si adattano allo stesso modo
+export function meccanicheDisponibili(meccaniche: readonly Meccanica[]): Meccanica[] {
+  return meccaniche
+    .filter(m => m.cards > 0)
+    .sort((a, b) => a.name.localeCompare(b.name, 'en') || a.dbName.localeCompare(b.dbName, 'en'));
 }
 
-export const PREFERENZE_BIBLIOTECA_PREDEFINITE: PreferenzeBiblioteca = { categoria: 'Gem', ordine: 'costo-asc' };
+// Preferenze della Biblioteca salvate nel browser: la categoria (i filtri restano per la sessione). Il vecchio campo
+// "ordine" (menu dell'ordinamento, tolto) si ignora: una preferenza salvata con quel campo si legge senza errori
+export interface PreferenzeBiblioteca {
+  categoria: TipoSupply;
+}
+
+export const PREFERENZE_BIBLIOTECA_PREDEFINITE: PreferenzeBiblioteca = { categoria: 'Gem' };
 
 // Legge le preferenze dal testo salvato: un valore sbagliato o assente dà quelle predefinite
 export function leggiPreferenzeBiblioteca(testo: string | null): PreferenzeBiblioteca {
@@ -117,9 +131,8 @@ export function leggiPreferenzeBiblioteca(testo: string | null): PreferenzeBibli
     return { ...PREFERENZE_BIBLIOTECA_PREDEFINITE };
   }
   if (typeof dati !== 'object' || dati === null) return { ...PREFERENZE_BIBLIOTECA_PREDEFINITE };
-  const { categoria, ordine } = dati as Record<string, unknown>;
+  const { categoria } = dati as Record<string, unknown>;
   return {
-    categoria: CATEGORIE_MERCATO.find(c => c === categoria) ?? PREFERENZE_BIBLIOTECA_PREDEFINITE.categoria,
-    ordine: ORDINI.find(o => o === ordine) ?? PREFERENZE_BIBLIOTECA_PREDEFINITE.ordine
+    categoria: CATEGORIE_MERCATO.find(c => c === categoria) ?? PREFERENZE_BIBLIOTECA_PREDEFINITE.categoria
   };
 }

@@ -11,6 +11,10 @@ import { isRecord, parseJson } from '../src/regole/json.ts';
 const ROOT = join(import.meta.dirname, '..');
 const file = (name: string): unknown => parseJson(readFileSync(join(ROOT, 'public', name), 'utf8'));
 
+// La tabella dei rinomini delle meccaniche (tools/import-db.py, RINOMINI_MECCANICHE): nome del DataBase -> nome nell'app
+const RINOMINI = new Map<string, string>([...(/RINOMINI_MECCANICHE = \{([^}]*)\}/.exec(readFileSync(join(ROOT, 'tools', 'import-db.py'), 'utf8'))?.[1] ?? '')
+  .matchAll(/'([^']+)':\s*'([^']+)'/g)].map(m => [m[1], m[2]]));
+
 describe('JSON veri di public/', () => {
   it('cards_nemesis.json: ogni carta ha tutti i campi, con tipi e valori ammessi', () => {
     const data = file('cards_nemesis.json');
@@ -127,29 +131,39 @@ describe('carte della biblioteca (supply e tesori)', () => {
     expect(readFileSync(join(ROOT, 'src', 'avvio.ts'), 'utf8')).not.toMatch(/cards_(supply|treasure)|mechanics\.json/);
   });
 
-  it('mechanics.json: ogni meccanica delle carte c\'è, con nomi unici e ordinati, e i conteggi tornano', () => {
+  it('mechanics.json: solo le meccaniche delle supply, nomi unici e ordinati, ogni campo com\'è scritto', () => {
     const r = checkMechanics(file('mechanics.json'));
     expect(r.problems).toEqual([]);
     const names = r.value.map(m => m.name);
     expect(new Set(names).size).toBe(names.length);
     expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })));
-    const byName = new Map(r.value.map(m => [m.name, m]));
-    // ogni meccanica elencata compare in almeno un Excel (supply + tesori > 0)
-    r.value.forEach(m => expect(m.supply + m.treasure, m.name).toBeGreaterThan(0));
-    // le carte nei file: ogni loro meccanica è nell'elenco, e il conteggio dei file non supera quello del DataBase
-    const found = new Map<string, { supply: number; treasure: number }>();
-    const add = (list: string[], kind: 'supply' | 'treasure') => list.forEach(m => {
-      const e = found.get(m) ?? { supply: 0, treasure: 0 };
-      e[kind] += 1;
-      found.set(m, e);
+    // "name" è il nome nell'app, "dbName" quello del DataBase: uguali salvo i rinomini della tabella di import-db.py
+    r.value.forEach(m => {
+      expect(m.it, m.name).toBeNull();
+      expect(m.cards, m.name).toBeGreaterThanOrEqual(0);
+      if (m.name !== m.dbName) expect(RINOMINI.get(m.dbName), m.dbName).toBe(m.name);
     });
-    checkSupplyCards(file('cards_supply.json')).value.forEach(c => add(c.mechanics, 'supply'));
-    checkTreasureCards(file('cards_treasure.json')).value.forEach(c => add(c.mechanics, 'treasure'));
-    found.forEach((n, name) => {
-      const m = byName.get(name);
-      expect(m, `${name}: manca in mechanics.json`).toBeDefined();
-      expect(m!.supply >= n.supply && m!.treasure >= n.treasure, `${name}: conteggi`).toBe(true);
+  });
+
+  it('mechanics.json: i conteggi delle carte tornano con cards_supply.json, ogni meccanica delle supply c\'è', () => {
+    const r = checkMechanics(file('mechanics.json')).value;
+    const byName = new Map(r.map(m => [m.name, m]));
+    const supply = checkSupplyCards(file('cards_supply.json')).value;
+    const count = new Map<string, number>();
+    supply.forEach(c => c.mechanics.forEach(m => count.set(m, (count.get(m) ?? 0) + 1)));
+    // le meccaniche delle carte supply sono tutte in mechanics.json, con lo stesso conteggio
+    count.forEach((n, name) => {
+      expect(byName.get(name), `${name}: manca in mechanics.json`).toBeDefined();
+      expect(byName.get(name)!.cards, `${name}: conteggio`).toBe(n);
     });
+    // e le altre voci hanno zero carte
+    r.forEach(m => expect(m.cards, m.name).toBe(count.get(m.name) ?? 0));
+  });
+
+  it('nessun nome originale rinominato resta nelle carte (cards_supply.json e cards_treasure.json)', () => {
+    const tutte = [...checkSupplyCards(file('cards_supply.json')).value, ...checkTreasureCards(file('cards_treasure.json')).value];
+    tutte.forEach(c => c.mechanics.forEach(m => expect(RINOMINI.has(m), `${c.id}: ${m}`).toBe(false)));
+    expect(tutte.some(c => c.mechanics.includes('Dual Breach'))).toBe(true);
   });
 
   it('box, miniExpansion e boxCode dicono la stessa scatola (products.json); le nemesi non hanno meccaniche', () => {

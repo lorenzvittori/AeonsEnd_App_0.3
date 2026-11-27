@@ -33,10 +33,16 @@ Caricamento dei dati e uso della rete. Livello 1: importa da `tipi/`, `regole/` 
 - Tutti e tre i file delle carte hanno `box`, `miniExpansion`, `boxCode` coerenti con `products.json` (la mini espansione, o la
   scatola grande, dà il nome del prodotto di `boxCode`); le incoerenze del DataBase vanno nelle segnalazioni dello script.
   Le nemesi non hanno la colonna Mechanics: `mechanics` è sempre `[]` in `cards_nemesis.json`.
-- `mechanics.json`: tutte le meccaniche delle carte supply e tesori del DataBase (tutte le righe, anche senza immagine), in ordine
-  alfabetico: `name` (nome com'è nel DataBase), `it` (nome italiano, ancora `null`), `supply` e `treasure` (quante carte di ciascun
-  Excel la hanno, es. `{"name": "Pulse Token", "it": null, "supply": 8, "treasure": 0}`). Non letto all'avvio. Alcuni nomi non sono
-  meccaniche ma descrizioni (es. "Cards that Interact with Trinket"): si lasciano così, il DataBase è dell'utente.
+- `mechanics.json`: le meccaniche delle carte **supply** del DataBase (tutte le righe, anche senza immagine), in ordine alfabetico
+  del nome nell'app. Ogni voce: `name` (il nome nell'app, quello che hanno le carte in `cards_supply.json`), `dbName` (il nome nel
+  DataBase: uguale a `name` tranne per i rinomini), `it` (nome italiano, ancora `null`), `cards` (quante carte di `cards_supply.json`
+  la hanno, cioè quelle entrate nell'app; `0` se nessuna), es. `{"name": "Dual Breach", "dbName": "Dual Breach Spell", "it": null,
+  "cards": 2}`. Non letto all'avvio: la Biblioteca lo legge alla prima apertura insieme alle carte, e il suo filtro per meccanica
+  (solo le voci con `cards` > 0) sparisce se il file manca o è rotto. Le meccaniche dei tesori non sono qui (sono in `cards_treasure.json`).
+- I **rinomini** delle meccaniche (lato app, il DataBase non si tocca): la tabella `RINOMINI_MECCANICHE` in cima a
+  `tools/import-db.py`, nome del DataBase → nome nell'app. Si applica alla colonna Mechanics di tutte le carte che il ponte scrive e a
+  `mechanics.json`. Per aggiungere una voce: una riga nella tabella, poi rilanciare il ponte. Una voce che non trova nessuna riga del
+  DataBase va nelle segnalazioni dello script.
 - `products.json`: `{ codice: nome }` (`"4": "The New Age"`, `"4.1": "Shattered Dreams"`). Il codice senza punto è la
   scatola base della wave; la wave è la parte prima del punto (`waveOfCode`).
 - `nemesis.json`: `name`, `boxCode` (null per le Promo, mai giocabili), `waveOrder`, `battle`, `flagBattle5`, `life` (vita

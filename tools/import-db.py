@@ -9,7 +9,7 @@ Legge (SOLO LETTURA; gli Excel vengono prima copiati in una cartella temporanea 
     <DataBase>/pipeline.py                  BOXES_NAMES: codice scatola -> nome del prodotto
 
 Scrive nel repository dell'app:
-    cards_nemesis.json, cards_supply.json, cards_treasure.json, products.json
+    cards_nemesis.json, cards_supply.json, cards_treasure.json, products.json, mechanics.json (solo supply)
     Data/Nemesis/<BoxCode>_<Prodotto>/<_Basics | _Upgraded | Nemesi>/Tier_<N>/<Nome>.webp   (WebP 90, max 1640 px)
     thumbs/Nemesis/...  (stesso albero, miniature ~264 x 369)
     Data/Supply/<codice>/<Gem | Relic | Spell>/<Nome>.webp e Data/Treasure/<codice>/<Level_N>/<Nome>.webp, con le
@@ -76,6 +76,16 @@ FLAGS = {'Removable': 'removable', 'InNemesisDeck': 'inNemesisDeck'}
 PREFIX = re.compile(r'^(TO DISCARD|IMMEDIATELY|PERSISTENT|POWER\s*\d+)\s*:\s*(.*)$')
 PART_KEY = {'TO DISCARD': 'toDiscard', 'IMMEDIATELY': 'immediately', 'PERSISTENT': 'persistent'}
 
+# Rinomini delle meccaniche, lato app (il DataBase non si tocca): nome nel DataBase -> nome nell'app. Si applica alla
+# colonna Mechanics di tutte le carte che il ponte scrive (cards_supply.json, cards_treasure.json) e ai nomi di
+# mechanics.json (name = nome nell'app, dbName = nome nel DataBase). Una voce che non trova nessuna riga del DataBase
+# finisce nelle segnalazioni. Per aggiungerne una: una riga qui sotto, "Nome nel DataBase": "Nome nell'app", poi
+# rilanciare il ponte. Il nome va scritto esattamente come nella colonna Mechanics (maiuscole e spazi compresi).
+RINOMINI_MECCANICHE = {
+    'Dual Breach Spell': 'Dual Breach',
+    'Cards that Interact with Trinket': 'Trinket Interaction',
+}
+
 
 # ------------------------------------------------------------------------------------------------ utilita'
 def slugify(text: str) -> str:
@@ -116,12 +126,22 @@ def tier_value(v):
     return number_or_text(v)
 
 
-def mechanics_list(v):
-    """Colonna Mechanics ("Pulse Token;Recall") -> elenco di testi, senza spazi ai bordi; vuota -> []."""
+def mechanics_names(v):
+    """Colonna Mechanics ("Pulse Token;Recall") -> nomi come nel DataBase, senza spazi ai bordi; vuota -> []."""
     text = text_or_none(v)
     if text is None:
         return []
     return [m.strip() for m in text.split(';') if m.strip()]
+
+
+def nome_app(nome_db):
+    """Nome di una meccanica nell'app: il rinomino di RINOMINI_MECCANICHE, altrimenti lo stesso nome."""
+    return RINOMINI_MECCANICHE.get(nome_db, nome_db)
+
+
+def mechanics_list(v):
+    """Colonna Mechanics -> elenco di nomi nell'app (con i rinomini), come va in cards_supply.json e cards_treasure.json."""
+    return [nome_app(m) for m in mechanics_names(v)]
 
 
 def natural_key(s):
@@ -401,22 +421,39 @@ def check_box(label, code, box, mini, products, issues):
 
 
 def scrivi_mechanics(data: Path, issues):
-    """public/mechanics.json: tutte le meccaniche delle carte supply e tesori del DataBase (colonna Mechanics, tutte
-    le righe, anche quelle senza immagine), in ordine alfabetico, con il nome del DataBase, quante carte di ciascun
-    Excel la hanno e il campo "it" (nome italiano, ancora vuoto). Legge gli Excel in sola lettura (copia temporanea)."""
-    counts = {}
+    """public/mechanics.json: le meccaniche delle carte SUPPLY del DataBase (colonna Mechanics di SUPPLY_CARDS.xlsx,
+    tutte le righe, anche quelle senza immagine). Per ciascuna: "name" (nome nell'app), "dbName" (nome nel DataBase),
+    "it" (nome italiano, ancora null) e "cards" (quante carte di cards_supply.json la hanno, cioe' quelle entrate
+    nell'app; 0 se nessuna). Ordine alfabetico del nome nell'app. Le meccaniche dei tesori non vanno qui (sono in
+    cards_treasure.json). Legge gli Excel in sola lettura (copia temporanea). Le voci di RINOMINI_MECCANICHE che non
+    trovano nessuna riga del DataBase (supply o tesori) vanno nelle segnalazioni."""
+    supply_db, tutte = set(), set()
     with tempfile.TemporaryDirectory(prefix='import-db-') as tmp:
         tmp = Path(tmp)
         for kind, cfg in EXTRA.items():
             shutil.copy2(data / cfg['excel'], tmp / cfg['excel'])
             for r in read_sheet(tmp / cfg['excel']):
-                for m in mechanics_list(r.get('Mechanics')):
-                    counts.setdefault(m, {'supply': 0, 'treasure': 0})[kind] += 1
-    out = [{'name': name, 'it': None, 'supply': counts[name]['supply'], 'treasure': counts[name]['treasure']}
-           for name in sorted(counts, key=lambda s: (s.casefold(), s))]
+                for m in mechanics_names(r.get('Mechanics')):
+                    tutte.add(m)
+                    if kind == 'supply':
+                        supply_db.add(m)
+    for voce in RINOMINI_MECCANICHE:
+        if voce not in tutte:
+            issues.append(f'rinomino meccanica "{voce}": nessuna riga del DataBase la ha (voce da togliere o da correggere)')
+
+    # quante carte supply entrate nell'app hanno ciascuna meccanica (cards_supply.json appena scritto)
+    conteggi = defaultdict(int)
+    for c in json.loads((SITE / 'cards_supply.json').read_text(encoding='utf-8-sig')):
+        for m in c['mechanics']:
+            conteggi[m] += 1
+    coppie = sorted(((nome_app(m), m) for m in supply_db), key=lambda p: (p[0].casefold(), p[0]))
+    fuori = set(conteggi) - {app for app, _ in coppie}
+    if fuori:
+        issues.append(f'meccaniche in cards_supply.json che non sono in mechanics.json: {", ".join(sorted(fuori))}')
+    out = [{'name': app, 'dbName': db, 'it': None, 'cards': conteggi.get(app, 0)} for app, db in coppie]
     text = json.dumps(out, indent=4, ensure_ascii=False, separators=(',', ':  '))
     (SITE / 'mechanics.json').write_text(text + '\n', encoding='utf-8', newline='\n')
-    print(f'mechanics.json: {len(out)} meccaniche')
+    print(f'mechanics.json: {len(out)} meccaniche delle supply')
 
 
 def importa_extra(data: Path, main_rows, products, args, issues, kinds):
