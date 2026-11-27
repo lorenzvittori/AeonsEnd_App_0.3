@@ -120,11 +120,16 @@
 .biblioteca-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 
 /* La carta è solo l'immagine originale, 63:88, senza cornici né sovrapposizioni */
+/* L'altezza viene solo dal rapporto 63:88 (padding in percentuale sulla larghezza, perché aspect-ratio non dava sempre
+   la stessa altezza su questo pulsante): l'immagine è fuori dal flusso (assoluta), così la miniatura non decide
+   l'altezza e tutte le carte di una griglia o di un carosello hanno la stessa dimensione */
 .biblioteca-card {
-  display: block; margin: 0; padding: 0; border: 0; background: none; cursor: pointer;
-  aspect-ratio: 63 / 88; min-width: 0;
+  position: relative; display: block; box-sizing: border-box; height: 0; min-width: 0;
+  margin: 0; padding: 0 0 calc(100% * 88 / 63); border: 0; background: none; cursor: pointer;
 }
-.biblioteca-card img { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+.biblioteca-card img {
+  position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 6px;
+}
 .biblioteca-card:focus-visible img { outline: 2px solid var(--ae-focus); outline-offset: 2px; }
 
 /* Voce di una carta: la carta e, sotto, il pannello informativo (stessa larghezza, scorrono insieme). Il pannello
