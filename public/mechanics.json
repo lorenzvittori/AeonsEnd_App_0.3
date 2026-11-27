@@ -9,7 +9,7 @@
         "name":  "Attach",
         "dbName":  "Attach",
         "it":  null,
-        "cards":  5
+        "cards":  6
     },
     {
         "name":  "Conjure",
@@ -27,7 +27,7 @@
         "name":  "Dual Breach",
         "dbName":  "Dual Breach Spell",
         "it":  null,
-        "cards":  2
+        "cards":  4
     },
     {
         "name":  "Echo",
@@ -45,7 +45,7 @@
         "name":  "Link",
         "dbName":  "Link",
         "it":  null,
-        "cards":  0
+        "cards":  5
     },
     {
         "name":  "Pulse Token",
