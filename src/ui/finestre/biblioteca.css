@@ -6,40 +6,80 @@
 /* Layer: testata, schede, filtri, area scorrevole e barra inferiore in colonna; niente padding in basso (lo dà la barra) */
 .collection-screen.biblioteca { padding: calc(var(--ae-safe-top) + 8px) 0 0; }
 .biblioteca-head { flex: none; }
-.biblioteca-head, .biblioteca-tabs, .biblioteca-filters, .biblioteca-body, .biblioteca-categories {
+.biblioteca-head, .biblioteca-filters, .biblioteca-body, .biblioteca-categories {
   width: 100%; margin-inline: auto;
 }
 @media (min-width: 900px) {
-  .biblioteca-head, .biblioteca-tabs, .biblioteca-filters, .biblioteca-body, .biblioteca-categories { width: min(100%, 900px); }
+  .biblioteca-head, .biblioteca-filters, .biblioteca-body, .biblioteca-categories { width: min(100%, 900px); }
 }
 
-/* Schede: Nemesi, Mercato, Tesori. Attiva: testo oro e linea sottile sotto */
-.biblioteca-tabs { flex: none; display: flex; border-bottom: 1px solid var(--ae-border); }
-.biblioteca-tab {
-  flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 8px; background: none; border: 0; cursor: pointer;
-  color: var(--ae-text-quiet); font: 600 14px/20px var(--ae-font-ui);
+/* Testata alta 44 px: "BIBLIOTECA · Mercato ⌄". La sezione è una tendina senza box, accanto al titolo; la X resta a destra */
+.biblioteca-head { flex: none; height: 44px; min-height: 44px; padding: 0 8px 0 16px; }
+.biblioteca-title { position: relative; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.biblioteca-title .collection-title { white-space: nowrap; }
+.biblioteca-title-dot { flex: none; width: 4px; height: 4px; border-radius: 50%; background: var(--ae-text-quiet); }
+.biblioteca-section-btn {
+  flex: none; display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 4px; margin: 0;
+  background: none; border: 0; cursor: pointer; color: var(--ae-text-muted); font: 600 14px/20px var(--ae-font-ui);
 }
-.biblioteca-tab.is-active { color: var(--ae-gold); box-shadow: inset 0 -2px 0 var(--ae-gold); }
+.biblioteca-section-btn:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: -2px; }
+/* Freccia verso il basso, disegnata con due bordi (niente icona in più) */
+.biblioteca-chevron {
+  width: 6px; height: 6px; margin-top: -3px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg); flex: none;
+}
+.biblioteca-section-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 4; min-width: 170px; display: flex; flex-direction: column;
+  gap: 2px; padding: 4px; background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md);
+}
+.biblioteca-section-menu[hidden] { display: none; }
+.biblioteca-section-option {
+  min-height: 40px; padding: 0 12px; text-align: left; background: none; border: 0; border-radius: var(--ae-radius-sm);
+  cursor: pointer; color: var(--ae-text); font: 500 15px/20px var(--ae-font-ui);
+}
+.biblioteca-section-option.is-active { color: var(--ae-gold); }
+.biblioteca-section-option:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
 
-/* Filtri: tre righe compatte, sempre visibili sopra l'area scorrevole */
+/* Filtri: due righe compatte (4 px tra loro), sempre visibili sopra l'area scorrevole */
 .biblioteca-filters {
-  flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 16px;
+  flex: none; display: flex; flex-direction: column; gap: 4px; padding: 6px 16px 8px;
   border-bottom: 1px solid var(--ae-border);
 }
 .biblioteca-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.biblioteca-search { position: relative; flex: 1 1 auto; min-width: 0; display: block; }
-.biblioteca-search input {
-  width: 100%; height: 34px; padding: 0 10px 0 32px; box-sizing: border-box;
+/* Prima riga: set, meccaniche (metà riga ciascuno) e la lente; il campo di ricerca si appoggia qui sotto */
+.biblioteca-row-top { position: relative; }
+
+/* La lente: nessun box, grigia; dorata quando c'è una ricerca attiva */
+.biblioteca-search-btn {
+  flex: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 0;
+  background: none; border: 0; cursor: pointer; color: var(--ae-text-quiet);
+}
+.biblioteca-search-btn svg { width: 18px; height: 18px; }
+.biblioteca-search-btn.is-active { color: var(--ae-gold); }
+.biblioteca-search-btn:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
+
+/* Campo di ricerca: si sovrappone alle carte sotto (position absolute), non le sposta */
+.biblioteca-search-pop {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 6px;
+  padding: 6px; background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md);
+}
+.biblioteca-search-pop[hidden] { display: none; }
+.biblioteca-search-pop input {
+  flex: 1 1 auto; min-width: 0; height: 34px; padding: 0 10px; box-sizing: border-box;
   background: var(--ae-surface-raised); color: var(--ae-text); border: 1px solid var(--ae-border);
   border-radius: var(--ae-radius-sm); font: 400 14px/20px var(--ae-font-ui);
 }
-.biblioteca-search input::placeholder { color: var(--ae-text-quiet); }
-.biblioteca-search input:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
-.biblioteca-search-icon {
-  position: absolute; left: 9px; top: 50%; transform: translateY(-50%); display: flex;
-  width: 16px; height: 16px; color: var(--ae-text-quiet); pointer-events: none;
+/* La X di cancellazione è la nostra (sotto): si nasconde quella nativa del campo */
+.biblioteca-search-pop input::-webkit-search-cancel-button { display: none; }
+.biblioteca-search-pop input::placeholder { color: var(--ae-text-quiet); }
+.biblioteca-search-pop input:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
+.biblioteca-search-clear {
+  flex: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0;
+  background: none; border: 0; cursor: pointer; color: var(--ae-text-quiet);
 }
-.biblioteca-search-icon svg { width: 16px; height: 16px; }
+.biblioteca-search-clear[hidden] { display: none; }
+.biblioteca-search-clear svg { width: 18px; height: 18px; }
+.biblioteca-search-clear:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
 
 /* Pulsanti compatti: sfondo scuro, bordo grigio sottile, angoli leggermente arrotondati; attivo = oro */
 .biblioteca-chip {
@@ -84,7 +124,7 @@
 /* Area centrale scorrevole */
 .collection-screen.biblioteca .biblioteca-body {
   flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
-  display: flex; flex-direction: column; gap: 18px; padding: 12px 16px 16px;
+  display: flex; flex-direction: column; gap: 14px; padding: 10px 16px 12px;
 }
 .biblioteca-group { display: flex; flex-direction: column; gap: 10px; flex: none; }
 /* Intestazione del gruppo: segmento grigio, "COSTO N" centrato, segmento grigio, numero di carte a destra */
@@ -108,13 +148,14 @@
 }
 .biblioteca-group-count { flex: none; color: var(--ae-text-quiet); font: 500 12px/16px var(--ae-font-ui); white-space: nowrap; }
 
-/* Carosello orizzontale indipendente: circa due carte e mezza visibili, scorrimento con lo snap */
+/* Carosello orizzontale: ogni carta è il 47% della larghezza utile (due carte intere e un bordo della terza), 8 px tra le
+   carte; scorrimento con lo snap */
 .biblioteca-track {
-  display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 2px;
+  display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 2px;
   scrollbar-width: none; overscroll-behavior-x: contain;
 }
 .biblioteca-track::-webkit-scrollbar { display: none; }
-.biblioteca-track > .biblioteca-item { flex: 0 0 calc((100% - 10px) / 2.35); scroll-snap-align: start; }
+.biblioteca-track > .biblioteca-item { flex: 0 0 47%; scroll-snap-align: start; }
 
 /* Griglia a due colonne (costo specifico): le carte occupano tutta la colonna */
 .biblioteca-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -157,18 +198,20 @@
 
 .biblioteca-message { margin: 32px 0; text-align: center; color: var(--ae-text-muted); font: 500 14px/20px var(--ae-font-ui); }
 
-/* Barra inferiore: tre categorie uniformi, attiva oro con indicatore sopra l'icona */
+/* Barra inferiore: 46 px più la safe area (bordo superiore 1 px dentro). Tre categorie uguali; ciascuna occupa tutta
+   la sua cella, quindi tutta la superficie è toccabile. Icona 22 px, etichetta 11 px, indicatore attivo 2 px sopra */
 .biblioteca-categories {
-  flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-top: 1px solid var(--ae-border); padding-bottom: calc(var(--ae-safe-bottom) + 4px);
+  flex: none; box-sizing: border-box; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  height: calc(46px + var(--ae-safe-bottom)); padding-bottom: var(--ae-safe-bottom);
+  border-top: 1px solid var(--ae-border);
 }
 .biblioteca-category {
   position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  min-height: 60px; padding: 8px 0 4px; background: none; border: 0; cursor: pointer;
+  min-width: 0; padding: 2px 0 3px; background: none; border: 0; cursor: pointer;
   color: var(--ae-text-quiet);
 }
-.biblioteca-category svg { width: 30px; height: 30px; flex: none; }
-.biblioteca-category-label { font: 600 12px/16px var(--ae-font-ui); }
+.biblioteca-category svg { width: 22px; height: 22px; flex: none; }
+.biblioteca-category-label { font: 600 11px/13px var(--ae-font-ui); }
 .biblioteca-category.is-active { color: var(--ae-gold); }
 .biblioteca-category.is-active::before {
   content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 2px; border-radius: 2px; background: var(--ae-gold);

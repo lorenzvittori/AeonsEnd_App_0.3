@@ -1,6 +1,6 @@
 // ui/finestre/biblioteca.ts: la Biblioteca, a tutto schermo dal menu iniziale. Testata con il titolo, tre schede (Nemesi,
-// Mercato, Tesori; per ora solo il Mercato ha contenuto), nel Mercato i filtri (ricerca per nome, ID o effetto; set e
-// meccaniche in due pannelli a selezione multipla; costo) e le carte: caroselli per costo, o una griglia a due colonne con
+// Mercato, Tesori; per ora solo il Mercato ha contenuto, scelta da una tendina nella testata), nel Mercato i filtri (set e
+// meccaniche in due pannelli a selezione multipla, la lente per la ricerca per nome, ID o effetto; costo) e le carte: caroselli per costo, o una griglia a due colonne con
 // un costo scelto. L'ordine è fisso (costo crescente, nome). Toccando una carta, lo zoom a tutto schermo (la scansione
 // originale). La barra inferiore sceglie la categoria (Gemme, Reliquie, Incantesimi).
 // Stato separato dalla partita: aprire la Biblioteca non tocca il mazzo, i turni o il salvataggio.
@@ -18,11 +18,12 @@ import { catalogo } from '../../stato/catalogo.ts';
 import { loadJson } from '../../dati/dati.ts';
 import { checkMechanics, checkSupplyCards, reportProblems } from '../../dati/controllo.ts';
 import type { CartaSupply, Meccanica, TipoSupply } from '../../tipi/dati.ts';
-import { CATEGORIE_MERCATO, etichettaBox, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca,
-  meccanicheCarta, meccanicheDiCategoria, raggruppaPerCosto, setPresenti } from '../../regole/biblioteca.ts';
+import { CATEGORIE_MERCATO, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca,
+  meccanicheDiCategoria, raggruppaPerCosto, setPresenti } from '../../regole/biblioteca.ts';
 import type { PreferenzeBiblioteca } from '../../regole/biblioteca.ts';
 import { iconaCategoria, iconaLente } from './biblioteca-icone.ts';
-import { coloreMeccanica } from '../colori-meccaniche.ts';
+import { adattaEtichetteIn, disconnettiEtichette, messaggio, voceCarta } from './biblioteca-carte.ts';
+import { apriZoomCarta } from './biblioteca-zoom.ts';
 
 // Preferenze della Biblioteca nel browser (la categoria; il vecchio campo dell'ordinamento si ignora)
 const CHIAVE_PREFERENZE = 'aeonsend-app-0.2-library';
@@ -99,81 +100,6 @@ function salvaPreferenze(preferenze: PreferenzeBiblioteca): void {
   }
 }
 
-function messaggio(testo: string): HTMLElement {
-  return el('p', 'biblioteca-message', testo);
-}
-
-// Un pulsante di carta: solo l'immagine (miniatura), niente nome né badge
-function bottoneCarta(carta: CartaSupply, apriZoom: (c: CartaSupply, origine: HTMLElement) => void): HTMLButtonElement {
-  const bottone = el('button', 'biblioteca-card');
-  bottone.type = 'button';
-  bottone.setAttribute('aria-label', carta.name);
-  const img = el('img');
-  img.src = carta.thumb;
-  img.alt = '';
-  img.loading = 'lazy';
-  img.decoding = 'async';
-  img.width = 264;
-  img.height = 369;
-  bottone.append(img);
-  bottone.addEventListener('click', () => apriZoom(carta, bottone));
-  return bottone;
-}
-
-// Il box del pannello sta su una riga: la dimensione parte da 11 px e scende (mezzo px alla volta, fino a 7 px) finché
-// il testo ci sta nella larghezza del pannello. Si ricalcola quando il pannello cambia dimensione (ResizeObserver)
-const DIMENSIONE_BOX = 11;
-const DIMENSIONE_BOX_MINIMA = 7;
-function adattaEtichetta(riga: HTMLElement): void {
-  riga.style.fontSize = `${DIMENSIONE_BOX}px`;
-  let misura = DIMENSIONE_BOX;
-  while (riga.scrollWidth > riga.clientWidth && misura > DIMENSIONE_BOX_MINIMA) {
-    misura -= 0.5;
-    riga.style.fontSize = `${misura}px`;
-  }
-}
-
-let osservatoreBox: ResizeObserver | null = null;
-function osservaEtichetta(riga: HTMLElement): void {
-  if (typeof ResizeObserver === 'undefined') { adattaEtichetta(riga); return; }
-  if (!osservatoreBox) osservatoreBox = new ResizeObserver(voci => { for (const v of voci) adattaEtichetta(v.target as HTMLElement); });
-  osservatoreBox.observe(riga);
-}
-
-// Il pannello sotto la carta: il box ("x", o "x - y" con la mini espansione y) e le meccaniche come tag, ciascuna nel suo
-// colore (ui/colori-meccaniche.ts). Null se non c'è nulla da mostrare
-function pannelloCarta(carta: CartaSupply): HTMLElement | null {
-  const box = etichettaBox(carta);
-  const tag = meccanicheCarta(carta);
-  if (box === '' && tag.length === 0) return null;
-  const pannello = el('div', 'biblioteca-info');
-  if (box !== '') {
-    const riga = el('p', 'biblioteca-info-box', box);
-    pannello.append(riga);
-    osservaEtichetta(riga);
-  }
-  if (tag.length > 0) {
-    const elenco = el('div', 'biblioteca-tags');
-    for (const nome of tag) {
-      const etichetta = el('span', 'biblioteca-tag', nome);
-      const colore = coloreMeccanica(nome);
-      if (colore !== null) etichetta.style.setProperty('--tag', colore);
-      elenco.append(etichetta);
-    }
-    pannello.append(elenco);
-  }
-  return pannello;
-}
-
-// Una voce del carosello o della griglia: la carta e, sotto, il suo pannello (stessa larghezza, scorrono insieme)
-function voceCarta(carta: CartaSupply, apriZoom: (c: CartaSupply, origine: HTMLElement) => void): HTMLElement {
-  const voce = el('div', 'biblioteca-item');
-  voce.append(bottoneCarta(carta, apriZoom));
-  const info = pannelloCarta(carta);
-  if (info) voce.append(info);
-  return voce;
-}
-
 // Apre la Biblioteca a tutto schermo. `trigger` riceve il fuoco alla chiusura.
 export function openLibrary(trigger?: HTMLElement | null): void {
   const stato = {
@@ -190,45 +116,89 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   layer.setAttribute('aria-modal', 'true');
   layer.setAttribute('aria-label', T.library);
 
-  // Testata: titolo e X (la X chiude; Indietro chiude per prima la carta ingrandita, poi la Biblioteca)
+  // Testata (44 px): "BIBLIOTECA · Mercato ⌄", con la sezione in una tendina senza box, e la X a destra (la X chiude;
+  // Indietro chiude per prima la carta ingrandita, poi la Biblioteca)
   const head = el('div', 'collection-head biblioteca-head');
   const chiudi = el('button', 'ae-icon-button');
   chiudi.type = 'button';
   chiudi.setAttribute('aria-label', T.close);
   chiudi.appendChild(icon('close'));
-  head.append(el('h2', 'collection-title', T.library), chiudi);
-
-  // Schede principali
   const testoScheda: Record<Scheda, string> = { nemesi: T.libraryNemesis, mercato: T.libraryMarket, tesori: T.libraryTreasures };
-  const schede = el('div', 'biblioteca-tabs');
-  schede.setAttribute('role', 'group');
-  schede.setAttribute('aria-label', T.libraryTabs);
+  const titoloGruppo = el('div', 'biblioteca-title');
+  const sezioneBtn = el('button', 'biblioteca-section-btn');
+  sezioneBtn.type = 'button';
+  sezioneBtn.setAttribute('aria-haspopup', 'true');
+  sezioneBtn.setAttribute('aria-expanded', 'false');
+  const sezioneNome = el('span', 'biblioteca-section-name');
+  const freccia = el('span', 'biblioteca-chevron');
+  freccia.setAttribute('aria-hidden', 'true');
+  sezioneBtn.append(sezioneNome, freccia);
+  const menuSezione = el('div', 'biblioteca-section-menu');
+  menuSezione.setAttribute('role', 'group');
+  menuSezione.setAttribute('aria-label', T.libraryTabs);
+  menuSezione.hidden = true;
   const bottoniScheda = new Map<Scheda, HTMLButtonElement>();
   SCHEDE.forEach(s => {
-    const b = el('button', 'biblioteca-tab', testoScheda[s]);
+    const b = el('button', 'biblioteca-section-option', testoScheda[s]);
     b.type = 'button';
-    b.addEventListener('click', () => { stato.scheda = s; disegnaTutto(); });
+    b.addEventListener('click', () => { stato.scheda = s; apriMenuSezione(false); disegnaTutto(); });
     bottoniScheda.set(s, b);
-    schede.append(b);
+    menuSezione.append(b);
   });
+  const punto = el('span', 'biblioteca-title-dot');
+  punto.setAttribute('aria-hidden', 'true');
+  titoloGruppo.append(el('h2', 'collection-title', T.library), punto, sezioneBtn, menuSezione);
+  head.append(titoloGruppo, chiudi);
+  let menuSezioneAperto = false;
+  function apriMenuSezione(aperto: boolean): void {
+    menuSezioneAperto = aperto;
+    menuSezione.hidden = !aperto;
+    sezioneBtn.setAttribute('aria-expanded', String(aperto));
+  }
+  sezioneBtn.addEventListener('click', () => apriMenuSezione(!menuSezioneAperto));
 
-  // Filtri del Mercato, in tre righe compatte
+  // Filtri del Mercato: la riga 1 (set, meccaniche, lente), la riga 2 (costo)
   const filtri = el('div', 'biblioteca-filters');
 
-  // Riga 1: ricerca per nome, ID o effetto, con la lente
-  const cercaRiga = el('div', 'biblioteca-row');
-  const campo = el('label', 'biblioteca-search');
-  const lente = el('span', 'biblioteca-search-icon');
-  lente.setAttribute('aria-hidden', 'true');
-  lente.appendChild(iconaLente());
+  // La lente (senza box; oro se la ricerca è attiva) apre un campo di ricerca sovrapposto alle carte, con il fuoco
+  let ricercaAperta = false;
+  const lenteBtn = el('button', 'biblioteca-search-btn');
+  lenteBtn.type = 'button';
+  lenteBtn.setAttribute('aria-label', T.librarySearch);
+  lenteBtn.setAttribute('aria-expanded', 'false');
+  lenteBtn.appendChild(iconaLente());
+  const ricercaPop = el('div', 'biblioteca-search-pop');
+  ricercaPop.hidden = true;
   const cerca = el('input');
   cerca.type = 'search';
   cerca.placeholder = T.librarySearch;
   cerca.setAttribute('aria-label', T.librarySearch);
   cerca.autocomplete = 'off';
-  cerca.addEventListener('input', () => { stato.ricerca = cerca.value; disegnaCorpo(); });
-  campo.append(lente, cerca);
-  cercaRiga.append(campo);
+  const cancella = el('button', 'biblioteca-search-clear');
+  cancella.type = 'button';
+  cancella.setAttribute('aria-label', T.librarySearchClear);
+  cancella.appendChild(icon('close'));
+  ricercaPop.append(cerca, cancella);
+  function apriRicerca(aperta: boolean): void {
+    ricercaAperta = aperta;
+    ricercaPop.hidden = !aperta;
+    lenteBtn.setAttribute('aria-expanded', String(aperta));
+    if (aperta) cerca.focus();
+  }
+  lenteBtn.addEventListener('click', () => apriRicerca(!ricercaAperta));
+  cerca.addEventListener('input', () => { stato.ricerca = cerca.value; disegnaRicerca(); disegnaCorpo(); });
+  cancella.addEventListener('click', () => {
+    cerca.value = '';
+    stato.ricerca = '';
+    disegnaRicerca();
+    disegnaCorpo();
+    cerca.focus();
+  });
+  function disegnaRicerca(): void {
+    const attiva = stato.ricerca !== '';
+    lenteBtn.classList.toggle('is-active', attiva);
+    cancella.hidden = !attiva;
+  }
 
   // Riga 2: set e meccaniche (selezione multipla, ciascuna in un pannello; un pannello aperto alla volta)
   let pannelloAperto: Pannello | null = null;
@@ -255,8 +225,8 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   };
   const pannelloSet = creaPannello(T.librarySets);
   const pannelloMeccaniche = creaPannello(T.libraryMechanics);
-  const setRiga = el('div', 'biblioteca-row');
-  setRiga.append(pannelloSet.wrap, pannelloMeccaniche.wrap);
+  const setRiga = el('div', 'biblioteca-row biblioteca-row-top');
+  setRiga.append(pannelloSet.wrap, pannelloMeccaniche.wrap, lenteBtn, ricercaPop);
 
   // Riga 3: costo, con i pulsanti delle fasce presenti nel catalogo
   const costoRiga = el('div', 'biblioteca-row biblioteca-cost');
@@ -266,7 +236,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   fasce.setAttribute('aria-label', T.libraryCost);
   costoRiga.append(costoEtichetta, fasce);
 
-  filtri.append(cercaRiga, setRiga, costoRiga);
+  filtri.append(setRiga, costoRiga);
 
   // Area centrale scorrevole: i gruppi di costo (o la griglia del costo scelto)
   const corpo = el('div', 'biblioteca-body');
@@ -289,7 +259,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     categorie.append(b);
   });
 
-  layer.append(head, schede, filtri, corpo, categorie);
+  layer.append(head, filtri, corpo, categorie);
 
   // --- Disegno ---
 
@@ -343,6 +313,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   }
 
   function disegnaFiltri(): void {
+    sezioneNome.textContent = testoScheda[stato.scheda];
     const n = stato.set.size;
     pannelloSet.btn.textContent = n === 0 ? T.librarySetsAll : T.librarySetsCount(n);
     pannelloSet.btn.classList.toggle('is-active', n > 0);
@@ -382,8 +353,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   }
 
   function disegnaCorpo(): void {
-    // Le righe dei box del disegno precedente non servono più: si smette di osservarle
-    osservatoreBox?.disconnect();
+    disconnettiEtichette();
     if (stato.scheda !== 'mercato') {
       corpo.replaceChildren(messaggio(T.libraryComingSoon));
       return;
@@ -411,8 +381,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
       return sezione;
     });
     corpo.replaceChildren(...gruppi);
-    // Subito dopo l'inserimento: la dimensione dei box si misura ora (ResizeObserver solo per i cambi successivi)
-    corpo.querySelectorAll<HTMLElement>('.biblioteca-info-box').forEach(adattaEtichetta);
+    adattaEtichetteIn(corpo);
   }
 
   function disegnaTutto(): void {
@@ -421,41 +390,13 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     filtri.hidden = !mercato;
     categorie.hidden = !mercato;
     aggiornaPannelloMeccaniche();
+    disegnaRicerca();
     disegnaFiltri();
     disegnaCorpo();
   }
 
-  // --- Zoom: la scansione a tutto schermo, con le proporzioni originali ---
-  function apriZoom(carta: CartaSupply, origine: HTMLElement): void {
-    const zoom = el('div', 'collection-screen biblioteca-zoom');
-    zoom.setAttribute('role', 'dialog');
-    zoom.setAttribute('aria-modal', 'true');
-    zoom.setAttribute('aria-label', carta.name);
-    const testata = el('div', 'collection-head biblioteca-zoom-head');
-    const chiudiZoom = el('button', 'ae-icon-button');
-    chiudiZoom.type = 'button';
-    chiudiZoom.setAttribute('aria-label', T.close);
-    chiudiZoom.appendChild(icon('close'));
-    testata.append(chiudiZoom);
-    const scena = el('div', 'biblioteca-zoom-stage');
-    const img = el('img');
-    img.src = carta.image;
-    img.alt = carta.name;
-    scena.append(img);
-    zoom.append(testata, scena);
-    const chiudiIngrandimento = () => {
-      zoom.remove();
-      layer.inert = false;
-      // La Biblioteca non si ridisegna: la posizione di scorrimento resta com'era
-      if (origine.isConnected) origine.focus({ preventScroll: true });
-    };
-    chiudiZoom.addEventListener('click', chiudiIngrandimento);
-    scena.addEventListener('click', chiudiIngrandimento);
-    zoom.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); chiudiIngrandimento(); } });
-    document.body.appendChild(zoom);
-    layer.inert = true;
-    chiudiZoom.focus();
-  }
+  // Zoom: la scansione a tutto schermo (biblioteca-zoom.ts); la Biblioteca resta inerte finché è aperto
+  const apriZoom = (carta: CartaSupply, origine: HTMLElement): void => apriZoomCarta(carta, origine, layer);
 
   // --- Chiusura ---
   const chiudiBiblioteca = () => {
@@ -464,16 +405,21 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     if (trigger && trigger.isConnected) trigger.focus({ preventScroll: true });
   };
   chiudi.addEventListener('click', chiudiBiblioteca);
+  // Esc chiude il livello più in alto: campo di ricerca, tendina della sezione, pannello set/meccaniche, poi la Biblioteca
   layer.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     e.stopPropagation();
-    if (pannelloAperto) apriPannello(null);
+    if (ricercaAperta) apriRicerca(false);
+    else if (menuSezioneAperto) apriMenuSezione(false);
+    else if (pannelloAperto) apriPannello(null);
     else chiudiBiblioteca();
   });
-  // Un tocco fuori dal pannello aperto (set o meccaniche) lo chiude
+  // Un tocco fuori dal livello aperto lo chiude (il tocco sulla lente o sulla sezione lo gestiscono i loro pulsanti)
   layer.addEventListener('click', e => {
     const bersaglio = e.target instanceof Node ? e.target : null;
     if (pannelloAperto && !pannelloAperto.wrap.contains(bersaglio)) apriPannello(null);
+    if (ricercaAperta && !ricercaPop.contains(bersaglio) && !lenteBtn.contains(bersaglio)) apriRicerca(false);
+    if (menuSezioneAperto && !titoloGruppo.contains(bersaglio)) apriMenuSezione(false);
   });
 
   document.body.appendChild(layer);
