@@ -1,6 +1,43 @@
 # Grandi miglioramenti:
 [x] Aggiungere ordine turno
-[] Implementare biblioteca carte e assistente per la creazione del mercato
+[x] Implementare biblioteca carte (Nemesi, Mercato, Tesori, Preferiti; box 1, 2, 4, 5 e mini espansioni)
+[] Assistente per la creazione del mercato
+
+# Stato al 28/11 (dai commit del 26-27/11)
+Fatto:
+- [x] Biblioteca: pulsante nel menu, Mercato a tutto schermo, filtri su una riga (ricerca, box, meccaniche, costo), chip dei filtri attivi, preferiti con la stella e sezione Preferiti
+- [x] Biblioteca: carte tutte della stessa altezza, angoli come nelle partite, pannello sotto la carta con box e meccaniche, simbolo Aether
+- [x] Dati: cards_nemesis.json, cards_supply.json, cards_treasure.json, mechanics.json; box 2 e 5 (con mini espansioni) importati
+- [x] Collezione: si possono scegliere solo le wave 1, 2, 4 e 5
+- [x] import-db trova le immagini nemesi anche con il prefisso "1 - " nelle cartelle del DataBase (Bane Sire aggiornata; carte nemesi da 243 a 469)
+- [x] Nemesi: retro delle carte salvato (campo back), campo toDiscardSpend, controllo automatico POWER n (npm run check)
+- [x] Versione automatica v0.3.x nel menu iniziale
+- [x] Mazzo dei turni: linea del tempo sotto le carte; token della nemesi nella finestra Pesca nuovo turno
+Da fare:
+- [] Assistente per la creazione del mercato
+- [x] Barra dei turni (sezione sotto)
+- [x] Menu principale: Continua partita e Opzioni (collezione, back, sfondo, lingua, animazione)
+- [] Regole dentro il gioco
+- [] Creare il menu "modalità" e forse ristrutturare in menu inizia partita
+- [] Mettere bene le lingue, mettere francese e tedesco
+
+# Generale:
+- [] rifare menu iniziale sopratutto titolo e "riprendi partita"
+- [] capire come gestire la "collezione". possibilità:
+    * togliere la collezione così nella biblioteca posso vedere tutto e poi la seleziono nel menu wave dentro nuova partita. in quesot modo posso fare boss anche che non ho. 
+    * se invece tengo la collezione posso mettere un simbolo (lucchetto chiuso o aperto) per le nemesi che posso giocatore anche se non ho la scatola. 
+- [] mettere in ordine per battaglia le nemesi nel menu nemesi di nuova partita
+
+
+# Biblioteca:
+- [] Togliere preferiti dal menu a tendina in alto
+- [] Aggiungere logi/icone per Nemesi, Mercato e Tesori
+- [] Rivedere il menu delle scatola, mettere le spedizioni indentate a destra sotto le wave e togliere x.y * NAME, tenere solo x * NAME
+- [] mettere il numero di carte avvianco al costo nel menu del costo
+- [] aggiungere "seleziona tutto" nel menu costo e boxes
+- [] aggiungere "tutti" nel menu in basso quindi gemme/reliqui/incantesimi insieme
+- [] nel menu meccaniche le voglio vedere tutte ma sono oscurate (non selezionabili) quelle relative a tipi di carte che non sto vedendo. affianco al nome della meccanica mettere il tipo, non solo il numero. Es: "Dual Breach"[icona incantesimo] (numero delle carte)
+
 
 # Scheda Mazzo Turno 
 - Interazione necessarie (solo The New Age e Core Set):
@@ -50,13 +87,13 @@ quella che lo scheletro chiama barra della fase è la barra dei turni, non la ba
 - [x] le wave non numerarle con numeri arabi ma con numeri romani
 - [x] Aggiungere la scelta del back delle carte come valore estetico e customizzabile in più (idea: mettere il back delle carte da briscola)
 - Mettere le regole dentro il Gioco, magari copiando la wiki o addirittura mettendo una parte di ai (chiamata API)
-- rorfare il webp di bane sire
+- [x] rorfare il webp di bane sire (commit 89047e5)
 - il box per il divieto rosso sulle carte potere più piccolo
 -  
 
 # Menu Principale 
 - [x] togliere il box dei pulsanti, mostra solo le scritte
-- Ci deve essere: Nuova Partita, continua partita, opzioni, Biblioteca
+- Ci deve essere: Nuova Partita, continua partita, opzioni, Biblioteca (Biblioteca fatta)
 - Opzioni -> collezione, scelta back, scelta sfondo, scelta lingua, scelta se fare animazione di creazione mazzo
 
 # Menu Nuova Partita
