@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { checkMechanics, checkSupplyCards } from '../src/dati/controllo.ts';
 import type { CartaSupply, Meccanica } from '../src/tipi/dati.ts';
 import { PREFERENZE_BIBLIOTECA_PREDEFINITE, etichettaCosto, fasceCostoPresenti, filtra, fasciaCosto,
-  leggiPreferenzeBiblioteca, meccanicheDisponibili, raggruppaPerCosto, setPresenti } from '../src/regole/biblioteca.ts';
+  leggiPreferenzeBiblioteca, meccanicheDiCategoria, raggruppaPerCosto, setPresenti } from '../src/regole/biblioteca.ts';
 import type { Filtri } from '../src/regole/biblioteca.ts';
 
 const public_ = join(process.cwd(), 'public');
@@ -107,14 +107,37 @@ describe('filtro per meccanica', () => {
     expect(r.every(c => c.boxCode === carta.boxCode && c.mechanics.includes(carta.mechanics[0]) && fasciaCosto(c.cost) === fasciaCosto(carta.cost))).toBe(true);
   });
 
-  it('nel filtro si offrono solo le meccaniche con almeno una carta, in ordine alfabetico', () => {
-    const lista: Meccanica[] = [
-      { name: 'Zeta', dbName: 'Zeta', it: null, cards: 2 },
-      { name: 'Alfa', dbName: 'Alfa', it: null, cards: 0 },
-      { name: 'beta', dbName: 'Beta Db', it: null, cards: 1 },
+  it('nel filtro di una categoria si offrono solo le meccaniche che hanno carte di quella categoria, in ordine alfabetico', () => {
+    const finte: CartaSupply[] = [
+      { ...carte[0], type: 'Gem', mechanics: ['Zeta', 'beta'] },
+      { ...carte[0], type: 'Gem', mechanics: ['beta'] },
+      { ...carte[0], type: 'Spell', mechanics: ['Alfa'] },
     ];
-    expect(meccanicheDisponibili(lista).map(m => m.name)).toEqual(['beta', 'Zeta']);
-    expect(meccanicheDisponibili(meccaniche).every(m => m.cards > 0)).toBe(true);
+    const lista: Meccanica[] = [
+      { name: 'Zeta', dbName: 'Zeta', it: null, cards: 1 },
+      { name: 'Alfa', dbName: 'Alfa', it: null, cards: 1 },
+      { name: 'beta', dbName: 'Beta Db', it: null, cards: 2 },
+    ];
+    expect(meccanicheDiCategoria(finte, lista, 'Gem')).toEqual([{ name: 'beta', carte: 2 }, { name: 'Zeta', carte: 1 }]);
+    expect(meccanicheDiCategoria(finte, lista, 'Spell')).toEqual([{ name: 'Alfa', carte: 1 }]);
+    expect(meccanicheDiCategoria(finte, lista, 'Relic')).toEqual([]);
+  });
+
+  it('con i dati veri: ogni categoria offre solo le meccaniche delle sue carte, con il conteggio giusto', () => {
+    for (const cat of ['Gem', 'Relic', 'Spell'] as const) {
+      const voci = meccanicheDiCategoria(carte, meccaniche, cat);
+      const delleCarte = new Map<string, number>();
+      carte.filter(c => c.type === cat).forEach(c => c.mechanics.forEach(m => delleCarte.set(m, (delleCarte.get(m) ?? 0) + 1)));
+      expect(voci.map(v => v.name)).toEqual([...delleCarte.keys()].sort((a, b) => a.localeCompare(b, 'en')));
+      voci.forEach(v => expect(v.carte, `${cat} ${v.name}`).toBe(delleCarte.get(v.name)));
+    }
+  });
+
+  it('le meccaniche degli Incantesimi non compaiono nelle Gemme (se non ci sono anche lì)', () => {
+    const gemme = new Set(meccanicheDiCategoria(carte, meccaniche, 'Gem').map(v => v.name));
+    const incantesimi = carte.filter(c => c.type === 'Spell').flatMap(c => c.mechanics);
+    const soloIncantesimi = [...new Set(incantesimi)].filter(m => !carte.some(c => c.type !== 'Spell' && c.mechanics.includes(m)));
+    soloIncantesimi.forEach(m => expect(gemme.has(m), m).toBe(false));
   });
 });
 

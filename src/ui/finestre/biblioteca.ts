@@ -18,7 +18,7 @@ import { catalogo } from '../../stato/catalogo.ts';
 import { loadJson } from '../../dati/dati.ts';
 import { checkMechanics, checkSupplyCards, reportProblems } from '../../dati/controllo.ts';
 import type { CartaSupply, Meccanica, TipoSupply } from '../../tipi/dati.ts';
-import { CATEGORIE_MERCATO, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca, meccanicheDisponibili,
+import { CATEGORIE_MERCATO, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca, meccanicheDiCategoria,
   raggruppaPerCosto, setPresenti } from '../../regole/biblioteca.ts';
 import type { PreferenzeBiblioteca } from '../../regole/biblioteca.ts';
 import { iconaCategoria, iconaLente } from './biblioteca-icone.ts';
@@ -258,22 +258,30 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     pannelloSet.elenco.replaceChildren(...elenco);
   }
 
-  // Pannello delle meccaniche: solo quelle con almeno una carta (il filtro sparisce se non ce n'è nessuna)
-  function costruisciPannelloMeccaniche(lista: readonly Meccanica[]): void {
-    const disponibili = meccanicheDisponibili(lista);
-    pannelloMeccaniche.wrap.hidden = disponibili.length === 0;
-    const elenco = disponibili.map(m => {
+  // Le meccaniche di mechanics.json (caricate alla prima apertura), da cui il pannello prende le voci della categoria
+  let listaMeccaniche: Meccanica[] = [];
+  // Pannello delle meccaniche: segue la categoria attiva (nelle Gemme solo le meccaniche delle Gemme). Si ricostruisce
+  // solo quando cambia la categoria; le meccaniche scelte che non ci sono più si tolgono, così nessun filtro resta nascosto
+  let categoriaElenco: TipoSupply | null = null;
+  function aggiornaPannelloMeccaniche(): void {
+    if (!cartePronte || categoriaElenco === stato.preferenze.categoria) return;
+    categoriaElenco = stato.preferenze.categoria;
+    const voci = meccanicheDiCategoria(cartePronte, listaMeccaniche, categoriaElenco);
+    pannelloMeccaniche.wrap.hidden = voci.length === 0;
+    const presenti = new Set(voci.map(v => v.name));
+    for (const nome of [...stato.meccaniche]) if (!presenti.has(nome)) stato.meccaniche.delete(nome);
+    const elenco = voci.map(v => {
       const riga = el('label', 'biblioteca-pick-row');
       const casella = el('input');
       casella.type = 'checkbox';
-      casella.value = m.name;
-      casella.checked = stato.meccaniche.has(m.name);
+      casella.value = v.name;
+      casella.checked = stato.meccaniche.has(v.name);
       casella.addEventListener('change', () => {
-        if (casella.checked) stato.meccaniche.add(m.name);
-        else stato.meccaniche.delete(m.name);
+        if (casella.checked) stato.meccaniche.add(v.name);
+        else stato.meccaniche.delete(v.name);
         disegnaTutto();
       });
-      riga.append(casella, el('span', '', m.name), el('span', 'biblioteca-pick-count', String(m.cards)));
+      riga.append(casella, el('span', '', v.name), el('span', 'biblioteca-pick-count', String(v.carte)));
       return riga;
     });
     pannelloMeccaniche.elenco.replaceChildren(...elenco);
@@ -348,6 +356,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     const mercato = stato.scheda === 'mercato';
     filtri.hidden = !mercato;
     categorie.hidden = !mercato;
+    aggiornaPannelloMeccaniche();
     disegnaFiltri();
     disegnaCorpo();
   }
@@ -411,7 +420,8 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   Promise.all([caricaCarte(), caricaMeccaniche()]).then(([, meccaniche]) => {
     erroreCaricamento = false;
     costruisciPannelloSet();
-    costruisciPannelloMeccaniche(meccaniche);
+    listaMeccaniche = meccaniche;
+    categoriaElenco = null;
     disegnaTutto();
   }, (err: unknown) => {
     console.error(err);

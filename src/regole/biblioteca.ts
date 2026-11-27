@@ -105,12 +105,25 @@ export function setPresenti(carte: readonly CartaSupply[], prodotti: Readonly<Pr
   return [...codici].sort(confrontoCodici).map(codice => ({ codice, nome: prodotti[codice] ?? codice }));
 }
 
-// Le meccaniche da offrire nel filtro: solo quelle che hanno almeno una carta nel file delle carte supply (cards > 0),
-// in ordine alfabetico del nome nell'app. Le fasce di costo si adattano allo stesso modo
-export function meccanicheDisponibili(meccaniche: readonly Meccanica[]): Meccanica[] {
+// Una meccanica offerta nel filtro della categoria attiva: il nome nell'app e quante carte di quella categoria la hanno
+export interface VoceMeccanica {
+  name: string;
+  carte: number;
+}
+
+// Le meccaniche da offrire nel filtro di una categoria: solo quelle che hanno almeno una carta di quella categoria
+// (così nelle Gemme non compaiono le meccaniche degli Incantesimi), in ordine alfabetico del nome nell'app
+export function meccanicheDiCategoria(carte: readonly CartaSupply[], meccaniche: readonly Meccanica[],
+  categoria: TipoSupply): VoceMeccanica[] {
+  const conta = new Map<string, number>();
+  for (const c of carte) {
+    if (c.type !== categoria) continue;
+    for (const m of c.mechanics) conta.set(m, (conta.get(m) ?? 0) + 1);
+  }
   return meccaniche
-    .filter(m => m.cards > 0)
-    .sort((a, b) => a.name.localeCompare(b.name, 'en') || a.dbName.localeCompare(b.dbName, 'en'));
+    .filter(m => (conta.get(m.name) ?? 0) > 0)
+    .map(m => ({ name: m.name, carte: conta.get(m.name) ?? 0 }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'en'));
 }
 
 // Preferenze della Biblioteca salvate nel browser: la categoria (i filtri restano per la sessione). Il vecchio campo
