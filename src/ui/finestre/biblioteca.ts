@@ -374,7 +374,7 @@ export function openLibrary(trigger?: HTMLElement | null): void {
       // Intestazione: segmento, "COSTO N" centrato con il simbolo Aether dopo il numero, segmento, numero di carte
       const testata = el('div', 'biblioteca-group-head');
       const titolo = el('h3', 'biblioteca-group-title', T.libraryCostGroup(etichettaCosto(g.fascia)));
-      const aether = el('span', 'biblioteca-aether');
+      const aether = el('span', 'aether-icon');
       aether.setAttribute('aria-hidden', 'true');
       titolo.append(aether);
       testata.append(el('span', 'biblioteca-group-rule'), titolo, el('span', 'biblioteca-group-rule'),

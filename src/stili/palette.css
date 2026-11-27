@@ -51,6 +51,7 @@
 
   /* --- Ori, ambra e arancio --- */
   --colore-oro: #dfae59;                /* Oro: colore di accento dell'app */
+  --colore-oro-antico: #c6a15f;         /* Oro antico: simbolo Aether accanto al costo in Biblioteca */
   --colore-oro-vivo: #ffce73;           /* Oro vivo: selezione da tastiera */
   --colore-oro-pallido: #ffd98a;        /* Oro pallido: contorno acceso dei cerchi del mazzo dei turni */
   --colore-oro-crema: #ffe2a6;          /* Oro crema: scritta della zona su cui si rilascia la carta */

@@ -92,11 +92,17 @@
 .biblioteca-group-rule { flex: 1 1 0; min-width: 0; height: 1px; background: var(--ae-text-quiet); opacity: .5; }
 .biblioteca-group-title {
   flex: none; display: flex; align-items: center; gap: 4px; margin: 0;
-  color: var(--ae-gold); font: 600 13px/18px var(--ae-font-ui); letter-spacing: .08em;
+  color: var(--ae-text-muted); font: 600 13px/18px var(--ae-font-ui); letter-spacing: .08em;
 }
-/* Simbolo Aether (Assets/ui/icons/aether.svg, come le altre icone a maschera): 12 px, arancio oro (colore base di palette.css) */
-.biblioteca-aether {
-  flex: none; width: 12px; height: 12px; background: var(--colore-arancio-oro);
+/* Simbolo Aether (Assets/ui/icons/aether.svg, a maschera: prende il colore di `color`), subito dopo il numero del costo */
+.aether-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--colore-oro-antico);
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  background: currentColor;
   -webkit-mask: url('/Assets/ui/icons/aether.svg') center / contain no-repeat;
   mask: url('/Assets/ui/icons/aether.svg') center / contain no-repeat;
 }
