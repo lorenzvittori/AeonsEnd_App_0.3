@@ -26,6 +26,9 @@ come `npm run check` sono "scorciatoie" definite nel file `package.json`, alla v
 | `python tools/import-db.py` | rigenera `cards_nemesis.json`, `cards_supply.json`, `cards_treasure.json`, `products.json` e le immagini dal DataBase | solo quando cambia il DataBase |
 | `python tools/import-db.py --solo-supply` (o `--solo-tesori`) | rifà solo `cards_supply.json` (o `cards_treasure.json`) e le sue immagini | quando cambiano solo le supply (o i tesori) |
 
+Le cartelle del DataBase possono avere un prefisso di numero (come `1 - Aeons_End_(Core_Box)` o `1.2 The_Nameless`) che nel
+foglio MAIN non c'è: lo script lo ignora per tutte le immagini (nemesi, retro, illustrazioni, supply e tesori).
+
 ## `npm run check`: cosa controlla
 
 `npm run check` esegue quattro controlli, uno dopo l'altro (il primo, `tsc`, viene lanciato due volte: su `src/` e su `tests/`);

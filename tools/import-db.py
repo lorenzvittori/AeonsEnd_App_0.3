@@ -279,11 +279,12 @@ def build_nemesis_art(data, main_rows, args, issues):
             continue
         s = art_slug(name)
         files = [ART_DIR / f'{s}.webp', ART_DIR / f'{s}-portrait.webp', ART_DIR / f'{s}-back.webp']
-        front = data / str(m['Path_FRONT']).replace('\\', '/') if m.get('Path_FRONT') else None
+        front = find_front(data, m.get('Path_FRONT'))
         back_val = str(m.get('Path_BACK') or '').strip()
-        back = data / back_val.replace('\\', '/') if back_val not in ('', '-') else None
-        if front is None or not front.exists():
-            issues.append(f'illustrazione nemesi {name}: Path_FRONT mancante o file non trovato')
+        has_back = back_val not in ('', '-')
+        back = find_front(data, back_val) if has_back else None
+        if front is None:
+            issues.append(f'illustrazione nemesi {name}: Path_FRONT mancante o file non trovato ({m.get("Path_FRONT")})')
             continue
         exists = name in manifest and all(f.exists() for f in files[:2] + ([files[2]] if back else []))
         if args.anteprima:  # solo il ritaglio fatto dal DB, nella cartella dell'anteprima (fuori da git)
@@ -302,8 +303,8 @@ def build_nemesis_art(data, main_rows, args, issues):
             make_portrait(img, name).save(files[1], 'WEBP', quality=ART_QUALITY, method=6)
             entry = {'card': f'Assets/nemesis/{s}.webp', 'portrait': f'Assets/nemesis/{s}-portrait.webp',
                      'ratio': round(card.height / card.width, 4)}
-        if back:
-            if not back.exists():
+        if has_back:
+            if back is None:
                 issues.append(f'illustrazione nemesi {name}: retro non trovato ({back_val})')
             else:
                 with Image.open(back) as img:
@@ -701,8 +702,8 @@ def main():
         elif not m.get('Path_FRONT'):
             issues.append(f'{c["id"]} {c["name"]}: Path_FRONT vuoto nel MAIN')
         else:
-            png = data / str(m['Path_FRONT']).replace('\\', '/')
-            if png.exists():
+            png = find_front(data, m['Path_FRONT'])
+            if png is not None:
                 c['_png'] = png
             else:
                 issues.append(f'{c["id"]} {c["name"]}: immagine non trovata ({m["Path_FRONT"]})')

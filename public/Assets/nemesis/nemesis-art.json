@@ -17,6 +17,12 @@
     "ratio": 1.345,
     "back": "Assets/nemesis/blight-lord-back.webp"
   },
+  "Burrower": {
+    "card": "Assets/nemesis/burrower.webp",
+    "portrait": "Assets/nemesis/burrower-portrait.webp",
+    "ratio": 1.352,
+    "back": "Assets/nemesis/burrower-back.webp"
+  },
   "Carapace Queen": {
     "card": "Assets/nemesis/carapace-queen.webp",
     "portrait": "Assets/nemesis/carapace-queen-portrait.webp",
@@ -29,11 +35,41 @@
     "ratio": 1.336,
     "back": "Assets/nemesis/crooked-mask-back.webp"
   },
+  "Experiment 153": {
+    "card": "Assets/nemesis/experiment-153.webp",
+    "portrait": "Assets/nemesis/experiment-153-portrait.webp",
+    "ratio": 1.346,
+    "back": "Assets/nemesis/experiment-153-back.webp"
+  },
   "Fenrix": {
     "card": "Assets/nemesis/fenrix.webp",
     "portrait": "Assets/nemesis/fenrix-portrait.webp",
     "ratio": 1.336,
     "back": "Assets/nemesis/fenrix-back.webp"
+  },
+  "Fortress": {
+    "card": "Assets/nemesis/fortress.webp",
+    "portrait": "Assets/nemesis/fortress-portrait.webp",
+    "ratio": 1.349,
+    "back": "Assets/nemesis/fortress-back.webp"
+  },
+  "Fountain of Souls": {
+    "card": "Assets/nemesis/fountain-of-souls.webp",
+    "portrait": "Assets/nemesis/fountain-of-souls-portrait.webp",
+    "ratio": 1.349,
+    "back": "Assets/nemesis/fountain-of-souls-back.webp"
+  },
+  "Gate Witch": {
+    "card": "Assets/nemesis/gate-witch.webp",
+    "portrait": "Assets/nemesis/gate-witch-portrait.webp",
+    "ratio": 1.408,
+    "back": "Assets/nemesis/gate-witch-back.webp"
+  },
+  "Hollow Crown": {
+    "card": "Assets/nemesis/hollow-crown.webp",
+    "portrait": "Assets/nemesis/hollow-crown-portrait.webp",
+    "ratio": 1.412,
+    "back": "Assets/nemesis/hollow-crown-back.webp"
   },
   "Horde-Crone": {
     "card": "Assets/nemesis/horde-crone.webp",
@@ -41,11 +77,29 @@
     "ratio": 1.347,
     "back": "Assets/nemesis/horde-crone-back.webp"
   },
+  "Knight of Shackles": {
+    "card": "Assets/nemesis/knight-of-shackles.webp",
+    "portrait": "Assets/nemesis/knight-of-shackles-portrait.webp",
+    "ratio": 1.395,
+    "back": "Assets/nemesis/knight-of-shackles-back.webp"
+  },
   "Maggoth": {
     "card": "Assets/nemesis/maggoth.webp",
     "portrait": "Assets/nemesis/maggoth-portrait.webp",
     "ratio": 1.336,
     "back": "Assets/nemesis/maggoth-back.webp"
+  },
+  "Magus of Cloaks": {
+    "card": "Assets/nemesis/magus-of-cloaks.webp",
+    "portrait": "Assets/nemesis/magus-of-cloaks-portrait.webp",
+    "ratio": 1.404,
+    "back": "Assets/nemesis/magus-of-cloaks-back.webp"
+  },
+  "Maiden of Thorns": {
+    "card": "Assets/nemesis/maiden-of-thorns.webp",
+    "portrait": "Assets/nemesis/maiden-of-thorns-portrait.webp",
+    "ratio": 1.396,
+    "back": "Assets/nemesis/maiden-of-thorns-back.webp"
   },
   "Necroswarm": {
     "card": "Assets/nemesis/necroswarm.webp",
@@ -65,6 +119,18 @@
     "ratio": 1.336,
     "back": "Assets/nemesis/rageborne-back.webp"
   },
+  "Risen Thrall": {
+    "card": "Assets/nemesis/risen-thrall.webp",
+    "portrait": "Assets/nemesis/risen-thrall-portrait.webp",
+    "ratio": 1.346,
+    "back": "Assets/nemesis/risen-thrall-back.webp"
+  },
+  "The Burning Kor": {
+    "card": "Assets/nemesis/the-burning-kor.webp",
+    "portrait": "Assets/nemesis/the-burning-kor-portrait.webp",
+    "ratio": 1.352,
+    "back": "Assets/nemesis/the-burning-kor-back.webp"
+  },
   "The Wailing": {
     "card": "Assets/nemesis/the-wailing.webp",
     "portrait": "Assets/nemesis/the-wailing-portrait.webp",
@@ -77,10 +143,34 @@
     "ratio": 1.336,
     "back": "Assets/nemesis/the-wanderer-back.webp"
   },
+  "Thief of Dreams": {
+    "card": "Assets/nemesis/thief-of-dreams.webp",
+    "portrait": "Assets/nemesis/thief-of-dreams-portrait.webp",
+    "ratio": 1.352,
+    "back": "Assets/nemesis/thief-of-dreams-back.webp"
+  },
+  "Thrice-Dead Prophet": {
+    "card": "Assets/nemesis/thrice-dead-prophet.webp",
+    "portrait": "Assets/nemesis/thrice-dead-prophet-portrait.webp",
+    "ratio": 1.406,
+    "back": "Assets/nemesis/thrice-dead-prophet-back.webp"
+  },
+  "Umbra Titan": {
+    "card": "Assets/nemesis/umbra-titan.webp",
+    "portrait": "Assets/nemesis/umbra-titan-portrait.webp",
+    "ratio": 1.368,
+    "back": "Assets/nemesis/umbra-titan-back.webp"
+  },
   "Wayward One": {
     "card": "Assets/nemesis/wayward-one.webp",
     "portrait": "Assets/nemesis/wayward-one-portrait.webp",
     "ratio": 1.345,
     "back": "Assets/nemesis/wayward-one-back.webp"
+  },
+  "Wraithmonger": {
+    "card": "Assets/nemesis/wraithmonger.webp",
+    "portrait": "Assets/nemesis/wraithmonger-portrait.webp",
+    "ratio": 1.406,
+    "back": "Assets/nemesis/wraithmonger-back.webp"
   }
 }

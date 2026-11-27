@@ -22,7 +22,10 @@ Strumenti per chi sviluppa: non fanno parte dell'app costruita. Si lanciano dall
   `cards_treasure.json`, `mechanics.json` (meccaniche delle supply, con il nome del DataBase e quante carte le hanno), `products.json`, `Data/Nemesis/`, `Data/Supply/`, `Data/Treasure/` con le miniature in `thumbs/` e le immagini
   delle nemesi (`Assets/nemesis/`: carta, retro, ritaglio, `nemesis-art.json`): **questi file non si modificano a mano**. Fonti in sola
   lettura: `Data/NEMESIS_CARDS.xlsx`, `Data/SUPPLY_CARDS.xlsx`, `Data/TREASURE_CARDS.xlsx`, `Data/DataBase_*.xlsx` (foglio MAIN, immagini
-  per UID), `BOXES_NAMES` di `pipeline.py`.
+  per UID), `BOXES_NAMES` di `pipeline.py`. Le cartelle del DataBase possono avere un prefisso di numero messo a mano
+  (`1 - Aeons_End_(Core_Box)`, `1.2 The_Nameless`) che nel MAIN non c'è: lo script lo ignora per tutte le immagini (nemesi,
+  retro, illustrazioni, supply, tesori) con `find_front()`, che cerca la cartella senza prefisso. Il messaggio "immagine non
+  trovata" esce solo se nemmeno così il file c'è.
   `python tools/import-db.py` (DataBase predefinito `..\DataBase`) o `python tools/import-db.py "C:\percorso\DataBase"`; `--no-images` rifà solo i
   JSON delle nemesi; `--solo-supply` rifà solo le supply e `--solo-tesori` solo i tesori; `--force` rifà anche immagini e miniature già presenti
   (senza, un file esistente non si sovrascrive). Due lanci di fila danno lo stesso risultato. I rinomini delle meccaniche (nome nel
