@@ -73,8 +73,7 @@ SUPPLY_TYPES = ('Gem', 'Relic', 'Spell')
 PLAIN_TEXT = {'ID': 'id', 'Name': 'name', 'BoxCode': 'boxCode', 'Type': 'type', 'SubType': 'subType'}
 PLAIN_NUMBER = {'Shield': 'shield', 'PowerTokens': 'powerTokens', 'RemovalCost': 'removalCost', 'Quantity': 'quantity'}
 FLAGS = {'Removable': 'removable', 'InNemesisDeck': 'inNemesisDeck'}
-PREFIX = re.compile(r'^(TO DISCARD|IMMEDIATELY|PERSISTENT|POWER\s*\d+)\s*:\s*(.*)$')
-PART_KEY = {'TO DISCARD': 'toDiscard', 'IMMEDIATELY': 'immediately', 'PERSISTENT': 'persistent'}
+TO_DISCARD_SPEND = re.compile(r'^TO DISCARD:\s*Spend (\d+) Æ\.?\s*$', re.M)
 
 # Rinomini delle meccaniche, lato app (il DataBase non si tocca): nome nel DataBase -> nome nell'app. Si applica alla
 # colonna Mechanics di tutte le carte che il ponte scrive (cards_supply.json, cards_treasure.json) e ai nomi di
@@ -170,42 +169,10 @@ def read_boxes_names(pipeline_py: Path) -> dict:
     raise SystemExit('BOXES_NAMES non trovato in pipeline.py')
 
 
-def split_effect(effect, issues, label, ctype):
-    """Effect -> (toDiscard, immediately, persistent, powerEffect). Segnala nei problemi i testi dubbi."""
-    out = {'toDiscard': None, 'immediately': None, 'persistent': None, 'powerEffect': None}
-    if not effect:
-        return out
-    parts = defaultdict(list)
-    current = None
-    pre = []
-    power_labels = set()
-    for line in str(effect).replace('\r', '').split('\n'):
-        m = PREFIX.match(line.strip())
-        if m:
-            tag = re.sub(r'\s+', ' ', m.group(1))
-            if tag.startswith('POWER'):
-                power_labels.add(tag)
-                tag = 'POWER'
-            current = tag
-            if parts[current]:
-                issues.append(f'{label}: prefisso "{tag}" ripetuto, i testi sono stati uniti')
-            parts[current].append(m.group(2))
-        elif current is None:
-            pre.append(line)
-        else:
-            parts[current].append(line)
-    if not parts:
-        if ctype == 'Power':
-            issues.append(f'{label}: Power senza prefissi, Effect non diviso')
-        return out
-    if any(p.strip() for p in pre):
-        issues.append(f'{label}: testo prima del primo prefisso non assegnato a nessun campo: "{" / ".join(p for p in pre if p.strip())}"')
-    if len(power_labels) > 1:
-        issues.append(f'{label}: piu\' prefissi POWER diversi {sorted(power_labels)}, testi uniti in powerEffect')
-    for tag, lines in parts.items():
-        text = '\n'.join(lines).strip() or None
-        out['powerEffect' if tag == 'POWER' else PART_KEY[tag]] = text
-    return out
+def discard_spend(effect):
+    """X di 'TO DISCARD: Spend X Æ' dal testo dell'Effect (None se la carta non ha questo effetto)."""
+    m = TO_DISCARD_SPEND.search(str(effect or '').replace('\r', ''))
+    return int(m.group(1)) if m else None
 
 
 def tier_folder(tier):
@@ -664,7 +631,7 @@ def main():
             card[key] = str(r.get(col) or '').strip().upper() == 'X'
         effect = r.get('Effect')
         card['effect'] = None if effect is None else str(effect)
-        card.update(split_effect(effect, issues, label, card['type']))
+        card['toDiscardSpend'] = discard_spend(effect)
         card['_box'] = r.get('MiniExpansion') or r['Box']
         card['_row'] = r
         cards.append(card)
@@ -813,8 +780,7 @@ def main():
             'nemesis': c['nemesis'], 'tier': c['tier'], 'type': c['type'], 'subType': c['subType'],
             'hp': c['hp'], 'hpVariable': c['hpVariable'], 'shield': c['shield'], 'powerTokens': c['powerTokens'],
             'removalCost': c['removalCost'], 'removable': c['removable'], 'inNemesisDeck': c['inNemesisDeck'],
-            'quantity': c['quantity'], 'effect': c['effect'], 'toDiscard': c['toDiscard'],
-            'immediately': c['immediately'], 'persistent': c['persistent'], 'powerEffect': c['powerEffect'],
+            'quantity': c['quantity'], 'effect': c['effect'], 'toDiscardSpend': c['toDiscardSpend'],
             'mechanics': [],  # le nemesi non hanno la colonna Mechanics
             'image': c['image'],
             **({'back': c['back']} if c.get('back') and (SITE / c['back']).exists() else {}),

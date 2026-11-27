@@ -1,27 +1,9 @@
 [
     {
-        "name":  "Aether Token",
-        "dbName":  "Aether Token",
-        "it":  null,
-        "cards":  0
-    },
-    {
         "name":  "Attach",
         "dbName":  "Attach",
         "it":  null,
         "cards":  6
-    },
-    {
-        "name":  "Conjure",
-        "dbName":  "Conjure",
-        "it":  null,
-        "cards":  0
-    },
-    {
-        "name":  "Develop",
-        "dbName":  "Develop",
-        "it":  null,
-        "cards":  0
     },
     {
         "name":  "Dual Breach",
@@ -36,39 +18,9 @@
         "cards":  5
     },
     {
-        "name":  "Elemental Token",
-        "dbName":  "Elemental Token",
-        "it":  null,
-        "cards":  0
-    },
-    {
         "name":  "Link",
         "dbName":  "Link",
         "it":  null,
         "cards":  5
-    },
-    {
-        "name":  "Pulse Token",
-        "dbName":  "Pulse Token",
-        "it":  null,
-        "cards":  0
-    },
-    {
-        "name":  "Recall",
-        "dbName":  "Recall",
-        "it":  null,
-        "cards":  0
-    },
-    {
-        "name":  "Shield Token",
-        "dbName":  "Shield Token",
-        "it":  null,
-        "cards":  0
-    },
-    {
-        "name":  "Trinket Interaction",
-        "dbName":  "Cards that Interact with Trinket",
-        "it":  null,
-        "cards":  0
     }
 ]

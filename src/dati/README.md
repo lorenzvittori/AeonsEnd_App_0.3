@@ -21,7 +21,7 @@ Caricamento dei dati e uso della rete. Livello 1: importa da `tipi/`, `regole/` 
   (prodotto: `"1"`, `"4"`, `"4.2"`), `category`, `nemesis` (solo Specific), `tier` (0…8, `"9+"`, null), `inNemesisDeck` (solo
   queste entrano nel mazzo), `type` (Attack | Power | Minion), `subType`, `hp`, `hpVariable`, `shield`, `powerTokens`,
   `quantity`, `removalCost` (Æ per scartare il potere), `removable`, `image` (`Data/Nemesis/<Box>_<Prodotto>/.../Tier_N/<Nome>.webp`).
-  `effect`, `toDiscard`, `immediately`, `persistent`, `powerEffect` sono testi non usati dall'app.
+  `effect` (testo intero, usato dalla ricerca della biblioteca), `toDiscardSpend` (X di "TO DISCARD: Spend X Æ", null se assente).
 - `cards_supply.json` e `cards_treasure.json` (per la biblioteca: **non si leggono all'avvio**, li controlla `controllo.ts` nei
   test): `id` (copiato dal DataBase così com'è, es. `"[AE055, AE061]"`), `name`, `boxCode`, `box` (scatola grande, colonna Box,
   es. `"The New Age"`), `miniExpansion` (colonna MiniExpansion, es. `"Shattered Dreams"`; null se è della scatola grande), `type`

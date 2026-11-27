@@ -36,8 +36,7 @@ const REGOLE_CARTA: Record<keyof Omit<Carta, 'thumb' | 'back'>, Regola> = {
   id: v => (typeof v === 'string' && v.length > 0 ? null : 'deve essere un testo non vuoto'),
   name: str, boxCode: str, box: strOrNull, miniExpansion: strOrNull, mechanics: listaDiTesti, category: oneOf(CATEGORIE), nemesis: strOrNull, tier, type: str, subType: strOrNull,
   hp: numOrNull, hpVariable: bool, shield: numOrNull, powerTokens: numOrNull, removalCost: numOrNull, removable: bool,
-  inNemesisDeck: bool, quantity: num, effect: str, toDiscard: strOrNull, immediately: strOrNull, persistent: strOrNull,
-  powerEffect: strOrNull, image: str
+  inNemesisDeck: bool, quantity: num, effect: str, toDiscardSpend: numOrNull, image: str
 };
 
 const REGOLE_NEMESI: Record<keyof Nemesi, Regola> = {

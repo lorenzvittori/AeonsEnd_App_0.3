@@ -40,10 +40,7 @@ export interface Carta {
   inNemesisDeck: boolean;        // la carta entra nel mazzo nemesi (false: carte speciali messe da parte)
   quantity: number;              // copie della carta nella scatola
   effect: string;                // testo dell'effetto
-  toDiscard: string | null;      // testo "To Discard" (poteri e minion che si scartano con una condizione)
-  immediately: string | null;    // testo "Immediately"
-  persistent: string | null;     // testo "Persistent"
-  powerEffect: string | null;    // testo dell'effetto del potere quando si risolve
+  toDiscardSpend: number | null; // X di "To Discard: Spend X Æ" (null se la carta non ha questo effetto)
   image: string;                 // scansione della carta (percorso in Data/; all'avvio diventa relativo a DATA_ROOT)
   back?: string;                 // retro della carta (Path_BACK del DataBase), se c'e' un file: stesso albero di image, nome _back
   thumb?: string;               // miniatura in thumbs/ (non è nel file: la aggiunge l'avvio, avvio.ts)

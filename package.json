@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "colori": "stylelint \"src/**/*.css\"",
     "docs": "node tools/check-docs.mjs",
-    "check": "tsc --noEmit && tsc --noEmit -p tests && node tools/check-moduli.mjs && npm run colori && npm run docs",
+    "check": "tsc --noEmit && tsc --noEmit -p tests && node tools/check-moduli.mjs && npm run colori && npm run docs && node tools/check-poteri.mjs",
     "test": "vitest run",
     "confronta": "node tools/confronto/confronta.mjs",
     "screenshot": "node tools/screenshot/screenshot.mjs"
