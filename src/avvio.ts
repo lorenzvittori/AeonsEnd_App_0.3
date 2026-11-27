@@ -46,6 +46,7 @@ export async function init(): Promise<void> {
     cards.value.forEach(c => {
       c.thumb = DATA_ROOT + String(c.image).replace(/^Data\//, THUMB_DIR);
       c.image = DATA_ROOT + c.image;
+      if (c.back) c.back = DATA_ROOT + c.back;
     });
     caricaCatalogo({ cards: cards.value, deckSetup: setup, nemeses: nemeses.value, products: products.value, nemesisArt: art.value });
     buildStartPage();

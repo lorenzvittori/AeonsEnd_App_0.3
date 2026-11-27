@@ -11202,7 +11202,8 @@
         "persistent":  null,
         "powerEffect":  null,
         "mechanics":  [],
-        "image":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Shambling_Infantry_Real.webp"
+        "image":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Shambling_Infantry_Real.webp",
+        "back":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Shambling_Infantry_Real_back.webp"
     },
     {
         "id":  "[O-3a-03, O-3a-08]",
@@ -11229,7 +11230,8 @@
         "persistent":  null,
         "powerEffect":  null,
         "mechanics":  [],
-        "image":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Shambling_Infantry_Illusion.webp"
+        "image":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Shambling_Infantry_Illusion.webp",
+        "back":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Shambling_Infantry_Illusion_back.webp"
     },
     {
         "id":  "[O-3a-09, O-3a-14]",
@@ -11256,7 +11258,8 @@
         "persistent":  null,
         "powerEffect":  null,
         "mechanics":  [],
-        "image":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Soldier_of_Rot_Real.webp"
+        "image":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Soldier_of_Rot_Real.webp",
+        "back":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Soldier_of_Rot_Real_back.webp"
     },
     {
         "id":  "[O-3a-09, O-3a-14]",
@@ -11283,7 +11286,8 @@
         "persistent":  null,
         "powerEffect":  null,
         "mechanics":  [],
-        "image":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Soldier_of_Rot_Illusion.webp"
+        "image":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Soldier_of_Rot_Illusion.webp",
+        "back":  "Data/Nemesis/5_Outcasts/Risen_Thrall/Tier_0/Soldier_of_Rot_Illusion_back.webp"
     },
     {
         "id":  "O-3a-02",
@@ -12390,7 +12394,8 @@
         "persistent":  null,
         "powerEffect":  null,
         "mechanics":  [],
-        "image":  "Data/Nemesis/5.2_Southern_Village/The_Burning_Kor/Tier_0/The_Burning_Kor_Player_Aid.webp"
+        "image":  "Data/Nemesis/5.2_Southern_Village/The_Burning_Kor/Tier_0/The_Burning_Kor_Player_Aid.webp",
+        "back":  "Data/Nemesis/5.2_Southern_Village/The_Burning_Kor/Tier_0/The_Burning_Kor_Player_Aid_back.webp"
     },
     {
         "id":  "SV-67",

@@ -45,7 +45,8 @@ export interface Carta {
   persistent: string | null;     // testo "Persistent"
   powerEffect: string | null;    // testo dell'effetto del potere quando si risolve
   image: string;                 // scansione della carta (percorso in Data/; all'avvio diventa relativo a DATA_ROOT)
-  thumb?: string;                // miniatura in thumbs/ (non è nel file: la aggiunge l'avvio, avvio.ts)
+  back?: string;                 // retro della carta (Path_BACK del DataBase), se c'e' un file: stesso albero di image, nome _back
+  thumb?: string;               // miniatura in thumbs/ (non è nel file: la aggiunge l'avvio, avvio.ts)
 }
 
 // Una carta supply di cards_supply.json (per la biblioteca: non si legge all'avvio). Il costo è in Æ

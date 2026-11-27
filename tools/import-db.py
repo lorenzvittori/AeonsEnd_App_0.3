@@ -708,6 +708,11 @@ def main():
             else:
                 issues.append(f'{c["id"]} {c["name"]}: immagine non trovata ({m["Path_FRONT"]})')
 
+        # retro della carta (Path_BACK del MAIN): stesso albero, nome con _back; nel JSON il campo "back"
+        c['_back_png'] = find_front(data, m.get('Path_BACK')) if m else None
+        if c['_back_png'] is not None:
+            c['back'] = (IMG_ROOT / folder / f'{stem}_back.webp').as_posix()
+
         c['_old'] = None
 
     # scansione e miniatura gia' nell'app (vecchio cards_nemesis.json, solo The New Age): prima per id, poi per nome + nemesi
@@ -759,6 +764,13 @@ def main():
                 stats['miniature generate'] += 1
             else:
                 issues.append(f'{c["id"]} {c["name"]}: miniatura non fatta (manca l\'immagine)')
+            if c.get('back'):  # retro: una copia webp, mai sovrascritta senza --force
+                bdst = SITE / c['back']
+                if bdst.exists() and not args.force:
+                    stats['retri gia presenti'] += 1
+                else:
+                    write_image(c['_back_png'], bdst)
+                    stats['retri convertiti dal DataBase'] += 1
 
         # cartelle vecchie rimaste vuote (i file non tracciati, per esempio i .jpg, restano dove sono)
         leftovers = []
@@ -805,6 +817,7 @@ def main():
             'immediately': c['immediately'], 'persistent': c['persistent'], 'powerEffect': c['powerEffect'],
             'mechanics': [],  # le nemesi non hanno la colonna Mechanics
             'image': c['image'],
+            **({'back': c['back']} if c.get('back') and (SITE / c['back']).exists() else {}),
         })
     # 4 spazi e due spazi dopo i due punti, come il vecchio file (PowerShell)
     text = json.dumps(out_cards, indent=4, ensure_ascii=False, separators=(',', ':  '))

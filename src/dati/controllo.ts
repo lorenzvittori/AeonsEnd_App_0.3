@@ -32,7 +32,7 @@ const listaDiTesti: Regola = v => (Array.isArray(v) && v.every(x => typeof x ===
 const oneOf = (allowed: readonly string[]): Regola => v => (typeof v === 'string' && allowed.includes(v) ? null : `deve essere uno di ${allowed.join(', ')}`);
 const tier: Regola = v => (v === null || v === '9+' || (typeof v === 'number' && Number.isInteger(v)) ? null : "deve essere un numero intero, '9+' o null");
 
-const REGOLE_CARTA: Record<keyof Omit<Carta, 'thumb'>, Regola> = {
+const REGOLE_CARTA: Record<keyof Omit<Carta, 'thumb' | 'back'>, Regola> = {
   id: v => (typeof v === 'string' && v.length > 0 ? null : 'deve essere un testo non vuoto'),
   name: str, boxCode: str, box: strOrNull, miniExpansion: strOrNull, mechanics: listaDiTesti, category: oneOf(CATEGORIE), nemesis: strOrNull, tier, type: oneOf(TIPI), subType: strOrNull,
   hp: numOrNull, hpVariable: bool, shield: numOrNull, powerTokens: numOrNull, removalCost: numOrNull, removable: bool,
@@ -78,6 +78,7 @@ export function checkCards(data: unknown): Controllato<Carta[]> {
     if (!isRecord(item)) { problems.push(`cards_nemesis.json, posizione ${i}: non è un oggetto`); return; }
     const id = typeof item.id === 'string' ? item.id : `(posizione ${i})`;
     const own = problemsOf(item, REGOLE_CARTA);
+    if ('back' in item && typeof item.back !== 'string') own.push(`back deve essere un testo (è ${JSON.stringify(item.back)})`);
     if (!own.length && hasShape<Carta>(item, REGOLE_CARTA)) {
       own.push(...cardConsistency(item));
       if (seen.has(item.id)) own.push('id ripetuto');
