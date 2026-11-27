@@ -9,7 +9,7 @@ Caricamento dei dati e uso della rete. Livello 1: importa da `tipi/`, `regole/` 
   una nemesi sbagliata si scarta con `console.error("Dati non validi: ...")` (id e campo); un file con la forma sbagliata, o un
   `deck-setup.json` sbagliato, ferma l'avvio. I messaggi sono in italiano, solo per la console.
 - `collezione.ts`: la collezione (wave e prodotti posseduti, salvata nel browser), nemesi giocabili, `waveLabel` (cifre romane
-  + nome in `products.json`). `COLLECTION_WAVES`: per ora solo le wave 1 e 4 sono selezionabili; i prodotti delle altre già
+  + nome in `products.json`). `COLLECTION_WAVES`: sono selezionabili le wave 1, 2, 4 e 5; i prodotti delle altre già
   salvati si tolgono all'avvio (`loadCollection`). Le chiavi del formato vecchio ("4 - The New Age|Shattered Dreams") si
   convertono nei codici ("4.1") e si risalvano (`convertCollectionKey`). Collezione vuota = Nuova partita non disponibile.
 - `rete.ts`: schermo sempre acceso (Screen Wake Lock, `keepScreenOn`: all'avvio, al ritorno in primo piano, al primo tocco),

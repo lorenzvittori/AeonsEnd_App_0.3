@@ -208,7 +208,7 @@ import, nessun `any`, nessun file sopra 500 righe. Dettagli in [src/ui/README.md
 - Un solo modo di creare il DOM (tutto in `index.html` o tutto da JS), senza le difese per l'`index.html` vecchio ancora in cache.
 - Doppioni da unire: i due editor della vita del minion (comandi sotto la carta e finestra), le animazioni di volo (`flyToDiscard`, `animateDrawIn`).
 - Le immagini delle altre nemesi (wave diverse da The New Age e dalla 1) mancano: l'utente le fornisce come scansioni della carta nemesi, fronte e
-  retro. Per ora solo le wave 1 e 4 si possono scegliere in collezione (`COLLECTION_WAVES`).
+  retro. Per ora si possono scegliere in collezione solo le wave 1, 2, 4 e 5 (`COLLECTION_WAVES`).
 - Il Core Set non ha carte Upgraded: con la sola wave 1, dalla battaglia 2 il mazzo è più corto di `deck-setup.json` (domanda aperta).
 - `public/manifest.webmanifest` è statico (la descrizione è in italiano): renderlo per lingua vorrebbe un manifest generato. Terza lingua:
   procedura in [src/ui/README.md](src/ui/README.md).

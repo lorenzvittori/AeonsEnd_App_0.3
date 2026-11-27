@@ -70,9 +70,9 @@ export function convertCollectionKey(key: unknown): CodiceProdotto | null {
   return Object.keys(catalogo.products).find(c => waveOfCode(c) === wave && catalogo.products[c] === name) || null;
 }
 
-// Per ora nella collezione si possono scegliere solo la wave 1 e la wave 4, con le loro mini espansioni; le altre wave
+// Nella collezione si possono scegliere solo le wave 1, 2, 4 e 5, con le loro mini espansioni; le altre wave
 // si vedono ma sono disattivate e non restano nella collezione
-export const COLLECTION_WAVES = [1, 4];
+export const COLLECTION_WAVES = [1, 2, 4, 5];
 
 export function collectionWaveEnabled(wave: string | number | null): boolean {
   return COLLECTION_WAVES.includes(parseInt(String(wave), 10));
