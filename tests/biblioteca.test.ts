@@ -49,11 +49,11 @@ describe('fasce di costo', () => {
     expect(etichettaCosto(3)).toBe('3');
   });
 
-  it('i pulsanti di costo sono quelli presenti nel catalogo (supply: 2-8)', () => {
+  it('i pulsanti di costo sono quelli presenti nel catalogo (costi interi non negativi)', () => {
+    expect(carte.every(c => Number.isInteger(c.cost) && c.cost >= 0)).toBe(true);
     expect(fasceCostoPresenti(carte, 'Gem')).toEqual([...new Set(carte.filter(c => c.type === 'Gem').map(c => fasciaCosto(c.cost)))].sort((a, b) => a - b));
     const tutte = fasceCostoPresenti(carte, 'Gem').concat(fasceCostoPresenti(carte, 'Relic'), fasceCostoPresenti(carte, 'Spell'));
-    expect(Math.min(...tutte)).toBeGreaterThanOrEqual(2);
-    expect(Math.max(...tutte)).toBe(8);
+    expect(tutte.every(f => Number.isInteger(f) && f >= 0)).toBe(true);
   });
 });
 

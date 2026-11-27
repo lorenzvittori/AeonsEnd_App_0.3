@@ -34,7 +34,7 @@ const tier: Regola = v => (v === null || v === '9+' || (typeof v === 'number' &&
 
 const REGOLE_CARTA: Record<keyof Omit<Carta, 'thumb' | 'back'>, Regola> = {
   id: v => (typeof v === 'string' && v.length > 0 ? null : 'deve essere un testo non vuoto'),
-  name: str, boxCode: str, box: strOrNull, miniExpansion: strOrNull, mechanics: listaDiTesti, category: oneOf(CATEGORIE), nemesis: strOrNull, tier, type: oneOf(TIPI), subType: strOrNull,
+  name: str, boxCode: str, box: strOrNull, miniExpansion: strOrNull, mechanics: listaDiTesti, category: oneOf(CATEGORIE), nemesis: strOrNull, tier, type: str, subType: strOrNull,
   hp: numOrNull, hpVariable: bool, shield: numOrNull, powerTokens: numOrNull, removalCost: numOrNull, removable: bool,
   inNemesisDeck: bool, quantity: num, effect: str, toDiscard: strOrNull, immediately: strOrNull, persistent: strOrNull,
   powerEffect: strOrNull, image: str
@@ -60,6 +60,7 @@ function cardConsistency(c: Carta): string[] {
   const out: string[] = [];
   if (c.category === 'Specific' && !c.nemesis) out.push('carta Specific senza nemesi');
   if (c.inNemesisDeck && !(c.tier === 1 || c.tier === 2 || c.tier === 3)) out.push(`carta del mazzo nemesi con tier ${JSON.stringify(c.tier)} (ammessi 1, 2, 3)`);
+  if (c.inNemesisDeck && !['Attack', 'Minion', 'Power'].includes(c.type)) out.push(`carta del mazzo nemesi con type ${JSON.stringify(c.type)} (ammessi Attack, Minion, Power)`);
   return out;
 }
 

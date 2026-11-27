@@ -22,6 +22,11 @@ describe('JSON veri di public/', () => {
     expect(r.problems).toEqual([]);
     expect(Array.isArray(data) && r.value.length === data.length).toBe(true);
     expect(r.value.length).toBeGreaterThan(200);
+    // le carte del mazzo nemesi: type Attack, Minion o Power, tier 1, 2 o 3 (gli altri type non interessano)
+    r.value.filter(c => c.inNemesisDeck).forEach(c => {
+      expect(['Attack', 'Minion', 'Power'], `${c.id} ${c.name}: type`).toContain(c.type);
+      expect([1, 2, 3], `${c.id} ${c.name}: tier`).toContain(c.tier);
+    });
   });
 
   it('nemesis.json: ogni nemesi ha tutti i campi', () => {
@@ -106,7 +111,7 @@ describe('carte della biblioteca (supply e tesori)', () => {
     expect(r.value.length).toBeGreaterThan(50);
     expect(new Set(r.value.map(c => c.type))).toEqual(new Set(['Gem', 'Relic', 'Spell']));
     r.value.forEach(c => {
-      expect(typeof c.cost, `${c.id}: costo`).toBe('number');
+      expect(Number.isInteger(c.cost) && c.cost >= 0, `${c.id}: costo intero non negativo (è ${c.cost})`).toBe(true);
       expect(exists(c.image), `${c.id}: ${c.image}`).toBe(true);
       expect(exists(c.thumb), `${c.id}: ${c.thumb}`).toBe(true);
       expect(c.boxCode in products, `${c.id}: prodotto ${c.boxCode}`).toBe(true);
