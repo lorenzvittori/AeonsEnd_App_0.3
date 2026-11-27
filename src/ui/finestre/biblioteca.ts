@@ -18,10 +18,11 @@ import { catalogo } from '../../stato/catalogo.ts';
 import { loadJson } from '../../dati/dati.ts';
 import { checkMechanics, checkSupplyCards, reportProblems } from '../../dati/controllo.ts';
 import type { CartaSupply, Meccanica, TipoSupply } from '../../tipi/dati.ts';
-import { CATEGORIE_MERCATO, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca, meccanicheDiCategoria,
-  raggruppaPerCosto, setPresenti } from '../../regole/biblioteca.ts';
+import { CATEGORIE_MERCATO, etichettaBox, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca,
+  meccanicheCarta, meccanicheDiCategoria, raggruppaPerCosto, setPresenti } from '../../regole/biblioteca.ts';
 import type { PreferenzeBiblioteca } from '../../regole/biblioteca.ts';
 import { iconaCategoria, iconaLente } from './biblioteca-icone.ts';
+import { coloreMeccanica } from '../colori-meccaniche.ts';
 
 // Preferenze della Biblioteca nel browser (la categoria; il vecchio campo dell'ordinamento si ignora)
 const CHIAVE_PREFERENZE = 'aeonsend-app-0.2-library';
@@ -117,6 +118,36 @@ function bottoneCarta(carta: CartaSupply, apriZoom: (c: CartaSupply, origine: HT
   bottone.append(img);
   bottone.addEventListener('click', () => apriZoom(carta, bottone));
   return bottone;
+}
+
+// Il pannello sotto la carta: il box ("x", o "x - y" con la mini espansione y) e le meccaniche come tag, ciascuna nel suo
+// colore (ui/colori-meccaniche.ts). Null se non c'è nulla da mostrare
+function pannelloCarta(carta: CartaSupply): HTMLElement | null {
+  const box = etichettaBox(carta);
+  const tag = meccanicheCarta(carta);
+  if (box === '' && tag.length === 0) return null;
+  const pannello = el('div', 'biblioteca-info');
+  if (box !== '') pannello.append(el('p', 'biblioteca-info-box', box));
+  if (tag.length > 0) {
+    const elenco = el('div', 'biblioteca-tags');
+    for (const nome of tag) {
+      const etichetta = el('span', 'biblioteca-tag', nome);
+      const colore = coloreMeccanica(nome);
+      if (colore !== null) etichetta.style.setProperty('--tag', colore);
+      elenco.append(etichetta);
+    }
+    pannello.append(elenco);
+  }
+  return pannello;
+}
+
+// Una voce del carosello o della griglia: la carta e, sotto, il suo pannello (stessa larghezza, scorrono insieme)
+function voceCarta(carta: CartaSupply, apriZoom: (c: CartaSupply, origine: HTMLElement) => void): HTMLElement {
+  const voce = el('div', 'biblioteca-item');
+  voce.append(bottoneCarta(carta, apriZoom));
+  const info = pannelloCarta(carta);
+  if (info) voce.append(info);
+  return voce;
 }
 
 // Apre la Biblioteca a tutto schermo. `trigger` riceve il fuoco alla chiusura.
@@ -340,11 +371,16 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     const griglia = stato.costo !== null;
     const gruppi = raggruppaPerCosto(visibili).map(g => {
       const sezione = el('section', 'biblioteca-group');
+      // Intestazione: segmento, "COSTO N" centrato con il simbolo Aether dopo il numero, segmento, numero di carte
       const testata = el('div', 'biblioteca-group-head');
-      testata.append(el('h3', 'biblioteca-group-title', T.libraryCostGroup(etichettaCosto(g.fascia))),
+      const titolo = el('h3', 'biblioteca-group-title', T.libraryCostGroup(etichettaCosto(g.fascia)));
+      const aether = el('span', 'biblioteca-aether');
+      aether.setAttribute('aria-hidden', 'true');
+      titolo.append(aether);
+      testata.append(el('span', 'biblioteca-group-rule'), titolo, el('span', 'biblioteca-group-rule'),
         el('span', 'biblioteca-group-count', T.libraryCount(g.carte.length)));
       const contenitore = el('div', griglia ? 'biblioteca-grid' : 'biblioteca-track');
-      contenitore.append(...g.carte.map(c => bottoneCarta(c, apriZoom)));
+      contenitore.append(...g.carte.map(c => voceCarta(c, apriZoom)));
       sezione.append(testata, contenitore);
       return sezione;
     });

@@ -87,12 +87,20 @@
   display: flex; flex-direction: column; gap: 18px; padding: 12px 16px 16px;
 }
 .biblioteca-group { display: flex; flex-direction: column; gap: 10px; flex: none; }
-.biblioteca-group-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-  padding-bottom: 6px; border-bottom: 1px solid var(--ae-border);
+/* Intestazione del gruppo: segmento grigio, "COSTO N" centrato, segmento grigio, numero di carte a destra */
+.biblioteca-group-head { display: flex; align-items: center; gap: 10px; }
+.biblioteca-group-rule { flex: 1 1 0; min-width: 0; height: 1px; background: var(--ae-text-quiet); opacity: .5; }
+.biblioteca-group-title {
+  flex: none; display: flex; align-items: center; gap: 4px; margin: 0;
+  color: var(--ae-gold); font: 600 13px/18px var(--ae-font-ui); letter-spacing: .08em;
 }
-.biblioteca-group-title { margin: 0; color: var(--ae-gold); font: 600 13px/18px var(--ae-font-ui); letter-spacing: .08em; }
-.biblioteca-group-count { color: var(--ae-text-quiet); font: 500 12px/16px var(--ae-font-ui); white-space: nowrap; }
+/* Simbolo Aether (Assets/ui/icons/aether.svg, come le altre icone a maschera): 12 px, arancio oro (colore base di palette.css) */
+.biblioteca-aether {
+  flex: none; width: 12px; height: 12px; background: var(--colore-arancio-oro);
+  -webkit-mask: url('/Assets/ui/icons/aether.svg') center / contain no-repeat;
+  mask: url('/Assets/ui/icons/aether.svg') center / contain no-repeat;
+}
+.biblioteca-group-count { flex: none; color: var(--ae-text-quiet); font: 500 12px/16px var(--ae-font-ui); white-space: nowrap; }
 
 /* Carosello orizzontale indipendente: circa due carte e mezza visibili, scorrimento con lo snap */
 .biblioteca-track {
@@ -100,7 +108,7 @@
   scrollbar-width: none; overscroll-behavior-x: contain;
 }
 .biblioteca-track::-webkit-scrollbar { display: none; }
-.biblioteca-track > .biblioteca-card { flex: 0 0 calc((100% - 10px) / 2.35); scroll-snap-align: start; }
+.biblioteca-track > .biblioteca-item { flex: 0 0 calc((100% - 10px) / 2.35); scroll-snap-align: start; }
 
 /* Griglia a due colonne (costo specifico): le carte occupano tutta la colonna */
 .biblioteca-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -112,6 +120,24 @@
 }
 .biblioteca-card img { display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
 .biblioteca-card:focus-visible img { outline: 2px solid var(--ae-focus); outline-offset: 2px; }
+
+/* Voce di una carta: la carta e, sotto, il pannello informativo (stessa larghezza, scorrono insieme). Il pannello
+   riempie l'altezza della voce, così nello stesso carosello o nella stessa griglia le altezze sono uguali */
+.biblioteca-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.biblioteca-item > .biblioteca-card { flex: none; width: 100%; }
+.biblioteca-info {
+  flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; min-width: 0; padding: 5px;
+  background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: 6px;
+}
+.biblioteca-info-box { margin: 0; color: var(--ae-text-quiet); font: 400 11px/14px var(--ae-font-ui); text-align: left; overflow-wrap: anywhere; }
+/* Tag delle meccaniche: il colore viene da --tag (ui/colori-meccaniche.ts); senza colore, il grigio neutro */
+.biblioteca-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+.biblioteca-tag {
+  --tag: var(--ae-text-quiet);
+  color: var(--tag); background: color-mix(in srgb, var(--tag) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tag) 44%, transparent); border-radius: 4px;
+  padding: 2px 5px; font: 500 11px/14px var(--ae-font-ui); white-space: nowrap;
+}
 
 .biblioteca-message { margin: 32px 0; text-align: center; color: var(--ae-text-muted); font: 500 14px/20px var(--ae-font-ui); }
 

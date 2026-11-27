@@ -126,6 +126,20 @@ export function meccanicheDiCategoria(carte: readonly CartaSupply[], meccaniche:
     .sort((a, b) => a.name.localeCompare(b.name, 'en'));
 }
 
+// L'etichetta del box di una carta: il nome del box ("The New Age"), o "box - mini espansione" se la carta è di una
+// mini espansione ("The New Age - Shattered Dreams"). Vuota se il box manca (non si inventa un nome)
+export function etichettaBox(carta: Pick<CartaSupply, 'box' | 'miniExpansion'>): string {
+  const box = carta.box?.trim() ?? '';
+  if (box === '') return '';
+  const mini = carta.miniExpansion?.trim() ?? '';
+  return mini === '' ? box : `${box} - ${mini}`;
+}
+
+// I tag di una carta: le sue meccaniche di cards_supply.json (il nome nell'app), senza vuote né ripetute, nell'ordine del file
+export function meccanicheCarta(carta: Pick<CartaSupply, 'mechanics'>): string[] {
+  return [...new Set(carta.mechanics.map(m => m.trim()).filter(m => m !== ''))];
+}
+
 // Preferenze della Biblioteca salvate nel browser: la categoria (i filtri restano per la sessione). Il vecchio campo
 // "ordine" (menu dell'ordinamento, tolto) si ignora: una preferenza salvata con quel campo si legge senza errori
 export interface PreferenzeBiblioteca {

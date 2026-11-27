@@ -16,6 +16,7 @@ L'interfaccia. I file qui sono il livello 2 (base) e il coordinatore (livello 6)
 - `ridisegno.ts`: gli agganci verso l'alto. `navigazione.ts`: il coordinatore. `navigazione-stato.ts`: dove si è (senza DOM, provato).
 - `partita-variante.ts`: `variantePartita(p, u, t = T)` (pura, riceve i testi): momento della schermata "partita".
 - `testi.ts` (unico accesso: `T`, `DIZIONARI`, `LINGUA`, tipo `Testi`), `testi-it.ts` (`I18N_IT`, il modello), `testi-en.ts` (`I18N_EN`).
+- `colori-meccaniche.ts`: il colore HEX fisso di ogni meccanica (`coloreMeccanica(nome)`, `null` se non in elenco); una riga per meccanica.
 
 ## Regole dei livelli (`tools/check-moduli.mjs`)
 - Un file importa solo da livelli più bassi. Nei livelli 0-3 anche dallo stesso livello (senza cicli); nei livelli 4-5 no, salvo i file di
