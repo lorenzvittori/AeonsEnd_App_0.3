@@ -8,10 +8,16 @@ Ogni finestra con stile ha il suo `.css` accanto.
 - `menu-laterale.ts` + `.css`: il menu della partita (pannello al 70%, entra da destra, esce in `SIDE_MENU_OUT_MS` 0,22s, si chiude
   anche trascinandolo a destra: `swipeToClose`; il pulsante Menu diventa X: `menuCloseToggle`).
 - `opzioni.ts` + `.css`: Opzioni del menu iniziale, La mia collezione, finestra "nemesi non più in collezione" (`openMissingNemesis`).
-- `biblioteca.ts` + `.css` + `biblioteca-icone.ts` (icone), `biblioteca-carte.ts` (carte e pannelli), `biblioteca-zoom.ts` (zoom): la Biblioteca a tutto schermo (`openLibrary`, dal menu iniziale): schede Nemesi,
-  testata "BIBLIOTECA · sezione ⌄" (tendina Nemesi/Mercato/Tesori, senza box). Mercato (prima riga: set e meccaniche in due pannelli (le meccaniche sono quelle della categoria scelta) e la lente, che apre un campo di ricerca sovrapposto alle carte; seconda riga: costo; caroselli per costo (carta al 47% della larghezza) o griglia (sotto ogni carta: il box, "x" o "x - y" con la mini espansione, su una riga: la dimensione scende da 11 px fino a 7 px, poi i puntini, e le meccaniche come tag colorati da `ui/colori-meccaniche.ts`; intestazione del costo con il simbolo Aether da `Assets/ui/icons/aether.svg`), zoom della carta, barra inferiore con le
-  icone SVG della specifica), Tesori (in arrivo). Legge `cards_supply.json` e `mechanics.json` alla prima apertura (se `mechanics.json`
-  manca o è rotto, il filtro meccaniche non si mostra); l'ordine è fisso. Preferenza (categoria) in `localStorage`.
+- `biblioteca.ts` + `.css` + `biblioteca-icone.ts` (icone), `biblioteca-carte.ts` (carte e pannelli), `biblioteca-zoom.ts` (zoom),
+  `biblioteca-filtri.ts` (box, menu e chip dei filtri), `biblioteca-stella.ts` (stella dei preferiti), `biblioteca-preferiti.ts`
+  (preferiti in `localStorage`, un solo posto), `biblioteca-dati.ts` (carte, meccaniche, categoria): la Biblioteca a tutto schermo
+  (`openLibrary`, dal menu iniziale). Testata "BIBLIOTECA · sezione ⌄" (tendina Nemesi/Mercato/Tesori/Preferiti, senza box).
+  Mercato: una riga di filtri (lente con campo di ricerca sovrapposto per nome, ID o effetto; box Set, Meccaniche, Costo con menu
+  a selezione multipla, Azzera/Applica, in sovrapposizione; stella = solo preferite), chip dei filtri attivi con la X; caroselli per
+  costo (carta al 47%) o griglia (un costo solo); sotto ogni carta il box e le meccaniche come tag (`ui/colori-meccaniche.ts`), la
+  stella nell'angolo in alto a sinistra; zoom a tutto schermo; barra inferiore con le icone SVG della specifica. Preferiti: griglia
+  delle carte con la stella, filtrabile per sezione, set, meccaniche, costo e ricerca. Tesori e Nemesi in arrivo. Legge
+  `cards_supply.json` e `mechanics.json` alla prima apertura; l'ordine è fisso. Preferenza (categoria) in `localStorage`.
 - `scheda-carta.ts`: la scheda della carta in gioco toccata. `vita.ts`: la finestra della vita di Gravehold o della nemesi.
 - `statistiche.ts` + `.css`: Vittoria, Sconfitta (`showEndScreen`, `showDefeat`) e Statistiche. `test.ts` + `.css`: Modalità test e scenari.
 - `test-regolazioni.ts` + `.css`: pannello "Regolazioni" della Modalità test; `test-regolazioni-lettura.ts`: la sua parte pura (la legge anche la pagina `scheletri/`: `MISURE` e i disegni delle zone, `DISEGNI`).

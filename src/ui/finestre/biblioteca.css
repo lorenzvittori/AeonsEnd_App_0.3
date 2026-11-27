@@ -1,17 +1,19 @@
 /* biblioteca.css: la Biblioteca (mercato) a tutto schermo. Colori solo dai ruoli di palette.css.
-   Elementi creati da: ui/finestre/biblioteca.ts (e biblioteca-icone.ts per le icone).
+   Elementi creati da: ui/finestre/biblioteca.ts (e biblioteca-filtri.ts, biblioteca-stella.ts, biblioteca-carte.ts,
+   biblioteca-zoom.ts, biblioteca-icone.ts per le icone).
    Ordine: dopo opzioni.css (riusa .collection-screen, .collection-head, .collection-title); le regole qui sono più
    specifiche (.collection-screen.biblioteca) e vincono sul layout comune. Si importa da src/stili/indice.ts. */
 
-/* Layer: testata, schede, filtri, area scorrevole e barra inferiore in colonna; niente padding in basso (lo dà la barra) */
+/* Layer: testata, filtri, chip, area scorrevole e barra inferiore in colonna; niente padding in basso (lo dà la barra) */
 .collection-screen.biblioteca { padding: calc(var(--ae-safe-top) + 8px) 0 0; }
-.biblioteca-head { flex: none; }
-.biblioteca-head, .biblioteca-filters, .biblioteca-body, .biblioteca-categories {
+.biblioteca-head, .biblioteca-filters, .biblioteca-active, .biblioteca-body, .biblioteca-categories {
   width: 100%; margin-inline: auto;
 }
 @media (min-width: 900px) {
-  .biblioteca-head, .biblioteca-filters, .biblioteca-body, .biblioteca-categories { width: min(100%, 900px); }
+  .biblioteca-head, .biblioteca-filters, .biblioteca-active, .biblioteca-body, .biblioteca-categories { width: min(100%, 900px); }
 }
+/* Gli elementi nascosti con l'attributo hidden non devono vincere sul display delle regole qui sotto */
+.collection-screen.biblioteca [hidden] { display: none !important; }
 
 /* Testata alta 44 px: "BIBLIOTECA · Mercato ⌄". La sezione è una tendina senza box, accanto al titolo; la X resta a destra */
 .biblioteca-head { flex: none; height: 44px; min-height: 44px; padding: 0 8px 0 16px; }
@@ -32,7 +34,6 @@
   position: absolute; top: calc(100% + 4px); left: 0; z-index: 4; min-width: 170px; display: flex; flex-direction: column;
   gap: 2px; padding: 4px; background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md);
 }
-.biblioteca-section-menu[hidden] { display: none; }
 .biblioteca-section-option {
   min-height: 40px; padding: 0 12px; text-align: left; background: none; border: 0; border-radius: var(--ae-radius-sm);
   cursor: pointer; color: var(--ae-text); font: 500 15px/20px var(--ae-font-ui);
@@ -40,30 +41,35 @@
 .biblioteca-section-option.is-active { color: var(--ae-gold); }
 .biblioteca-section-option:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
 
-/* Filtri: due righe compatte (4 px tra loro), sempre visibili sopra l'area scorrevole */
+/* Barra dei filtri: una sola riga (ricerca, box Set, Meccaniche, Costo, stella). Il campo di ricerca sovrapposto
+   (position absolute) parte da qui sotto e non sposta le carte */
 .biblioteca-filters {
-  flex: none; display: flex; flex-direction: column; gap: 4px; padding: 6px 16px 8px;
+  flex: none; position: relative; display: flex; flex-direction: column; padding: 6px 16px 8px;
   border-bottom: 1px solid var(--ae-border);
 }
-.biblioteca-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
-/* Prima riga: set, meccaniche (metà riga ciascuno) e la lente; il campo di ricerca si appoggia qui sotto */
-.biblioteca-row-top { position: relative; }
+.biblioteca-row { display: flex; align-items: center; gap: 5px; min-width: 0; }
 
-/* La lente: nessun box, grigia; dorata quando c'è una ricerca attiva */
+/* Il box della ricerca: lente e "Cerca..." (o la ricerca attiva), dorato quando la ricerca è attiva */
 .biblioteca-search-btn {
-  flex: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 0;
-  background: none; border: 0; cursor: pointer; color: var(--ae-text-quiet);
+  flex: 1 1 0; min-width: 0; height: 32px; box-sizing: border-box; display: flex; align-items: center; gap: 6px;
+  padding: 0 8px; cursor: pointer; text-align: left;
+  background: var(--ae-surface-raised); color: var(--ae-text-quiet); border: 1px solid var(--ae-border); border-radius: 8px;
+  font: 400 14px/18px var(--ae-font-ui);
 }
-.biblioteca-search-btn svg { width: 18px; height: 18px; }
-.biblioteca-search-btn.is-active { color: var(--ae-gold); }
+.biblioteca-search-btn svg { width: 20px; height: 20px; flex: none; }
+.biblioteca-search-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.biblioteca-search-btn.is-active {
+  color: var(--ae-gold); border-color: var(--ae-gold);
+  background: color-mix(in srgb, var(--ae-gold) 12%, var(--ae-surface-raised));
+}
+.biblioteca-search-btn.is-active .biblioteca-search-text { color: var(--ae-text); }
 .biblioteca-search-btn:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
 
-/* Campo di ricerca: si sovrappone alle carte sotto (position absolute), non le sposta */
+/* Campo di ricerca: si sovrappone alle carte sotto la barra (position absolute), non le sposta */
 .biblioteca-search-pop {
-  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 6px;
-  padding: 6px; background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md);
+  position: absolute; top: 100%; left: 16px; right: 16px; z-index: 3; display: flex; align-items: center; gap: 6px;
+  margin-top: 4px; padding: 6px; background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md);
 }
-.biblioteca-search-pop[hidden] { display: none; }
 .biblioteca-search-pop input {
   flex: 1 1 auto; min-width: 0; height: 34px; padding: 0 10px; box-sizing: border-box;
   background: var(--ae-surface-raised); color: var(--ae-text); border: 1px solid var(--ae-border);
@@ -77,49 +83,85 @@
   flex: none; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0;
   background: none; border: 0; cursor: pointer; color: var(--ae-text-quiet);
 }
-.biblioteca-search-clear[hidden] { display: none; }
 .biblioteca-search-clear svg { width: 18px; height: 18px; }
 .biblioteca-search-clear:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
 
-/* Pulsanti compatti: sfondo scuro, bordo grigio sottile, angoli leggermente arrotondati; attivo = oro */
-.biblioteca-chip {
-  flex: 0 0 auto; height: 30px; min-width: 34px; padding: 0 10px; box-sizing: border-box; cursor: pointer;
-  background: var(--ae-surface-raised); color: var(--ae-text-muted); border: 1px solid var(--ae-border);
-  border-radius: var(--ae-radius-sm); font: 500 13px/16px var(--ae-font-ui); white-space: nowrap;
+/* Box di un filtro (Set, Meccaniche, Costo): 52 × 32 px, angoli 8 px, icona 20 px, freccia 10 px; oro quando attivo */
+.biblioteca-fmenu { flex: none; display: flex; }
+.biblioteca-fbox {
+  position: relative; width: 52px; height: 32px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+  gap: 2px; padding: 0; cursor: pointer;
+  background: var(--ae-surface-raised); color: var(--ae-text-quiet); border: 1px solid var(--ae-border); border-radius: 8px;
 }
-.biblioteca-chip.is-active {
+.biblioteca-fbox > svg { width: 20px; height: 20px; flex: none; }
+.biblioteca-fbox-arrow { display: flex; flex: none; }
+.biblioteca-fbox-arrow svg { width: 10px; height: 10px; }
+.biblioteca-fbox .aether-icon { width: 18px; height: 18px; }
+.biblioteca-fbox.is-active {
   color: var(--ae-gold); border-color: var(--ae-gold);
   background: color-mix(in srgb, var(--ae-gold) 12%, var(--ae-surface-raised));
 }
-.biblioteca-chip:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
+.biblioteca-fbox:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
 
-/* Riga set e meccaniche: due pannelli a selezione multipla, ciascuno metà riga */
-.biblioteca-pick-wrap { position: relative; flex: 1 1 0; min-width: 0; display: flex; }
-.biblioteca-pick-wrap[hidden] { display: none; }
-.biblioteca-pick-btn { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-.biblioteca-pick-panel {
-  position: absolute; top: calc(100% + 4px); left: 0; z-index: 2; min-width: min(260px, 90vw); max-height: 50vh;
-  overflow-y: auto; display: flex; flex-direction: column; gap: 2px; padding: 6px;
-  background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md);
+/* Menu di un filtro: si sovrappone alle carte (position fixed, posizionato sotto il box in biblioteca-filtri.ts) */
+.biblioteca-fpanel {
+  position: fixed; z-index: 6; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px;
+  max-height: 60vh; padding: 8px; background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: var(--ae-radius-md);
 }
-.biblioteca-pick-panel[hidden] { display: none; }
-/* Il pannello della metà destra (le meccaniche) si allinea al bordo destro: non esce dallo schermo */
-.biblioteca-pick-wrap + .biblioteca-pick-wrap > .biblioteca-pick-panel { left: auto; right: 0; }
-.biblioteca-pick-row {
-  display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 8px;
-  color: var(--ae-text); font: 500 14px/18px var(--ae-font-ui); cursor: pointer;
+.biblioteca-fpanel-title { padding: 0 4px; color: var(--ae-text-muted); font: 600 13px/18px var(--ae-font-ui); }
+.biblioteca-fpanel-list { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow-y: auto; }
+.biblioteca-fpanel-row {
+  display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 6px; cursor: pointer;
+  color: var(--ae-text); font: 500 14px/18px var(--ae-font-ui);
 }
-.biblioteca-pick-row input { width: 16px; height: 16px; margin: 0; accent-color: var(--ae-gold); }
-.biblioteca-pick-row > span:nth-of-type(1) { flex: 1 1 auto; min-width: 0; }
-.biblioteca-pick-count { color: var(--ae-text-quiet); font: 500 12px/16px var(--ae-font-ui); white-space: nowrap; }
+.biblioteca-fpanel-row input { flex: none; width: 16px; height: 16px; margin: 0; accent-color: var(--ae-gold); }
+.biblioteca-fpanel-name { flex: 1 1 auto; min-width: 0; }
+.biblioteca-fpanel-row .biblioteca-tag { flex: 0 1 auto; min-width: 0; }
+.biblioteca-fpanel-count { flex: none; color: var(--ae-text-quiet); font: 500 12px/16px var(--ae-font-ui); white-space: nowrap; }
+.biblioteca-fpanel-actions {
+  flex: none; display: flex; justify-content: flex-end; gap: 6px; padding-top: 6px; border-top: 1px solid var(--ae-border);
+}
+.biblioteca-fpanel-clear, .biblioteca-fpanel-apply {
+  min-height: 36px; padding: 0 14px; border-radius: var(--ae-radius-sm); cursor: pointer; font: 600 14px/18px var(--ae-font-ui);
+}
+.biblioteca-fpanel-clear { background: none; border: 1px solid var(--ae-border); color: var(--ae-text-muted); }
+.biblioteca-fpanel-apply { background: var(--ae-gold); border: 1px solid var(--ae-gold); color: var(--testo-su-oro); }
+.biblioteca-fpanel-clear:focus-visible, .biblioteca-fpanel-apply:focus-visible, .biblioteca-fpanel-row input:focus-visible {
+  outline: 2px solid var(--ae-focus); outline-offset: 1px;
+}
 
-/* Riga costo: etichetta e pulsanti in una striscia che, se stretta, scorre in orizzontale */
-.biblioteca-cost { min-width: 0; }
-.biblioteca-cost-label { flex: none; color: var(--ae-text-quiet); font: 600 12px/16px var(--ae-font-ui); }
-.biblioteca-cost-chips { flex: 1 1 auto; min-width: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
-.biblioteca-cost-chips::-webkit-scrollbar { display: none; }
-/* Pulsanti di costo: si dividono la riga (Tutti, 2 ... 8+ stanno tutti in un telefono stretto) */
-.biblioteca-cost-chips .biblioteca-chip { flex: 1 1 0; min-width: 0; padding: 0 2px; font-size: 12px; }
+/* La stella dei preferiti nella barra: nessun box; vuota grigia, piena dorata quando il filtro è attivo */
+.biblioteca-filter-star {
+  flex: none; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; cursor: pointer; color: var(--ae-text-quiet);
+}
+.biblioteca-filter-star svg { width: 22px; height: 22px; }
+.biblioteca-filter-star.is-active { color: var(--ae-gold); }
+.biblioteca-filter-star.is-active svg { fill: var(--ae-gold); }
+.biblioteca-filter-star:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
+
+/* Chip dei filtri attivi: una riga sotto la barra (solo se c'è un filtro); scorre in orizzontale, "Azzera tutti" fisso */
+.biblioteca-active { flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 16px 0; }
+.biblioteca-active-list { flex: 1 1 auto; min-width: 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.biblioteca-active-list::-webkit-scrollbar { display: none; }
+.biblioteca-achip {
+  flex: none; display: inline-flex; align-items: center; gap: 2px; height: 26px; box-sizing: border-box; padding: 0 2px 0 9px;
+  border: 1px solid var(--ae-gold); border-radius: 8px; white-space: nowrap;
+  background: color-mix(in srgb, var(--ae-gold) 10%, var(--ae-surface-raised)); color: var(--ae-gold);
+  font: 500 12px/16px var(--ae-font-ui);
+}
+.biblioteca-achip-text { color: var(--tag, var(--ae-gold)); }
+.biblioteca-achip-x {
+  display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0;
+  background: none; border: 0; cursor: pointer; color: inherit;
+}
+.biblioteca-achip-x svg { width: 12px; height: 12px; }
+.biblioteca-achip-x:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
+.biblioteca-active-clear {
+  flex: none; height: 26px; padding: 0 4px; background: none; border: 0; cursor: pointer; white-space: nowrap;
+  color: var(--ae-text-muted); font: 600 12px/16px var(--ae-font-ui);
+}
+.biblioteca-active-clear:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
 
 /* Area centrale scorrevole */
 .collection-screen.biblioteca .biblioteca-body {
@@ -157,15 +199,16 @@
 .biblioteca-track::-webkit-scrollbar { display: none; }
 .biblioteca-track > .biblioteca-item { flex: 0 0 47%; scroll-snap-align: start; }
 
-/* Griglia a due colonne (costo specifico): le carte occupano tutta la colonna */
+/* Griglia a due colonne (un costo scelto, e i Preferiti): le carte occupano tutta la colonna */
 .biblioteca-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.biblioteca-count-line { margin: 0; color: var(--ae-text-quiet); font: 500 12px/16px var(--ae-font-ui); }
 
 /* La carta è solo l'immagine originale, 63:88, senza cornici né sovrapposizioni */
 /* L'altezza viene solo dal rapporto 63:88 (padding in percentuale sulla larghezza, perché aspect-ratio non dava sempre
    la stessa altezza su questo pulsante): l'immagine è fuori dal flusso (assoluta), così la miniatura non decide
    l'altezza e tutte le carte di una griglia o di un carosello hanno la stessa dimensione */
 .biblioteca-card {
-  position: relative; display: block; box-sizing: border-box; height: 0; min-width: 0;
+  position: relative; display: block; box-sizing: border-box; height: 0; min-width: 0; width: 100%;
   margin: 0; padding: 0 0 calc(100% * 88 / 63); border: 0; background: none; cursor: pointer;
 }
 .biblioteca-card img {
@@ -173,15 +216,29 @@
 }
 .biblioteca-card:focus-visible img { outline: 2px solid var(--ae-focus); outline-offset: 2px; }
 
+/* La miniatura e la stella sopra il suo angolo in alto a sinistra (la stella non sta dentro il pulsante della carta) */
+.biblioteca-card-wrap { position: relative; min-width: 0; }
+.biblioteca-star {
+  position: absolute; top: 4px; left: 4px; z-index: 1; box-sizing: border-box; width: 34px; height: 34px; padding: 0;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; border: 0; border-radius: 50%;
+  background: color-mix(in srgb, var(--colore-bronzo) 62%, transparent); color: var(--ae-text);
+}
+.biblioteca-star svg { width: 18px; height: 18px; }
+.biblioteca-star.is-on { color: var(--ae-gold); }
+.biblioteca-star.is-on svg { fill: var(--ae-gold); }
+.biblioteca-star:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 1px; }
+.biblioteca-star.is-large { top: 10px; left: 10px; width: 44px; height: 44px; }
+.biblioteca-star.is-large svg { width: 22px; height: 22px; }
+
 /* Voce di una carta: la carta e, sotto, il pannello informativo (stessa larghezza, scorrono insieme). Il pannello
    riempie l'altezza della voce, così nello stesso carosello o nella stessa griglia le altezze sono uguali */
 .biblioteca-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.biblioteca-item > .biblioteca-card { flex: none; width: 100%; }
+.biblioteca-item > .biblioteca-card-wrap { flex: none; width: 100%; }
 .biblioteca-info {
   flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; min-width: 0; padding: 5px;
   background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: 6px;
 }
-/* Il box sta su una sola riga: la dimensione si adatta al pannello (adattaEtichetta in biblioteca.ts, da 11 px in giù);
+/* Il box sta su una sola riga: la dimensione si adatta al pannello (adattaRiga in biblioteca-carte.ts, da 11 px in giù);
    solo se non ci sta nemmeno al minimo, i puntini */
 .biblioteca-info-box {
   margin: 0; color: var(--ae-text-quiet); font: 400 11px/14px var(--ae-font-ui); text-align: left;
@@ -197,6 +254,11 @@
 }
 
 .biblioteca-message { margin: 32px 0; text-align: center; color: var(--ae-text-muted); font: 500 14px/20px var(--ae-font-ui); }
+/* Nessuna preferita: una stella vuota sopra il messaggio */
+.biblioteca-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 32px 0; }
+.biblioteca-empty .biblioteca-message { margin: 0; }
+.biblioteca-empty-star { display: flex; color: var(--ae-text-quiet); }
+.biblioteca-empty-star svg { width: 40px; height: 40px; }
 
 /* Barra inferiore: 46 px più la safe area (bordo superiore 1 px dentro). Tre categorie uguali; ciascuna occupa tutta
    la sua cella, quindi tutta la superficie è toccabile. Icona 22 px, etichetta 11 px, indicatore attivo 2 px sopra */
@@ -218,10 +280,19 @@
 }
 .biblioteca-category:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: -2px; }
 
-/* Zoom: la scansione a tutto schermo, con le proporzioni originali */
+/* Testata: la sezione in una tendina senza box (dentro il layer della Biblioteca) */
+.biblioteca-section-menu[hidden] { display: none; }
+
+/* Zoom: la scansione a tutto schermo, con le proporzioni originali; la stella nell'angolo in alto a sinistra della carta */
 .collection-screen.biblioteca-zoom { padding: calc(var(--ae-safe-top) + 8px) 0 calc(var(--ae-safe-bottom) + 8px); }
 .biblioteca-zoom-head { justify-content: flex-end; }
 .biblioteca-zoom-stage {
   flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 16px 8px; cursor: zoom-out;
 }
-.biblioteca-zoom-stage img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; border-radius: 5% / 3.58%; }
+/* La cornice prende la misura della scansione (la stella sta nell'angolo della carta, non della scena). L'altezza massima
+   lascia spazio alla testata e alle safe area; l'immagine mantiene le sue proporzioni */
+.biblioteca-zoom-frame { position: relative; max-width: 100%; line-height: 0; }
+.biblioteca-zoom-stage img {
+  display: block; max-width: 100%; max-height: calc(100dvh - var(--ae-safe-top) - var(--ae-safe-bottom) - 96px);
+  width: auto; height: auto; object-fit: contain; border-radius: 5% / 3.58%;
+}

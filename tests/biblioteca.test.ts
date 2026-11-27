@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { checkMechanics, checkSupplyCards } from '../src/dati/controllo.ts';
 import type { CartaSupply, Meccanica } from '../src/tipi/dati.ts';
-import { PREFERENZE_BIBLIOTECA_PREDEFINITE, etichettaCosto, fasceCostoPresenti, filtra, fasciaCosto,
+import { PREFERENZE_BIBLIOTECA_PREDEFINITE, chiaveCarta, leggiPreferiti, etichettaCosto, fasceCostoPresenti, filtra, fasciaCosto,
   leggiPreferenzeBiblioteca, meccanicheDiCategoria, raggruppaPerCosto, setPresenti } from '../src/regole/biblioteca.ts';
 import type { Filtri } from '../src/regole/biblioteca.ts';
 
@@ -16,7 +16,29 @@ const prodotti: Record<string, string> = JSON.parse(readFileSync(join(public_, '
 const meccaniche: Meccanica[] = checkMechanics(JSON.parse(readFileSync(join(public_, 'mechanics.json'), 'utf8'))).value;
 
 const nessuno = new Set<string>();
-const tutti: Filtri = { ricerca: '', set: nessuno, meccaniche: nessuno, costo: null };
+const nessunoCosto = new Set<number>();
+const tutti: Filtri = { ricerca: '', set: nessuno, meccaniche: nessuno, costi: nessunoCosto, preferite: null };
+
+describe('preferite', () => {
+  it("la chiave distingue sezione, tipo, set e id (l'id da solo non basta)", () => {
+    const a = { type: 'Gem' as const, boxCode: '1', id: 'AE055' };
+    expect(chiaveCarta('mercato', a)).not.toBe(chiaveCarta('mercato', { ...a, boxCode: '2' }));
+    expect(chiaveCarta('mercato', a)).not.toBe(chiaveCarta('mercato', { ...a, type: 'Spell' as const }));
+    expect(chiaveCarta('mercato', a)).not.toBe(chiaveCarta('nemesi', a));
+  });
+  it('leggiPreferiti: array di testi senza doppioni; il resto si scarta', () => {
+    expect(leggiPreferiti(null)).toEqual([]);
+    expect(leggiPreferiti('non json')).toEqual([]);
+    expect(leggiPreferiti('{"a":1}')).toEqual([]);
+    expect(leggiPreferiti('["a","a",3,"","b"]')).toEqual(['a', 'b']);
+  });
+  it('il filtro preferite tiene solo le carte con la chiave del Mercato', () => {
+    const carta = carte[0];
+    const solo = new Set([chiaveCarta('mercato', carta)]);
+    expect(filtra(carte, null, { ...tutti, preferite: solo })).toEqual([carta]);
+    expect(filtra(carte, null, { ...tutti, preferite: new Set([chiaveCarta('nemesi', carta)]) })).toEqual([]);
+  });
+});
 
 describe('fasce di costo', () => {
   it('8 e oltre sono "8+", il resto il numero', () => {
@@ -71,16 +93,16 @@ describe('filtri', () => {
   });
 
   it('il costo sceglie la fascia, "8+" comprende 8 e oltre', () => {
-    const otto = filtra(carte, 'Spell', { ...tutti, costo: 8 });
+    const otto = filtra(carte, 'Spell', { ...tutti, costi: new Set([8]), preferite: null });
     expect(otto.every(c => c.cost >= 8)).toBe(true);
   });
 
   it('i set si combinano con gli altri filtri (multipla, poi costo e ricerca)', () => {
     const set = new Set(['1', '4.2']);
-    const r = filtra(carte, 'Gem', { ricerca: '', set, meccaniche: nessuno, costo: 5 });
+    const r = filtra(carte, 'Gem', { ricerca: '', set, meccaniche: nessuno, costi: new Set([5]), preferite: null });
     expect(r.every(c => set.has(c.boxCode) && c.cost === 5 && c.type === 'Gem')).toBe(true);
     // Un set senza carte di quel costo: nessun risultato, non un errore
-    expect(filtra(carte, 'Gem', { ricerca: 'zzzz-nessuna', set, meccaniche: nessuno, costo: null })).toEqual([]);
+    expect(filtra(carte, 'Gem', { ricerca: 'zzzz-nessuna', set, meccaniche: nessuno, costi: nessunoCosto, preferite: null })).toEqual([]);
   });
 });
 
@@ -102,7 +124,7 @@ describe('filtro per meccanica', () => {
 
   it('combinato con set e costo: tutti i filtri devono passare', () => {
     const carta = carte.find(c => c.mechanics.length > 0)!;
-    const r = filtra(carte, carta.type, { ricerca: '', set: new Set([carta.boxCode]), meccaniche: new Set([carta.mechanics[0]]), costo: fasciaCosto(carta.cost) });
+    const r = filtra(carte, carta.type, { ricerca: '', set: new Set([carta.boxCode]), meccaniche: new Set([carta.mechanics[0]]), costi: new Set([fasciaCosto(carta.cost)]), preferite: null });
     expect(r.includes(carta)).toBe(true);
     expect(r.every(c => c.boxCode === carta.boxCode && c.mechanics.includes(carta.mechanics[0]) && fasciaCosto(c.cost) === fasciaCosto(carta.cost))).toBe(true);
   });
@@ -162,7 +184,7 @@ describe('raggruppamento', () => {
   });
 
   it('un costo solo non produce gruppi vuoti (risultati vuoti gestiti dal filtro)', () => {
-    const r = filtra(carte, 'Relic', { ...tutti, costo: 7 });
+    const r = filtra(carte, 'Relic', { ...tutti, costi: new Set([7]), preferite: null });
     const gruppi = raggruppaPerCosto(r);
     expect(gruppi.length).toBeLessThanOrEqual(1);
   });

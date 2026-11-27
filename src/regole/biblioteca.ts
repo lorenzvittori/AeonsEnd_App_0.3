@@ -22,13 +22,34 @@ export function etichettaCosto(fascia: number): string {
   return fascia >= COSTO_FASCIA_ALTA ? `${COSTO_FASCIA_ALTA}+` : String(fascia);
 }
 
-// Filtri combinabili: testo (nome, id o effetto), set (codici di products.json, vuoto = tutti), meccaniche (nomi nell'app,
-// vuoto = tutte; una carta passa se ha almeno una di quelle scelte), costo (fascia, null = tutti)
+// Filtri combinabili (AND tra tipi diversi, OR dentro lo stesso tipo): testo (nome, id o effetto), set (codici di
+// products.json, vuoto = tutti), meccaniche (nomi nell'app, vuoto = tutte; una carta passa se ha almeno una di quelle),
+// costi (fasce, vuoto = tutti), preferite (chiavi di chiaveCarta, null = filtro spento)
 export interface Filtri {
   ricerca: string;
   set: ReadonlySet<string>;
   meccaniche: ReadonlySet<string>;
-  costo: number | null;
+  costi: ReadonlySet<number>;
+  preferite: ReadonlySet<string> | null;
+}
+
+// Chiave che identifica una carta preferita: sezione, tipo, set e id (l'id da solo non basta: "[AE055, AE061]" più copie).
+// Le preferite sono salvate così nel browser; le carte del Mercato hanno sezione 'mercato'
+export function chiaveCarta(sezione: string, carta: Pick<CartaSupply, 'type' | 'boxCode' | 'id'>): string {
+  return [sezione, carta.type, carta.boxCode, carta.id].join('|');
+}
+
+// Le chiavi preferite lette dal testo salvato: un array di testi, senza doppioni; il resto si scarta
+export function leggiPreferiti(testo: string | null): string[] {
+  if (testo === null) return [];
+  let dati: unknown;
+  try {
+    dati = JSON.parse(testo);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(dati)) return [];
+  return [...new Set(dati.filter((v): v is string => typeof v === 'string' && v !== ''))];
 }
 
 // Testo confrontabile: senza maiuscole e senza accenti (e senza spazi ai bordi)
@@ -41,13 +62,14 @@ function cercaNella(carta: CartaSupply, q: string): boolean {
   return [carta.name, carta.id, carta.effect ?? ''].some(testo => normalizza(testo).includes(q));
 }
 
-// Le carte di una categoria che passano tutti i filtri
-export function filtra(carte: readonly CartaSupply[], categoria: TipoSupply, filtri: Filtri): CartaSupply[] {
+// Le carte di una categoria (null = tutte le categorie) che passano tutti i filtri
+export function filtra(carte: readonly CartaSupply[], categoria: TipoSupply | null, filtri: Filtri): CartaSupply[] {
   const q = normalizza(filtri.ricerca);
-  return carte.filter(c => c.type === categoria
+  return carte.filter(c => (categoria === null || c.type === categoria)
     && (filtri.set.size === 0 || filtri.set.has(c.boxCode))
     && (filtri.meccaniche.size === 0 || c.mechanics.some(m => filtri.meccaniche.has(m)))
-    && (filtri.costo === null || fasciaCosto(c.cost) === filtri.costo)
+    && (filtri.costi.size === 0 || filtri.costi.has(fasciaCosto(c.cost)))
+    && (filtri.preferite === null || filtri.preferite.has(chiaveCarta('mercato', c)))
     && (q === '' || cercaNella(c, q)));
 }
 
@@ -105,25 +127,28 @@ export function setPresenti(carte: readonly CartaSupply[], prodotti: Readonly<Pr
   return [...codici].sort(confrontoCodici).map(codice => ({ codice, nome: prodotti[codice] ?? codice }));
 }
 
-// Una meccanica offerta nel filtro della categoria attiva: il nome nell'app e quante carte di quella categoria la hanno
+// Una meccanica offerta nel filtro: il nome nell'app e quante carte la hanno
 export interface VoceMeccanica {
   name: string;
   carte: number;
 }
 
-// Le meccaniche da offrire nel filtro di una categoria: solo quelle che hanno almeno una carta di quella categoria
-// (così nelle Gemme non compaiono le meccaniche degli Incantesimi), in ordine alfabetico del nome nell'app
-export function meccanicheDiCategoria(carte: readonly CartaSupply[], meccaniche: readonly Meccanica[],
-  categoria: TipoSupply): VoceMeccanica[] {
+// Le meccaniche da offrire nel filtro, per le carte date: solo quelle che hanno almeno una carta (in ordine alfabetico)
+export function meccanicheDi(carte: readonly CartaSupply[], meccaniche: readonly Meccanica[]): VoceMeccanica[] {
   const conta = new Map<string, number>();
   for (const c of carte) {
-    if (c.type !== categoria) continue;
     for (const m of c.mechanics) conta.set(m, (conta.get(m) ?? 0) + 1);
   }
   return meccaniche
     .filter(m => (conta.get(m.name) ?? 0) > 0)
     .map(m => ({ name: m.name, carte: conta.get(m.name) ?? 0 }))
     .sort((a, b) => a.name.localeCompare(b.name, 'en'));
+}
+
+// Le meccaniche del filtro di una categoria: così nelle Gemme non compaiono le meccaniche degli Incantesimi
+export function meccanicheDiCategoria(carte: readonly CartaSupply[], meccaniche: readonly Meccanica[],
+  categoria: TipoSupply): VoceMeccanica[] {
+  return meccanicheDi(carte.filter(c => c.type === categoria), meccaniche);
 }
 
 // L'etichetta del box di una carta: il nome del box ("The New Age"), o "box - mini espansione" se la carta è di una

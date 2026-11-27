@@ -1,106 +1,39 @@
-// ui/finestre/biblioteca.ts: la Biblioteca, a tutto schermo dal menu iniziale. Testata con il titolo, tre schede (Nemesi,
-// Mercato, Tesori; per ora solo il Mercato ha contenuto, scelta da una tendina nella testata), nel Mercato i filtri (set e
-// meccaniche in due pannelli a selezione multipla, la lente per la ricerca per nome, ID o effetto; costo) e le carte: caroselli per costo, o una griglia a due colonne con
-// un costo scelto. L'ordine è fisso (costo crescente, nome). Toccando una carta, lo zoom a tutto schermo (la scansione
-// originale). La barra inferiore sceglie la categoria (Gemme, Reliquie, Incantesimi).
+// ui/finestre/biblioteca.ts: la Biblioteca, a tutto schermo dal menu iniziale. Testata con il titolo e la sezione in una
+// tendina (Nemesi, Mercato, Tesori, Preferiti). Mercato: una riga di filtri (ricerca, set, meccaniche, costo, preferite),
+// i chip dei filtri attivi, le carte (caroselli per costo, o una griglia con un costo solo) e la barra con le categorie.
+// Preferiti: le carte contrassegnate con la stella, in griglia. Toccando una carta, lo zoom a tutto schermo.
 // Stato separato dalla partita: aprire la Biblioteca non tocca il mazzo, i turni o il salvataggio.
-// Le carte (cards_supply.json) e le meccaniche (mechanics.json) si leggono solo quando la Biblioteca si apre la prima
-// volta. Se mechanics.json manca o è rotto il filtro meccaniche non si mostra e il Mercato funziona lo stesso (solo console).
+// I dati (carte, meccaniche, categoria) sono in biblioteca-dati.ts; le preferite in biblioteca-preferiti.ts.
 // Livello 6 (finestre). Dipende da: regole/biblioteca.ts (logica), dati/ (lettura e controllo), stato/catalogo.ts,
-// ui/ base (testi, dom, pagina), ui/componenti/dialoghi.ts (updateInert), ui/finestre/biblioteca-icone.ts.
+// ui/ base (testi, dom, pagina, colori-meccaniche), ui/componenti/dialoghi.ts (updateInert), ui/finestre/biblioteca-*.ts.
 // Usato da: ui/schermate/menu.ts (pulsante Biblioteca). Stile: biblioteca.css.
 
 import { T } from '../testi.ts';
 import { el, icon } from '../dom.ts';
 import { updateInert } from '../componenti/dialoghi.ts';
-import { DATA_ROOT, startLayer } from '../pagina.ts';
+import { startLayer } from '../pagina.ts';
 import { catalogo } from '../../stato/catalogo.ts';
-import { loadJson } from '../../dati/dati.ts';
-import { checkMechanics, checkSupplyCards, reportProblems } from '../../dati/controllo.ts';
-import type { CartaSupply, Meccanica, TipoSupply } from '../../tipi/dati.ts';
-import { CATEGORIE_MERCATO, etichettaCosto, fasceCostoPresenti, filtra, leggiPreferenzeBiblioteca,
-  meccanicheDiCategoria, raggruppaPerCosto, setPresenti } from '../../regole/biblioteca.ts';
-import type { PreferenzeBiblioteca } from '../../regole/biblioteca.ts';
-import { iconaCategoria, iconaLente } from './biblioteca-icone.ts';
+import type { CartaSupply, TipoSupply } from '../../tipi/dati.ts';
+import { CATEGORIE_MERCATO, chiaveCarta, etichettaCosto, fasciaCosto, filtra, meccanicheDi, meccanicheDiCategoria,
+  raggruppaPerCosto, setPresenti } from '../../regole/biblioteca.ts';
+import { coloreMeccanica } from '../colori-meccaniche.ts';
+import { iconaCategoria, iconaLente, iconaMeccaniche, iconaSet, iconaSezione, iconaStella } from './biblioteca-icone.ts';
 import { adattaEtichetteIn, disconnettiEtichette, messaggio, voceCarta } from './biblioteca-carte.ts';
 import { apriZoomCarta } from './biblioteca-zoom.ts';
+import { aggiornaStelle } from './biblioteca-stella.ts';
+import { ascoltaPreferite, preferite } from './biblioteca-preferiti.ts';
+import { creaChip, creaMenuFiltro } from './biblioteca-filtri.ts';
+import type { MenuFiltro, VoceFiltro } from './biblioteca-filtri.ts';
+import { caricaCarte, caricaMeccaniche, carteLette, leggiPreferenze, meccanicheLette, salvaPreferenze } from './biblioteca-dati.ts';
 
-// Preferenze della Biblioteca nel browser (la categoria; il vecchio campo dell'ordinamento si ignora)
-const CHIAVE_PREFERENZE = 'aeonsend-app-0.2-library';
+// Le sezioni della tendina. Nemesi e Tesori sono in arrivo (nessuna carta ancora)
+type Scheda = 'nemesi' | 'mercato' | 'tesori' | 'preferiti';
+const SCHEDE: readonly Scheda[] = ['nemesi', 'mercato', 'tesori', 'preferiti'];
+// Le sezioni in cui sta una carta preferita (il filtro della sezione Preferiti)
+const SEZIONI_CARTE: readonly Scheda[] = ['nemesi', 'mercato', 'tesori'];
+// Chiave delle preferite: le carte del Mercato (le altre sezioni non hanno ancora carte)
+const SEZIONE_MERCATO = 'mercato';
 
-type Scheda = 'nemesi' | 'mercato' | 'tesori';
-const SCHEDE: readonly Scheda[] = ['nemesi', 'mercato', 'tesori'];
-
-// Il pannello a selezione multipla (set, meccaniche): il pulsante lo apre e chiude, l'elenco contiene le caselle
-interface Pannello {
-  wrap: HTMLElement;
-  btn: HTMLButtonElement;
-  elenco: HTMLElement;
-}
-
-// Le carte supply, lette la prima volta che si apre la Biblioteca (poi restano in memoria)
-let cartePronte: CartaSupply[] | null = null;
-let caricamento: Promise<CartaSupply[]> | null = null;
-let erroreCaricamento = false;
-
-// Le meccaniche (mechanics.json), lette insieme alle carte. Se mancano o sono rotte, il filtro non si mostra
-let meccanichePronte: Meccanica[] | null = null;
-let caricamentoMeccaniche: Promise<Meccanica[]> | null = null;
-
-// Il percorso di immagine e miniatura è relativo alla radice del sito (come per le nemesi, avvio.ts)
-function caricaCarte(): Promise<CartaSupply[]> {
-  if (cartePronte) return Promise.resolve(cartePronte);
-  if (!caricamento) {
-    caricamento = loadJson(DATA_ROOT + 'cards_supply.json').then(dati => {
-      const controllate = checkSupplyCards(dati);
-      reportProblems(controllate.problems);
-      cartePronte = controllate.value.map(c => ({ ...c, image: DATA_ROOT + c.image, thumb: DATA_ROOT + c.thumb }));
-      return cartePronte;
-    }).catch((err: unknown) => {
-      caricamento = null;
-      throw err;
-    });
-  }
-  return caricamento;
-}
-
-// Mai rifiuta: un errore si scrive in console e il filtro meccaniche resta senza voci (la prossima apertura riprova)
-function caricaMeccaniche(): Promise<Meccanica[]> {
-  if (meccanichePronte) return Promise.resolve(meccanichePronte);
-  if (!caricamentoMeccaniche) {
-    caricamentoMeccaniche = loadJson(DATA_ROOT + 'mechanics.json').then(dati => {
-      const controllate = checkMechanics(dati);
-      reportProblems(controllate.problems);
-      meccanichePronte = controllate.value;
-      return meccanichePronte;
-    }).catch((err: unknown) => {
-      caricamentoMeccaniche = null;
-      console.error('Meccaniche non caricate, il filtro non si mostra:', err);
-      return [];
-    });
-  }
-  return caricamentoMeccaniche;
-}
-
-function leggiPreferenze(): PreferenzeBiblioteca {
-  let testo: string | null = null;
-  try {
-    testo = localStorage.getItem(CHIAVE_PREFERENZE);
-  } catch {
-    // Il browser può negare lo storage: si usano le predefinite
-  }
-  return leggiPreferenzeBiblioteca(testo);
-}
-
-function salvaPreferenze(preferenze: PreferenzeBiblioteca): void {
-  try {
-    localStorage.setItem(CHIAVE_PREFERENZE, JSON.stringify(preferenze));
-  } catch {
-    // Senza storage la scelta vale per questa apertura soltanto
-  }
-}
-
-// Apre la Biblioteca a tutto schermo. `trigger` riceve il fuoco alla chiusura.
 export function openLibrary(trigger?: HTMLElement | null): void {
   const stato = {
     scheda: 'mercato' as Scheda,
@@ -108,7 +41,10 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     ricerca: '',
     set: new Set<string>(),
     meccaniche: new Set<string>(),
-    costo: null as number | null
+    costi: new Set<number>(),
+    soloPreferite: false,
+    // Vuoto = tutte le sezioni (come per gli altri filtri: vuoto non filtra)
+    sezioni: new Set<string>()
   };
 
   const layer = el('div', 'collection-screen biblioteca');
@@ -123,7 +59,9 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   chiudi.type = 'button';
   chiudi.setAttribute('aria-label', T.close);
   chiudi.appendChild(icon('close'));
-  const testoScheda: Record<Scheda, string> = { nemesi: T.libraryNemesis, mercato: T.libraryMarket, tesori: T.libraryTreasures };
+  const testoScheda: Record<Scheda, string> = {
+    nemesi: T.libraryNemesis, mercato: T.libraryMarket, tesori: T.libraryTreasures, preferiti: T.libraryFavorites
+  };
   const titoloGruppo = el('div', 'biblioteca-title');
   const sezioneBtn = el('button', 'biblioteca-section-btn');
   sezioneBtn.type = 'button';
@@ -157,16 +95,20 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   }
   sezioneBtn.addEventListener('click', () => apriMenuSezione(!menuSezioneAperto));
 
-  // Filtri del Mercato: la riga 1 (set, meccaniche, lente), la riga 2 (costo)
+  // --- Barra dei filtri: una riga. [Cerca...] [Sezione] [Set] [Meccaniche] [Costo] [Stella]
+  // (Sezione solo nei Preferiti, Stella solo nel Mercato)
   const filtri = el('div', 'biblioteca-filters');
+  const riga = el('div', 'biblioteca-row');
 
-  // La lente (senza box; oro se la ricerca è attiva) apre un campo di ricerca sovrapposto alle carte, con il fuoco
+  // Il box della ricerca mostra la lente e "Cerca..." (o la ricerca attiva); toccandolo si apre il campo sovrapposto
   let ricercaAperta = false;
-  const lenteBtn = el('button', 'biblioteca-search-btn');
-  lenteBtn.type = 'button';
-  lenteBtn.setAttribute('aria-label', T.librarySearch);
-  lenteBtn.setAttribute('aria-expanded', 'false');
-  lenteBtn.appendChild(iconaLente());
+  const cercaBtn = el('button', 'biblioteca-search-btn');
+  cercaBtn.type = 'button';
+  cercaBtn.setAttribute('aria-label', T.librarySearch);
+  cercaBtn.setAttribute('aria-expanded', 'false');
+  const cercaTesto = el('span', 'biblioteca-search-text', T.librarySearchPlaceholder);
+  cercaBtn.append(iconaLente(), cercaTesto);
+  // Il campo di ricerca si sovrappone alle carte (sotto la barra dei filtri), con il fuoco
   const ricercaPop = el('div', 'biblioteca-search-pop');
   ricercaPop.hidden = true;
   const cerca = el('input');
@@ -182,63 +124,94 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   function apriRicerca(aperta: boolean): void {
     ricercaAperta = aperta;
     ricercaPop.hidden = !aperta;
-    lenteBtn.setAttribute('aria-expanded', String(aperta));
+    cercaBtn.setAttribute('aria-expanded', String(aperta));
     if (aperta) cerca.focus();
   }
-  lenteBtn.addEventListener('click', () => apriRicerca(!ricercaAperta));
-  cerca.addEventListener('input', () => { stato.ricerca = cerca.value; disegnaRicerca(); disegnaCorpo(); });
+  cercaBtn.addEventListener('click', () => apriRicerca(!ricercaAperta));
+  cerca.addEventListener('input', () => { stato.ricerca = cerca.value; disegnaTutto(); });
   cancella.addEventListener('click', () => {
     cerca.value = '';
     stato.ricerca = '';
-    disegnaRicerca();
-    disegnaCorpo();
+    disegnaTutto();
     cerca.focus();
   });
-  function disegnaRicerca(): void {
-    const attiva = stato.ricerca !== '';
-    lenteBtn.classList.toggle('is-active', attiva);
-    cancella.hidden = !attiva;
-  }
 
-  // Riga 2: set e meccaniche (selezione multipla, ciascuna in un pannello; un pannello aperto alla volta)
-  let pannelloAperto: Pannello | null = null;
-  const apriPannello = (p: Pannello | null): void => {
-    pannelloAperto = p;
-    for (const q of [pannelloSet, pannelloMeccaniche]) {
-      q.elenco.hidden = q !== p;
-      q.btn.setAttribute('aria-expanded', String(q === p));
-    }
+  // Le carte su cui si calcolano le voci dei menu: nel Mercato la categoria scelta, nei Preferiti le carte preferite
+  const carteAttive = (): CartaSupply[] => {
+    const base = carteLette() ?? [];
+    if (stato.scheda === 'preferiti') return base.filter(c => preferite().has(chiaveCarta(SEZIONE_MERCATO, c)));
+    return base.filter(c => c.type === stato.preferenze.categoria);
   };
-  const creaPannello = (etichetta: string): Pannello => {
-    const wrap = el('div', 'biblioteca-pick-wrap');
-    const btn = el('button', 'biblioteca-chip biblioteca-pick-btn');
-    btn.type = 'button';
-    btn.setAttribute('aria-expanded', 'false');
-    const elenco = el('div', 'biblioteca-pick-panel');
-    elenco.setAttribute('role', 'group');
-    elenco.setAttribute('aria-label', etichetta);
-    elenco.hidden = true;
-    wrap.append(btn, elenco);
-    const p: Pannello = { wrap, btn, elenco };
-    btn.addEventListener('click', () => apriPannello(pannelloAperto === p ? null : p));
-    return p;
-  };
-  const pannelloSet = creaPannello(T.librarySets);
-  const pannelloMeccaniche = creaPannello(T.libraryMechanics);
-  const setRiga = el('div', 'biblioteca-row biblioteca-row-top');
-  setRiga.append(pannelloSet.wrap, pannelloMeccaniche.wrap, lenteBtn, ricercaPop);
 
-  // Riga 3: costo, con i pulsanti delle fasce presenti nel catalogo
-  const costoRiga = el('div', 'biblioteca-row biblioteca-cost');
-  const costoEtichetta = el('span', 'biblioteca-cost-label', T.libraryCost);
-  const fasce = el('div', 'biblioteca-cost-chips');
-  fasce.setAttribute('role', 'group');
-  fasce.setAttribute('aria-label', T.libraryCost);
-  costoRiga.append(costoEtichetta, fasce);
+  // Il box del filtro Sezione (solo nei Preferiti)
+  const menuSezioni = creaMenuFiltro({
+    titolo: T.librarySectionFilter,
+    icona: iconaSezione(),
+    voci: () => SEZIONI_CARTE.map(s => ({ valore: s, testo: testoScheda[s] })),
+    scelti: () => stato.sezioni,
+    applica: scelti => { stato.sezioni = scelti; disegnaTutto(); }
+  });
+  const menuSet = creaMenuFiltro({
+    titolo: T.librarySets,
+    icona: iconaSet(),
+    voci: () => setPresenti(stato.scheda === 'preferiti' ? carteAttive() : (carteLette() ?? []), catalogo.products)
+      .map(s => ({ valore: s.codice, testo: `${s.codice} · ${s.nome}` })),
+    scelti: () => stato.set,
+    applica: scelti => { stato.set = scelti; disegnaTutto(); }
+  });
+  const menuMeccaniche = creaMenuFiltro({
+    titolo: T.libraryMechanics,
+    icona: iconaMeccaniche(),
+    voci: () => {
+      const lista = stato.scheda === 'preferiti'
+        ? meccanicheDi(carteAttive(), meccanicheLette())
+        : meccanicheDiCategoria(carteLette() ?? [], meccanicheLette(), stato.preferenze.categoria);
+      return lista.map((m): VoceFiltro => ({ valore: m.name, testo: m.name, conteggio: m.carte, colore: coloreMeccanica(m.name) }));
+    },
+    scelti: () => stato.meccaniche,
+    applica: scelti => { stato.meccaniche = scelti; disegnaTutto(); }
+  });
+  // Il box del costo: il simbolo Aether (dorato, dal progetto) al posto della scritta
+  const aether = el('span', 'aether-icon');
+  aether.setAttribute('aria-hidden', 'true');
+  const menuCosto = creaMenuFiltro({
+    titolo: T.libraryCost,
+    icona: aether,
+    voci: () => [...new Set(carteAttive().map(c => fasciaCosto(c.cost)))].sort((a, b) => a - b)
+      .map(f => ({ valore: String(f), testo: etichettaCosto(f) })),
+    scelti: () => new Set([...stato.costi].map(String)),
+    applica: scelti => { stato.costi = new Set([...scelti].map(Number)); disegnaTutto(); }
+  });
+  const menuFiltri: MenuFiltro[] = [menuSezioni, menuSet, menuMeccaniche, menuCosto];
 
-  filtri.append(setRiga, costoRiga);
+  // La stella a destra: filtro a interruttore, mostra solo le preferite della sezione e categoria correnti
+  const stellaFiltro = el('button', 'biblioteca-filter-star');
+  stellaFiltro.type = 'button';
+  stellaFiltro.setAttribute('aria-label', T.libraryFavoritesOnly);
+  stellaFiltro.appendChild(iconaStella());
+  stellaFiltro.addEventListener('click', () => { stato.soloPreferite = !stato.soloPreferite; disegnaTutto(); });
 
-  // Area centrale scorrevole: i gruppi di costo (o la griglia del costo scelto)
+  riga.append(cercaBtn, ...menuFiltri.map(m => m.wrap), stellaFiltro);
+  filtri.append(riga, ricercaPop);
+
+  // Chip dei filtri attivi (una riga che scorre in orizzontale; "Azzera tutti" resta fisso a destra)
+  const attivi = el('div', 'biblioteca-active');
+  const attiviLista = el('div', 'biblioteca-active-list');
+  const azzeraTutti = el('button', 'biblioteca-active-clear', T.libraryClearAll);
+  azzeraTutti.type = 'button';
+  attivi.append(attiviLista, azzeraTutti);
+  azzeraTutti.addEventListener('click', () => {
+    stato.ricerca = '';
+    stato.set.clear();
+    stato.meccaniche.clear();
+    stato.costi.clear();
+    stato.soloPreferite = false;
+    stato.sezioni.clear();
+    cerca.value = '';
+    disegnaTutto();
+  });
+
+  // Area centrale scorrevole: i gruppi di costo, la griglia, o le preferite
   const corpo = el('div', 'biblioteca-body');
 
   // Barra inferiore: le tre categorie del Mercato
@@ -259,167 +232,163 @@ export function openLibrary(trigger?: HTMLElement | null): void {
     categorie.append(b);
   });
 
-  layer.append(head, filtri, corpo, categorie);
+  layer.append(head, filtri, attivi, corpo, categorie);
 
   // --- Disegno ---
 
-  // Pannello dei set: un interruttore per espansione, costruito quando le carte sono lette
-  function costruisciPannelloSet(): void {
-    if (!cartePronte) return;
-    const elenco = setPresenti(cartePronte, catalogo.products).map(s => {
-      const riga = el('label', 'biblioteca-pick-row');
-      const casella = el('input');
-      casella.type = 'checkbox';
-      casella.value = s.codice;
-      casella.checked = stato.set.has(s.codice);
-      casella.addEventListener('change', () => {
-        if (casella.checked) stato.set.add(s.codice);
-        else stato.set.delete(s.codice);
-        disegnaTutto();
-      });
-      riga.append(casella, el('span', '', `${s.codice} · ${s.nome}`));
-      return riga;
-    });
-    pannelloSet.elenco.replaceChildren(...elenco);
-  }
-
-  // Le meccaniche di mechanics.json (caricate alla prima apertura), da cui il pannello prende le voci della categoria
-  let listaMeccaniche: Meccanica[] = [];
-  // Pannello delle meccaniche: segue la categoria attiva (nelle Gemme solo le meccaniche delle Gemme). Si ricostruisce
-  // solo quando cambia la categoria; le meccaniche scelte che non ci sono più si tolgono, così nessun filtro resta nascosto
-  let categoriaElenco: TipoSupply | null = null;
-  function aggiornaPannelloMeccaniche(): void {
-    if (!cartePronte || categoriaElenco === stato.preferenze.categoria) return;
-    categoriaElenco = stato.preferenze.categoria;
-    const voci = meccanicheDiCategoria(cartePronte, listaMeccaniche, categoriaElenco);
-    pannelloMeccaniche.wrap.hidden = voci.length === 0;
-    const presenti = new Set(voci.map(v => v.name));
-    for (const nome of [...stato.meccaniche]) if (!presenti.has(nome)) stato.meccaniche.delete(nome);
-    const elenco = voci.map(v => {
-      const riga = el('label', 'biblioteca-pick-row');
-      const casella = el('input');
-      casella.type = 'checkbox';
-      casella.value = v.name;
-      casella.checked = stato.meccaniche.has(v.name);
-      casella.addEventListener('change', () => {
-        if (casella.checked) stato.meccaniche.add(v.name);
-        else stato.meccaniche.delete(v.name);
-        disegnaTutto();
-      });
-      riga.append(casella, el('span', '', v.name), el('span', 'biblioteca-pick-count', String(v.carte)));
-      return riga;
-    });
-    pannelloMeccaniche.elenco.replaceChildren(...elenco);
-  }
-
+  // La riga dei filtri: il testo e lo stato dei box, la stella e la sezione secondo la scheda
   function disegnaFiltri(): void {
     sezioneNome.textContent = testoScheda[stato.scheda];
-    const n = stato.set.size;
-    pannelloSet.btn.textContent = n === 0 ? T.librarySetsAll : T.librarySetsCount(n);
-    pannelloSet.btn.classList.toggle('is-active', n > 0);
-    const m = stato.meccaniche.size;
-    pannelloMeccaniche.btn.textContent = m === 0 ? T.libraryMechanicsAll : T.libraryMechanicsCount(m);
-    pannelloMeccaniche.btn.classList.toggle('is-active', m > 0);
-
-    // Fasce di costo presenti nel catalogo supply (tutte le categorie, così la riga non cambia passando da una
-    // categoria all'altra), più "Tutti"
-    const tutte = cartePronte ?? [];
-    const fasceCatalogo = [...new Set(CATEGORIE_MERCATO.flatMap(c => fasceCostoPresenti(tutte, c)))].sort((a, b) => a - b);
-    const pulsanti: HTMLButtonElement[] = [];
-    const tuttiBtn = el('button', 'biblioteca-chip', T.libraryAll);
-    tuttiBtn.type = 'button';
-    tuttiBtn.classList.toggle('is-active', stato.costo === null);
-    tuttiBtn.addEventListener('click', () => { stato.costo = null; disegnaTutto(); });
-    pulsanti.push(tuttiBtn);
-    fasceCatalogo.forEach(fascia => {
-      const b = el('button', 'biblioteca-chip', etichettaCosto(fascia));
-      b.type = 'button';
-      b.classList.toggle('is-active', stato.costo === fascia);
-      b.addEventListener('click', () => { stato.costo = fascia; disegnaTutto(); });
-      pulsanti.push(b);
-    });
-    fasce.replaceChildren(...pulsanti);
-
-    bottoniCategoria.forEach((b, c) => {
-      const attiva = c === stato.preferenze.categoria;
-      b.classList.toggle('is-active', attiva);
-      b.setAttribute('aria-pressed', String(attiva));
-    });
     bottoniScheda.forEach((b, s) => {
       const attiva = s === stato.scheda;
       b.classList.toggle('is-active', attiva);
       b.setAttribute('aria-pressed', String(attiva));
     });
+    const mercato = stato.scheda === 'mercato';
+    const preferiteView = stato.scheda === 'preferiti';
+    const niente = stato.scheda === 'nemesi' || stato.scheda === 'tesori';
+    filtri.hidden = niente;
+    categorie.hidden = !mercato;
+    menuSezioni.wrap.hidden = !preferiteView;
+    stellaFiltro.hidden = !mercato;
+    stellaFiltro.classList.toggle('is-active', stato.soloPreferite);
+    stellaFiltro.setAttribute('aria-pressed', String(stato.soloPreferite));
+    const attivoBox = (m: MenuFiltro, on: boolean) => m.box.classList.toggle('is-active', on);
+    attivoBox(menuSezioni, stato.sezioni.size > 0);
+    attivoBox(menuSet, stato.set.size > 0);
+    attivoBox(menuMeccaniche, stato.meccaniche.size > 0);
+    attivoBox(menuCosto, stato.costi.size > 0);
+    const cercando = stato.ricerca !== '';
+    cercaBtn.classList.toggle('is-active', cercando);
+    cercaTesto.textContent = cercando ? stato.ricerca : T.librarySearchPlaceholder;
+    cancella.hidden = !cercando;
+    bottoniCategoria.forEach((b, c) => {
+      const attiva = c === stato.preferenze.categoria;
+      b.classList.toggle('is-active', attiva);
+      b.setAttribute('aria-pressed', String(attiva));
+    });
+  }
+
+  // I chip dei filtri attivi: ciascuno si toglie con la sua X; nessun chip = la riga non si vede
+  function disegnaAttivi(): void {
+    const chip: HTMLElement[] = [];
+    const via = (testo: string, rimuovi: () => void, colore?: string | null) => {
+      chip.push(creaChip(testo, T.libraryRemoveFilter(testo), () => { rimuovi(); disegnaTutto(); }, colore));
+    };
+    if (stato.ricerca !== '') via(`"${stato.ricerca}"`, () => { stato.ricerca = ''; cerca.value = ''; });
+    stato.sezioni.forEach(s => via(testoScheda[s as Scheda], () => stato.sezioni.delete(s)));
+    stato.set.forEach(s => via(s, () => stato.set.delete(s)));
+    stato.meccaniche.forEach(m => via(m, () => stato.meccaniche.delete(m), coloreMeccanica(m)));
+    stato.costi.forEach(f => via(T.libraryCostChip(etichettaCosto(f)), () => stato.costi.delete(f)));
+    if (stato.soloPreferite) via(T.libraryFavoritesOnly, () => { stato.soloPreferite = false; });
+    attiviLista.replaceChildren(...chip);
+    attivi.hidden = chip.length === 0 || stato.scheda === 'nemesi' || stato.scheda === 'tesori';
+  }
+
+  // Lo zoom si apre dalla carta: la stella della carta e quella dello zoom sono la stessa preferita
+  const apriZoom = (carta: CartaSupply, chiave: string, origine: HTMLElement): void =>
+    apriZoomCarta(carta, chiave, origine, layer);
+
+  // Una griglia o un carosello di carte (con la stella e il pannello di ciascuna)
+  function contenitoreCarte(carte: CartaSupply[], griglia: boolean): HTMLElement {
+    const contenitore = el('div', griglia ? 'biblioteca-grid' : 'biblioteca-track');
+    contenitore.append(...carte.map(c => voceCarta(c, chiaveCarta(SEZIONE_MERCATO, c), apriZoom)));
+    return contenitore;
   }
 
   function disegnaCorpo(): void {
     disconnettiEtichette();
-    if (stato.scheda !== 'mercato') {
-      corpo.replaceChildren(messaggio(T.libraryComingSoon));
+    if (stato.scheda === 'nemesi' || stato.scheda === 'tesori') { corpo.replaceChildren(messaggio(T.libraryComingSoon)); return; }
+    if (carteLette() === null) {
+      corpo.replaceChildren(messaggio(caricamentoFallito ? T.libraryLoadError : T.libraryLoading));
       return;
     }
-    if (erroreCaricamento) { corpo.replaceChildren(messaggio(T.libraryLoadError)); return; }
-    if (!cartePronte) { corpo.replaceChildren(messaggio(T.libraryLoading)); return; }
-    const visibili = filtra(cartePronte, stato.preferenze.categoria,
-      { ricerca: stato.ricerca, set: stato.set, meccaniche: stato.meccaniche, costo: stato.costo });
+    const base = carteLette() ?? [];
+    if (stato.scheda === 'preferiti') { disegnaPreferite(base); return; }
+    const visibili = filtra(base, stato.preferenze.categoria, {
+      ricerca: stato.ricerca, set: stato.set, meccaniche: stato.meccaniche, costi: stato.costi,
+      preferite: stato.soloPreferite ? preferite() : null
+    });
     if (visibili.length === 0) { corpo.replaceChildren(messaggio(T.libraryEmpty)); return; }
-    // Con un costo scelto: griglia a due colonne; altrimenti caroselli orizzontali per costo
-    const griglia = stato.costo !== null;
+    // Con un solo costo scelto: griglia a due colonne; altrimenti caroselli orizzontali per costo
+    const griglia = stato.costi.size === 1;
     const gruppi = raggruppaPerCosto(visibili).map(g => {
       const sezione = el('section', 'biblioteca-group');
       // Intestazione: segmento, "COSTO N" centrato con il simbolo Aether dopo il numero, segmento, numero di carte
       const testata = el('div', 'biblioteca-group-head');
       const titolo = el('h3', 'biblioteca-group-title', T.libraryCostGroup(etichettaCosto(g.fascia)));
-      const aether = el('span', 'aether-icon');
-      aether.setAttribute('aria-hidden', 'true');
-      titolo.append(aether);
+      const simbolo = el('span', 'aether-icon');
+      simbolo.setAttribute('aria-hidden', 'true');
+      titolo.append(simbolo);
       testata.append(el('span', 'biblioteca-group-rule'), titolo, el('span', 'biblioteca-group-rule'),
         el('span', 'biblioteca-group-count', T.libraryCount(g.carte.length)));
-      const contenitore = el('div', griglia ? 'biblioteca-grid' : 'biblioteca-track');
-      contenitore.append(...g.carte.map(c => voceCarta(c, apriZoom)));
-      sezione.append(testata, contenitore);
+      sezione.append(testata, contenitoreCarte(g.carte, griglia));
       return sezione;
     });
     corpo.replaceChildren(...gruppi);
     adattaEtichetteIn(corpo);
   }
 
+  // I Preferiti: una griglia a due colonne con le carte preferite che passano i filtri (nessun carosello)
+  function disegnaPreferite(base: CartaSupply[]): void {
+    if (preferite().size === 0) {
+      // Nessuna preferita: una stella vuota e il messaggio, niente griglia
+      const stellaVuota = el('span', 'biblioteca-empty-star');
+      stellaVuota.setAttribute('aria-hidden', 'true');
+      stellaVuota.appendChild(iconaStella());
+      const vuoto = el('div', 'biblioteca-empty');
+      vuoto.append(stellaVuota, messaggio(T.libraryFavoritesEmpty));
+      corpo.replaceChildren(vuoto);
+      return;
+    }
+    const sezioneScelta = stato.sezioni.size === 0 || stato.sezioni.has(SEZIONE_MERCATO);
+    const visibili = sezioneScelta
+      ? raggruppaPerCosto(filtra(base, null, {
+        ricerca: stato.ricerca, set: stato.set, meccaniche: stato.meccaniche, costi: stato.costi, preferite: preferite()
+      })).flatMap(g => g.carte)
+      : [];
+    if (visibili.length === 0) { corpo.replaceChildren(messaggio(T.libraryFavoritesNoMatch)); return; }
+    const conteggio = el('p', 'biblioteca-count-line', T.libraryCount(visibili.length));
+    corpo.replaceChildren(conteggio, contenitoreCarte(visibili, true));
+    adattaEtichetteIn(corpo);
+  }
+
+  let caricamentoFallito = false;
+
   function disegnaTutto(): void {
-    // Filtri e barra inferiore esistono solo nel Mercato
-    const mercato = stato.scheda === 'mercato';
-    filtri.hidden = !mercato;
-    categorie.hidden = !mercato;
-    aggiornaPannelloMeccaniche();
-    disegnaRicerca();
     disegnaFiltri();
+    disegnaAttivi();
     disegnaCorpo();
   }
 
-  // Zoom: la scansione a tutto schermo (biblioteca-zoom.ts); la Biblioteca resta inerte finché è aperto
-  const apriZoom = (carta: CartaSupply, origine: HTMLElement): void => apriZoomCarta(carta, origine, layer);
-
   // --- Chiusura ---
   const chiudiBiblioteca = () => {
+    smettiDiAscoltare();
     layer.remove();
     updateInert();
     if (trigger && trigger.isConnected) trigger.focus({ preventScroll: true });
   };
   chiudi.addEventListener('click', chiudiBiblioteca);
-  // Esc chiude il livello più in alto: campo di ricerca, tendina della sezione, pannello set/meccaniche, poi la Biblioteca
+  // Esc chiude il livello più in alto: ricerca, tendina della sezione, un menu di filtro, poi la Biblioteca
   layer.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     e.stopPropagation();
     if (ricercaAperta) apriRicerca(false);
     else if (menuSezioneAperto) apriMenuSezione(false);
-    else if (pannelloAperto) apriPannello(null);
+    else if (menuFiltri.some(m => m.aperto())) menuFiltri.forEach(m => m.chiudi());
     else chiudiBiblioteca();
   });
   // Un tocco fuori dal livello aperto lo chiude (il tocco sulla lente o sulla sezione lo gestiscono i loro pulsanti)
   layer.addEventListener('click', e => {
     const bersaglio = e.target instanceof Node ? e.target : null;
-    if (pannelloAperto && !pannelloAperto.wrap.contains(bersaglio)) apriPannello(null);
-    if (ricercaAperta && !ricercaPop.contains(bersaglio) && !lenteBtn.contains(bersaglio)) apriRicerca(false);
+    for (const m of menuFiltri) if (m.aperto() && !m.contiene(bersaglio)) m.chiudi();
+    if (ricercaAperta && !ricercaPop.contains(bersaglio) && !cercaBtn.contains(bersaglio)) apriRicerca(false);
     if (menuSezioneAperto && !titoloGruppo.contains(bersaglio)) apriMenuSezione(false);
+  });
+  // Una preferita cambiata (qui o nello zoom): le stelle si aggiornano; la griglia si rifà solo dove serve
+  const smettiDiAscoltare = ascoltaPreferite(() => {
+    if (stato.scheda === 'preferiti' || stato.soloPreferite) disegnaTutto();
+    else aggiornaStelle();
   });
 
   document.body.appendChild(layer);
@@ -427,15 +396,12 @@ export function openLibrary(trigger?: HTMLElement | null): void {
 
   // Le carte e le meccaniche si leggono alla prima apertura: nel frattempo "Caricamento…"
   disegnaTutto();
-  Promise.all([caricaCarte(), caricaMeccaniche()]).then(([, meccaniche]) => {
-    erroreCaricamento = false;
-    costruisciPannelloSet();
-    listaMeccaniche = meccaniche;
-    categoriaElenco = null;
+  Promise.all([caricaCarte(), caricaMeccaniche()]).then(() => {
+    caricamentoFallito = false;
     disegnaTutto();
   }, (err: unknown) => {
     console.error(err);
-    erroreCaricamento = true;
+    caricamentoFallito = true;
     disegnaTutto();
   });
   // Il fuoco sulla X (non sulla ricerca: sul telefono aprirebbe la tastiera)

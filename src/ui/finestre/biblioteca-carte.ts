@@ -8,13 +8,17 @@ import { el } from '../dom.ts';
 import type { CartaSupply } from '../../tipi/dati.ts';
 import { etichettaBox, meccanicheCarta } from '../../regole/biblioteca.ts';
 import { coloreMeccanica } from '../colori-meccaniche.ts';
+import { bottoneStella } from './biblioteca-stella.ts';
 
 export function messaggio(testo: string): HTMLElement {
   return el('p', 'biblioteca-message', testo);
 }
 
-// Un pulsante di carta: solo l'immagine (miniatura), niente nome né badge
-function bottoneCarta(carta: CartaSupply, apriZoom: (c: CartaSupply, origine: HTMLElement) => void): HTMLButtonElement {
+// Chi apre lo zoom di una carta: la carta, la sua chiave di preferita e il pulsante che riceve il fuoco alla chiusura
+export type ApriZoom = (carta: CartaSupply, chiave: string, origine: HTMLElement) => void;
+
+// Un pulsante di carta: solo l'immagine (miniatura), niente nome né badge. La stella sta accanto, non dentro
+function bottoneCarta(carta: CartaSupply, chiave: string, apriZoom: ApriZoom): HTMLButtonElement {
   const bottone = el('button', 'biblioteca-card');
   bottone.type = 'button';
   bottone.setAttribute('aria-label', carta.name);
@@ -26,7 +30,7 @@ function bottoneCarta(carta: CartaSupply, apriZoom: (c: CartaSupply, origine: HT
   img.width = 264;
   img.height = 369;
   bottone.append(img);
-  bottone.addEventListener('click', () => apriZoom(carta, bottone));
+  bottone.addEventListener('click', () => apriZoom(carta, chiave, bottone));
   return bottone;
 }
 
@@ -85,10 +89,13 @@ function pannelloCarta(carta: CartaSupply): HTMLElement | null {
   return pannello;
 }
 
-// Una voce del carosello o della griglia: la carta e, sotto, il suo pannello (stessa larghezza, scorrono insieme)
-export function voceCarta(carta: CartaSupply, apriZoom: (c: CartaSupply, origine: HTMLElement) => void): HTMLElement {
+// Una voce del carosello o della griglia: la carta (con la stella sopra l'angolo) e, sotto, il suo pannello (stessa
+// larghezza, scorrono insieme). `chiave` è la chiave della carta tra le preferite (chiaveCarta)
+export function voceCarta(carta: CartaSupply, chiave: string, apriZoom: ApriZoom): HTMLElement {
   const voce = el('div', 'biblioteca-item');
-  voce.append(bottoneCarta(carta, apriZoom));
+  const miniatura = el('div', 'biblioteca-card-wrap');
+  miniatura.append(bottoneCarta(carta, chiave, apriZoom), bottoneStella(chiave, false));
+  voce.append(miniatura);
   const info = pannelloCarta(carta);
   if (info) voce.append(info);
   return voce;

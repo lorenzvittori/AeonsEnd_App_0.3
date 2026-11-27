@@ -1,14 +1,17 @@
 // ui/finestre/biblioteca-zoom.ts: lo zoom di una carta della Biblioteca, a tutto schermo, con le proporzioni originali
-// (la scansione intera, senza ritagli). Supporto di biblioteca.ts (stesso livello 4): non importa il file principale.
-// Stile: biblioteca.css.
-// Livello 4 (finestre). Dipende da: ui/testi.ts, ui/dom.ts, tipi/dati.ts. Usato da: ui/finestre/biblioteca.ts.
+// (la scansione intera, senza ritagli) e la stella dei preferiti nell'angolo in alto a sinistra. Supporto di biblioteca.ts
+// (stesso livello 4): non importa il file principale. Stile: biblioteca.css.
+// Livello 4 (finestre). Dipende da: ui/testi.ts, ui/dom.ts, tipi/dati.ts, ui/finestre/biblioteca-stella.ts.
+// Usato da: ui/finestre/biblioteca.ts.
 
 import { T } from '../testi.ts';
 import { el, icon } from '../dom.ts';
 import type { CartaSupply } from '../../tipi/dati.ts';
+import { bottoneStella } from './biblioteca-stella.ts';
 
-// `layer` (la Biblioteca) resta inerte finché lo zoom è aperto; alla chiusura il fuoco torna alla carta (`origine`)
-export function apriZoomCarta(carta: CartaSupply, origine: HTMLElement, layer: HTMLElement): void {
+// `layer` (la Biblioteca) resta inerte finché lo zoom è aperto; alla chiusura il fuoco torna alla carta (`origine`).
+// Il tocco sulla stella cambia la preferita senza chiudere lo zoom (bottoneStella ferma la propagazione)
+export function apriZoomCarta(carta: CartaSupply, chiave: string, origine: HTMLElement, layer: HTMLElement): void {
   const zoom = el('div', 'collection-screen biblioteca-zoom');
   zoom.setAttribute('role', 'dialog');
   zoom.setAttribute('aria-modal', 'true');
@@ -20,10 +23,12 @@ export function apriZoomCarta(carta: CartaSupply, origine: HTMLElement, layer: H
   chiudiZoom.appendChild(icon('close'));
   testata.append(chiudiZoom);
   const scena = el('div', 'biblioteca-zoom-stage');
+  const cornice = el('div', 'biblioteca-zoom-frame');
   const img = el('img');
   img.src = carta.image;
   img.alt = carta.name;
-  scena.append(img);
+  cornice.append(img, bottoneStella(chiave, true));
+  scena.append(cornice);
   zoom.append(testata, scena);
   const chiudiIngrandimento = () => {
     zoom.remove();
