@@ -135,7 +135,12 @@
   flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; min-width: 0; padding: 5px;
   background: var(--ae-surface); border: 1px solid var(--ae-border); border-radius: 6px;
 }
-.biblioteca-info-box { margin: 0; color: var(--ae-text-quiet); font: 400 11px/14px var(--ae-font-ui); text-align: left; overflow-wrap: anywhere; }
+/* Il box sta su una sola riga: la dimensione si adatta al pannello (adattaEtichetta in biblioteca.ts, da 11 px in giù);
+   solo se non ci sta nemmeno al minimo, i puntini */
+.biblioteca-info-box {
+  margin: 0; color: var(--ae-text-quiet); font: 400 11px/14px var(--ae-font-ui); text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
 /* Tag delle meccaniche: il colore viene da --tag (ui/colori-meccaniche.ts); senza colore, il grigio neutro */
 .biblioteca-tags { display: flex; flex-wrap: wrap; gap: 3px; }
 .biblioteca-tag {

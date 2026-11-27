@@ -120,6 +120,26 @@ function bottoneCarta(carta: CartaSupply, apriZoom: (c: CartaSupply, origine: HT
   return bottone;
 }
 
+// Il box del pannello sta su una riga: la dimensione parte da 11 px e scende (mezzo px alla volta, fino a 7 px) finché
+// il testo ci sta nella larghezza del pannello. Si ricalcola quando il pannello cambia dimensione (ResizeObserver)
+const DIMENSIONE_BOX = 11;
+const DIMENSIONE_BOX_MINIMA = 7;
+function adattaEtichetta(riga: HTMLElement): void {
+  riga.style.fontSize = `${DIMENSIONE_BOX}px`;
+  let misura = DIMENSIONE_BOX;
+  while (riga.scrollWidth > riga.clientWidth && misura > DIMENSIONE_BOX_MINIMA) {
+    misura -= 0.5;
+    riga.style.fontSize = `${misura}px`;
+  }
+}
+
+let osservatoreBox: ResizeObserver | null = null;
+function osservaEtichetta(riga: HTMLElement): void {
+  if (typeof ResizeObserver === 'undefined') { adattaEtichetta(riga); return; }
+  if (!osservatoreBox) osservatoreBox = new ResizeObserver(voci => { for (const v of voci) adattaEtichetta(v.target as HTMLElement); });
+  osservatoreBox.observe(riga);
+}
+
 // Il pannello sotto la carta: il box ("x", o "x - y" con la mini espansione y) e le meccaniche come tag, ciascuna nel suo
 // colore (ui/colori-meccaniche.ts). Null se non c'è nulla da mostrare
 function pannelloCarta(carta: CartaSupply): HTMLElement | null {
@@ -127,7 +147,11 @@ function pannelloCarta(carta: CartaSupply): HTMLElement | null {
   const tag = meccanicheCarta(carta);
   if (box === '' && tag.length === 0) return null;
   const pannello = el('div', 'biblioteca-info');
-  if (box !== '') pannello.append(el('p', 'biblioteca-info-box', box));
+  if (box !== '') {
+    const riga = el('p', 'biblioteca-info-box', box);
+    pannello.append(riga);
+    osservaEtichetta(riga);
+  }
   if (tag.length > 0) {
     const elenco = el('div', 'biblioteca-tags');
     for (const nome of tag) {
@@ -358,6 +382,8 @@ export function openLibrary(trigger?: HTMLElement | null): void {
   }
 
   function disegnaCorpo(): void {
+    // Le righe dei box del disegno precedente non servono più: si smette di osservarle
+    osservatoreBox?.disconnect();
     if (stato.scheda !== 'mercato') {
       corpo.replaceChildren(messaggio(T.libraryComingSoon));
       return;
@@ -385,6 +411,8 @@ export function openLibrary(trigger?: HTMLElement | null): void {
       return sezione;
     });
     corpo.replaceChildren(...gruppi);
+    // Subito dopo l'inserimento: la dimensione dei box si misura ora (ResizeObserver solo per i cambi successivi)
+    corpo.querySelectorAll<HTMLElement>('.biblioteca-info-box').forEach(adattaEtichetta);
   }
 
   function disegnaTutto(): void {
