@@ -92,6 +92,16 @@
   --colore-petrolio: #007591;           /* Petrolio: giocatore 3 */
   --colore-viola: #773067;              /* Viola: giocatore 4 */
 
+  /* --- Menu iniziale (restyling come schermata di gioco): avorio, argento, ottone, pannello --- */
+  --colore-menu-avorio: #f1ede4;        /* Menu avorio: titolo e voci del menu iniziale */
+  --colore-menu-argento: #bfc4ce;       /* Menu argento: sottotitolo e cestino della partita salvata */
+  --colore-menu-grigio: #a8afbd;        /* Menu grigio: "Partita in corso", selettore della lingua */
+  --colore-menu-grigio-scuro: #9299ac;  /* Menu grigio scuro: versione e pulsante Test */
+  --colore-menu-oro: #e1ae58;           /* Menu oro: Riprendi partita, lingua scelta, feedback alla pressione */
+  --colore-menu-ottone: #67553b;        /* Menu ottone: linee del separatore del titolo */
+  --colore-menu-pannello: #1a1c24;      /* Menu pannello: box della partita in corso */
+  --colore-menu-bordo: #3b3e48;         /* Menu bordo: bordo del box della partita in corso */
+
   /* --- Con trasparenza --- */
   --colore-velo: #040508d1;             /* Velo: dietro finestre e menu aperti (82% di opacità) */
 }
@@ -183,4 +193,15 @@
   --guida-linea: var(--colore-arancio-oro);             /* linea verticale della guida di posizionamento */
   --guida-pallino: var(--colore-arancio);               /* pallino della guida di posizionamento */
   --guida-alone: var(--colore-arancio-vivo);            /* alone della guida di posizionamento */
+
+  /* --- Menu iniziale --- */
+  --menu-testo: var(--colore-menu-avorio);              /* titolo, voci del menu iniziale */
+  --menu-testo-tenue: var(--colore-menu-argento);       /* sottotitolo, cestino della partita salvata */
+  --menu-etichetta: var(--colore-menu-grigio);          /* "Partita in corso", lingua, sigla IT/EN */
+  --menu-discreto: var(--colore-menu-grigio-scuro);     /* versione, Test */
+  --menu-oro: var(--colore-menu-oro);                   /* Riprendi partita, lingua scelta, pressione */
+  --menu-filetto: var(--colore-menu-ottone);            /* linee del separatore sotto il titolo */
+  --menu-diamante: var(--colore-oro-antico);            /* rombo del separatore sotto il titolo */
+  --menu-pannello: var(--colore-menu-pannello);         /* box della partita in corso */
+  --menu-pannello-bordo: var(--colore-menu-bordo);      /* bordo del box della partita in corso */
 }

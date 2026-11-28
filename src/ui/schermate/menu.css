@@ -12,10 +12,20 @@
    Carattere Inter (l'interfaccia), non Cinzel: è un dato, non un titolo */
 .start-version {
   position: fixed; top: calc(var(--ae-safe-top) + 8px); right: 16px; margin: 0; z-index: 41;
-  font: 400 12px/16px var(--ae-font-ui); font-variant-numeric: tabular-nums; color: var(--ae-text-quiet);
+  font: 400 12px/16px var(--ae-font-ui); font-variant-numeric: tabular-nums; color: var(--menu-discreto);
 }
-.start-title { margin-top: 8px; text-align: center; font: 600 28px/34px var(--ae-font-display); }
-.start-subtitle { display: block; margin-top: 6px; font: 600 16px/22px var(--ae-font-display); letter-spacing: .14em; color: var(--ae-text-muted); }
+/* Titolo AEON'S END (il testo in index.html è "Aeon's End", maiuscolo per CSS): 44 px, una riga sola; sugli schermi
+   stretti si rimpicciolisce (12.2vw, uguale a 44 px su 360 px) invece di andare a capo */
+.start-title {
+  margin-top: 40px; text-align: center; white-space: nowrap; text-transform: uppercase;
+  font: 600 min(44px, 12.2vw) / 1.15 var(--ae-font-display); color: var(--menu-testo);
+  text-shadow: 0 2px 14px var(--ombra);
+}
+/* Sottotitolo GAME COMPANION: 13 px maiuscolo, spaziato di 3,5 px (il padding a sinistra compensa lo spazio finale) */
+.start-subtitle {
+  display: block; margin-top: 6px; padding-left: 3.5px; font: 600 16px/22px var(--ae-font-display);
+  letter-spacing: 3.5px; text-transform: uppercase; color: var(--menu-testo-tenue);
+}
 .start-group { display: flex; flex-direction: column; }
 .start-label { margin-bottom: 10px; font: 600 14px/20px var(--ae-font-ui); color: var(--ae-text-muted); letter-spacing: .08em; text-transform: uppercase; }
 .nemesis-list { display: grid; grid-template-columns: 1fr; gap: 8px; }
@@ -94,19 +104,26 @@
 /* Finestra "Partita in corso" sotto il titolo (c'è una partita salvata): nemesi e giocatori, con a destra
    l'illustrazione della nemesi se c'è; poi Riprendi partita / Nuova partita. Nel frattempo le scelte sono nascoste. */
 .start-box.is-choosing > .start-group, .start-box.is-choosing > .ae-switch-row, .start-box.is-choosing > .start-actions { display: none; }
+/* Box "Partita in corso": l'unico contenitore grafico del menu iniziale (sfondo e bordo dai ruoli di palette.css) */
 .start-choice {
-  display: flex; flex-direction: column; gap: 10px; padding: 16px;
-  border: 1px solid var(--ae-border); border-radius: var(--ae-radius-lg); background: var(--ae-surface);
+  position: relative; display: flex; flex-direction: column; gap: 4px; padding: 8px 12px;
+  border: 1px solid var(--menu-pannello-bordo); border-radius: var(--ae-radius-md); background: var(--menu-pannello);
 }
-.start-choice-head { position: relative; min-height: 72px; display: flex; flex-direction: column; justify-content: center; gap: 4px; margin-bottom: 4px; border-radius: var(--ae-radius-md); overflow: hidden; }
-.start-choice-head.has-art { padding-right: 140px; }
-.start-choice-head .nemesis-art { z-index: 0; }
+.start-choice-head { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 2px; border-radius: var(--ae-radius-md); }
+.start-choice-head.has-art { padding-right: 96px; }
+.start-choice-head .nemesis-art { z-index: 0; width: 110px; }
 .start-choice-title, .start-choice-info { position: relative; z-index: 1; }
-.start-choice-title { color: var(--ae-text-muted); font: 600 14px/20px var(--ae-font-ui); letter-spacing: .08em; text-transform: uppercase; }
-.start-choice-info { font: 600 18px/24px var(--ae-font-ui); }
+.start-choice-title { color: var(--menu-etichetta); font: 700 10px/14px var(--ae-font-ui); letter-spacing: 1px; text-transform: uppercase; }
+.start-choice-info { font: 700 15px/18px var(--ae-font-ui); color: var(--menu-testo); }
+/* Cestino in basso a destra del box: area di 44 × 44 px, senza sfondo né alone */
+.start-choice-delete {
+  position: absolute; bottom: 0; right: 0; z-index: 3; width: 44px; height: 44px; display: grid; place-items: center; padding: 0;
+  border: 0; border-radius: 50%; background: none; color: var(--menu-testo-tenue);
+}
+.start-choice-delete:hover, .start-choice-delete:focus-visible { color: var(--menu-oro); }
+.start-choice-delete:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: -4px; }
 
 @media (min-width: 768px) {
-  .start-title { font-size: 32px; line-height: 39px; }
   .start-box { width: min(100% - 64px, 560px); }
 }
 /* Menu iniziale con la collezione vuota: "Inserisci collezione" e "Nuova partita" oscurato */
@@ -216,16 +233,72 @@
   -webkit-user-drag: none;
 }
 .nemesis-flip.is-zoomed { touch-action: none; }
-/* Menu iniziale: solo le scritte, senza il box dei pulsanti */
+/* Menu iniziale: solo le scritte, senza box, bordi e divisori. Tutte uguali (avorio, maiuscolo, 18 px grassetto); al tocco
+   diventano dorate. Area cliccabile alta 44 px; 14 px di spazio fra una voce e l'altra = 58 px fra i centri */
 .start-home .ae-button, .start-choice .start-choice-resume {
-  min-height: 52px; background: none; border: 0; box-shadow: none; font: 600 22px/28px var(--ae-font-display); letter-spacing: .04em;
+  min-height: 44px; padding: 0 12px; background: none; border: 0; box-shadow: none;
+  font: 600 18px/24px var(--ae-font-display); letter-spacing: .08em; text-transform: uppercase;
+  /* alone scuro attorno alla scritta: più strati di ombra nera sfumata, leggibile anche sull'illustrazione */
+  text-shadow: 0 0 4px var(--ombra), 0 0 10px var(--ombra), 0 0 18px var(--ombra), 0 2px 12px var(--ombra);
 }
-.start-home .ae-button--primary, .start-choice .start-choice-resume { color: var(--ae-gold); }
-.start-home .ae-button--secondary { color: var(--ae-text); }
-.start-home .ae-button:hover:not(:disabled), .start-choice .start-choice-resume:hover { filter: none; text-decoration: underline; text-underline-offset: 6px; }
-.start-home { gap: 4px; }
+.start-home .ae-button--primary, .start-home .ae-button--secondary { color: var(--menu-testo); }
+.start-home .ae-button:hover:not(:disabled), .start-home .ae-button:active:not(:disabled) { filter: none; color: var(--menu-oro); }
+.start-home { gap: 14px; }
+/* Riprendi partita: dorato, centrato, senza icona e senza box */
+.start-choice .start-choice-resume { width: 100%; min-height: 28px; color: var(--menu-oro); justify-content: center; text-align: center; }
+.start-choice .start-choice-resume:hover, .start-choice .start-choice-resume:active { filter: none; color: var(--menu-testo); }
 /* Nel menu iniziale la voce "Test" sta in fondo allo schermo, staccata dalle altre (la pagina è alta quanto lo
-   schermo e il gruppo dei pulsanti occupa lo spazio che resta) */
+   schermo e il gruppo dei pulsanti occupa lo spazio che resta). Discreta: 14 px, grigio */
 .start-screen:not(.is-setup) .start-box { min-height: 100%; }
 .start-screen:not(.is-setup) .start-home { flex: 1 1 auto; }
-.start-home .start-home-test { margin-top: auto; margin-bottom: 12px; }
+.start-home .ae-button.start-home-test {
+  margin-top: auto; margin-bottom: 12px; min-height: 44px; font: 600 14px/20px var(--ae-font-display); letter-spacing: .08em; color: var(--menu-discreto);
+}
+.start-home .ae-button.start-home-test:hover:not(:disabled), .start-home .ae-button.start-home-test:active:not(:disabled) { color: var(--menu-oro); }
+
+/* --- Menu iniziale restyling: sfondo, separatore, selettore della lingua, icone --- */
+/* Illustrazione a tutta schermata (cover, ancorata in basso: se serve il taglio si fa in alto, la città resta intera),
+   solo nel menu iniziale. Sta su un livello proprio sotto i testi; il velo scuro (ombra, 10%) è un livello a parte
+   sopra l'immagine. Non sfocata. */
+.menu-sfondo { display: none; }
+.start-screen:not(.is-setup) .menu-sfondo {
+  display: block; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: url('/Assets/ui/menu/demone-citta-terrazzata.webp') center bottom / cover no-repeat;
+}
+.start-screen:not(.is-setup) .menu-sfondo::before {
+  content: ''; position: absolute; inset: 0; background: color-mix(in srgb, var(--ombra) 40%, transparent);
+}
+/* Larghezza del menu: 22 px di margine laterale; il box della partita e le voci restano centrati */
+.start-screen:not(.is-setup) .start-box { width: min(100% - 44px, 480px); }
+/* Separatore sotto il titolo: 176 px, due linee sottili e un rombo dorato al centro */
+.start-separatore { display: flex; align-items: center; gap: 10px; width: 176px; margin: 0 auto; }
+.start-separatore::before, .start-separatore::after { content: ''; flex: 1 1 auto; height: 1px; background: var(--menu-filetto); }
+.start-separatore-rombo { flex: 0 0 auto; width: 8px; height: 8px; background: var(--menu-diamante); transform: rotate(45deg); }
+.start-screen.is-setup .start-separatore { display: none; }
+/* Selettore della lingua: angolo in alto a sinistra, senza bordo né contenitore (globo, sigla, freccia) */
+.start-lingua { position: fixed; top: calc(var(--ae-safe-top) + 8px); left: 16px; z-index: 42; }
+.start-lingua[hidden] { display: none; }
+.start-lingua-toggle {
+  min-height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none;
+  color: var(--menu-etichetta); font: 600 12px/16px var(--ae-font-ui); letter-spacing: .04em;
+}
+.start-lingua-toggle[aria-expanded='true'] { color: var(--menu-oro); }
+.start-lingua-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 1; min-width: 152px; padding: 6px;
+  border: 1px solid var(--menu-pannello-bordo); border-radius: var(--ae-radius-md); background: var(--menu-pannello);
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--ombra) 60%, transparent);
+}
+.start-lingua-menu[hidden] { display: none; }
+.start-lingua-voce {
+  width: 100%; min-height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 10px;
+  border: 0; border-radius: var(--ae-radius-sm); background: none; color: var(--menu-testo); font: 600 14px/20px var(--ae-font-ui); text-align: left;
+}
+.start-lingua-voce:hover, .start-lingua-voce:focus-visible { background: color-mix(in srgb, var(--menu-oro) 12%, transparent); }
+.start-lingua-voce[aria-selected='true'] { color: var(--menu-oro); }
+.start-lingua-spunta { width: 14px; height: 14px; display: grid; place-items: center; }
+.start-lingua-voce:focus-visible, .start-lingua-toggle:focus-visible { outline: 2px solid var(--ae-focus); outline-offset: 2px; }
+/* Icone del menu (maschere SVG in Assets/ui/icons, colore dal testo) */
+.ae-icon--globe { -webkit-mask-image: url('/Assets/ui/icons/globe.svg'); mask-image: url('/Assets/ui/icons/globe.svg'); width: 16px; height: 16px; }
+.ae-icon--chevron-down { -webkit-mask-image: url('/Assets/ui/icons/chevron-down.svg'); mask-image: url('/Assets/ui/icons/chevron-down.svg'); width: 11px; height: 11px; }
+.ae-icon--check { -webkit-mask-image: url('/Assets/ui/icons/check.svg'); mask-image: url('/Assets/ui/icons/check.svg'); width: 14px; height: 14px; }
+.ae-icon--trash { -webkit-mask-image: url('/Assets/ui/icons/trash.svg'); mask-image: url('/Assets/ui/icons/trash.svg'); width: 17px; height: 17px; }

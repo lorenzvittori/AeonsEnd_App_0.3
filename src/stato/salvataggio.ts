@@ -40,6 +40,13 @@ export function scriviPartita(partita: Readonly<StatoPartita>): void {
   }
 }
 
+// Elimina la sola partita salvata (chiamata dopo la conferma del menu iniziale): preferiti, collezione, impostazioni e
+// lingua sono altre chiavi e restano
+export function cancellaPartitaSalvata(): void {
+  try { localStorage.removeItem(SAVE_KEY); } catch (err) { console.warn('Partita salvata non eliminata', err); }
+  statoSalvataggio.gameSaved = false;
+}
+
 export function readSave(): SalvataggioValido | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);

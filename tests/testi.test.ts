@@ -90,7 +90,7 @@ describe('testi fissi di index.html', () => {
   it('nessun testo scritto a mano tra i tag (a parte il nome del gioco)', () => {
     const senzaCommenti = html.replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<style[\s\S]*?<\/style>/g, '');
     const testi = [...senzaCommenti.matchAll(/>([^<>]*[A-Za-zàèéìòù]{3}[^<>]*)</g)].map(m => m[1].trim()).filter(Boolean);
-    expect(testi.filter(t => !/^(Aeons End App|Aeon's End|Nemesis Companion)/.test(t))).toEqual([]);
+    expect(testi.filter(t => !/^(Aeons End App|Aeon's End|Game Companion)/.test(t))).toEqual([]);
     // Neppure negli attributi di testo (aria-label, title, alt, placeholder) senza la chiave
     expect([...senzaCommenti.matchAll(/\s(aria-label|title|alt|placeholder)="([^"]+)"/g)].map(m => m[0].trim())).toEqual([]);
   });
