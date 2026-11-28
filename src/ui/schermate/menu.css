@@ -255,6 +255,8 @@
   margin-top: auto; margin-bottom: 12px; min-height: 44px; font: 600 14px/20px var(--ae-font-display); letter-spacing: .08em; color: var(--menu-discreto);
 }
 .start-home .ae-button.start-home-test:hover:not(:disabled), .start-home .ae-button.start-home-test:active:not(:disabled) { color: var(--menu-oro); }
+/* Nel menu niente anello arancione del fuoco: il pulsante col fuoco (anche da tastiera) diventa dorato */
+.start-home .ae-button:focus-visible, .start-choice .start-choice-resume:focus-visible { outline: none; color: var(--menu-oro); }
 
 /* --- Menu iniziale restyling: sfondo, separatore, selettore della lingua, icone --- */
 /* Illustrazione a tutta schermata (cover, ancorata in basso: se serve il taglio si fa in alto, la città resta intera),
