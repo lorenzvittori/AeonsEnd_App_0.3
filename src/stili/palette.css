@@ -205,3 +205,21 @@
   --menu-pannello: var(--colore-menu-pannello);         /* box della partita in corso */
   --menu-pannello-bordo: var(--colore-menu-bordo);      /* bordo del box della partita in corso */
 }
+
+/* --- Menu partita (restyling del menu laterale, ui/finestre/menu-laterale.css) --- */
+:root {
+  --colore-menu-fondo: #1A1C24;         /* Fondo del pannello del menu partita */
+  --colore-menu-testo: #F1EDE4;         /* Testo del menu partita: titolo, tempo, voci */
+  --colore-menu-grigio-chiaro: #A8AFBD; /* Etichetta del mazzo Nemesi e icona dell'orologio */
+  --colore-menu-icona: #BFC4CE;         /* Icone delle azioni del menu partita */
+  --colore-menu-spento: #626773;        /* Azioni disabilitate del menu partita */
+  --colore-menu-linea: #353943;         /* Linee sottili del menu partita */
+  --colore-menu-tacca-spenta: #464B57;  /* Tacca del mazzo Nemesi non ancora pescata */
+  --colore-menu-distintivo: #2A2D37;    /* Sfondo del numero delle carte scartate */
+  --colore-menu-chiudi: #E1E2E5;        /* X di chiusura del menu partita */
+  --colore-oro-menu: #E1AE58;           /* Oro del menu partita: tacche pescate, Tier in corso, trofeo */
+  --colore-oro-bordo-menu: #8C7449;     /* Bordo desaturato del pulsante Nemesi sconfitta */
+  --colore-oro-testo-menu: #B9A17C;     /* Didascalia del pulsante Nemesi sconfitta */
+  --colore-rosso-menu: #B65C60;         /* Bordo del pulsante Esci dalla partita */
+  --colore-rosso-testo-menu: #E78B8B;   /* Testo del pulsante Esci dalla partita */
+}

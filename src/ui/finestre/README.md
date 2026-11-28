@@ -67,3 +67,5 @@ Ogni finestra con stile ha il suo `.css` accanto.
 ## Da sapere prima di modificare
 - Una finestra nuova: un file qui con la funzione che la apre; niente import da altre finestre.
 - Prove: `tests/regolazioni.test.ts` (lettura pura, ogni ruolo punta a un colore base), `tests/navigazione.test.ts` (Indietro).
+
+- **Menu partita (supporto)**: `menu-laterale-icone.ts` (icone lineari SVG del menu), `menu-laterale-mazzo.ts` (barra del mazzo Nemesi: una tacca per carta, geometria fissa in percentuale), `menu-laterale-tempo.ts` (tempo di gioco: conta a partita in corso e pagina visibile, salvato per ora di inizio).

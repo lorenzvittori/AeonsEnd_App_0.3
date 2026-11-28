@@ -1,10 +1,10 @@
-// ui/finestre/menu-laterale.ts: il menu laterale della partita (turno e mazzo, Annulla, Scarti, Nemesi uccisa,
-// Ricomincia, sfondi e dorso, Esci), con l'uscita animata, lo swipe per chiuderlo e la X sopra il pulsante Menu; il
-// pulsante da tenere premuto (holdToConfirm).
+// ui/finestre/menu-laterale.ts: il menu laterale della partita (tempo di gioco, mazzo Nemesi, Partita: Annulla, Scarti,
+// Statistiche, Ricomincia; Personalizzazione: sfondi e dorso; Fine partita: Nemesi sconfitta; Esci), con l'uscita animata,
+// lo swipe per chiuderlo e la X sopra il pulsante Menu; il pulsante da tenere premuto (holdToConfirm).
 // Le voci che portano altrove usano gli agganci (menu iniziale, fine partita, ricomincia il mazzo o lo scenario).
 // Livello 4 (ui/finestre/). Dipende da: stato/partita.ts (lettura), ui/ base (testi, pagina, dom, ridisegno),
-// ui/componenti (animazioni, dialoghi, pesca-undo, ripristino, scarti, sfondi). Usato da: navigazione (pulsante Menu,
-// aggancio apriMenuLaterale).
+// ui/componenti (animazioni, dialoghi, pesca-undo, ripristino, scarti, sfondi), ui/finestre (icone, mazzo, tempo).
+// Usato da: navigazione (pulsante Menu, aggancio apriMenuLaterale).
 
 import { T } from '../testi.ts';
 import { partita } from '../../stato/partita.ts';
@@ -17,9 +17,34 @@ import { openExitConfirm, openUndoFloat } from '../componenti/pesca-undo.ts';
 import { undo } from '../componenti/ripristino.ts';
 import { openDiscard } from '../componenti/scarti.ts';
 import { backgroundChoiceButton, cardBackChoiceButton, GRAVEHOLD_BG_CHOICE } from '../componenti/sfondi.ts';
+import { type IconaMenu, iconaMenu } from './menu-laterale-icone.ts';
+import { indicatoreMazzo } from './menu-laterale-mazzo.ts';
+import { avviaTempoPartita, formatoOrologio, tempoPartita } from './menu-laterale-tempo.ts';
 
 // Durata dell'uscita animata del menu laterale
 export const SIDE_MENU_OUT_MS = 220;
+
+// Intestazione di sezione: titolo in maiuscolo con una linea sottile a destra
+function sezione(titolo: string): HTMLElement {
+  const h = el('div', 'ae-side-section');
+  h.append(el('span', 'ae-side-section-title', titolo), el('span', 'ae-side-section-line'));
+  return h;
+}
+
+// Riga di azione: icona lineare a sinistra, testo, eventuale indicatore a destra; nessun box
+function riga(testo: string, onClick: () => void, icona?: IconaMenu, destra?: HTMLElement): HTMLButtonElement {
+  const b = el('button', 'ae-side-row') as HTMLButtonElement;
+  b.type = 'button';
+  if (icona) {
+    const ic = el('span', 'ae-side-row-icon');
+    ic.appendChild(iconaMenu(icona, 22));
+    b.appendChild(ic);
+  }
+  b.appendChild(el('span', 'ae-side-row-label', testo));
+  if (destra) b.appendChild(destra);
+  b.addEventListener('click', onClick);
+  return b;
+}
 
 // leave (facoltativo) = cosa chiudere prima di una voce che porta altrove (Menu aperto dalla finestra del mazzo dei
 // turni: la finestra si chiude prima di undo, scarti, vittoria, esci, ricomincia)
@@ -28,52 +53,67 @@ export function openSideMenu(leave?: () => void): void {
   let close = () => {};
   const cancel = () => close();
   const go = () => { close(); if (typeof leave === 'function') leave(); };
-  const panel = dialogShell(T.menu, '', cancel, { displayTitle: false });
+  const panel = dialogShell(T.menuTitle, '', cancel, { displayTitle: true });
   panel.classList.add('ae-side-menu');
-  const statsList = el('dl', 'ae-side-stats');
-  statsList.append(el('dt', '', T.menuTurn), el('dd', '', String(partita.turn)),
-    el('dt', '', T.menuDeck), el('dd', '', String(partita.deck.length)));
-  // Sfondo: anteprima dello sfondo scelto con il nome; si tocca per scegliere tra le anteprime di tutti gli sfondi
+  // La X dell'intestazione: icona del mockup (chiude il menu come la X sopra il pulsante Menu)
+  const headX = panel.querySelector<HTMLElement>('.ae-modal-header > .ae-icon-button');
+  // Resta solo la X animata sopra il pulsante Menu (menuCloseToggle): quella dell'intestazione si toglie
+  headX?.remove();
+
+  // Tempo di gioco (si aggiorna ogni secondo finché il menu è aperto; il conteggio sta in menu-laterale-tempo.ts)
+  const orologio = el('div', 'ae-side-clock');
+  const valoreOrologio = el('span', 'ae-side-clock-value', formatoOrologio(tempoPartita()));
+  orologio.append(iconaMenu('orologio', 14), valoreOrologio);
+  const tempo = el('div', 'ae-side-time');
+  tempo.append(orologio);
+  const timer = setInterval(() => { valoreOrologio.textContent = formatoOrologio(tempoPartita()); }, 1000);
+
+  // Mazzo Nemesi: un'unica barra con una tacca per carta (menu-laterale-mazzo.ts)
+  const mazzo = indicatoreMazzo(T.menuNemesisDeck, T.menuTier);
+  mazzo.radice.classList.add('ae-side-deck');
+
+  // PARTITA: Ricomincia (solo in Crea mazzo o nella Modalità test), Annulla, Carte scartate, Statistiche
+  const partitaVoci: HTMLElement[] = [];
+  if (ui.deckBuilding) partitaVoci.push(riga(T.restartGame, () => { go(); ricominciaMazzo(); }));
+  if (partita.testRun) partitaVoci.push(riga(T.testRestart, () => { go(); ricominciaScenario(); }));
+  // Undo: annulla l'ultima azione (prima le modifiche non salvate)
+  const undoItem = riga(T.undoAction, () => { go(); undo(); openUndoFloat(); }, 'annulla');
+  undoItem.disabled = partita.undoStack.length === 0 && ui.drafts.size === 0;
+  const conteggioScarti = el('span', 'ae-side-badge', String(partita.discard.length));
+  const discardOpen = riga(T.menuDiscarded, () => { go(); openDiscard(); }, 'scarti', conteggioScarti);
+  discardOpen.setAttribute('aria-label', T.discardButtonLabel(partita.discard.length));
+  const freccia = () => { const s = el('span', 'ae-side-arrow'); s.appendChild(iconaMenu('freccia', 14)); return s; };
+  const statsOpen = riga(T.statsInProgress, () => { go(); apriStatistiche(); }, 'statistiche', freccia());
+  partitaVoci.push(undoItem, discardOpen, statsOpen);
+
+  // PERSONALIZZAZIONE: anteprime reali di sfondo, sfondo di Gravehold e dorso (nessun box attorno alla riga)
   const bgRow = el('div', 'ae-side-field ae-side-field--row');
-  bgRow.append(el('span', 'ae-side-field-label', T.background), backgroundChoiceButton(null, { compact: true }));
-  // Sfondo del box della vita di Gravehold (stessa riga con anteprima)
+  bgRow.append(el('span', 'ae-side-field-label', T.menuGameBackground), backgroundChoiceButton(null, { compact: true }));
   const graveRow = el('div', 'ae-side-field ae-side-field--row');
   graveRow.append(el('span', 'ae-side-field-label', T.graveholdBg),
     backgroundChoiceButton(null, { compact: true, choice: GRAVEHOLD_BG_CHOICE }));
-  // Dorso delle carte: miniatura del dorso scelto con il nome; si tocca per scegliere tra tutti i dorsi
   const backRow = el('div', 'ae-side-field ae-side-field--row');
   backRow.append(el('span', 'ae-side-field-label', T.cardBack), cardBackChoiceButton(null, { compact: true }));
-  const discardOpen = button(T.discardButton(partita.discard.length), 'secondary', () => { go(); openDiscard(); });
-  discardOpen.classList.add('ae-button--full');
-  discardOpen.setAttribute('aria-label', T.discardButtonLabel(partita.discard.length));
-  // Nemesi uccisa al tavolo (vita a 0): si va alla schermata Vittoria; la partita non cambia (Chiudi torna indietro)
-  const killed = button(T.nemesisKilled, 'secondary', () => { go(); mostraFinePartita('victory'); });
-  killed.classList.add('ae-button--full');
+
+  // FINE PARTITA: "Nemesi sconfitta" da tenere premuto (come l'uscita), con didascalia e trofeo
+  const killed = el('button', 'ae-side-end') as HTMLButtonElement;
+  killed.type = 'button';
+  const trofeo = el('span', 'ae-side-row-icon ae-side-trophy');
+  trofeo.appendChild(iconaMenu('trofeo', 22));
+  const testoFine = el('span', 'ae-side-end-text');
+  testoFine.append(el('span', 'ae-side-end-title', T.menuNemesisDefeated));
+  killed.append(trofeo, testoFine);
+  holdToConfirm(killed, HOLD_EXIT_MS, () => { go(); mostraFinePartita('victory'); });
+
   // Esci dalla partita (rosso): finestra di conferma, poi il menu iniziale (Modalità test: "Esci dal test")
   const exit = button(partita.testRun ? T.testExit : T.exitGame, 'danger', () => openExitConfirm(() => { go(); vaiAlMenuIniziale(); }));
   exit.classList.add('ae-button--full', 'ae-side-exit', 'ae-hold-exit');
-  // Undo: annulla l'ultima azione (prima le modifiche non salvate)
-  const undoItem = button(T.undoAction, 'secondary', () => { go(); undo(); openUndoFloat(); });
-  undoItem.classList.add('ae-button--full');
-  undoItem.disabled = partita.undoStack.length === 0 && ui.drafts.size === 0;
-  // Statistiche della partita fin qui (le stesse della Vittoria)
-  const statsOpen = button(T.statsInProgress, 'secondary', () => { go(); apriStatistiche(); });
-  statsOpen.classList.add('ae-button--full');
-  const items: HTMLElement[] = [statsList, undoItem, discardOpen, statsOpen, killed];
-  // Durante "Crea mazzo": Ricomincia la partita (mazzo nuovo con la stessa nemesi e gli stessi giocatori)
-  if (ui.deckBuilding) {
-    const restart = button(T.restartGame, 'secondary', () => { go(); ricominciaMazzo(); });
-    restart.classList.add('ae-button--full');
-    items.splice(1, 0, restart);
-  }
-  // Modalità test: "Ricomincia lo scenario" (di nuovo dallo stato iniziale, undo vuoto)
-  if (partita.testRun) {
-    const restartTest = button(T.testRestart, 'secondary', () => { go(); ricominciaScenario(); });
-    restartTest.classList.add('ae-button--full', 'ae-side-test-restart');
-    items.splice(1, 0, restartTest);
-  }
-  panel.append(...items, bgRow, graveRow, backRow, exit);
-  close = openModal(panel, { onCancel: cancel });
+
+  panel.append(tempo, el('hr', 'ae-side-sep'), mazzo.radice,
+    sezione(T.menuGameSection), ...partitaVoci,
+    sezione(T.menuCustomSection), bgRow, graveRow, backRow,
+    sezione(T.menuEndSection), killed, exit);
+  close = openModal(panel, { onCancel: cancel, onClosed: () => clearInterval(timer) });
   // Anche l'uscita è animata: il pannello torna a destra e lo sfondo scuro svanisce, poi il menu si chiude. Parte da
   // dove si trova (se lo si è già trascinato fuori, niente salto)
   const closeNow = close;
@@ -204,4 +244,6 @@ export function swipeToClose(panel: HTMLElement, close: () => void): void {
 export function avvio(): void {
   // (il menu non riceve l'evento del tocco: openSideMenu accetta solo una funzione da chiamare prima di uscire)
   menuBtn.addEventListener('click', () => openSideMenu());
+  // Il tempo di gioco conta dall'avvio dell'app (solo a partita in corso, a pagina visibile)
+  avviaTempoPartita();
 }
