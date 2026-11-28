@@ -67,6 +67,10 @@ export function nuovaPartita(): void {
   stato.undoStack = [];
   stato.nemesisLife = nemesisStartLife();
   stato.deck = buildDeck();
+  // Il mazzo dei turni parte pieno e mescolato, con tutte le carte coperte, come dopo un giro. Il giro resta 0 (niente
+  // "Turno N" nella testata e "Pesca carta turno" finché non si pesca): solo il mazzo è quello di un giro mescolato
+  stato.turnOrder = { ...Turni.shuffleTurnOrder(stato.turnOrder, preferenze.settings.players,
+    turnOrderCards(preferenze.settings.players), Math.random), round: 0 };
   stato.stats = Nemesi.emptyStats(stato.deck.length);
   stato.stats.startedAt = Date.now();
 }

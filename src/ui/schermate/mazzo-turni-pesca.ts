@@ -22,7 +22,9 @@ import type { Finestra } from './mazzo-turni-bozza.ts';
 import { draw } from './mazzo-turni-disegno.ts';
 
 // Durate (ms): estrazione, flip, comparsa e feedback dei token, volo negli scarti, pausa
-const T_EXTRACT = 540, T_FLIP = 620, T_PICKS = 320, T_FEEDBACK = 280, T_FLY = 560, T_PAUSE = 360;
+const T_EXTRACT = 491, T_FLIP = 564, T_PICKS = 291, T_FEEDBACK = 255, T_FLY = 509, T_PAUSE = 327;
+// Permanenza della carta che non chiede scelta (1,1x più veloce: 1000 ms / 1.1)
+const T_HOLD = 909;
 // Carta al centro: al massimo 176 px di larghezza, proporzioni del dorso (252 x 352)
 const CARD_W_MAX = 176;
 const CARD_RATIO = 352 / 252;
@@ -187,7 +189,7 @@ export function avviaPesca(f: Finestra, chiudi: () => void): void {
       await run(picks, [{ opacity: 1 }, { opacity: 0 }], { duration: ms(T_PICKS), fill: 'forwards' });
       picks.remove();
     } else {
-      await new Promise(r => setTimeout(r, ms(1000)));
+      await new Promise(r => setTimeout(r, ms(T_HOLD)));
     }
 
     // Fase D: la carta va in fondo agli scarti, riducendosi alla misura delle miniature
