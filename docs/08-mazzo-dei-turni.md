@@ -130,7 +130,7 @@ stateDiagram-v2
 Passo per passo (per la coppia 1/2; la 3/4 funziona uguale e ha la sua memoria):
 
 1. **SenzaMemoria.** `pairNext.p12` è vuoto. Esce una carta 1/2: `drawTurnCard()` non sa chi gioca.
-2. **DaScegliere.** Nella finestra "Pesca nuovo turno" (`ui/componenti/pesca-turno.ts`), sotto la carta girata, compare "Chi gioca
+2. **DaScegliere.** Nella finestra "Pesca nuovo turno" (`ui/schermate/mazzo-turni.ts`), sotto la carta girata, compare "Chi gioca
    questo turno?" con i due token; se si esce prima di scegliere, la scelta scende nel pulsante in basso (`renderPairChoice()` in
    `ui/componenti/barra-turni.ts`, anche dopo un Undo o una ripresa). Finché non si sceglie, il pulsante principale non fa niente
    (`needsPairChoice()`) e lo sfondo resta al centro. La scelta chiama `scegliGiocatoreCoppia()`, un'azione con il suo passo di Undo.

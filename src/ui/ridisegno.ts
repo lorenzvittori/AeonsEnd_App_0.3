@@ -36,6 +36,7 @@ export interface Agganci {
   aggiornaInizio: () => void;
   vita: (kind: 'grave' | 'nemesis') => void;
   statistiche: () => void;
+  apriPescaTurno: () => void;
 }
 
 // Finché il coordinatore non li registra, chiamarli è un errore del programma
@@ -57,7 +58,8 @@ const gestori: Agganci = {
   riprendiPartita: mancante('riprendiPartita'),
   aggiornaInizio: mancante('aggiornaInizio'),
   vita: mancante('vita'),
-  statistiche: mancante('statistiche')
+  statistiche: mancante('statistiche'),
+  apriPescaTurno: mancante('apriPescaTurno')
 };
 
 // Il coordinatore registra i gestori (tutti o una parte)
@@ -124,6 +126,11 @@ export function dopoAzioneNemesi(a: DopoAzioneNemesi): void {
 // giocatori): le carte grandi partono da quella che si stava guardando nel turno giocatori
 export function passaAlTurnoNemesi(): void {
   gestori.turnoNemesi();
+}
+
+// Pesca del turno nella schermata del mazzo dei turni (dopo "Fine turno", o da "Pesca la prima carta turno")
+export function apriPescaTurno(): void {
+  gestori.apriPescaTurno();
 }
 
 // Menu iniziale ↔ Nuova partita ("Nuova partita" del menu, X della pagina Nuova partita): le due schermate stanno nella

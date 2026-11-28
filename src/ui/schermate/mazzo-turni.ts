@@ -7,18 +7,21 @@
 // Usato da: navigazione (tocco sulla barra dei turni).
 
 import { T } from '../testi.ts';
-import { aggiungiPassoUndo, partita, snapshot } from '../../stato/partita.ts';
+import { awaitingTurnCard, aggiungiPassoUndo, currentTurnCard, isPairCard, partita, snapshot,
+  turnCardPlayer } from '../../stato/partita.ts';
+import { pairChoiceKey } from '../componenti/barra-turni.ts';
 import { button, dialogShell, modals, openModal } from '../componenti/dialoghi.ts';
 import { fitPhaseName } from '../componenti/testata.ts';
 import type { BozzaTurni, MazzoTurni } from '../../tipi/partita.ts';
-import { app, byId, reducedMotion, ui } from '../pagina.ts';
+import { app, byId, pulsantePrincipale, reducedMotion, ui } from '../pagina.ts';
 import { animDone } from '../componenti/animazioni.ts';
 import { el, icon, need, query } from '../dom.ts';
-import { apriMenuLaterale } from '../ridisegno.ts';
+import { apriMenuLaterale, passaAlTurnoNemesi, richiediRidisegno } from '../ridisegno.ts';
 import { impostaMazzoTurniAperto } from '../navigazione-stato.ts';
 import { turnDraftFrom, turnDraftKey, turnDraftOps, viewOnlyCopy } from './mazzo-turni-bozza.ts';
 import type { Finestra } from './mazzo-turni-bozza.ts';
 import { draw, flipChange, inPileZone, layoutFan } from './mazzo-turni-disegno.ts';
+import { avviaPesca } from './mazzo-turni-pesca.ts';
 import { dropOn, endDrag, onCardClick, onPointerCancel, onPointerDown, onPointerMove, onPointerUp,
   runShuffle } from './mazzo-turni-trascina.ts';
 
@@ -33,6 +36,11 @@ export interface FinestraTurni {
   readonly shuffling: boolean;
 }
 
+// Modalità pesca: la schermata si apre da sola e pesca il turno dopo (avviaPesca); fine dice cosa fare dopo la chiusura
+export interface OpzioniApertura {
+  pesca?: { fine: () => void };
+}
+
 export function turnDeckBlocked(): boolean {
   return ui.isTransitioning || ui.deckBuilding || !!ui.trackShuffle || modals.length > 0;
 }
@@ -45,7 +53,7 @@ export const TURN_SHEET_MS = 320;
 
 // Apre la finestra: crea gli elementi e lo stato (Finestra, mazzo-turni-bozza.ts), registra i gestori, la disegna
 // (mazzo-turni-disegno.ts) e fa scendere il foglio. Tocchi e trascinamenti: mazzo-turni-trascina.ts
-export function openTurnScreen(): void {
+export function openTurnScreen(opzioni: OpzioniApertura = {}): void {
   if (turnDeckBlocked()) return;
   // d.old: carte già note all'apertura (scurite, si spostano solo dalla cima); parallelo a d.left, solo nella finestra
   const fresh = (order: MazzoTurni | BozzaTurni) => { const x = turnDraftFrom(order); x.old = x.known.slice(); return x; };
@@ -55,6 +63,8 @@ export function openTurnScreen(): void {
   // Il titolo è "Mazzo dei turni" ("Turno N" è nella copia della testata, sopra)
   const dialog = dialogShell(T.turnDeckTitle, '', () => tryClose(f));
   dialog.classList.add('ae-turn-screen');
+  // In modalità pesca i comandi di gestione non servono: restano il mazzo, gli scarti e la linea del tempo
+  if (opzioni.pesca) dialog.classList.add('is-pesca');
   // Tutto tranne la copia della testata sta in un foglio che scende da sotto la barra dei turni
   const sheet = el('div', 'ae-turn-sheet');
   sheet.appendChild(need(dialog.firstChild, 'intestazione della finestra')); // titolo e X
@@ -88,7 +98,7 @@ export function openTurnScreen(): void {
     copyMenu.setAttribute('aria-label', T.menu);
     copyMenu.setAttribute('aria-haspopup', 'dialog');
     copyMenu.addEventListener('click', () => {
-      if (f.drag || f.shuffling || f.closing) return;
+      if (f.drag || f.shuffling || f.closing || f.pesca?.busy) return;
       f.sel = null;
       draw(f);
       // Le voci che portano altrove (undo, scarti, vittoria, esci, ricomincia) chiudono prima la finestra; chiudendo
@@ -215,7 +225,8 @@ export function openTurnScreen(): void {
     dropOn(f, { type: 'top' }, f.sel);
   });
 
-  const hint = el('p', 'ae-turn-hint', T.turnHint);
+  // Solo la scritta della carta selezionata (nessun testo istruttivo fisso): vuota quando non c'è selezione
+  const hint = el('p', 'ae-turn-hint');
   hint.setAttribute('aria-live', 'polite');
   const footer = el('div', 'ae-turn-screen-footer');
   const resetBtn = button(T.turnResetAll, 'secondary', () => {
@@ -237,6 +248,7 @@ export function openTurnScreen(): void {
     dirty: () => turnDraftKey(f.d) !== turnDraftKey(f.initial),
     allKnown: () => f.d.left.length > 0 && f.d.known.every(Boolean),
     sel: null, press: null, drag: null, shuffling: false, closing: false, suppressClick: false, close: () => {},
+    pesca: opzioni.pesca ? { busy: true, fine: opzioni.pesca.fine } : undefined,
     fanEls: [], pileEls: [], rowGeo: null, headsGrowTimer: undefined, headsGrowing: false, lastHeadsCx: 0,
     dialog, sheet, copyShell, trackHolder, copyMenu, row, pileArea, pileRow, divider, deckArea, shuffleBtn, heads, pileHead,
     deckHead, headLines, cusp, board, lane, zoneTop, zoneBottom, revealTop, insertBar, pileInsert, pileZone, revealAll,
@@ -273,6 +285,27 @@ export function openTurnScreen(): void {
   turnScreen = { dialog, get draft() { return f.d; }, dirty: f.dirty, tryClose: () => tryClose(f), onCancel: () => onCancel(f),
     shuffle: f.h.runShuffle, get shuffling() { return f.shuffling; } };
   impostaMazzoTurniAperto(true);
+  // Modalità pesca: la sequenza parte da sola; a fine chiude la schermata (tryClose)
+  if (f.pesca) avviaPesca(f, () => tryClose(f));
+}
+
+// Apre la schermata in modalità pesca per la carta del nuovo turno (dopo "Fine turno", o da "Pesca la prima carta turno"):
+// nessun tocco per pescare; a fine pesca la schermata si chiude e si torna alla partita (passaAlTurnoNemesi se il turno è
+// della nemesi)
+export function openDrawTurn(): void {
+  if (ui.pescaTurnoAperta || turnDeckBlocked() || ui.deckBuilding || partita.resolving || !awaitingTurnCard()) return;
+  ui.pescaTurnoAperta = true;
+  app.classList.add('is-draw-turn');
+  openTurnScreen({ pesca: { fine: () => {
+    ui.pescaTurnoAperta = false;
+    app.classList.remove('is-draw-turn');
+    if (partita.resolving) { passaAlTurnoNemesi(); return; }
+    // Carta 1/2 o 3/4 non ancora scelta (schermata chiusa prima): la scelta scende nei pulsanti in basso
+    const kind = currentTurnCard();
+    if (isPairCard(kind) && !turnCardPlayer(kind)) ui.pairMinimized = pairChoiceKey();
+    richiediRidisegno();
+    pulsantePrincipale.focus({ preventScroll: true });
+  } } });
 }
 
 // Chiusura: le modifiche sono già valide (niente "Uscire senza salvare?"). Con la X o Esc il foglio risale sotto la
@@ -284,6 +317,7 @@ function shut(f: Finestra): void {
   turnScreen = null;
   impostaMazzoTurniAperto(false);
   f.close();
+  f.pesca?.fine();
 }
 // Un solo passo di undo per la visita: lo stato di prima, se alla fine il mazzo dei turni è diverso
 function commitUndo(f: Finestra): void {
@@ -295,6 +329,13 @@ function commitUndo(f: Finestra): void {
 function tryClose(f: Finestra): void {
   if (f.drag) { endDrag(f, false); return; }
   if (f.closing) return;
+  // Pesca in corso: si chiude solo mentre si attende la scelta del giocatore (la scelta resta da fare in basso)
+  if (f.pesca?.busy) {
+    if (!f.pesca.lascia) return;
+    const lascia = f.pesca.lascia;
+    f.pesca.lascia = undefined;
+    lascia();
+  }
   f.closing = true;
   if (reducedMotion.matches || !f.sheet.animate) { shut(f); return; }
   const a = f.sheet.animate([{ transform: 'none' }, { transform: 'translateY(-100%)' }],

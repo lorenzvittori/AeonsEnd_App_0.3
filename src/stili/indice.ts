@@ -36,4 +36,4 @@ import '../ui/schermate/turno-giocatori.css';
 import '../ui/componenti/testata.css';
 import '../ui/schermate/crea-mazzo.css';
 import '../ui/finestre/statistiche.css';
-import '../ui/componenti/pesca-turno.css';
+import '../ui/schermate/mazzo-turni-pesca.css';

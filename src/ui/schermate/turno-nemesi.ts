@@ -20,9 +20,8 @@ import { BG_SLIDE_MS, buzz, ENTER_MS, lockFor, MORPH_MS, scrollItemInto, shakeAp
   trackDrag } from '../componenti/animazioni.ts';
 import { query } from '../dom.ts';
 import { beginTrackShuffle, playTurnShuffle, SHUFFLE_FADE_MS } from '../componenti/barra-turni.ts';
-import { openDrawTurn } from '../componenti/pesca-turno.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
-import { passaAlTurnoGiocatori, richiediRidisegno } from '../ridisegno.ts';
+import { apriPescaTurno, passaAlTurnoGiocatori, richiediRidisegno } from '../ridisegno.ts';
 import type { DopoAzioneNemesi } from '../ridisegno.ts';
 import { activeEntry, animateDrawIn, centredFocusUid, focusProgrammaticUntil, isDrawStep, preloadNext, renderResolve,
   startReveal } from './turno-nemesi-carosello.ts';
@@ -67,7 +66,7 @@ export function onResolveClick(): void {
     // finestra "Pesca nuovo turno"
     if (!partita.resolving) {
       if (partita.turnOrder.round !== roundAtDraw) playTurnShuffle(SHUFFLE_FADE_MS);
-      openDrawTurn();
+      apriPescaTurno();
     }
     return;
   }
@@ -100,7 +99,7 @@ export function mostraDopoAzione(a: DopoAzioneNemesi): void {
   // A passaggio finito si apre la finestra "Pesca nuovo turno" (e, a fine giro, la barra dei turni si mischia)
   const shuffleAfter = () => {
     if (roundShuffled) playTurnShuffle(0);
-    openDrawTurn();
+    apriPescaTurno();
   };
   if (!partita.resolving) {
     // Fine del turno nemesi: si torna alla VistaCoda con la carta pescata in vista

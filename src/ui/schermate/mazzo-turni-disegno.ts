@@ -157,7 +157,7 @@ export function draw(f: Finestra, still = false) {
   f.heads.classList.toggle('no-shuffle', n < 2);
   f.resetBtn.disabled = !f.dirty();
   markTargets(f, f.sel);
-  f.hint.textContent = f.sel ? T.turnSelected(selName(f, f.sel)) : T.turnHint;
+  f.hint.textContent = f.sel ? T.turnSelected(selName(f, f.sel)) : '';
   layoutFan(f);
   if (still) { void f.pileRow.offsetWidth; f.pileRow.classList.remove('is-still'); }
   // Ogni modifica vale subito nel mazzo dei turni; la selezione da sola non cambia niente

@@ -242,8 +242,6 @@ export const I18N_IT = {
   drawTurnCard: 'Pesca carta turno',
   trackWaiting: 'Carta turno da pescare',
   pairChoiceTitle: 'Chi gioca questo turno?',
-  drawTurnTitle: 'Nuovo turno',
-  drawTurnCardLabel: 'Pesca la carta del nuovo turno, coperta',
   drawnTurnNemesis: 'Turno Nemesi',
   // Mazzo dei turni
   turnDeckHint: 'tocca per il mazzo dei turni',
@@ -265,7 +263,6 @@ export const I18N_IT = {
   turnCovered: 'Carta coperta',
   turnDeckCardLabel: (name: string, n: number, total: number) => `${name}, carta ${n} di ${total} dalla cima`,
   turnPileCardLabel: (name: string, current: boolean) => current ? `${name}, turno in corso` : name,
-  turnHint: 'Trascina una carta scoperta, oppure toccala e poi tocca dove metterla. Il mazzo si legge da sinistra: la prima carta è la cima.',
   turnSelected: (name: string) => `Selezionata: ${name}. Tocca dove metterla.`,
   turnShuffleDeck: 'Mescola',
   // Finestra del mazzo dei turni: riga unica scarti | mazzo

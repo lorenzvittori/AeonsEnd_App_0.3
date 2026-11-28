@@ -1,0 +1,36 @@
+/* mazzo-turni-pesca.css: la pesca del turno dentro la schermata del mazzo dei turni (modalità pesca: mazzo-turni.ts e
+   mazzo-turni-pesca.ts). La carta che si gira usa le regole .ae-flip di turno-nemesi.css; i token della scelta sono
+   .ae-pair-pick di mazzo-turni.css. Ordine: dopo mazzo-turni.css e turno-nemesi.css. Si importa da src/stili/indice.ts. */
+
+/* Dietro la schermata lo sfondo dell'app si oscura, tranne la barra dei turni (come nella scelta 1/2 e 3/4) */
+.ae-shell.is-draw-turn::before { opacity: .55; transition: opacity .25s ease-out; }
+.ae-shell.is-draw-turn > .ae-header, .ae-shell.is-draw-turn > .ae-dock,
+.ae-shell.is-draw-turn > .ae-main > :not(.ae-turn-track) { filter: brightness(.45); }
+
+/* Modalità pesca: niente comandi di gestione (restano il mazzo, gli scarti e la linea del tempo) */
+.ae-turn-screen.is-pesca .ae-turn-shuffle,
+.ae-turn-screen.is-pesca .ae-turn-eye,
+.ae-turn-screen.is-pesca .ae-turn-reveal-row,
+.ae-turn-screen.is-pesca .ae-turn-zone,
+.ae-turn-screen.is-pesca .ae-turn-screen-footer { display: none; }
+
+/* Il livello della pesca: sopra la schermata, trasparente, con la sola carta e i token che ricevono i tocchi */
+.ae-draw-layer { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+.ae-draw-ghost {
+  position: absolute; transform-origin: 50% 50%; border-radius: 8% / 6%; pointer-events: none; will-change: transform;
+}
+.ae-draw-ghost.is-lifted { filter: drop-shadow(0 12px 14px color-mix(in srgb, var(--ombra) 55%, transparent)); }
+/* Carta coperta al centro, pronta: tocca per girarla (bagliore dorato, come il dorso della finestra) */
+.ae-draw-ghost.is-ready { pointer-events: auto; cursor: pointer; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--bagliore-giallo) 75%, transparent)); }
+.ae-draw-ghost .ae-flip-face { border-radius: 8% / 6%; }
+.ae-draw-ghost .ae-flip-face--front { background: var(--ae-surface); }
+.ae-draw-ghost .ae-flip-face img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Sotto la carta: "Chi gioca questo turno?" e i due token (stessa misura e stessa distanza della scelta 1/2 e 3/4) */
+.ae-draw-picks {
+  position: absolute; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 16px;
+  pointer-events: auto;
+}
+.ae-draw-picks-title { margin: 0; color: var(--ae-text); font: 600 14px/20px var(--ae-font-ui); text-align: center; }
+.ae-draw-picks-row { display: flex; gap: 20px; }
+.ae-draw-picks .ae-pair-pick { --ae-pick-w: 48px; }

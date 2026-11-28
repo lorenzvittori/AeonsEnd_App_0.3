@@ -246,8 +246,6 @@ export const I18N_EN: Testi = {
   drawTurnCard: 'Draw turn card',
   trackWaiting: 'Turn card to draw',
   pairChoiceTitle: 'Who plays this turn?',
-  drawTurnTitle: 'New turn',
-  drawTurnCardLabel: 'Draw the new turn card, face down',
   drawnTurnNemesis: 'Nemesis turn',
   // Mazzo dei turni
   turnDeckHint: 'tap for the turn order deck',
@@ -269,7 +267,6 @@ export const I18N_EN: Testi = {
   turnCovered: 'Covered card',
   turnDeckCardLabel: (name: string, n: number, total: number) => `${name}, card ${n} of ${total} from the top`,
   turnPileCardLabel: (name: string, current: boolean) => current ? `${name}, current turn` : name,
-  turnHint: 'Drag a revealed card, or tap it and then tap where to put it. The deck reads from the left: the first card is the top.',
   turnSelected: (name: string) => `Selected: ${name}. Tap where to put it.`,
   turnShuffleDeck: 'Shuffle',
   // Finestra del mazzo dei turni: riga unica scarti | mazzo

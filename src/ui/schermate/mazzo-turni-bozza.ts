@@ -65,6 +65,9 @@ export interface Finestra {
   closing: boolean;              // il foglio si sta chiudendo
   suppressClick: boolean;        // il click che segue il rilascio non seleziona la carta
   close: () => void;             // chiude la finestra (openModal)
+  pesca?: { busy: boolean; fine: () => void; lascia?: () => void }; // modalità pesca del turno (mazzo-turni-pesca.ts): occupata
+                                 // finché la sequenza non è finita; fine, alla chiusura, dice cosa fare dopo la pesca;
+                                 // lascia (solo mentre si attende la scelta del giocatore) chiude la sequenza
   fanEls: HTMLElement[];         // carte del mazzo disegnate
   pileEls: HTMLElement[];        // carte degli scarti disegnate
   rowGeo: { centers: number[]; split: number; n: number } | null; // ultima disposizione: centri delle carte del mazzo,

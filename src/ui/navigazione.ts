@@ -38,7 +38,7 @@ import { closeDiscard } from './componenti/scarti.ts';
 import { currentBackground } from './componenti/sfondi.ts';
 import { disegnaTestata, fitPhaseName, renderDockPiles } from './componenti/testata.ts';
 import { renderLives } from './componenti/vite.ts';
-import { openTurnScreen } from './schermate/mazzo-turni.ts';
+import { openDrawTurn, openTurnScreen } from './schermate/mazzo-turni.ts';
 import { openSideMenu } from './finestre/menu-laterale.ts';
 import { openMissingNemesis } from './finestre/opzioni.ts';
 import { openStats, showDefeat, showVictory } from './finestre/statistiche.ts';
@@ -324,6 +324,7 @@ function backGuardArmed(): boolean {
 // Codice eseguito all'avvio, nell'ordine di sempre
 export function avvio(): void {
   registraAgganci({
+    apriPescaTurno: openDrawTurn,
     dopoAzioneNemesi: mostraDopoAzione,
     ridisegna: render,
     menuIniziale: openStart,

@@ -135,6 +135,7 @@
   box-shadow: 0 0 0 3px var(--ae-gold), 0 12px 28px color-mix(in srgb, var(--ombra) 55%, transparent); outline: none;
 }
 .ae-turn-hint { margin: 0; color: var(--ae-text-muted); font: 400 13px/18px var(--ae-font-ui); }
+.ae-turn-hint:empty { display: none; }
 /* Mentre si trascina la finestra non scorre (la carta si porta ovunque nello schermo) */
 .ae-modal.ae-turn-screen.is-dragging { overflow: hidden; touch-action: none; }
 /* Copia, solo da guardare, della testata e della barra della fase in cima alla finestra. Il contenitore ha le

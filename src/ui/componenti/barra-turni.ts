@@ -298,7 +298,7 @@ export function pairButtons(kind: CartaTurno | null, cls: string, label: (p: Gio
 export function renderPairChoice(): void {
   const pending = needsPairChoice();
   const minimized = pending && ui.pairMinimized === pairChoiceKey();
-  // Con la finestra "Pesca nuovo turno" aperta la scelta è dentro di lei (ui/componenti/pesca-turno.ts)
+  // Con la pesca del turno aperta (schermata del mazzo dei turni) la scelta è dentro di lei (ui/schermate/mazzo-turni-pesca.ts)
   const show = pending && !minimized && !ui.pescaTurnoAperta;
   const wasShown = !pairChoice.hidden;
   pairChoice.hidden = !show;

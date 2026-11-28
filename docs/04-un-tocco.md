@@ -50,7 +50,7 @@ sequenceDiagram
     participant R as regole/
     participant S as stato/salvataggio.ts
     participant A as ui/ridisegno.ts
-    participant W as ui/componenti/pesca-turno.ts
+    participant W as ui/schermate/mazzo-turni.ts
     U->>N: tocca il pulsante principale con data-azione fine-turno
     N->>G: onPulsanteTurnoGiocatori()
     G->>P: fineTurnoGiocatore()
@@ -90,7 +90,7 @@ Passo per passo:
 5. **Le regole.** `endPlayerTurn()` chiama `endPlayerTurnCards()` (in `regole/turno-nemesi.ts`: la vita attuale di ogni minion diventa
    il nuovo riferimento di inizio turno e le carte grigie, cioè poteri pagati e minion a 0, vanno negli scarti) e poi
    `closeTurn()`: il turno dopo è in attesa (`turnOrder.waiting`); se il giro è finito si rimescola invece il mazzo dei turni.
-6. **La finestra "Pesca nuovo turno".** `openDrawTurn()` (`ui/componenti/pesca-turno.ts`) mostra il dorso delle carte turno. Toccandolo,
+6. **La finestra "Pesca nuovo turno".** `openDrawTurn()` (`ui/schermate/mazzo-turni.ts`) mostra il dorso delle carte turno. Toccandolo,
    `pescaCartaTurno()` (un altro passo di undo) fa `drawTurnCard()` (in `regole/mazzo-turni.ts`: toglie la carta in cima) e il dorso si
    gira. **Se esce la nemesi** si chiama `nemesisTurn()`: `turn` sale di uno e `resolving` diventa vero.
 7. **Il salvataggio.** `act()` chiama `save()`, cioè `scriviPartita()`: scrive nel `localStorage` la partita e la cronologia

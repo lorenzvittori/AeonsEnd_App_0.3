@@ -20,10 +20,9 @@ import { annullaModificheBtn, mainEl, pulsantePrincipale, queueEmpty, queueList,
 import type { AncoraCoda } from '../pagina.ts';
 import { ENTER_MS, fastScrollTo, MORPH_MS, scrollItemInto, scrollJobs, trackDrag } from '../componenti/animazioni.ts';
 import { el, query, queryAll } from '../dom.ts';
-import { richiediRidisegno } from '../ridisegno.ts';
+import { apriPescaTurno, richiediRidisegno } from '../ridisegno.ts';
 import { catalogo } from '../../stato/catalogo.ts';
 import { playTurnShuffle, SHUFFLE_FADE_MS } from '../componenti/barra-turni.ts';
-import { openDrawTurn } from '../componenti/pesca-turno.ts';
 import { altezzaArea, sharedCardWidth, sizeColumn, spazioVicine } from '../componenti/misure.ts';
 import { openCardDialog } from '../finestre/scheda-carta.ts';
 
@@ -258,7 +257,7 @@ export function onPulsanteTurnoGiocatori(): void {
   if (needsPairChoice()) return;
   // "Pesca carta turno" (turno da pescare, per esempio a inizio partita o dopo aver chiuso la finestra): la riapre
   if (awaitingTurnCard()) {
-    openDrawTurn();
+    apriPescaTurno();
     return;
   }
   // "Fine turno": il turno finisce (a fine giro il mazzo dei turni si mescola) e lo sfondo va al centro; si pesca il turno
@@ -267,7 +266,7 @@ export function onPulsanteTurnoGiocatori(): void {
   fineTurnoGiocatore();
   richiediRidisegno();
   if (roundEnding) playTurnShuffle(SHUFFLE_FADE_MS);
-  openDrawTurn();
+  apriPescaTurno();
 }
 
 // Dal turno nemesi al turno giocatori: la carta grande del turno nemesi si trasforma in quella della coda, le altre

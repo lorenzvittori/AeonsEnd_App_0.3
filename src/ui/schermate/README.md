@@ -8,6 +8,7 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
   Nuova partita e la carta della nemesi scelta (`buildNemesisFlip`, zoom a due dita, `resetNemesisZoom`).
 - `partita.css`: la mappa delle 7 zone. `partita-misure.css`: tutte le misure delle zone come variabili. `turno-giocatori.ts` + `.css`,
   `turno-nemesi.ts` + `turno-nemesi-carosello.ts` + `.css`: i due turni. `crea-mazzo.ts` + `crea-mazzo-cursore.ts` + `.css`: "Crea mazzo".
+- `mazzo-turni-pesca.ts` + `.css`: la pesca del turno dentro questa schermata (modalità pesca di `openDrawTurn`): la prima carta del mazzo si stacca, si ingrandisce al centro, si gira e, con le carte 1/2 e 3/4, mostra i token dei due giocatori; poi va in fondo agli scarti. Nessuna finestra in più, nessun tocco per pescare.
 - `mazzo-turni.ts` + `.css` (apertura, foglio, chiusura, Esc), `mazzo-turni-bozza.ts` (bozza e stato `Finestra`), `mazzo-turni-disegno.ts`
   (disegno della riga: `draw`, `layoutFan`, `layoutHeads`), `mazzo-turni-trascina.ts` (tocchi, trascinamento, `runShuffle`),
   `mazzo-turni-tempo.ts` (linea del tempo sotto le carte), `mazzo-turni-riga.ts` (conti puri della riga, provati in `tests/mazzo-turni-riga.test.ts`).
@@ -31,7 +32,7 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
 - **Turno giocatori:** fascia piccola con tutte le carte in gioco, carte grandi in orizzontale (tocco al centro = scheda, di lato = porta
   al centro); i comandi sotto la carta al centro li mostra `markQueueRail` (classe `is-centred`; durante uno scorrimento avviato dall'app l'evidenziazione resta sulla
   carta scelta, col dito segue lo scorrimento). *Fine turno* (`endPlayerTurn`) chiude il turno (il turno dopo è in attesa), lo sfondo va al
-  centro (`data-fondo="centro"`) e si apre la finestra "Pesca nuovo turno" (`componenti/pesca-turno.ts`), dove si pesca il turno dopo
+  centro (`data-fondo="centro"`) e si apre la pesca del turno nella schermata del mazzo dei turni (`openDrawTurn`, in `mazzo-turni.ts`), dove si pesca il turno dopo
   (`pescaCartaTurno`): se esce la nemesi, scossa e vibrazione e lo sfondo a destra, alla chiusura della finestra. Dopo "Crea mazzo" l'app
   attende "Pesca carta turno" (apre la stessa finestra). A fine giro il mazzo dei turni si mischia subito (animazione `playTurnShuffle`).
 - **Turno nemesi:** carosello (`#focus`, scroll-snap nativo; `renderFocus` lo ricostruisce solo se cambia `focusStateSignature`,
@@ -43,7 +44,7 @@ aggancio di `ui/ridisegno.ts`) salvo i file di supporto della stessa schermata (
   nemesi"). Alla prima carta di Tier 2 e 3 il banner (un tocco lo finisce subito). Il mazzo non si rimescola. Dal turno nemesi
   `passaAlTurnoGiocatori`. Dopo ogni azione che può chiudere il turno nemesi (pulsante principale, minion a 0 dalla scheda) lo schermo fa lo
   stesso passaggio: `mostraDopoAzione` (`turno-nemesi.ts`), chiesta dalla scheda con l'aggancio `dopoAzioneNemesi`; l'azione dello stato
-  (`afterNemesisTurn`) chiude il turno e a fine passaggio si apre la finestra "Pesca nuovo turno".
+  (`afterNemesisTurn`) chiude il turno e a fine passaggio si apre la pesca del turno (schermata del mazzo dei turni).
 - **Menu e Nuova partita:** menu con partita in corso (Riprendi), collezione vuota = "Inserisci collezione" e Nuova partita oscurata. Nuova
   partita: giocatori 2-4; opzioni del mazzo (*Modalità battaglia*, *Unisci le carte della collezione*, preferenze del browser
   `aeonsend-app-0.2-deck-options`, copiate in `settings`); wave multiple a cifre romane; nemesi con dado, freccia che apre la carta (il retro
